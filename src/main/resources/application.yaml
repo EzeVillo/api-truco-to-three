@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: truco
+
+truco:
+  match:
+    games-to-win: 3
+    points-to-win-game: 3
