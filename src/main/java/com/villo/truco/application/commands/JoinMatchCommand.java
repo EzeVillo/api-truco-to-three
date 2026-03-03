@@ -1,13 +1,13 @@
 package com.villo.truco.application.commands;
 
+import com.villo.truco.domain.model.match.valueobjects.InviteCode;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 
-public record JoinMatchCommand(MatchId matchId, PlayerId playerTwoId) {
+public record JoinMatchCommand(MatchId matchId, InviteCode inviteCode) {
 
-    public JoinMatchCommand(final String matchId, final String playerTwoId) {
+  public JoinMatchCommand(final String matchId, final String inviteCode) {
 
-        this(MatchId.of(matchId), PlayerId.of(playerTwoId));
-    }
+    this(MatchId.of(matchId), InviteCode.of(inviteCode));
+  }
 
 }

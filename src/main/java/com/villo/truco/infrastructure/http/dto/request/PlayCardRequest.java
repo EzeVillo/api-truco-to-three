@@ -2,12 +2,11 @@ package com.villo.truco.infrastructure.http.dto.request;
 
 import java.util.Objects;
 
-public record PlayCardRequest(String playerId, String suit, int number) {
+public record PlayCardRequest(String suit, int number) {
 
-    public PlayCardRequest {
+  public PlayCardRequest {
 
-        Objects.requireNonNull(playerId);
-        Objects.requireNonNull(suit);
-    }
+    Objects.requireNonNull(suit);
+  }
 
 }

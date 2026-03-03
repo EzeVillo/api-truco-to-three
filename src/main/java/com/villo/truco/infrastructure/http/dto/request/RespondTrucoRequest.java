@@ -2,12 +2,11 @@ package com.villo.truco.infrastructure.http.dto.request;
 
 import java.util.Objects;
 
-public record RespondTrucoRequest(String playerId, String response) {
+public record RespondTrucoRequest(String response) {
 
-    public RespondTrucoRequest {
+  public RespondTrucoRequest {
 
-        Objects.requireNonNull(playerId);
-        Objects.requireNonNull(response);
-    }
+    Objects.requireNonNull(response);
+  }
 
 }
