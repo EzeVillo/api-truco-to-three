@@ -54,6 +54,8 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     final var identity = this.tokenProvider.validateAccessToken(token);
 
     accessor.getSessionAttributes().put(IDENTITY_ATTR, identity);
+    final var userName = WebSocketUserNaming.userName(identity.matchId(), identity.playerId());
+    accessor.setUser(() -> userName);
 
     return message;
   }
@@ -66,29 +68,22 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     }
 
     final var destination = accessor.getDestination();
-    if (destination != null && destination.startsWith("/topic/matches/")) {
-      this.validateTopicAccess(destination, identity);
+    if (destination != null) {
+      this.validateTopicAccess(destination);
     }
 
     return message;
   }
 
-  private void validateTopicAccess(final String destination, final PlayerIdentity identity) {
+  private void validateTopicAccess(final String destination) {
 
-    // Topic format: /topic/matches/{matchId}/{playerId}
-    final var parts = destination.split("/");
-    // parts: ["", "topic", "matches", matchId, playerId]
-    if (parts.length >= 5) {
-      final var topicMatchId = parts[3];
-      final var topicPlayerId = parts[4];
-
-      final var matchIdMatches = identity.matchId().value().toString().equals(topicMatchId);
-      final var playerIdMatches = identity.playerId().value().toString().equals(topicPlayerId);
-
-      if (!matchIdMatches || !playerIdMatches) {
-        throw new MessageDeliveryException("Not authorized to subscribe to this topic");
-      }
+    // Topic format:
+    //   /user/queue/events
+    if ("/user/queue/events".equals(destination)) {
+      return;
     }
+
+    throw new MessageDeliveryException("Not authorized to subscribe to this topic");
   }
 
 }

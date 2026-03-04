@@ -1,11 +1,13 @@
 package com.villo.truco.infrastructure.websocket;
 
-import com.villo.truco.application.dto.MatchStateDTO;
+import com.villo.truco.domain.model.match.events.SeatTargetedEvent;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.ports.MatchEventNotifier;
-import com.villo.truco.domain.ports.MatchQueryRepository;
-import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
+import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
+import java.util.List;
 import java.util.Objects;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -13,32 +15,35 @@ import org.springframework.stereotype.Component;
 @Component
 public final class StompMatchEventNotifier implements MatchEventNotifier {
 
-    private final SimpMessagingTemplate messagingTemplate;
-    private final MatchQueryRepository matchQueryRepository;
+  private final SimpMessagingTemplate messagingTemplate;
 
-    public StompMatchEventNotifier(final SimpMessagingTemplate messagingTemplate,
-        final MatchQueryRepository matchQueryRepository) {
+  public StompMatchEventNotifier(final SimpMessagingTemplate messagingTemplate) {
 
-        this.messagingTemplate = Objects.requireNonNull(messagingTemplate);
-        this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
+    this.messagingTemplate = Objects.requireNonNull(messagingTemplate);
+  }
+
+  @Override
+  public void publishDomainEvents(final MatchId matchId, final PlayerId playerOneId,
+      final PlayerId playerTwoId, final List<DomainEventBase> events) {
+
+    for (final var event : events) {
+      final var wsEvent = MatchWsEvent.from(event);
+
+      if (event instanceof SeatTargetedEvent targeted) {
+        final var recipient =
+            targeted.getTargetSeat() == PlayerSeat.PLAYER_ONE ? playerOneId : playerTwoId;
+        this.sendEvent(matchId, recipient, wsEvent);
+      } else {
+        this.sendEvent(matchId, playerOneId, wsEvent);
+        this.sendEvent(matchId, playerTwoId, wsEvent);
+      }
     }
+  }
 
-    @Override
-    public void notifyPlayers(final MatchId matchId, final PlayerId playerOneId,
-        final PlayerId playerTwoId) {
+  private void sendEvent(final MatchId matchId, final PlayerId playerId, final Object message) {
 
-        this.notifyPlayer(matchId, playerOneId);
-        this.notifyPlayer(matchId, playerTwoId);
-    }
-
-    private void notifyPlayer(final MatchId matchId, final PlayerId playerId) {
-
-        this.matchQueryRepository.findById(matchId).ifPresent(match -> {
-            final var dto = MatchStateDTO.of(match, playerId);
-            this.messagingTemplate.convertAndSend(
-                "/topic/matches/" + matchId.value().toString() + "/" + playerId.value().toString(),
-                MatchStateResponse.from(dto));
-        });
-    }
+    final var userName = WebSocketUserNaming.userName(matchId, playerId);
+    this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+  }
 
 }

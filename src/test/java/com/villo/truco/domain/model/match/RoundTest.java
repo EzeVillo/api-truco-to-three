@@ -21,574 +21,573 @@ import org.junit.jupiter.api.Test;
 
 class RoundTest {
 
-    private PlayerId mano;
-    private PlayerId pie;
-    private Round round;
+  private PlayerId mano;
+  private PlayerId pie;
+  private Round round;
 
-    @BeforeEach
-    void setUp() {
+  @BeforeEach
+  void setUp() {
 
-        this.mano = PlayerId.generate();
-        this.pie = PlayerId.generate();
-        this.round = Round.create(this.mano, this.mano, this.pie, MatchRules.defaultRules());
+    this.mano = PlayerId.generate();
+    this.pie = PlayerId.generate();
+    this.round = Round.create(1, this.mano, this.mano, this.pie, MatchRules.defaultRules());
+  }
+
+  private void playCardFromHand(final PlayerId playerId) {
+
+    final var card = this.round.getHandOf(playerId).getCards().getFirst();
+    this.round.playCard(playerId, card);
+  }
+
+  private void playFullHand() {
+
+    this.playCardFromHand(this.round.getCurrentTurn());
+    this.playCardFromHand(this.round.getCurrentTurn());
+  }
+
+  @Test
+  void manoShouldPlayFirst() {
+
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
+
+  @Test
+  void turnShouldSwitchAfterPlayingCard() {
+
+    this.playCardFromHand(this.mano);
+
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.pie);
+  }
+
+  @Test
+  void shouldThrowWhenPlayingOutOfTurn() {
+
+    final var card = this.round.getHandOf(this.pie).getCards().getFirst();
+
+    assertThatThrownBy(() -> this.round.playCard(this.pie, card)).isInstanceOf(
+        NotYourTurnException.class);
+  }
+
+  @Test
+  void shouldThrowWhenPlayingCardNotInHand() {
+
+    final var foreignCard = this.round.getHandOf(this.pie).getCards().getFirst();
+
+    assertThatThrownBy(() -> this.round.playCard(this.mano, foreignCard)).isInstanceOf(
+        CardNotInHandException.class);
+  }
+
+  @Test
+  void roundShouldFinishWithAWinner() {
+
+    while (this.round.getStatus() != RoundStatus.FINISHED) {
+      this.playFullHand();
     }
 
-    private void playCardFromHand(final PlayerId playerId) {
+    assertThat(this.round.getRoundWinner()).isPresent();
+  }
 
-        final var card = this.round.getHandOf(playerId).getCards().getFirst();
-        this.round.playCard(playerId, card);
-    }
+  @Test
+  void roundShouldNotBeFinishedMidGame() {
 
-    private void playFullHand() {
+    this.playFullHand();
 
-        this.playCardFromHand(this.round.getCurrentTurn());
-        this.playCardFromHand(this.round.getCurrentTurn());
-    }
+    assertThat(this.round.getStatus()).isNotEqualTo(RoundStatus.FINISHED);
+  }
 
-    @Test
-    void manoShouldPlayFirst() {
+  // ===== TRUCO =====
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-    }
+  @Test
+  void shouldChangeTurnWhenCallingTruco() {
 
-    @Test
-    void turnShouldSwitchAfterPlayingCard() {
+    this.round.callTruco(this.mano);
 
-        this.playCardFromHand(this.mano);
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.pie);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
+  }
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.pie);
-    }
+  @Test
+  void shouldRestoreOriginalTurnAfterAcceptingTruco() {
 
-    @Test
-    void shouldThrowWhenPlayingOutOfTurn() {
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
 
-        final var card = this.round.getHandOf(this.pie).getCards().getFirst();
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.PLAYING);
+  }
 
-        assertThatThrownBy(() -> this.round.playCard(this.pie, card)).isInstanceOf(
-            NotYourTurnException.class);
-    }
+  @Test
+  void shouldSetTwoPointsAtStakeAfterAcceptingTruco() {
 
-    @Test
-    void shouldThrowWhenPlayingCardNotInHand() {
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
 
-        final var foreignCard = this.round.getHandOf(this.pie).getCards().getFirst();
+    assertThat(this.round.getTrucoPointsAtStake()).isEqualTo(2);
+  }
 
-        assertThatThrownBy(() -> this.round.playCard(this.mano, foreignCard)).isInstanceOf(
-            CardNotInHandException.class);
-    }
+  @Test
+  void shouldFinishRoundWithOnePointAfterRejectingTruco() {
 
-    @Test
-    void roundShouldFinishWithAWinner() {
+    this.round.callTruco(this.mano);
+    final var result = this.round.rejectTruco(this.pie);
 
-        while (this.round.getStatus() != RoundStatus.FINISHED) {
-            this.playFullHand();
-        }
+    assertThat(result.points()).isEqualTo(1);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(result.winner()).isEqualTo(this.mano);
+  }
 
-        assertThat(this.round.getRoundWinner()).isPresent();
-    }
+  @Test
+  void shouldAllowRetrucoAfterTruco() {
 
-    @Test
-    void roundShouldNotBeFinishedMidGame() {
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
 
-        this.playFullHand();
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
 
-        assertThat(this.round.getStatus()).isNotEqualTo(RoundStatus.FINISHED);
-    }
+  @Test
+  void shouldSetThreePointsAtStakeAfterAcceptingRetruco() {
 
-    // ===== TRUCO =====
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+    this.round.acceptTruco(this.mano);
 
-    @Test
-    void shouldChangeTurnWhenCallingTruco() {
+    assertThat(this.round.getTrucoPointsAtStake()).isEqualTo(3);
+  }
 
-        this.round.callTruco(this.mano);
+  @Test
+  void shouldAllowValeCuatroAfterRetruco() {
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.pie);
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
-    }
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+    this.round.callTruco(this.mano);
 
-    @Test
-    void shouldRestoreOriginalTurnAfterAcceptingTruco() {
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
+  }
 
-        this.round.callTruco(this.mano);
-        this.round.acceptTruco(this.pie);
+  @Test
+  void shouldRestoreOriginalTurnAfterRetruco() {
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.PLAYING);
-    }
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+    this.round.acceptTruco(this.mano);
 
-    @Test
-    void shouldSetTwoPointsAtStakeAfterAcceptingTruco() {
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
 
-        this.round.callTruco(this.mano);
-        this.round.acceptTruco(this.pie);
+  @Test
+  void shouldRestoreOriginalTurnAfterFullTrucoChain() {
+    // mano tiene el turno original
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
 
-        assertThat(this.round.getTrucoPointsAtStake()).isEqualTo(2);
-    }
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
 
-    @Test
-    void shouldFinishRoundWithOnePointAfterRejectingTruco() {
+  @Test
+  void shouldThrowWhenSamePlayerCallsTrucoTwice() {
 
-        this.round.callTruco(this.mano);
-        final var result = this.round.rejectTruco(this.pie);
+    this.round.callTruco(this.mano);
 
-        assertThat(result.points()).isEqualTo(1);
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.FINISHED);
-        assertThat(result.winner()).isEqualTo(this.mano);
-    }
+    assertThatThrownBy(() -> this.round.callTruco(this.mano)).isInstanceOf(
+        NotYourTurnException.class);
+  }
 
-    @Test
-    void shouldAllowRetrucoAfterTruco() {
+  @Test
+  void shouldThrowWhenCallingTrucoAfterValeCuatro() {
 
-        this.round.callTruco(this.mano);
-        this.round.callTruco(this.pie);
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+    this.round.callTruco(this.mano);
 
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-    }
+    assertThatThrownBy(() -> this.round.callTruco(this.pie)).isInstanceOf(
+        InvalidTrucoCallException.class);
+  }
 
-    @Test
-    void shouldSetThreePointsAtStakeAfterAcceptingRetruco() {
+  @Test
+  void shouldFinishRoundWhenFoldingAfterTruco() {
 
-        this.round.callTruco(this.mano);
-        this.round.callTruco(this.pie);
-        this.round.acceptTruco(this.mano);
+    this.round.callTruco(this.mano);
+    final var result = this.round.acceptTrucoAndFold(this.pie);
 
-        assertThat(this.round.getTrucoPointsAtStake()).isEqualTo(3);
-    }
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(result.points()).isEqualTo(2);
+    assertThat(result.winner()).isEqualTo(this.mano);
+  }
 
-    @Test
-    void shouldAllowValeCuatroAfterRetruco() {
+  @Test
+  void trucoCancelledWhenEnvidoCalled() {
 
-        this.round.callTruco(this.mano);
-        this.round.callTruco(this.pie);
-        this.round.callTruco(this.mano);
+    this.round.callTruco(this.mano);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
 
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
-    }
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
+  }
 
-    @Test
-    void shouldRestoreOriginalTurnAfterRetruco() {
+  // ===== ENVIDO =====
 
-        this.round.callTruco(this.mano);
-        this.round.callTruco(this.pie);
-        this.round.acceptTruco(this.mano);
+  @Test
+  void shouldChangeTurnWhenCallingEnvido() {
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
 
-    @Test
-    void shouldRestoreOriginalTurnAfterFullTrucoChain() {
-        // mano tiene el turno original
-        this.round.callTruco(this.mano);
-        this.round.callTruco(this.pie);
-        this.round.callTruco(this.mano);
-        this.round.acceptTruco(this.pie);
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.pie);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
+  }
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-    }
+  @Test
+  void shouldThrowWhenCallingEnvidoAfterFirstHand() {
 
-    @Test
-    void shouldThrowWhenSamePlayerCallsTrucoTwice() {
+    this.playFullHand();
 
-        this.round.callTruco(this.mano);
+    assertThatThrownBy(
+        () -> this.round.callEnvido(this.round.getCurrentTurn(), EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
+  }
 
-        assertThatThrownBy(() -> this.round.callTruco(this.mano)).isInstanceOf(
-            NotYourTurnException.class);
-    }
+  @Test
+  void shouldThrowWhenCallingEnvidoAfterPlayingCard() {
 
-    @Test
-    void shouldThrowWhenCallingTrucoAfterValeCuatro() {
+    this.playCardFromHand(this.mano);
 
-        this.round.callTruco(this.mano);
-        this.round.callTruco(this.pie);
-        this.round.callTruco(this.mano);
+    assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
+        NotYourTurnException.class);
+  }
 
-        assertThatThrownBy(() -> this.round.callTruco(this.pie)).isInstanceOf(
-            InvalidTrucoCallException.class);
-    }
+  @Test
+  void shouldAllowEnvidoChain() {
 
-    @Test
-    void shouldFinishRoundWhenFoldingAfterTruco() {
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
 
-        this.round.callTruco(this.mano);
-        final var result = this.round.acceptTrucoAndFold(this.pie);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
+  }
 
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.FINISHED);
-        assertThat(result.points()).isEqualTo(2);
-        assertThat(result.winner()).isEqualTo(this.mano);
-    }
+  @Test
+  @DisplayName("no se puede cantar un tercer ENVIDO")
+  void shouldThrowWhenCallingThirdEnvido() {
 
-    @Test
-    void trucoCancelledWhenEnvidoCalled() {
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
 
-        this.round.callTruco(this.mano);
-        this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+    assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
+  }
 
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
-    }
+  @Test
+  void shouldRestoreOriginalTurnAfterRejectingEnvido() {
 
-    // ===== ENVIDO =====
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.rejectEnvido(this.pie);
 
-    @Test
-    void shouldChangeTurnWhenCallingEnvido() {
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.PLAYING);
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+  @Test
+  void shouldRestoreOriginalTurnAfterEnvidoChainAndRejection() {
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.pie);
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+    this.round.rejectEnvido(this.mano);
 
-    @Test
-    void shouldThrowWhenCallingEnvidoAfterFirstHand() {
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
 
-        this.playFullHand();
+  @Test
+  void shouldReturnOnePointWhenRejectingSingleEnvido() {
 
-        assertThatThrownBy(
-            () -> this.round.callEnvido(this.round.getCurrentTurn(),
-                EnvidoCall.ENVIDO)).isInstanceOf(
-            EnvidoNotAllowedException.class);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
+    final var result = this.round.rejectEnvido(this.pie);
 
-    @Test
-    void shouldThrowWhenCallingEnvidoAfterPlayingCard() {
+    assertThat(result.points()).isEqualTo(1);
+  }
 
-        this.playCardFromHand(this.mano);
+  @Test
+  void shouldReturnSumMinusLastWhenRejectingChain() {
 
-        assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
-            NotYourTurnException.class);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.pie, EnvidoCall.REAL_ENVIDO);
+    final var result = this.round.rejectEnvido(this.mano);
 
-    @Test
-    void shouldAllowEnvidoChain() {
+    assertThat(result.points()).isEqualTo(2);
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
+  @Test
+  void shouldReturnSumOfLongerChainMinusLast() {
 
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+    this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
+    final var result = this.round.rejectEnvido(this.pie);
 
-    @Test
-    @DisplayName("no se puede cantar un tercer ENVIDO")
-    void shouldThrowWhenCallingThirdEnvido() {
+    assertThat(result.points()).isEqualTo(4);
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+  @Test
+  void shouldThrowWhenRaisingEnvidoWithLowerHierarchy() {
 
-        assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
-            EnvidoNotAllowedException.class);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
 
-    @Test
-    void shouldRestoreOriginalTurnAfterRejectingEnvido() {
+    assertThatThrownBy(() -> this.round.callEnvido(this.pie, EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.rejectEnvido(this.pie);
+  @Test
+  void shouldThrowWhenCallingEnvidoAfterResolved() {
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-        assertThat(this.round.getStatus()).isEqualTo(RoundStatus.PLAYING);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.rejectEnvido(this.pie);
 
-    @Test
-    void shouldRestoreOriginalTurnAfterEnvidoChainAndRejection() {
+    assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
-        this.round.rejectEnvido(this.mano);
+  @Test
+  void shouldAllowPlayingAfterEnvidoResolved() {
 
-        assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
-    }
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.rejectEnvido(this.pie);
 
-    @Test
-    void shouldReturnOnePointWhenRejectingSingleEnvido() {
+    assertThatNoException().isThrownBy(() -> this.playCardFromHand(this.mano));
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
-        final var result = this.round.rejectEnvido(this.pie);
+  @Test
+  void shouldAllowPlayingAfterTrucoAccepted() {
 
-        assertThat(result.points()).isEqualTo(1);
-    }
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
 
-    @Test
-    void shouldReturnSumMinusLastWhenRejectingChain() {
+    assertThatNoException().isThrownBy(() -> this.playCardFromHand(this.mano));
+  }
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.pie, EnvidoCall.REAL_ENVIDO);
-        final var result = this.round.rejectEnvido(this.mano);
+  @Test
+  @DisplayName("no es tu turno → lista vacía")
+  void noActionsWhenNotYourTurn() {
 
-        assertThat(result.points()).isEqualTo(2);
-    }
+    assertThat(this.round.getAvailableActions(this.pie)).isEmpty();
+  }
 
-    @Test
-    void shouldReturnSumOfLongerChainMinusLast() {
+  @Test
+  @DisplayName("es tu turno en primera mano → PLAY_CARD, FOLD, CALL_TRUCO(TRUCO), CALL_ENVIDO(ENVIDO, REAL_ENVIDO, FALTA_ENVIDO)")
+  void allActionsAvailableOnFirstHandWithTurn() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
-        this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
-        final var result = this.round.rejectEnvido(this.pie);
+    final var actions = this.round.getAvailableActions(this.mano);
 
-        assertThat(result.points()).isEqualTo(4);
-    }
+    assertThat(actionsOfType(actions, "PLAY_CARD")).isEmpty(); // sin parámetros
+    assertThat(actionsOfType(actions, "FOLD")).isEmpty();
+    assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("TRUCO");
+    assertThat(actionsOfType(actions, "CALL_ENVIDO")).containsExactlyInAnyOrder("ENVIDO",
+        "REAL_ENVIDO", "FALTA_ENVIDO");
+  }
 
-    @Test
-    void shouldThrowWhenRaisingEnvidoWithLowerHierarchy() {
+  @Test
+  @DisplayName("ya jugaste carta en la mano actual → no puede cantar envido")
+  void noEnvidoAfterPlayingCard() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
+    this.playCardFromHand(this.mano);
+    final var actions = this.round.getAvailableActions(this.mano);
 
-        assertThatThrownBy(() -> this.round.callEnvido(this.pie, EnvidoCall.ENVIDO)).isInstanceOf(
-            EnvidoNotAllowedException.class);
-    }
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+  }
 
-    @Test
-    void shouldThrowWhenCallingEnvidoAfterResolved() {
+  @Test
+  @DisplayName("segunda mano → no puede cantar envido")
+  void noEnvidoOnSecondHand() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.rejectEnvido(this.pie);
+    this.playFullHand();
+    // arrancó segunda mano
+    final var actions = this.round.getAvailableActions(this.round.getCurrentTurn());
 
-        assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
-            EnvidoNotAllowedException.class);
-    }
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+  }
 
-    @Test
-    void shouldAllowPlayingAfterEnvidoResolved() {
+  @Test
+  @DisplayName("envido ya resuelto → no aparece CALL_ENVIDO")
+  void noEnvidoAfterResolved() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.rejectEnvido(this.pie);
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    this.round.rejectEnvido(this.pie);
 
-        assertThatNoException().isThrownBy(() -> this.playCardFromHand(this.mano));
-    }
+    final var actions = this.round.getAvailableActions(this.mano);
 
-    @Test
-    void shouldAllowPlayingAfterTrucoAccepted() {
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+  }
 
-        this.round.callTruco(this.mano);
-        this.round.acceptTruco(this.pie);
+  @Test
+  @DisplayName("rival cantó truco → puede subir a RETRUCO")
+  void canRaiseTrucoAfterRivalCalled() {
 
-        assertThatNoException().isThrownBy(() -> this.playCardFromHand(this.mano));
-    }
+    this.round.callTruco(this.mano);
+    // ahora es turno de pie para responder
+    final var actions = this.round.getAvailableActions(this.pie);
 
-    @Test
-    @DisplayName("no es tu turno → lista vacía")
-    void noActionsWhenNotYourTurn() {
+    assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("RETRUCO");
+  }
 
-        assertThat(this.round.getAvailableActions(this.pie)).isEmpty();
-    }
+  @Test
+  @DisplayName("estado TRUCO_IN_PROGRESS → RESPOND_TRUCO(QUIERO, NO_QUIERO, QUIERO_Y_ME_VOY_AL_MAZO) y puede subir")
+  void respondTrucoActionsWhenTrucoInProgress() {
 
-    @Test
-    @DisplayName("es tu turno en primera mano → PLAY_CARD, FOLD, CALL_TRUCO(TRUCO), CALL_ENVIDO(ENVIDO, REAL_ENVIDO, FALTA_ENVIDO)")
-    void allActionsAvailableOnFirstHandWithTurn() {
+    this.round.callTruco(this.mano);
+    final var actions = this.round.getAvailableActions(this.pie);
 
-        final var actions = this.round.getAvailableActions(this.mano);
+    assertThat(actionsOfType(actions, "RESPOND_TRUCO")).containsExactlyInAnyOrder("QUIERO",
+        "NO_QUIERO", "QUIERO_Y_ME_VOY_AL_MAZO");
+    assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("RETRUCO");
+  }
 
-        assertThat(actionsOfType(actions, "PLAY_CARD")).isEmpty(); // sin parámetros
-        assertThat(actionsOfType(actions, "FOLD")).isEmpty();
-        assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("TRUCO");
-        assertThat(actionsOfType(actions, "CALL_ENVIDO")).containsExactlyInAnyOrder("ENVIDO",
-            "REAL_ENVIDO", "FALTA_ENVIDO");
-    }
+  @Test
+  @DisplayName("VALE_CUATRO en progreso → no puede subir más")
+  void noRaiseAfterValeCuatro() {
 
-    @Test
-    @DisplayName("ya jugaste carta en la mano actual → no puede cantar envido")
-    void noEnvidoAfterPlayingCard() {
+    this.round.callTruco(this.mano);  // TRUCO
+    this.round.callTruco(this.pie);   // RETRUCO
+    this.round.callTruco(this.mano);  // VALE_CUATRO
 
-        this.playCardFromHand(this.mano);
-        final var actions = this.round.getAvailableActions(this.mano);
+    final var actions = this.round.getAvailableActions(this.pie);
 
-        assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
-    }
+    assertThat(actionsOfType(actions, "RESPOND_TRUCO")).containsExactlyInAnyOrder("QUIERO",
+        "NO_QUIERO", "QUIERO_Y_ME_VOY_AL_MAZO");
+    assertThat(hasActionType(actions, "CALL_TRUCO")).isFalse();
+  }
 
-    @Test
-    @DisplayName("segunda mano → no puede cantar envido")
-    void noEnvidoOnSecondHand() {
+  @Test
+  @DisplayName("estado ENVIDO_IN_PROGRESS → RESPOND_ENVIDO(QUIERO, NO_QUIERO) y puede subir")
+  void respondEnvidoActionsWhenEnvidoInProgress() {
 
-        this.playFullHand();
-        // arrancó segunda mano
-        final var actions = this.round.getAvailableActions(this.round.getCurrentTurn());
+    this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
+    final var actions = this.round.getAvailableActions(this.pie);
 
-        assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
-    }
+    assertThat(actionsOfType(actions, "RESPOND_ENVIDO")).containsExactlyInAnyOrder("QUIERO",
+        "NO_QUIERO");
+    assertThat(actionsOfType(actions, "CALL_ENVIDO")).containsExactlyInAnyOrder("ENVIDO",
+        "REAL_ENVIDO", "FALTA_ENVIDO");
+  }
 
-    @Test
-    @DisplayName("envido ya resuelto → no aparece CALL_ENVIDO")
-    void noEnvidoAfterResolved() {
+  @Test
+  @DisplayName("FALTA_ENVIDO en progreso → no puede subir más")
+  void noRaiseAfterFaltaEnvido() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        this.round.rejectEnvido(this.pie);
+    this.round.callEnvido(this.mano, EnvidoCall.FALTA_ENVIDO);
+    final var actions = this.round.getAvailableActions(this.pie);
 
-        final var actions = this.round.getAvailableActions(this.mano);
+    assertThat(actionsOfType(actions, "RESPOND_ENVIDO")).containsExactlyInAnyOrder("QUIERO",
+        "NO_QUIERO");
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+  }
 
-        assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
-    }
+  @Test
+  @DisplayName("ronda terminada → lista vacía para ambos jugadores")
+  void noActionsWhenRoundFinished() {
 
-    @Test
-    @DisplayName("rival cantó truco → puede subir a RETRUCO")
-    void canRaiseTrucoAfterRivalCalled() {
+    this.round.callTruco(this.mano);
+    this.round.rejectTruco(this.pie);
 
-        this.round.callTruco(this.mano);
-        // ahora es turno de pie para responder
-        final var actions = this.round.getAvailableActions(this.pie);
+    assertThat(this.round.getAvailableActions(this.mano)).isEmpty();
+    assertThat(this.round.getAvailableActions(this.pie)).isEmpty();
+  }
 
-        assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("RETRUCO");
-    }
+  @Test
+  @DisplayName("sin cartas jugadas → currentHandInfo vacío y playedHands vacío")
+  void noCardsPlayedInitially() {
 
-    @Test
-    @DisplayName("estado TRUCO_IN_PROGRESS → RESPOND_TRUCO(QUIERO, NO_QUIERO, QUIERO_Y_ME_VOY_AL_MAZO) y puede subir")
-    void respondTrucoActionsWhenTrucoInProgress() {
+    final var handInfo = this.round.getCurrentHandInfo();
+    assertThat(handInfo.cardPlayerOne()).isNull();
+    assertThat(handInfo.cardPlayerTwo()).isNull();
+    assertThat(this.round.getPlayedHands()).isEmpty();
+  }
 
-        this.round.callTruco(this.mano);
-        final var actions = this.round.getAvailableActions(this.pie);
+  @Test
+  @DisplayName("después de dos cartas → currentHandInfo vacío y playedHands tiene la mano")
+  void handResolvedAfterTwoCards() {
 
-        assertThat(actionsOfType(actions, "RESPOND_TRUCO")).containsExactlyInAnyOrder("QUIERO",
-            "NO_QUIERO", "QUIERO_Y_ME_VOY_AL_MAZO");
-        assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("RETRUCO");
-    }
+    final var cardMano = this.round.getHandOf(this.mano).getCards().getFirst();
+    final var cardPie = this.round.getHandOf(this.pie).getCards().getFirst();
 
-    @Test
-    @DisplayName("VALE_CUATRO en progreso → no puede subir más")
-    void noRaiseAfterValeCuatro() {
+    this.round.playCard(this.mano, cardMano);
+    this.round.playCard(this.pie, cardPie);
 
-        this.round.callTruco(this.mano);  // TRUCO
-        this.round.callTruco(this.pie);   // RETRUCO
-        this.round.callTruco(this.mano);  // VALE_CUATRO
+    final var handInfo = this.round.getCurrentHandInfo();
+    assertThat(handInfo.cardPlayerOne()).isNull();
+    assertThat(handInfo.cardPlayerTwo()).isNull();
 
-        final var actions = this.round.getAvailableActions(this.pie);
+    assertThat(this.round.getPlayedHands()).hasSize(1);
 
-        assertThat(actionsOfType(actions, "RESPOND_TRUCO")).containsExactlyInAnyOrder("QUIERO",
-            "NO_QUIERO", "QUIERO_Y_ME_VOY_AL_MAZO");
-        assertThat(hasActionType(actions, "CALL_TRUCO")).isFalse();
-    }
+    final var playedHand = this.round.getPlayedHands().getFirst();
+    // mano es playerOne en el setUp — su carta es cardPlayerOne
+    assertThat(playedHand.cardPlayerOne()).isEqualTo(cardMano);
+    assertThat(playedHand.cardPlayerTwo()).isEqualTo(cardPie);
+  }
 
-    @Test
-    @DisplayName("estado ENVIDO_IN_PROGRESS → RESPOND_ENVIDO(QUIERO, NO_QUIERO) y puede subir")
-    void respondEnvidoActionsWhenEnvidoInProgress() {
+  @Test
+  @DisplayName("currentHandInfo refleja quién jugó en la mano actual")
+  void currentHandInfoAfterOneCard() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
-        final var actions = this.round.getAvailableActions(this.pie);
+    final var card = this.round.getHandOf(this.mano).getCards().getFirst();
+    this.round.playCard(this.mano, card);
 
-        assertThat(actionsOfType(actions, "RESPOND_ENVIDO")).containsExactlyInAnyOrder("QUIERO",
-            "NO_QUIERO");
-        assertThat(actionsOfType(actions, "CALL_ENVIDO")).containsExactlyInAnyOrder("ENVIDO",
-            "REAL_ENVIDO", "FALTA_ENVIDO");
-    }
+    final var handInfo = this.round.getCurrentHandInfo();
+    // mano es playerOne — jugó la primera carta
+    assertThat(handInfo.cardPlayerOne()).isEqualTo(card);
+    assertThat(handInfo.cardPlayerTwo()).isNull();
+  }
 
-    @Test
-    @DisplayName("FALTA_ENVIDO en progreso → no puede subir más")
-    void noRaiseAfterFaltaEnvido() {
+  @Test
+  @DisplayName("currentHandInfo del pie después de que jugó")
+  void currentHandInfoAfterPiePlays() {
 
-        this.round.callEnvido(this.mano, EnvidoCall.FALTA_ENVIDO);
-        final var actions = this.round.getAvailableActions(this.pie);
+    this.playCardFromHand(this.mano);
+    final var card = this.round.getHandOf(this.pie).getCards().getFirst();
+    this.round.playCard(this.pie, card);
 
-        assertThat(actionsOfType(actions, "RESPOND_ENVIDO")).containsExactlyInAnyOrder("QUIERO",
-            "NO_QUIERO");
-        assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
-    }
+    // ambos jugaron — se resolvió la mano, currentHandInfo vacío
+    final var handInfo = this.round.getCurrentHandInfo();
+    assertThat(handInfo.cardPlayerOne()).isNull();
+    assertThat(handInfo.cardPlayerTwo()).isNull();
+  }
 
-    @Test
-    @DisplayName("ronda terminada → lista vacía para ambos jugadores")
-    void noActionsWhenRoundFinished() {
+  @Test
+  @DisplayName("playedHands registra el ganador de la mano")
+  void playedHandRecordsWinner() {
 
-        this.round.callTruco(this.mano);
-        this.round.rejectTruco(this.pie);
+    this.playFullHand();
 
-        assertThat(this.round.getAvailableActions(this.mano)).isEmpty();
-        assertThat(this.round.getAvailableActions(this.pie)).isEmpty();
-    }
+    final var playedHand = this.round.getPlayedHands().getFirst();
+    assertThat(playedHand.winner()).satisfiesAnyOf(w -> assertThat(w).isNull(),
+        w -> assertThat(w).isIn(this.mano, this.pie));
+  }
 
-    @Test
-    @DisplayName("sin cartas jugadas → currentHandInfo vacío y playedHands vacío")
-    void noCardsPlayedInitially() {
+  @Test
+  @DisplayName("segunda mano → playedHands tiene dos entradas")
+  void secondHandAddsToPlayedHands() {
 
-        final var handInfo = this.round.getCurrentHandInfo();
-        assertThat(handInfo.cardPlayerOne()).isNull();
-        assertThat(handInfo.cardPlayerTwo()).isNull();
-        assertThat(this.round.getPlayedHands()).isEmpty();
-    }
+    this.playFullHand();
+    this.playFullHand();
 
-    @Test
-    @DisplayName("después de dos cartas → currentHandInfo vacío y playedHands tiene la mano")
-    void handResolvedAfterTwoCards() {
+    assertThat(this.round.getPlayedHands()).hasSize(2);
+  }
 
-        final var cardMano = this.round.getHandOf(this.mano).getCards().getFirst();
-        final var cardPie = this.round.getHandOf(this.pie).getCards().getFirst();
+  @Test
+  @DisplayName("getManoPlayer devuelve el mano de la ronda")
+  void getManoPlayerReturnsMano() {
 
-        this.round.playCard(this.mano, cardMano);
-        this.round.playCard(this.pie, cardPie);
+    assertThat(this.round.getManoPlayer()).isEqualTo(this.mano);
+  }
 
-        final var handInfo = this.round.getCurrentHandInfo();
-        assertThat(handInfo.cardPlayerOne()).isNull();
-        assertThat(handInfo.cardPlayerTwo()).isNull();
+  private List<String> actionsOfType(final List<AvailableAction> actions, final String type) {
 
-        assertThat(this.round.getPlayedHands()).hasSize(1);
+    return actions.stream().filter(a -> a.type().name().equals(type))
+        .map(a -> a.getParameter().orElse(null)).filter(Objects::nonNull).toList();
+  }
 
-        final var playedHand = this.round.getPlayedHands().getFirst();
-        // mano es playerOne en el setUp — su carta es cardPlayerOne
-        assertThat(playedHand.cardPlayerOne()).isEqualTo(cardMano);
-        assertThat(playedHand.cardPlayerTwo()).isEqualTo(cardPie);
-    }
+  private boolean hasActionType(final List<AvailableAction> actions, final String type) {
 
-    @Test
-    @DisplayName("currentHandInfo refleja quién jugó en la mano actual")
-    void currentHandInfoAfterOneCard() {
-
-        final var card = this.round.getHandOf(this.mano).getCards().getFirst();
-        this.round.playCard(this.mano, card);
-
-        final var handInfo = this.round.getCurrentHandInfo();
-        // mano es playerOne — jugó la primera carta
-        assertThat(handInfo.cardPlayerOne()).isEqualTo(card);
-        assertThat(handInfo.cardPlayerTwo()).isNull();
-    }
-
-    @Test
-    @DisplayName("currentHandInfo del pie después de que jugó")
-    void currentHandInfoAfterPiePlays() {
-
-        this.playCardFromHand(this.mano);
-        final var card = this.round.getHandOf(this.pie).getCards().getFirst();
-        this.round.playCard(this.pie, card);
-
-        // ambos jugaron — se resolvió la mano, currentHandInfo vacío
-        final var handInfo = this.round.getCurrentHandInfo();
-        assertThat(handInfo.cardPlayerOne()).isNull();
-        assertThat(handInfo.cardPlayerTwo()).isNull();
-    }
-
-    @Test
-    @DisplayName("playedHands registra el ganador de la mano")
-    void playedHandRecordsWinner() {
-
-        this.playFullHand();
-
-        final var playedHand = this.round.getPlayedHands().getFirst();
-        assertThat(playedHand.winner()).satisfiesAnyOf(w -> assertThat(w).isNull(),
-            w -> assertThat(w).isIn(this.mano, this.pie));
-    }
-
-    @Test
-    @DisplayName("segunda mano → playedHands tiene dos entradas")
-    void secondHandAddsToPlayedHands() {
-
-        this.playFullHand();
-        this.playFullHand();
-
-        assertThat(this.round.getPlayedHands()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("getManoPlayer devuelve el mano de la ronda")
-    void getManoPlayerReturnsMano() {
-
-        assertThat(this.round.getManoPlayer()).isEqualTo(this.mano);
-    }
-
-    private List<String> actionsOfType(final List<AvailableAction> actions, final String type) {
-
-        return actions.stream().filter(a -> a.type().name().equals(type))
-            .map(a -> a.getParameter().orElse(null)).filter(Objects::nonNull).toList();
-    }
-
-    private boolean hasActionType(final List<AvailableAction> actions, final String type) {
-
-        return actions.stream().anyMatch(a -> a.type().name().equals(type));
-    }
+    return actions.stream().anyMatch(a -> a.type().name().equals(type));
+  }
 
 }

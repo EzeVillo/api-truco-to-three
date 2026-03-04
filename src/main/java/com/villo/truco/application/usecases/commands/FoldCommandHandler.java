@@ -9,31 +9,32 @@ import java.util.Objects;
 
 public final class FoldCommandHandler implements FoldUseCase {
 
-    private final MatchResolver matchResolver;
-    private final MatchRepository matchRepository;
-    private final MatchEventNotifier matchEventNotifier;
+  private final MatchResolver matchResolver;
+  private final MatchRepository matchRepository;
+  private final MatchEventNotifier matchEventNotifier;
 
-    public FoldCommandHandler(final MatchResolver matchResolver,
-        final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+  public FoldCommandHandler(final MatchResolver matchResolver,
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
 
-        this.matchResolver = Objects.requireNonNull(matchResolver);
-        this.matchRepository = Objects.requireNonNull(matchRepository);
-        this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
-    }
+    this.matchResolver = Objects.requireNonNull(matchResolver);
+    this.matchRepository = Objects.requireNonNull(matchRepository);
+    this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
+  }
 
-    @Override
-    public MatchId handle(final FoldCommand command) {
+  @Override
+  public MatchId handle(final FoldCommand command) {
 
-        final var match = this.matchResolver.resolve(command.matchId());
+    final var match = this.matchResolver.resolve(command.matchId());
 
-        match.fold(command.playerId());
+    match.fold(command.playerId());
 
-        this.matchRepository.save(match);
-        this.matchEventNotifier.notifyPlayers(match.getId(), match.getPlayerOne(),
-            match.getPlayerTwo());
+    this.matchRepository.save(match);
+    this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
+        match.getPlayerTwo(), match.getDomainEvents());
+    match.clearDomainEvents();
 
-        return command.matchId();
-    }
+    return command.matchId();
+  }
 
 }
 

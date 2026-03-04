@@ -9,30 +9,31 @@ import java.util.Objects;
 
 public final class CallTrucoCommandHandler implements CallTrucoUseCase {
 
-    private final MatchResolver matchResolver;
-    private final MatchRepository matchRepository;
-    private final MatchEventNotifier matchEventNotifier;
+  private final MatchResolver matchResolver;
+  private final MatchRepository matchRepository;
+  private final MatchEventNotifier matchEventNotifier;
 
-    public CallTrucoCommandHandler(final MatchResolver matchResolver,
-        final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+  public CallTrucoCommandHandler(final MatchResolver matchResolver,
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
 
-        this.matchResolver = Objects.requireNonNull(matchResolver);
-        this.matchRepository = Objects.requireNonNull(matchRepository);
-        this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
-    }
+    this.matchResolver = Objects.requireNonNull(matchResolver);
+    this.matchRepository = Objects.requireNonNull(matchRepository);
+    this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
+  }
 
-    @Override
-    public MatchId handle(final CallTrucoCommand command) {
+  @Override
+  public MatchId handle(final CallTrucoCommand command) {
 
-        final var match = this.matchResolver.resolve(command.matchId());
+    final var match = this.matchResolver.resolve(command.matchId());
 
-        match.callTruco(command.playerId());
+    match.callTruco(command.playerId());
 
-        this.matchRepository.save(match);
-        this.matchEventNotifier.notifyPlayers(match.getId(), match.getPlayerOne(),
-            match.getPlayerTwo());
+    this.matchRepository.save(match);
+    this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
+        match.getPlayerTwo(), match.getDomainEvents());
+    match.clearDomainEvents();
 
-        return command.matchId();
-    }
+    return command.matchId();
+  }
 
 }
