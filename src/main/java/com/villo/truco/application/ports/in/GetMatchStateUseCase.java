@@ -5,6 +5,6 @@ import com.villo.truco.application.queries.GetMatchStateQuery;
 
 public interface GetMatchStateUseCase {
 
-    MatchStateDTO handle(GetMatchStateQuery query);
+  MatchStateDTO handle(GetMatchStateQuery query);
 
 }

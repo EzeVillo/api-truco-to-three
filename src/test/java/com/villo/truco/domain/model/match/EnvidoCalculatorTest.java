@@ -9,67 +9,67 @@ import org.junit.jupiter.api.Test;
 
 class EnvidoCalculatorTest {
 
-    @Test
-    void shouldReturnHighestCardValueWhenNoMatchingSuit() {
+  @Test
+  void shouldReturnHighestCardValueWhenNoMatchingSuit() {
 
-        final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.BASTO, 3),
-            Card.of(Suit.ORO, 2));
+    final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.BASTO, 3),
+        Card.of(Suit.ORO, 2));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(5);
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(5);
+  }
 
-    @Test
-    void shouldReturnZeroWhenAllCardsAreFiguresAndNoMatchingSuit() {
+  @Test
+  void shouldReturnZeroWhenAllCardsAreFiguresAndNoMatchingSuit() {
 
-        final var cards = List.of(Card.of(Suit.ESPADA, 10), Card.of(Suit.BASTO, 11),
-            Card.of(Suit.ORO, 12));
+    final var cards = List.of(Card.of(Suit.ESPADA, 10), Card.of(Suit.BASTO, 11),
+        Card.of(Suit.ORO, 12));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isZero();
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isZero();
+  }
 
-    @Test
-    void shouldSumTwoCardsOfSameSuitPlusTwenty() {
+  @Test
+  void shouldSumTwoCardsOfSameSuitPlusTwenty() {
 
-        final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.ESPADA, 3),
-            Card.of(Suit.ORO, 7));
+    final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.ESPADA, 3),
+        Card.of(Suit.ORO, 7));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(28);
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(28);
+  }
 
-    @Test
-    void shouldUseBestTwoCardsWhenThreeOfSameSuit() {
+  @Test
+  void shouldUseBestTwoCardsWhenThreeOfSameSuit() {
 
-        final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.ESPADA, 3),
-            Card.of(Suit.ESPADA, 7));
+    final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.ESPADA, 3),
+        Card.of(Suit.ESPADA, 7));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(32);
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(32);
+  }
 
-    @Test
-    void figuresShouldCountAsZeroInEnvido() {
+  @Test
+  void figuresShouldCountAsZeroInEnvido() {
 
-        final var cards = List.of(Card.of(Suit.ESPADA, 12), Card.of(Suit.ESPADA, 7),
-            Card.of(Suit.ORO, 4));
+    final var cards = List.of(Card.of(Suit.ESPADA, 12), Card.of(Suit.ESPADA, 7),
+        Card.of(Suit.ORO, 4));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(27);
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(27);
+  }
 
-    @Test
-    void twoFiguresOfSameSuitShouldGiveTwenty() {
+  @Test
+  void twoFiguresOfSameSuitShouldGiveTwenty() {
 
-        final var cards = List.of(Card.of(Suit.BASTO, 10), Card.of(Suit.BASTO, 11),
-            Card.of(Suit.ORO, 3));
+    final var cards = List.of(Card.of(Suit.BASTO, 10), Card.of(Suit.BASTO, 11),
+        Card.of(Suit.ORO, 3));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(20);
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(20);
+  }
 
-    @Test
-    void shouldReturnMaxEnvidoScore() {
+  @Test
+  void shouldReturnMaxEnvidoScore() {
 
-        final var cards = List.of(Card.of(Suit.ESPADA, 7), Card.of(Suit.ESPADA, 6),
-            Card.of(Suit.ORO, 1));
+    final var cards = List.of(Card.of(Suit.ESPADA, 7), Card.of(Suit.ESPADA, 6),
+        Card.of(Suit.ORO, 1));
 
-        assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(33);
-    }
+    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(33);
+  }
 
 }

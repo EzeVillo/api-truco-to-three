@@ -4,9 +4,9 @@ import com.villo.truco.application.dto.CardDTO;
 
 public record CardResponse(String suit, int number) {
 
-    public static CardResponse from(final CardDTO dto) {
+  public static CardResponse from(final CardDTO dto) {
 
-        return new CardResponse(dto.suit(), dto.number());
-    }
+    return new CardResponse(dto.suit(), dto.number());
+  }
 
 }

@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class EnvidoNotAllowedException extends DomainException {
 
-    public EnvidoNotAllowedException(final String reason) {
+  public EnvidoNotAllowedException(final String reason) {
 
-        super(reason);
-    }
+    super(reason);
+  }
 
 }

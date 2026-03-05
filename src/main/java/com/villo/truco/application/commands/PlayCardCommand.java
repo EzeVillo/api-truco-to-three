@@ -8,16 +8,16 @@ import java.util.Objects;
 
 public record PlayCardCommand(MatchId matchId, PlayerId playerId, Card card) {
 
-    public PlayCardCommand {
+  public PlayCardCommand {
 
-        Objects.requireNonNull(matchId);
-        Objects.requireNonNull(playerId);
-        Objects.requireNonNull(card);
-    }
+    Objects.requireNonNull(matchId);
+    Objects.requireNonNull(playerId);
+    Objects.requireNonNull(card);
+  }
 
-    public PlayCardCommand(String matchId, String playerId, String suit, int number) {
+  public PlayCardCommand(String matchId, String playerId, String suit, int number) {
 
-        this(MatchId.of(matchId), PlayerId.of(playerId), Card.of(Suit.valueOf(suit), number));
-    }
+    this(MatchId.of(matchId), PlayerId.of(playerId), Card.of(Suit.valueOf(suit), number));
+  }
 
 }

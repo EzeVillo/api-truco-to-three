@@ -6,10 +6,10 @@ import java.util.List;
 public record TournamentMatchdayResponse(int matchdayNumber,
                                          List<TournamentFixtureResponse> fixtures) {
 
-    public static TournamentMatchdayResponse from(final TournamentMatchdayDTO dto) {
+  public static TournamentMatchdayResponse from(final TournamentMatchdayDTO dto) {
 
-        return new TournamentMatchdayResponse(dto.matchdayNumber(),
-            dto.fixtures().stream().map(TournamentFixtureResponse::from).toList());
-    }
+    return new TournamentMatchdayResponse(dto.matchdayNumber(),
+        dto.fixtures().stream().map(TournamentFixtureResponse::from).toList());
+  }
 
 }

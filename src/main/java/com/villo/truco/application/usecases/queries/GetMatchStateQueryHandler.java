@@ -9,20 +9,20 @@ import java.util.Objects;
 
 public final class GetMatchStateQueryHandler implements GetMatchStateUseCase {
 
-    private final MatchQueryRepository queryRepository;
+  private final MatchQueryRepository queryRepository;
 
-    public GetMatchStateQueryHandler(final MatchQueryRepository queryRepository) {
+  public GetMatchStateQueryHandler(final MatchQueryRepository queryRepository) {
 
-        this.queryRepository = Objects.requireNonNull(queryRepository);
-    }
+    this.queryRepository = Objects.requireNonNull(queryRepository);
+  }
 
-    @Override
-    public MatchStateDTO handle(final GetMatchStateQuery query) {
+  @Override
+  public MatchStateDTO handle(final GetMatchStateQuery query) {
 
-        final var match = this.queryRepository.findById(query.matchId())
-            .orElseThrow(() -> new MatchNotFoundException(query.matchId()));
+    final var match = this.queryRepository.findById(query.matchId())
+        .orElseThrow(() -> new MatchNotFoundException(query.matchId()));
 
-        return MatchStateDTO.of(match, query.requestingPlayer());
-    }
+    return MatchStateDTO.of(match, query.requestingPlayer());
+  }
 
 }

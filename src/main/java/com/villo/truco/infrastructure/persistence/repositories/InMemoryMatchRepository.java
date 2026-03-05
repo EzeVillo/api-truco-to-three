@@ -12,18 +12,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 public final class InMemoryMatchRepository implements MatchRepository, MatchQueryRepository {
 
-    private final Map<MatchId, Match> store = new ConcurrentHashMap<>();
+  private final Map<MatchId, Match> store = new ConcurrentHashMap<>();
 
-    @Override
-    public void save(final Match match) {
+  @Override
+  public void save(final Match match) {
 
-        this.store.put(match.getId(), match);
-    }
+    this.store.put(match.getId(), match);
+  }
 
-    @Override
-    public Optional<Match> findById(final MatchId id) {
+  @Override
+  public Optional<Match> findById(final MatchId id) {
 
-        return Optional.ofNullable(this.store.get(id));
-    }
+    return Optional.ofNullable(this.store.get(id));
+  }
 
 }

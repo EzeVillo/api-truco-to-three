@@ -5,9 +5,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class PlayerNotInMatchException extends DomainException {
 
-    public PlayerNotInMatchException(final PlayerId playerId) {
+  public PlayerNotInMatchException(final PlayerId playerId) {
 
-        super("Player not in match: " + playerId.value());
-    }
+    super("Player not in match: " + playerId.value());
+  }
 
 }

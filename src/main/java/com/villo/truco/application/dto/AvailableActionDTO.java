@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 
 public record AvailableActionDTO(String type, List<String> parameters) {
 
-    public static List<AvailableActionDTO> fromActions(final List<AvailableAction> actions) {
+  public static List<AvailableActionDTO> fromActions(final List<AvailableAction> actions) {
 
-        return actions.stream().collect(Collectors.groupingBy(a -> a.type().name(),
-                Collectors.mapping(a -> a.getParameter().orElse(null), Collectors.toList()))).entrySet()
-            .stream().map(e -> new AvailableActionDTO(e.getKey(),
-                e.getValue().stream().filter(Objects::nonNull).toList())).toList();
-    }
+    return actions.stream().collect(Collectors.groupingBy(a -> a.type().name(),
+            Collectors.mapping(a -> a.getParameter().orElse(null), Collectors.toList()))).entrySet()
+        .stream().map(e -> new AvailableActionDTO(e.getKey(),
+            e.getValue().stream().filter(Objects::nonNull).toList())).toList();
+  }
 
 }

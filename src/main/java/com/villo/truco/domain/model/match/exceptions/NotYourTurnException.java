@@ -5,9 +5,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class NotYourTurnException extends DomainException {
 
-    public NotYourTurnException(final PlayerId playerId) {
+  public NotYourTurnException(final PlayerId playerId) {
 
-        super("It is not the turn of player: " + playerId);
-    }
+    super("It is not the turn of player: " + playerId);
+  }
 
 }

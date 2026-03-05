@@ -10,29 +10,29 @@ import org.junit.jupiter.api.Test;
 
 class DeckTest {
 
-    @Test
-    void shouldDeal40UniqueCards() {
+  @Test
+  void shouldDeal40UniqueCards() {
 
-        final var deck = Deck.create();
-        final var dealtCards = new HashSet<Card>();
+    final var deck = Deck.create();
+    final var dealtCards = new HashSet<Card>();
 
-        for (int i = 0; i < 40; i++) {
-            dealtCards.add(deck.dealOne());
-        }
-
-        assertThat(dealtCards).hasSize(40);
+    for (int i = 0; i < 40; i++) {
+      dealtCards.add(deck.dealOne());
     }
 
-    @Test
-    void shouldThrowWhenDeckIsExhausted() {
+    assertThat(dealtCards).hasSize(40);
+  }
 
-        final var deck = Deck.create();
+  @Test
+  void shouldThrowWhenDeckIsExhausted() {
 
-        for (int i = 0; i < 40; i++) {
-            deck.dealOne();
-        }
+    final var deck = Deck.create();
 
-        assertThatThrownBy(deck::dealOne).isInstanceOf(DeckEmptyException.class);
+    for (int i = 0; i < 40; i++) {
+      deck.dealOne();
     }
+
+    assertThatThrownBy(deck::dealOne).isInstanceOf(DeckEmptyException.class);
+  }
 
 }

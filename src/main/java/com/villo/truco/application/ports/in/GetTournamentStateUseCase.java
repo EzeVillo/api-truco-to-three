@@ -5,6 +5,6 @@ import com.villo.truco.application.queries.GetTournamentStateQuery;
 
 public interface GetTournamentStateUseCase {
 
-    TournamentStateDTO handle(GetTournamentStateQuery query);
+  TournamentStateDTO handle(GetTournamentStateQuery query);
 
 }

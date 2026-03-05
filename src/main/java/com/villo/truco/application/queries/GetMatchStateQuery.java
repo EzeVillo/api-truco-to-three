@@ -6,15 +6,15 @@ import java.util.Objects;
 
 public record GetMatchStateQuery(MatchId matchId, PlayerId requestingPlayer) {
 
-    public GetMatchStateQuery {
+  public GetMatchStateQuery {
 
-        Objects.requireNonNull(matchId);
-        Objects.requireNonNull(requestingPlayer);
-    }
+    Objects.requireNonNull(matchId);
+    Objects.requireNonNull(requestingPlayer);
+  }
 
-    public GetMatchStateQuery(final String matchId, final String requestingPlayer) {
+  public GetMatchStateQuery(final String matchId, final String requestingPlayer) {
 
-        this(MatchId.of(matchId), PlayerId.of(requestingPlayer));
-    }
+    this(MatchId.of(matchId), PlayerId.of(requestingPlayer));
+  }
 
 }

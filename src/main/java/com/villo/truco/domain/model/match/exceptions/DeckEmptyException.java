@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class DeckEmptyException extends DomainException {
 
-    public DeckEmptyException() {
+  public DeckEmptyException() {
 
-        super("No cards remaining in the deck");
-    }
+    super("No cards remaining in the deck");
+  }
 
 }

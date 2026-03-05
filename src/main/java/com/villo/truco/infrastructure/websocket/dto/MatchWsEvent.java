@@ -10,6 +10,7 @@ import com.villo.truco.domain.model.match.events.HandResolvedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
+import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
 import com.villo.truco.domain.model.match.events.RoundEndedEvent;
 import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.events.ScoreChangedEvent;
@@ -43,6 +44,7 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
       case PlayerHandUpdatedEvent e -> mapPlayerHandUpdated(e);
       case AvailableActionsUpdatedEvent e -> mapAvailableActionsUpdated(e);
       case PlayerJoinedEvent e -> Map.<String, Object>of();
+      case PlayerReadyEvent e -> mapPlayerReady(e);
       default -> Map.<String, Object>of();
     };
 
@@ -182,6 +184,11 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
     map.put("suit", card.suit().name());
     map.put("number", card.number());
     return map;
+  }
+
+  private static Map<String, Object> mapPlayerReady(final PlayerReadyEvent event) {
+
+    return Map.of("seat", event.getSeat().name());
   }
 
 }

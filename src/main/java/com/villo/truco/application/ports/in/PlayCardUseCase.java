@@ -5,6 +5,6 @@ import com.villo.truco.domain.model.match.valueobjects.MatchId;
 
 public interface PlayCardUseCase {
 
-    MatchId handle(PlayCardCommand command);
+  MatchId handle(PlayCardCommand command);
 
 }

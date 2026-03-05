@@ -20,265 +20,258 @@ import java.util.Objects;
 
 public final class Tournament extends AggregateBase<TournamentId> {
 
-    private final List<PlayerId> participants;
-    private final List<Fixture> fixtures;
-    private final Map<PlayerId, Integer> winsByPlayer;
-    private TournamentStatus status;
+  private final List<PlayerId> participants;
+  private final List<Fixture> fixtures;
+  private final Map<PlayerId, Integer> winsByPlayer;
+  private TournamentStatus status;
 
-    private Tournament(final TournamentId id, final List<PlayerId> participants,
-        final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
-        final TournamentStatus status) {
+  private Tournament(final TournamentId id, final List<PlayerId> participants,
+      final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
+      final TournamentStatus status) {
 
-        super(id);
-        this.participants = participants;
-        this.fixtures = fixtures;
-        this.winsByPlayer = winsByPlayer;
-        this.status = status;
+    super(id);
+    this.participants = participants;
+    this.fixtures = fixtures;
+    this.winsByPlayer = winsByPlayer;
+    this.status = status;
+  }
+
+  public static Tournament create(final List<PlayerId> participantIds) {
+
+    Objects.requireNonNull(participantIds, "Participants cannot be null");
+
+    if (participantIds.size() < 2) {
+      throw new InvalidTournamentPlayersException("Tournament requires at least 2 players");
     }
 
-    public static Tournament create(final List<PlayerId> participantIds) {
+    final var unique = new LinkedHashSet<>(participantIds);
 
-        Objects.requireNonNull(participantIds, "Participants cannot be null");
-
-        if (participantIds.size() < 2) {
-            throw new InvalidTournamentPlayersException("Tournament requires at least 2 players");
-        }
-
-        final var unique = new LinkedHashSet<>(participantIds);
-
-        if (unique.size() != participantIds.size()) {
-            throw new InvalidTournamentPlayersException("Tournament participants must be unique");
-        }
-
-        final var participants = List.copyOf(participantIds);
-        final var fixtures = new ArrayList<Fixture>();
-        fixtures.addAll(generateRoundRobinFixtures(participants));
-
-        final var winsByPlayer = new LinkedHashMap<PlayerId, Integer>();
-
-        for (final var participant : participants) {
-            winsByPlayer.put(participant, 0);
-        }
-
-        return new Tournament(TournamentId.generate(), participants, fixtures, winsByPlayer,
-            TournamentStatus.IN_PROGRESS);
+    if (unique.size() != participantIds.size()) {
+      throw new InvalidTournamentPlayersException("Tournament participants must be unique");
     }
 
-    private static List<Fixture> generateRoundRobinFixtures(final List<PlayerId> participants) {
+    final var participants = List.copyOf(participantIds);
+    final var fixtures = new ArrayList<>(generateRoundRobinFixtures(participants));
 
-        final var rotation = new ArrayList<>(participants);
+    final var winsByPlayer = new LinkedHashMap<PlayerId, Integer>();
 
-        final var hasOddParticipants = rotation.size() % 2 != 0;
-
-        if (hasOddParticipants) {
-            rotation.add(null);
-        }
-
-        final var teamCount = rotation.size();
-        final var matchdays = teamCount - 1;
-        final var matchesPerMatchday = teamCount / 2;
-        final var fixtures = new ArrayList<Fixture>();
-
-        for (var matchday = 1; matchday <= matchdays; matchday++) {
-            for (var matchIndex = 0; matchIndex < matchesPerMatchday; matchIndex++) {
-                final var playerOne = rotation.get(matchIndex);
-                final var playerTwo = rotation.get(teamCount - 1 - matchIndex);
-
-                if (playerOne == null || playerTwo == null) {
-                    final var freePlayer = playerOne != null ? playerOne : playerTwo;
-                    fixtures.add(Fixture.free(FixtureId.generate(), matchday, freePlayer));
-                } else {
-                    fixtures.add(
-                        Fixture.pending(FixtureId.generate(), matchday, playerOne, playerTwo));
-                }
-            }
-
-            rotateKeepingFirstFixed(rotation);
-        }
-
-        return fixtures;
+    for (final var participant : participants) {
+      winsByPlayer.put(participant, 0);
     }
 
-    private static void rotateKeepingFirstFixed(final List<PlayerId> rotation) {
+    return new Tournament(TournamentId.generate(), participants, fixtures, winsByPlayer,
+        TournamentStatus.IN_PROGRESS);
+  }
 
-        final var last = rotation.removeLast();
-        rotation.add(1, last);
+  private static List<Fixture> generateRoundRobinFixtures(final List<PlayerId> participants) {
+
+    final var rotation = new ArrayList<>(participants);
+
+    final var hasOddParticipants = rotation.size() % 2 != 0;
+
+    if (hasOddParticipants) {
+      rotation.add(null);
     }
 
-    public void linkFixtureMatch(final FixtureId fixtureId, final MatchId matchId) {
+    final var teamCount = rotation.size();
+    final var matchdays = teamCount - 1;
+    final var matchesPerMatchday = teamCount / 2;
+    final var fixtures = new ArrayList<Fixture>();
 
-        Objects.requireNonNull(fixtureId, "FixtureId cannot be null");
-        Objects.requireNonNull(matchId, "MatchId cannot be null");
+    for (var matchday = 1; matchday <= matchdays; matchday++) {
+      for (var matchIndex = 0; matchIndex < matchesPerMatchday; matchIndex++) {
+        final var playerOne = rotation.get(matchIndex);
+        final var playerTwo = rotation.get(teamCount - 1 - matchIndex);
 
-        final var fixture = this.fixtures.stream().filter(it -> it.id().equals(fixtureId))
-            .findFirst().orElseThrow(() -> new MatchNotPartOfTournamentException(matchId));
-
-        if (fixture.status() == FixtureStatus.LIBRE) {
-            return;
+        if (playerOne == null || playerTwo == null) {
+          final var freePlayer = playerOne != null ? playerOne : playerTwo;
+          fixtures.add(Fixture.free(FixtureId.generate(), matchday, freePlayer));
+        } else {
+          fixtures.add(Fixture.pending(FixtureId.generate(), matchday, playerOne, playerTwo));
         }
+      }
 
-        fixture.linkMatch(matchId);
+      rotateKeepingFirstFixed(rotation);
     }
 
-    public void recordMatchWinner(final MatchId matchId, final PlayerId winner) {
+    return fixtures;
+  }
 
-        Objects.requireNonNull(matchId, "MatchId cannot be null");
-        Objects.requireNonNull(winner, "Winner cannot be null");
+  private static void rotateKeepingFirstFixed(final List<PlayerId> rotation) {
 
-        final var fixture = this.fixtures.stream()
-            .filter(it -> it.matchId() != null && it.matchId().equals(matchId)).findFirst()
-            .orElseThrow(() -> new MatchNotPartOfTournamentException(matchId));
+    final var last = rotation.removeLast();
+    rotation.add(1, last);
+  }
 
-        if (fixture.status() == FixtureStatus.FINISHED) {
-            throw new FixtureAlreadyResolvedException();
-        }
+  public void linkFixtureMatch(final FixtureId fixtureId, final MatchId matchId) {
 
-        if (!fixture.containsPlayer(winner)) {
-            throw new WinnerNotInFixtureException();
-        }
+    Objects.requireNonNull(fixtureId, "FixtureId cannot be null");
+    Objects.requireNonNull(matchId, "MatchId cannot be null");
 
-        fixture.resolve(winner);
-        this.winsByPlayer.merge(winner, 1, Integer::sum);
+    final var fixture = this.fixtures.stream().filter(it -> it.id().equals(fixtureId)).findFirst()
+        .orElseThrow(() -> new MatchNotPartOfTournamentException(matchId));
 
-        final var allResolved = this.fixtures.stream()
-            .allMatch(it -> it.status() != FixtureStatus.PENDING);
-
-        if (allResolved) {
-            this.status = TournamentStatus.FINISHED;
-        }
+    if (fixture.status() == FixtureStatus.LIBRE) {
+      return;
     }
 
-    public TournamentStatus getStatus() {
+    fixture.linkMatch(matchId);
+  }
 
-        return this.status;
+  public void recordMatchWinner(final MatchId matchId, final PlayerId winner) {
+
+    Objects.requireNonNull(matchId, "MatchId cannot be null");
+    Objects.requireNonNull(winner, "Winner cannot be null");
+
+    final var fixture = this.fixtures.stream()
+        .filter(it -> it.matchId() != null && it.matchId().equals(matchId)).findFirst()
+        .orElseThrow(() -> new MatchNotPartOfTournamentException(matchId));
+
+    if (fixture.status() == FixtureStatus.FINISHED) {
+      throw new FixtureAlreadyResolvedException();
     }
 
-    public List<PlayerId> getParticipants() {
-
-        return List.copyOf(this.participants);
+    if (!fixture.containsPlayer(winner)) {
+      throw new WinnerNotInFixtureException();
     }
 
-    public List<FixtureView> getFixtures() {
+    fixture.resolve(winner);
+    this.winsByPlayer.merge(winner, 1, Integer::sum);
 
-        return this.fixtures.stream().map(Fixture::toView).toList();
+    final var allResolved = this.fixtures.stream()
+        .allMatch(it -> it.status() != FixtureStatus.PENDING);
+
+    if (allResolved) {
+      this.status = TournamentStatus.FINISHED;
+    }
+  }
+
+  public TournamentStatus getStatus() {
+
+    return this.status;
+  }
+
+  public List<FixtureView> getFixtures() {
+
+    return this.fixtures.stream().map(Fixture::toView).toList();
+  }
+
+  public List<MatchdayView> getMatchdays() {
+
+    final var byMatchday = new LinkedHashMap<Integer, List<FixtureView>>();
+
+    for (final var fixture : this.fixtures) {
+      byMatchday.computeIfAbsent(fixture.matchdayNumber(), ignored -> new ArrayList<>())
+          .add(fixture.toView());
     }
 
-    public List<MatchdayView> getMatchdays() {
+    return byMatchday.entrySet().stream()
+        .map(entry -> new MatchdayView(entry.getKey(), entry.getValue())).toList();
+  }
 
-        final var byMatchday = new LinkedHashMap<Integer, List<FixtureView>>();
+  public Map<PlayerId, Integer> getWinsByPlayer() {
 
-        for (final var fixture : this.fixtures) {
-            byMatchday.computeIfAbsent(fixture.matchdayNumber(), ignored -> new ArrayList<>())
-                .add(fixture.toView());
-        }
+    return Map.copyOf(this.winsByPlayer);
+  }
 
-        return byMatchday.entrySet().stream()
-            .map(entry -> new MatchdayView(entry.getKey(), entry.getValue())).toList();
+  public List<PlayerId> getLeaders() {
+
+    if (this.winsByPlayer.isEmpty()) {
+      return List.of();
     }
 
-    public Map<PlayerId, Integer> getWinsByPlayer() {
+    final var maxWins = this.winsByPlayer.values().stream().mapToInt(Integer::intValue).max()
+        .orElse(0);
 
-        return Map.copyOf(this.winsByPlayer);
+    return this.winsByPlayer.entrySet().stream().filter(entry -> entry.getValue() == maxWins)
+        .map(Map.Entry::getKey).toList();
+  }
+
+  public record FixtureView(FixtureId fixtureId, int matchdayNumber, PlayerId playerOne,
+                            PlayerId playerTwo, MatchId matchId, PlayerId winner,
+                            FixtureStatus status) {
+
+  }
+
+  public record MatchdayView(int matchdayNumber, List<FixtureView> fixtures) {
+
+  }
+
+  private static final class Fixture {
+
+    private final FixtureId id;
+    private final int matchdayNumber;
+    private final PlayerId playerOne;
+    private final PlayerId playerTwo;
+    private MatchId matchId;
+    private PlayerId winner;
+    private FixtureStatus status;
+
+    private Fixture(final FixtureId id, final int matchdayNumber, final PlayerId playerOne,
+        final PlayerId playerTwo, final FixtureStatus status) {
+
+      this.id = id;
+      this.matchdayNumber = matchdayNumber;
+      this.playerOne = playerOne;
+      this.playerTwo = playerTwo;
+      this.status = status;
     }
 
-    public List<PlayerId> getLeaders() {
+    private static Fixture pending(final FixtureId id, final int matchdayNumber,
+        final PlayerId playerOne, final PlayerId playerTwo) {
 
-        if (this.winsByPlayer.isEmpty()) {
-            return List.of();
-        }
-
-        final var maxWins = this.winsByPlayer.values().stream().mapToInt(Integer::intValue).max()
-            .orElse(0);
-
-        return this.winsByPlayer.entrySet().stream().filter(entry -> entry.getValue() == maxWins)
-            .map(Map.Entry::getKey).toList();
+      return new Fixture(id, matchdayNumber, playerOne, playerTwo, FixtureStatus.PENDING);
     }
 
-    public record FixtureView(FixtureId fixtureId, int matchdayNumber, PlayerId playerOne,
-                              PlayerId playerTwo, MatchId matchId, PlayerId winner,
-                              FixtureStatus status) {
+    private static Fixture free(final FixtureId id, final int matchdayNumber,
+        final PlayerId freePlayer) {
 
+      return new Fixture(id, matchdayNumber, freePlayer, null, FixtureStatus.LIBRE);
     }
 
-    public record MatchdayView(int matchdayNumber, List<FixtureView> fixtures) {
+    private FixtureId id() {
 
+      return this.id;
     }
 
-    private static final class Fixture {
+    private MatchId matchId() {
 
-        private final FixtureId id;
-        private final int matchdayNumber;
-        private final PlayerId playerOne;
-        private final PlayerId playerTwo;
-        private MatchId matchId;
-        private PlayerId winner;
-        private FixtureStatus status;
-
-        private Fixture(final FixtureId id, final int matchdayNumber, final PlayerId playerOne,
-            final PlayerId playerTwo, final FixtureStatus status) {
-
-            this.id = id;
-            this.matchdayNumber = matchdayNumber;
-            this.playerOne = playerOne;
-            this.playerTwo = playerTwo;
-            this.status = status;
-        }
-
-        private static Fixture pending(final FixtureId id, final int matchdayNumber,
-            final PlayerId playerOne, final PlayerId playerTwo) {
-
-            return new Fixture(id, matchdayNumber, playerOne, playerTwo, FixtureStatus.PENDING);
-        }
-
-        private static Fixture free(final FixtureId id, final int matchdayNumber,
-            final PlayerId freePlayer) {
-
-            return new Fixture(id, matchdayNumber, freePlayer, null, FixtureStatus.LIBRE);
-        }
-
-        private FixtureId id() {
-
-            return this.id;
-        }
-
-        private MatchId matchId() {
-
-            return this.matchId;
-        }
-
-        private FixtureStatus status() {
-
-            return this.status;
-        }
-
-        private int matchdayNumber() {
-
-            return this.matchdayNumber;
-        }
-
-        private boolean containsPlayer(final PlayerId playerId) {
-
-            final var playerTwoMatches = this.playerTwo != null && this.playerTwo.equals(playerId);
-            return this.playerOne.equals(playerId) || playerTwoMatches;
-        }
-
-        private void linkMatch(final MatchId matchId) {
-
-            this.matchId = matchId;
-        }
-
-        private void resolve(final PlayerId winner) {
-
-            this.winner = winner;
-            this.status = FixtureStatus.FINISHED;
-        }
-
-        private FixtureView toView() {
-
-            return new FixtureView(this.id, this.matchdayNumber, this.playerOne, this.playerTwo,
-                this.matchId, this.winner, this.status);
-        }
-
+      return this.matchId;
     }
+
+    private FixtureStatus status() {
+
+      return this.status;
+    }
+
+    private int matchdayNumber() {
+
+      return this.matchdayNumber;
+    }
+
+    private boolean containsPlayer(final PlayerId playerId) {
+
+      final var playerTwoMatches = this.playerTwo != null && this.playerTwo.equals(playerId);
+      return this.playerOne.equals(playerId) || playerTwoMatches;
+    }
+
+    private void linkMatch(final MatchId matchId) {
+
+      this.matchId = matchId;
+    }
+
+    private void resolve(final PlayerId winner) {
+
+      this.winner = winner;
+      this.status = FixtureStatus.FINISHED;
+    }
+
+    private FixtureView toView() {
+
+      return new FixtureView(this.id, this.matchdayNumber, this.playerOne, this.playerTwo,
+          this.matchId, this.winner, this.status);
+    }
+
+  }
 
 }

@@ -14,125 +14,120 @@ import org.junit.jupiter.api.Test;
 
 class TournamentTest {
 
-    private static FixtureView findFixture(
-        final List<FixtureView> fixtures,
-        final PlayerId left,
-        final PlayerId right) {
+  private static FixtureView findFixture(final List<FixtureView> fixtures, final PlayerId left,
+      final PlayerId right) {
 
-        return fixtures.stream().filter(fixture ->
-                (fixture.playerOne().equals(left) && fixture.playerTwo().equals(right))
-                    || (fixture.playerOne().equals(right) && fixture.playerTwo().equals(left)))
-            .findFirst().orElseThrow();
+    return fixtures.stream().filter(
+            fixture -> (fixture.playerOne().equals(left) && fixture.playerTwo().equals(right)) || (
+                fixture.playerOne().equals(right) && fixture.playerTwo().equals(left))).findFirst()
+        .orElseThrow();
+  }
+
+  @Test
+  @DisplayName("genera calendario por fechas con 1 partido por jugador")
+  void generatesRoundRobinMatchdaysForEvenPlayers() {
+
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var p4 = PlayerId.generate();
+
+    final var tournament = Tournament.create(List.of(p1, p2, p3, p4));
+
+    assertThat(tournament.getMatchdays()).hasSize(3);
+    assertThat(tournament.getFixtures()).hasSize(6);
+
+    for (final var matchday : tournament.getMatchdays()) {
+      assertThat(matchday.fixtures()).hasSize(2);
+      assertThat(matchday.fixtures()).allMatch(fixture -> fixture.status() != FixtureStatus.LIBRE);
+
+      final var seenPlayers = new HashSet<PlayerId>();
+
+      for (final var fixture : matchday.fixtures()) {
+        assertThat(seenPlayers.add(fixture.playerOne())).isTrue();
+        assertThat(seenPlayers.add(fixture.playerTwo())).isTrue();
+      }
+
+      assertThat(seenPlayers).hasSize(4);
     }
 
-    @Test
-    @DisplayName("genera calendario por fechas con 1 partido por jugador")
-    void generatesRoundRobinMatchdaysForEvenPlayers() {
+    assertThat(tournament.getStatus()).isEqualTo(TournamentStatus.IN_PROGRESS);
+  }
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
-        final var p4 = PlayerId.generate();
+  @Test
+  @DisplayName("si hay impares, hay un jugador libre por fecha")
+  void createsOneFreePlayerPerMatchdayWhenOddPlayers() {
 
-        final var tournament = Tournament.create(List.of(p1, p2, p3, p4));
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
 
-        assertThat(tournament.getMatchdays()).hasSize(3);
-        assertThat(tournament.getFixtures()).hasSize(6);
+    final var tournament = Tournament.create(List.of(p1, p2, p3));
 
-        for (final var matchday : tournament.getMatchdays()) {
-            assertThat(matchday.fixtures()).hasSize(2);
-            assertThat(matchday.fixtures()).allMatch(
-                fixture -> fixture.status() != FixtureStatus.LIBRE);
+    assertThat(tournament.getMatchdays()).hasSize(3);
 
-            final var seenPlayers = new HashSet<PlayerId>();
-
-            for (final var fixture : matchday.fixtures()) {
-                assertThat(seenPlayers.add(fixture.playerOne())).isTrue();
-                assertThat(seenPlayers.add(fixture.playerTwo())).isTrue();
-            }
-
-            assertThat(seenPlayers).hasSize(4);
-        }
-
-        assertThat(tournament.getStatus()).isEqualTo(TournamentStatus.IN_PROGRESS);
+    for (final var matchday : tournament.getMatchdays()) {
+      assertThat(matchday.fixtures()).hasSize(2);
+      assertThat(matchday.fixtures().stream()
+          .filter(fixture -> fixture.status() == FixtureStatus.LIBRE)).hasSize(1);
+      assertThat(matchday.fixtures().stream()
+          .filter(fixture -> fixture.status() == FixtureStatus.PENDING)).hasSize(1);
     }
+  }
 
-    @Test
-    @DisplayName("si hay impares, hay un jugador libre por fecha")
-    void createsOneFreePlayerPerMatchdayWhenOddPlayers() {
+  @Test
+  @DisplayName("termina empatado cuando todos ganan un partido")
+  void finishesWithTieWhenLeadersHaveSameWins() {
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
 
-        final var tournament = Tournament.create(List.of(p1, p2, p3));
+    final var tournament = Tournament.create(List.of(p1, p2, p3));
 
-        assertThat(tournament.getMatchdays()).hasSize(3);
+    final var playableFixtures = tournament.getFixtures().stream()
+        .filter(fixture -> fixture.status() == FixtureStatus.PENDING).toList();
 
-        for (final var matchday : tournament.getMatchdays()) {
-            assertThat(matchday.fixtures()).hasSize(2);
-            assertThat(matchday.fixtures().stream()
-                .filter(fixture -> fixture.status() == FixtureStatus.LIBRE)).hasSize(1);
-            assertThat(matchday.fixtures().stream()
-                .filter(fixture -> fixture.status() == FixtureStatus.PENDING)).hasSize(1);
-        }
-    }
+    final var fixture12 = findFixture(playableFixtures, p1, p2);
+    final var fixture23 = findFixture(playableFixtures, p2, p3);
+    final var fixture13 = findFixture(playableFixtures, p1, p3);
 
-    @Test
-    @DisplayName("termina empatado cuando todos ganan un partido")
-    void finishesWithTieWhenLeadersHaveSameWins() {
+    final var m12 = MatchId.generate();
+    final var m23 = MatchId.generate();
+    final var m13 = MatchId.generate();
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
+    tournament.linkFixtureMatch(fixture12.fixtureId(), m12);
+    tournament.linkFixtureMatch(fixture23.fixtureId(), m23);
+    tournament.linkFixtureMatch(fixture13.fixtureId(), m13);
 
-        final var tournament = Tournament.create(List.of(p1, p2, p3));
+    tournament.recordMatchWinner(m12, p1);
+    tournament.recordMatchWinner(m23, p2);
+    tournament.recordMatchWinner(m13, p3);
 
-        final var playableFixtures = tournament.getFixtures().stream()
-            .filter(fixture -> fixture.status() == FixtureStatus.PENDING)
-            .toList();
+    assertThat(tournament.getStatus()).isEqualTo(TournamentStatus.FINISHED);
+    assertThat(tournament.getLeaders()).hasSize(3);
+    assertThat(tournament.getWinsByPlayer().values()).containsOnly(1);
+  }
 
-        final var fixture12 = findFixture(playableFixtures, p1, p2);
-        final var fixture23 = findFixture(playableFixtures, p2, p3);
-        final var fixture13 = findFixture(playableFixtures, p1, p3);
+  @Test
+  @DisplayName("suma victoria al ganador del fixture")
+  void recordsWinnerWin() {
 
-        final var m12 = MatchId.generate();
-        final var m23 = MatchId.generate();
-        final var m13 = MatchId.generate();
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
 
-        tournament.linkFixtureMatch(fixture12.fixtureId(), m12);
-        tournament.linkFixtureMatch(fixture23.fixtureId(), m23);
-        tournament.linkFixtureMatch(fixture13.fixtureId(), m13);
+    final var tournament = Tournament.create(List.of(p1, p2));
 
-        tournament.recordMatchWinner(m12, p1);
-        tournament.recordMatchWinner(m23, p2);
-        tournament.recordMatchWinner(m13, p3);
+    final var fixture = tournament.getFixtures().stream()
+        .filter(it -> it.status() == FixtureStatus.PENDING).findFirst().orElseThrow();
+    final var matchId = MatchId.generate();
 
-        assertThat(tournament.getStatus()).isEqualTo(TournamentStatus.FINISHED);
-        assertThat(tournament.getLeaders()).hasSize(3);
-        assertThat(tournament.getWinsByPlayer().values()).containsOnly(1);
-    }
+    tournament.linkFixtureMatch(fixture.fixtureId(), matchId);
+    tournament.recordMatchWinner(matchId, p1);
 
-    @Test
-    @DisplayName("suma victoria al ganador del fixture")
-    void recordsWinnerWin() {
-
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-
-        final var tournament = Tournament.create(List.of(p1, p2));
-
-        final var fixture = tournament.getFixtures().stream()
-            .filter(it -> it.status() == FixtureStatus.PENDING)
-            .findFirst().orElseThrow();
-        final var matchId = MatchId.generate();
-
-        tournament.linkFixtureMatch(fixture.fixtureId(), matchId);
-        tournament.recordMatchWinner(matchId, p1);
-
-        assertThat(tournament.getWinsByPlayer().get(p1)).isEqualTo(1);
-        assertThat(tournament.getWinsByPlayer().get(p2)).isZero();
-        assertThat(tournament.getStatus()).isEqualTo(TournamentStatus.FINISHED);
-    }
+    assertThat(tournament.getWinsByPlayer().get(p1)).isEqualTo(1);
+    assertThat(tournament.getWinsByPlayer().get(p2)).isZero();
+    assertThat(tournament.getStatus()).isEqualTo(TournamentStatus.FINISHED);
+  }
 
 }

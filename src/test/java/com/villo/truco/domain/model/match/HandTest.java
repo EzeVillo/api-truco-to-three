@@ -10,47 +10,47 @@ import org.junit.jupiter.api.Test;
 
 class HandTest {
 
-    private static final Card CARD_1 = Card.of(Suit.ESPADA, 1);
-    private static final Card CARD_2 = Card.of(Suit.BASTO, 2);
-    private static final Card CARD_3 = Card.of(Suit.ORO, 3);
+  private static final Card CARD_1 = Card.of(Suit.ESPADA, 1);
+  private static final Card CARD_2 = Card.of(Suit.BASTO, 2);
+  private static final Card CARD_3 = Card.of(Suit.ORO, 3);
 
-    @Test
-    void shouldPlayCardThatIsInHand() {
+  @Test
+  void shouldPlayCardThatIsInHand() {
 
-        final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
+    final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
 
-        final var played = hand.play(CARD_1);
+    final var played = hand.play(CARD_1);
 
-        assertThat(played).isEqualTo(CARD_1);
-        assertThat(hand.getCards()).doesNotContain(CARD_1);
-    }
+    assertThat(played).isEqualTo(CARD_1);
+    assertThat(hand.getCards()).doesNotContain(CARD_1);
+  }
 
-    @Test
-    void shouldThrowWhenPlayingCardNotInHand() {
+  @Test
+  void shouldThrowWhenPlayingCardNotInHand() {
 
-        final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
-        final var foreignCard = Card.of(Suit.COPA, 7);
+    final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
+    final var foreignCard = Card.of(Suit.COPA, 7);
 
-        assertThatThrownBy(() -> hand.play(foreignCard)).isInstanceOf(CardNotInHandException.class);
-    }
+    assertThatThrownBy(() -> hand.play(foreignCard)).isInstanceOf(CardNotInHandException.class);
+  }
 
-    @Test
-    void shouldNotBeAbleToPlaySameCardTwice() {
+  @Test
+  void shouldNotBeAbleToPlaySameCardTwice() {
 
-        final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
+    final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
 
-        hand.play(CARD_1);
+    hand.play(CARD_1);
 
-        assertThatThrownBy(() -> hand.play(CARD_1)).isInstanceOf(CardNotInHandException.class);
-    }
+    assertThatThrownBy(() -> hand.play(CARD_1)).isInstanceOf(CardNotInHandException.class);
+  }
 
-    @Test
-    void shouldReturnUnmodifiableCards() {
+  @Test
+  void shouldReturnUnmodifiableCards() {
 
-        final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
+    final var hand = Hand.of(CARD_1, CARD_2, CARD_3);
 
-        assertThatThrownBy(() -> hand.getCards().removeFirst()).isInstanceOf(
-            UnsupportedOperationException.class);
-    }
+    assertThatThrownBy(() -> hand.getCards().removeFirst()).isInstanceOf(
+        UnsupportedOperationException.class);
+  }
 
 }

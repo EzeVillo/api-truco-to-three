@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
-import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
@@ -36,6 +35,8 @@ class MatchTest {
 
     final var match = Match.create(playerOne, playerTwo);
     match.join(match.getInviteCode());
+    match.startMatch(playerOne);
+    match.startMatch(playerTwo);
     return match;
   }
 
@@ -99,6 +100,8 @@ class MatchTest {
 
       final var match = Match.create(playerOne, playerTwo, new MatchRules(1, 2));
       match.join(match.getInviteCode());
+      match.startMatch(playerOne);
+      match.startMatch(playerTwo);
 
       finishGame(match, playerOne);
 
@@ -115,30 +118,13 @@ class MatchTest {
   class Join {
 
     @Test
-    @DisplayName("pasa el match a IN_PROGRESS")
-    void setsMatchToInProgress() {
+    @DisplayName("no arranca el juego todavía — no hay turno asignado")
+    void doesNotStartGame() {
 
-      final var match = matchInProgress();
+      final var match = Match.create(playerOne, playerTwo);
+      match.join(match.getInviteCode());
 
-      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
-    }
-
-    @Test
-    @DisplayName("arranca el primer juego — hay turno asignado")
-    void startsFirstGame() {
-
-      final var match = matchInProgress();
-
-      assertThat(match.getCurrentTurn()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("playerOne es mano en el primer juego")
-    void playerOneIsManoInFirstGame() {
-
-      final var match = matchInProgress();
-
-      assertThat(match.getCurrentTurn()).isEqualTo(playerOne);
+      assertThat(match.getCurrentTurn()).isNull();
     }
 
     @Test
@@ -159,14 +145,69 @@ class MatchTest {
           InvalidInviteCodeException.class);
     }
 
+  }
+
+  @Nested
+  @DisplayName("startMatch")
+  class StartMatch {
+
     @Test
-    @DisplayName("falla si el match ya está IN_PROGRESS")
-    void failsIfAlreadyInProgress() {
+    @DisplayName("un solo jugador ready no inicia el match")
+    void singleReadyDoesNotStart() {
+
+      final var match = Match.create(playerOne, playerTwo);
+      match.join(match.getInviteCode());
+      match.startMatch(playerOne);
+
+      assertThat(match.getStatus()).isNotEqualTo(MatchStatus.IN_PROGRESS);
+      assertThat(match.isReadyPlayerOne()).isTrue();
+      assertThat(match.isReadyPlayerTwo()).isFalse();
+      assertThat(match.getCurrentTurn()).isNull();
+    }
+
+    @Test
+    @DisplayName("ambos jugadores ready inicia el match")
+    void bothReadyStartsMatch() {
 
       final var match = matchInProgress();
 
-      assertThatThrownBy(() -> match.join(InviteCode.generate())).isInstanceOf(
-          InvalidMatchStateException.class);
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
+      assertThat(match.getCurrentTurn()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("playerOne es mano en el primer juego")
+    void playerOneIsManoInFirstGame() {
+
+      final var match = matchInProgress();
+
+      assertThat(match.getCurrentTurn()).isEqualTo(playerOne);
+    }
+
+    @Test
+    @DisplayName("startMatch es idempotente")
+    void startMatchIsIdempotent() {
+
+      final var match = Match.create(playerOne, playerTwo);
+      match.join(match.getInviteCode());
+      match.startMatch(playerOne);
+      match.startMatch(playerOne);
+
+      assertThat(match.getStatus()).isNotEqualTo(MatchStatus.IN_PROGRESS);
+    }
+
+    @Test
+    @DisplayName("startMatch es idempotente cuando ya está IN_PROGRESS")
+    void startMatchIsIdempotentWhenAlreadyInProgress() {
+
+      final var match = matchInProgress();
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
+
+      match.startMatch(playerOne);
+      match.startMatch(playerTwo);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
     }
 
   }
@@ -310,19 +351,6 @@ class MatchTest {
 
       assertThat(match.getScorePlayerOne()).isZero();
       assertThat(match.getScorePlayerTwo()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("aceptar envido devuelve resultado con ganador y puntos")
-    void acceptEnvidoReturnsResult() {
-
-      final var match = matchInProgress();
-
-      match.callEnvido(playerOne, EnvidoCall.ENVIDO);
-      final var result = match.acceptEnvido(playerTwo);
-
-      assertThat(result.winner()).isIn(playerOne, playerTwo);
-      assertThat(result.pointsWon()).isGreaterThan(0);
     }
 
     @Test

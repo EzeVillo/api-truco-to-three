@@ -11,41 +11,39 @@ import java.util.Objects;
 
 public final class GetTournamentStateQueryHandler implements GetTournamentStateUseCase {
 
-    private final TournamentResolver tournamentResolver;
+  private final TournamentResolver tournamentResolver;
 
-    public GetTournamentStateQueryHandler(final TournamentResolver tournamentResolver) {
+  public GetTournamentStateQueryHandler(final TournamentResolver tournamentResolver) {
 
-        this.tournamentResolver = Objects.requireNonNull(tournamentResolver);
-    }
+    this.tournamentResolver = Objects.requireNonNull(tournamentResolver);
+  }
 
-    @Override
-    public TournamentStateDTO handle(final GetTournamentStateQuery query) {
+  @Override
+  public TournamentStateDTO handle(final GetTournamentStateQuery query) {
 
-        final var tournament = this.tournamentResolver.resolve(query.tournamentId());
+    final var tournament = this.tournamentResolver.resolve(query.tournamentId());
 
-        final var standings = tournament.getWinsByPlayer().entrySet().stream()
-            .map(entry -> new TournamentStandingDTO(entry.getKey().value().toString(),
-                entry.getValue()))
-            .sorted((left, right) -> Integer.compare(right.wins(), left.wins())).toList();
+    final var standings = tournament.getWinsByPlayer().entrySet().stream().map(
+            entry -> new TournamentStandingDTO(entry.getKey().value().toString(), entry.getValue()))
+        .sorted((left, right) -> Integer.compare(right.wins(), left.wins())).toList();
 
-        final var winners = tournament.getLeaders().stream()
-            .map(playerId -> playerId.value().toString())
-            .toList();
+    final var winners = tournament.getLeaders().stream()
+        .map(playerId -> playerId.value().toString()).toList();
 
-        final var matchdays = tournament.getMatchdays().stream().map(matchday -> {
-            final var matchdayFixtures = matchday.fixtures().stream().map(
-                fixture -> new TournamentFixtureDTO(fixture.fixtureId().value().toString(),
-                    fixture.matchdayNumber(), fixture.playerOne().value().toString(),
-                    fixture.playerTwo() != null ? fixture.playerTwo().value().toString() : null,
-                    fixture.matchId() != null ? fixture.matchId().value().toString() : null,
-                    fixture.winner() != null ? fixture.winner().value().toString() : null,
-                    fixture.status().name())).toList();
+    final var matchdays = tournament.getMatchdays().stream().map(matchday -> {
+      final var matchdayFixtures = matchday.fixtures().stream().map(
+          fixture -> new TournamentFixtureDTO(fixture.fixtureId().value().toString(),
+              fixture.matchdayNumber(), fixture.playerOne().value().toString(),
+              fixture.playerTwo() != null ? fixture.playerTwo().value().toString() : null,
+              fixture.matchId() != null ? fixture.matchId().value().toString() : null,
+              fixture.winner() != null ? fixture.winner().value().toString() : null,
+              fixture.status().name())).toList();
 
-            return new TournamentMatchdayDTO(matchday.matchdayNumber(), matchdayFixtures);
-        }).toList();
+      return new TournamentMatchdayDTO(matchday.matchdayNumber(), matchdayFixtures);
+    }).toList();
 
-        return new TournamentStateDTO(tournament.getId().value().toString(),
-            tournament.getStatus().name(), standings, winners, matchdays);
-    }
+    return new TournamentStateDTO(tournament.getId().value().toString(),
+        tournament.getStatus().name(), standings, winners, matchdays);
+  }
 
 }

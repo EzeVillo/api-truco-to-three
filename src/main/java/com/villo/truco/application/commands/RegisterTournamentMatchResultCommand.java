@@ -6,15 +6,15 @@ import java.util.Objects;
 
 public record RegisterTournamentMatchResultCommand(TournamentId tournamentId, MatchId matchId) {
 
-    public RegisterTournamentMatchResultCommand {
+  public RegisterTournamentMatchResultCommand {
 
-        Objects.requireNonNull(tournamentId);
-        Objects.requireNonNull(matchId);
-    }
+    Objects.requireNonNull(tournamentId);
+    Objects.requireNonNull(matchId);
+  }
 
-    public RegisterTournamentMatchResultCommand(final String tournamentId, final String matchId) {
+  public RegisterTournamentMatchResultCommand(final String tournamentId, final String matchId) {
 
-        this(TournamentId.of(tournamentId), MatchId.of(matchId));
-    }
+    this(TournamentId.of(tournamentId), MatchId.of(matchId));
+  }
 
 }

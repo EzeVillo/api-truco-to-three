@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface MatchQueryRepository {
 
-    Optional<Match> findById(MatchId matchId);
+  Optional<Match> findById(MatchId matchId);
 
 }

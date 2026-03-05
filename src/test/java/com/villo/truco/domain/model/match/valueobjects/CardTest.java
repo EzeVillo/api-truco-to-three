@@ -11,62 +11,61 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class CardTest {
 
-    @Test
-    void shouldCreateCardWithValidNumberAndSuit() {
+  @Test
+  void shouldCreateCardWithValidNumberAndSuit() {
 
-        final var card = Card.of(Suit.ESPADA, 1);
+    final var card = Card.of(Suit.ESPADA, 1);
 
-        assertThat(card.number()).isEqualTo(1);
-        assertThat(card.suit()).isEqualTo(Suit.ESPADA);
-    }
+    assertThat(card.number()).isEqualTo(1);
+    assertThat(card.suit()).isEqualTo(Suit.ESPADA);
+  }
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2, 3, 4, 5, 6, 7, 10, 11, 12})
-    void shouldCreateCardForAllValidNumbers(final int number) {
+  @ParameterizedTest
+  @ValueSource(ints = {1, 2, 3, 4, 5, 6, 7, 10, 11, 12})
+  void shouldCreateCardForAllValidNumbers(final int number) {
 
-        assertThatNoException().isThrownBy(() -> Card.of(Suit.ORO, number));
-    }
+    assertThatNoException().isThrownBy(() -> Card.of(Suit.ORO, number));
+  }
 
-    @ParameterizedTest
-    @ValueSource(ints = {0, 8, 9, 13, -1})
-    void shouldRejectInvalidNumbers(final int number) {
+  @ParameterizedTest
+  @ValueSource(ints = {0, 8, 9, 13, -1})
+  void shouldRejectInvalidNumbers(final int number) {
 
-        assertThatThrownBy(() -> Card.of(Suit.COPA, number)).isInstanceOf(
-            InvalidCardException.class);
-    }
+    assertThatThrownBy(() -> Card.of(Suit.COPA, number)).isInstanceOf(InvalidCardException.class);
+  }
 
-    @Test
-    void shouldRejectNullSuit() {
+  @Test
+  void shouldRejectNullSuit() {
 
-        assertThatThrownBy(() -> Card.of(null, 1)).isInstanceOf(NullPointerException.class);
-    }
+    assertThatThrownBy(() -> Card.of(null, 1)).isInstanceOf(NullPointerException.class);
+  }
 
-    @Test
-    void shouldBeEqualWhenSameSuitAndNumber() {
+  @Test
+  void shouldBeEqualWhenSameSuitAndNumber() {
 
-        final var card1 = Card.of(Suit.ESPADA, 1);
-        final var card2 = Card.of(Suit.ESPADA, 1);
+    final var card1 = Card.of(Suit.ESPADA, 1);
+    final var card2 = Card.of(Suit.ESPADA, 1);
 
-        assertThat(card1).isEqualTo(card2);
-        assertThat(card1.hashCode()).hasSameHashCodeAs(card2.hashCode());
-    }
+    assertThat(card1).isEqualTo(card2);
+    assertThat(card1.hashCode()).hasSameHashCodeAs(card2.hashCode());
+  }
 
-    @Test
-    void shouldNotBeEqualWhenDifferentSuit() {
+  @Test
+  void shouldNotBeEqualWhenDifferentSuit() {
 
-        final var card1 = Card.of(Suit.ESPADA, 1);
-        final var card2 = Card.of(Suit.BASTO, 1);
+    final var card1 = Card.of(Suit.ESPADA, 1);
+    final var card2 = Card.of(Suit.BASTO, 1);
 
-        assertThat(card1).isNotEqualTo(card2);
-    }
+    assertThat(card1).isNotEqualTo(card2);
+  }
 
-    @Test
-    void shouldNotBeEqualWhenDifferentNumber() {
+  @Test
+  void shouldNotBeEqualWhenDifferentNumber() {
 
-        final var card1 = Card.of(Suit.ESPADA, 1);
-        final var card2 = Card.of(Suit.ESPADA, 2);
+    final var card1 = Card.of(Suit.ESPADA, 1);
+    final var card2 = Card.of(Suit.ESPADA, 2);
 
-        assertThat(card1).isNotEqualTo(card2);
-    }
+    assertThat(card1).isNotEqualTo(card2);
+  }
 
 }

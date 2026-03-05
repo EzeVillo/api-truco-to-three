@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class InvalidTrucoCallException extends DomainException {
 
-    public InvalidTrucoCallException() {
+  public InvalidTrucoCallException() {
 
-        super("No se puede cantar truco en este momento");
-    }
+    super("No se puede cantar truco en este momento");
+  }
 
 }

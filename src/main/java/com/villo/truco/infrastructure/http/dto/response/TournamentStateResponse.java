@@ -8,11 +8,11 @@ public record TournamentStateResponse(String tournamentId, String status,
                                       List<String> winners,
                                       List<TournamentMatchdayResponse> matchdays) {
 
-    public static TournamentStateResponse from(final TournamentStateDTO dto) {
+  public static TournamentStateResponse from(final TournamentStateDTO dto) {
 
-        return new TournamentStateResponse(dto.tournamentId(), dto.status(),
-            dto.standings().stream().map(TournamentStandingResponse::from).toList(), dto.winners(),
-            dto.matchdays().stream().map(TournamentMatchdayResponse::from).toList());
-    }
+    return new TournamentStateResponse(dto.tournamentId(), dto.status(),
+        dto.standings().stream().map(TournamentStandingResponse::from).toList(), dto.winners(),
+        dto.matchdays().stream().map(TournamentMatchdayResponse::from).toList());
+  }
 
 }

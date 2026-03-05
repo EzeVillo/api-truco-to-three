@@ -4,9 +4,9 @@ import java.util.UUID;
 
 public record HandId(UUID value) {
 
-    public static HandId generate() {
+  public static HandId generate() {
 
-        return new HandId(UUID.randomUUID());
-    }
+    return new HandId(UUID.randomUUID());
+  }
 
 }

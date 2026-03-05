@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface TournamentQueryRepository {
 
-    Optional<Tournament> findById(TournamentId tournamentId);
+  Optional<Tournament> findById(TournamentId tournamentId);
 
 }

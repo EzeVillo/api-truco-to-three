@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class FixtureAlreadyResolvedException extends DomainException {
 
-    public FixtureAlreadyResolvedException() {
+  public FixtureAlreadyResolvedException() {
 
-        super("Fixture already resolved");
-    }
+    super("Fixture already resolved");
+  }
 
 }

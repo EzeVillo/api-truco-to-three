@@ -8,17 +8,17 @@ import java.util.Objects;
 
 public final class MatchResolver {
 
-    private final MatchQueryRepository matchQueryRepository;
+  private final MatchQueryRepository matchQueryRepository;
 
-    public MatchResolver(final MatchQueryRepository matchQueryRepository) {
+  public MatchResolver(final MatchQueryRepository matchQueryRepository) {
 
-        this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
-    }
+    this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
+  }
 
-    public Match resolve(final MatchId matchId) {
+  public Match resolve(final MatchId matchId) {
 
-        return this.matchQueryRepository.findById(matchId)
-            .orElseThrow(() -> new MatchNotFoundException(matchId));
-    }
+    return this.matchQueryRepository.findById(matchId)
+        .orElseThrow(() -> new MatchNotFoundException(matchId));
+  }
 
 }

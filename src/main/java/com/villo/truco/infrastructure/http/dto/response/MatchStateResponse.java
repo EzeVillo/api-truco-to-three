@@ -6,11 +6,11 @@ public record MatchStateResponse(String matchId, String status, int gamesWonPlay
                                  int gamesWonPlayerTwo, String matchWinner,
                                  RoundStateResponse RoundGame) {
 
-    public static MatchStateResponse from(final MatchStateDTO dto) {
+  public static MatchStateResponse from(final MatchStateDTO dto) {
 
-        return new MatchStateResponse(dto.matchId(), dto.status(), dto.gamesWonPlayerOne(),
-            dto.gamesWonPlayerTwo(), dto.matchWinner(),
-            dto.currentRound() != null ? RoundStateResponse.from(dto.currentRound()) : null);
-    }
+    return new MatchStateResponse(dto.matchId(), dto.status(), dto.gamesWonPlayerOne(),
+        dto.gamesWonPlayerTwo(), dto.matchWinner(),
+        dto.currentRound() != null ? RoundStateResponse.from(dto.currentRound()) : null);
+  }
 
 }

@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class SamePlayerMatchException extends DomainException {
 
-    public SamePlayerMatchException() {
+  public SamePlayerMatchException() {
 
-        super("A match cannot be created with the same player twice");
-    }
+    super("A match cannot be created with the same player twice");
+  }
 
 }

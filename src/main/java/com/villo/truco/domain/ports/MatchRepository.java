@@ -4,6 +4,6 @@ import com.villo.truco.domain.model.match.Match;
 
 public interface MatchRepository {
 
-    void save(Match match);
+  void save(Match match);
 
 }

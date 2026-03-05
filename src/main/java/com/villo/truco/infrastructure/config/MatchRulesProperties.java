@@ -5,27 +5,27 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "truco.match")
 public class MatchRulesProperties {
 
-    private int gamesToWin = 3;
-    private int pointsToWinGame = 3;
+  private int gamesToWin = 3;
+  private int pointsToWinGame = 3;
 
-    public int getGamesToWin() {
+  public int getGamesToWin() {
 
-        return gamesToWin;
-    }
+    return gamesToWin;
+  }
 
-    public void setGamesToWin(final int gamesToWin) {
+  public void setGamesToWin(final int gamesToWin) {
 
-        this.gamesToWin = gamesToWin;
-    }
+    this.gamesToWin = gamesToWin;
+  }
 
-    public int getPointsToWinGame() {
+  public int getPointsToWinGame() {
 
-        return pointsToWinGame;
-    }
+    return pointsToWinGame;
+  }
 
-    public void setPointsToWinGame(final int pointsToWinGame) {
+  public void setPointsToWinGame(final int pointsToWinGame) {
 
-        this.pointsToWinGame = pointsToWinGame;
-    }
+    this.pointsToWinGame = pointsToWinGame;
+  }
 
 }

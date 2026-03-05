@@ -5,9 +5,9 @@ import java.util.List;
 
 public record AvailableActionResponse(String type, List<String> parameters) {
 
-    public static AvailableActionResponse from(final AvailableActionDTO dto) {
+  public static AvailableActionResponse from(final AvailableActionDTO dto) {
 
-        return new AvailableActionResponse(dto.type(), dto.parameters());
-    }
+    return new AvailableActionResponse(dto.type(), dto.parameters());
+  }
 
 }

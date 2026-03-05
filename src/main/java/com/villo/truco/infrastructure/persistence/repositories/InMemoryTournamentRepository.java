@@ -10,21 +10,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public final class InMemoryTournamentRepository
-    implements TournamentRepository, TournamentQueryRepository {
+public final class InMemoryTournamentRepository implements TournamentRepository,
+    TournamentQueryRepository {
 
-    private final Map<TournamentId, Tournament> store = new ConcurrentHashMap<>();
+  private final Map<TournamentId, Tournament> store = new ConcurrentHashMap<>();
 
-    @Override
-    public void save(final Tournament tournament) {
+  @Override
+  public void save(final Tournament tournament) {
 
-        this.store.put(tournament.getId(), tournament);
-    }
+    this.store.put(tournament.getId(), tournament);
+  }
 
-    @Override
-    public Optional<Tournament> findById(final TournamentId tournamentId) {
+  @Override
+  public Optional<Tournament> findById(final TournamentId tournamentId) {
 
-        return Optional.ofNullable(this.store.get(tournamentId));
-    }
+    return Optional.ofNullable(this.store.get(tournamentId));
+  }
 
 }

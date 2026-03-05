@@ -4,9 +4,9 @@ import java.util.UUID;
 
 public record DeckId(UUID value) {
 
-    public static DeckId generate() {
+  public static DeckId generate() {
 
-        return new DeckId(UUID.randomUUID());
-    }
+    return new DeckId(UUID.randomUUID());
+  }
 
 }

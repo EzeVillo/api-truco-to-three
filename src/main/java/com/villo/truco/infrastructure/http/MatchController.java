@@ -8,6 +8,7 @@ import com.villo.truco.application.commands.JoinMatchCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
+import com.villo.truco.application.commands.StartMatchCommand;
 import com.villo.truco.application.exceptions.UnauthorizedAccessException;
 import com.villo.truco.application.ports.PlayerIdentity;
 import com.villo.truco.application.ports.PlayerTokenProvider;
@@ -20,6 +21,7 @@ import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
+import com.villo.truco.application.ports.in.StartMatchUseCase;
 import com.villo.truco.application.queries.GetMatchStateQuery;
 import com.villo.truco.infrastructure.http.dto.request.CallEnvidoRequest;
 import com.villo.truco.infrastructure.http.dto.request.JoinMatchRequest;
@@ -27,7 +29,6 @@ import com.villo.truco.infrastructure.http.dto.request.PlayCardRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondEnvidoRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondTrucoRequest;
 import com.villo.truco.infrastructure.http.dto.response.CreateMatchResponse;
-import com.villo.truco.infrastructure.http.dto.response.EnvidoResultResponse;
 import com.villo.truco.infrastructure.http.dto.response.JoinMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
 import java.util.Objects;
@@ -47,6 +48,7 @@ public final class MatchController {
 
   private final CreateMatchUseCase createMatch;
   private final JoinMatchUseCase joinMatch;
+  private final StartMatchUseCase startMatch;
   private final PlayCardUseCase playCard;
   private final CallTrucoUseCase callTruco;
   private final RespondTrucoUseCase respondTruco;
@@ -57,13 +59,15 @@ public final class MatchController {
   private final PlayerTokenProvider tokenProvider;
 
   public MatchController(final CreateMatchUseCase createMatch, final JoinMatchUseCase joinMatch,
-      final PlayCardUseCase playCard, final CallTrucoUseCase callTruco,
-      final RespondTrucoUseCase respondTruco, final CallEnvidoUseCase callEnvido,
-      final RespondEnvidoUseCase respondEnvido, final FoldUseCase fold,
-      final GetMatchStateUseCase getMatchState, final PlayerTokenProvider tokenProvider) {
+      final StartMatchUseCase startMatch, final PlayCardUseCase playCard,
+      final CallTrucoUseCase callTruco, final RespondTrucoUseCase respondTruco,
+      final CallEnvidoUseCase callEnvido, final RespondEnvidoUseCase respondEnvido,
+      final FoldUseCase fold, final GetMatchStateUseCase getMatchState,
+      final PlayerTokenProvider tokenProvider) {
 
     this.createMatch = Objects.requireNonNull(createMatch);
     this.joinMatch = Objects.requireNonNull(joinMatch);
+    this.startMatch = Objects.requireNonNull(startMatch);
     this.playCard = Objects.requireNonNull(playCard);
     this.callTruco = Objects.requireNonNull(callTruco);
     this.respondTruco = Objects.requireNonNull(respondTruco);
@@ -89,6 +93,16 @@ public final class MatchController {
 
     final var dto = this.joinMatch.handle(new JoinMatchCommand(matchId, request.inviteCode()));
     return ResponseEntity.ok(JoinMatchResponse.from(dto));
+  }
+
+  @PostMapping("/{matchId}/start")
+  @Transactional
+  public ResponseEntity<Void> startMatch(@PathVariable final String matchId,
+      @RequestHeader("Authorization") final String authHeader) {
+
+    final var identity = this.authenticate(matchId, authHeader);
+    this.startMatch.handle(new StartMatchCommand(matchId, identity.playerId().value().toString()));
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/{matchId}")
@@ -151,17 +165,16 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/envido/respond")
   @Transactional
-  public ResponseEntity<EnvidoResultResponse> respondEnvido(@PathVariable final String matchId,
+  public ResponseEntity<Void> respondEnvido(@PathVariable final String matchId,
       @RequestBody final RespondEnvidoRequest request,
       @RequestHeader("Authorization") final String authHeader) {
 
     final var identity = this.authenticate(matchId, authHeader);
-    final var result = this.respondEnvido.handle(
+    this.respondEnvido.handle(
         new RespondEnvidoCommand(matchId, identity.playerId().value().toString(),
             request.response()));
 
-    return result.map(EnvidoResultResponse::from).map(ResponseEntity::ok)
-        .orElse(ResponseEntity.noContent().build());
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{matchId}/fold")

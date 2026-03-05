@@ -5,14 +5,14 @@ import java.util.Objects;
 
 public record GetTournamentStateQuery(TournamentId tournamentId) {
 
-    public GetTournamentStateQuery {
+  public GetTournamentStateQuery {
 
-        Objects.requireNonNull(tournamentId);
-    }
+    Objects.requireNonNull(tournamentId);
+  }
 
-    public GetTournamentStateQuery(final String tournamentId) {
+  public GetTournamentStateQuery(final String tournamentId) {
 
-        this(TournamentId.of(tournamentId));
-    }
+    this(TournamentId.of(tournamentId));
+  }
 
 }

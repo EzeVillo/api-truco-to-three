@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.ports.MatchLockManager;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.SessionGrantProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
@@ -16,6 +17,7 @@ import com.villo.truco.application.ports.in.RefreshSessionUseCase;
 import com.villo.truco.application.ports.in.RegisterTournamentMatchResultUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
+import com.villo.truco.application.ports.in.StartMatchUseCase;
 import com.villo.truco.application.usecases.commands.CallEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.CallTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
@@ -29,6 +31,7 @@ import com.villo.truco.application.usecases.commands.RefreshSessionCommandHandle
 import com.villo.truco.application.usecases.commands.RegisterTournamentMatchResultCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
+import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.TournamentResolver;
 import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetTournamentStateQueryHandler;
@@ -72,6 +75,15 @@ public class UseCaseConfiguration {
 
     return new JoinMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
         sessionGrantProvider);
+  }
+
+  @Bean
+  StartMatchUseCase startMatchCommandHandler(final MatchResolver matchResolver,
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
+
+    return new StartMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean

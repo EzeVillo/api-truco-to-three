@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class WinnerNotInFixtureException extends DomainException {
 
-    public WinnerNotInFixtureException() {
+  public WinnerNotInFixtureException() {
 
-        super("Winner does not belong to fixture players");
-    }
+    super("Winner does not belong to fixture players");
+  }
 
 }

@@ -5,6 +5,6 @@ import com.villo.truco.application.dto.CreateMatchDTO;
 
 public interface CreateMatchUseCase {
 
-    CreateMatchDTO handle(CreateMatchCommand command);
+  CreateMatchDTO handle(CreateMatchCommand command);
 
 }

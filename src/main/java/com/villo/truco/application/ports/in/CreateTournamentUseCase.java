@@ -5,6 +5,6 @@ import com.villo.truco.application.dto.CreateTournamentDTO;
 
 public interface CreateTournamentUseCase {
 
-    CreateTournamentDTO handle(CreateTournamentCommand command);
+  CreateTournamentDTO handle(CreateTournamentCommand command);
 
 }

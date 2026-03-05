@@ -5,18 +5,18 @@ import java.util.UUID;
 
 public record FixtureId(UUID value) {
 
-    public static FixtureId of(final String value) {
+  public static FixtureId of(final String value) {
 
-        try {
-            return new FixtureId(UUID.fromString(value));
-        } catch (final IllegalArgumentException e) {
-            throw new InvalidIdException(value);
-        }
+    try {
+      return new FixtureId(UUID.fromString(value));
+    } catch (final IllegalArgumentException e) {
+      throw new InvalidIdException(value);
     }
+  }
 
-    public static FixtureId generate() {
+  public static FixtureId generate() {
 
-        return new FixtureId(UUID.randomUUID());
-    }
+    return new FixtureId(UUID.randomUUID());
+  }
 
 }

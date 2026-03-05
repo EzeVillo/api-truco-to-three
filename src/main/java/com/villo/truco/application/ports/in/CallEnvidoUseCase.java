@@ -5,6 +5,6 @@ import com.villo.truco.domain.model.match.valueobjects.MatchId;
 
 public interface CallEnvidoUseCase {
 
-    MatchId handle(CallEnvidoCommand command);
+  MatchId handle(CallEnvidoCommand command);
 
 }

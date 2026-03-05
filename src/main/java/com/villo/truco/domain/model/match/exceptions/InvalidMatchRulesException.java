@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class InvalidMatchRulesException extends DomainException {
 
-    public InvalidMatchRulesException(final String message) {
+  public InvalidMatchRulesException(final String message) {
 
-        super(message);
-    }
+    super(message);
+  }
 
 }

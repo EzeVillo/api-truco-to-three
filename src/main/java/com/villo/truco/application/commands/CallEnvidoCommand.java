@@ -7,16 +7,16 @@ import java.util.Objects;
 
 public record CallEnvidoCommand(MatchId matchId, PlayerId playerId, EnvidoCall call) {
 
-    public CallEnvidoCommand {
+  public CallEnvidoCommand {
 
-        Objects.requireNonNull(matchId, "MatchId is required");
-        Objects.requireNonNull(playerId, "PlayerId is required");
-        Objects.requireNonNull(call, "Call is required");
-    }
+    Objects.requireNonNull(matchId, "MatchId is required");
+    Objects.requireNonNull(playerId, "PlayerId is required");
+    Objects.requireNonNull(call, "Call is required");
+  }
 
-    public CallEnvidoCommand(final String matchId, final String playerId, final String call) {
+  public CallEnvidoCommand(final String matchId, final String playerId, final String call) {
 
-        this(MatchId.of(matchId), PlayerId.of(playerId), EnvidoCall.valueOf(call));
-    }
+    this(MatchId.of(matchId), PlayerId.of(playerId), EnvidoCall.valueOf(call));
+  }
 
 }

@@ -4,9 +4,9 @@ import com.villo.truco.application.dto.TournamentStandingDTO;
 
 public record TournamentStandingResponse(String playerId, int wins) {
 
-    public static TournamentStandingResponse from(final TournamentStandingDTO dto) {
+  public static TournamentStandingResponse from(final TournamentStandingDTO dto) {
 
-        return new TournamentStandingResponse(dto.playerId(), dto.wins());
-    }
+    return new TournamentStandingResponse(dto.playerId(), dto.wins());
+  }
 
 }

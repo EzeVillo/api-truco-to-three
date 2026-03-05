@@ -6,15 +6,15 @@ import java.util.Objects;
 
 public record CreateTournamentCommand(List<PlayerId> playerIds) {
 
-    public CreateTournamentCommand {
+  public CreateTournamentCommand {
 
-        Objects.requireNonNull(playerIds);
-    }
+    Objects.requireNonNull(playerIds);
+  }
 
-    public static CreateTournamentCommand fromPlayerIds(final List<String> playerIds) {
+  public static CreateTournamentCommand fromPlayerIds(final List<String> playerIds) {
 
-        Objects.requireNonNull(playerIds);
-        return new CreateTournamentCommand(playerIds.stream().map(PlayerId::of).toList());
-    }
+    Objects.requireNonNull(playerIds);
+    return new CreateTournamentCommand(playerIds.stream().map(PlayerId::of).toList());
+  }
 
 }

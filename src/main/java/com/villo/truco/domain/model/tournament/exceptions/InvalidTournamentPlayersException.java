@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class InvalidTournamentPlayersException extends DomainException {
 
-    public InvalidTournamentPlayersException(final String message) {
+  public InvalidTournamentPlayersException(final String message) {
 
-        super(message);
-    }
+    super(message);
+  }
 
 }

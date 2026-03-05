@@ -4,6 +4,6 @@ import com.villo.truco.application.commands.RegisterTournamentMatchResultCommand
 
 public interface RegisterTournamentMatchResultUseCase {
 
-    void handle(RegisterTournamentMatchResultCommand command);
+  void handle(RegisterTournamentMatchResultCommand command);
 
 }

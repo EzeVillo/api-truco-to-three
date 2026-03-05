@@ -5,6 +5,6 @@ import com.villo.truco.domain.model.match.valueobjects.MatchId;
 
 public interface RespondTrucoUseCase {
 
-    MatchId handle(RespondTrucoCommand command);
+  MatchId handle(RespondTrucoCommand command);
 
 }

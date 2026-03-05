@@ -5,9 +5,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class InvalidMatchStateException extends DomainException {
 
-    public InvalidMatchStateException(final MatchStatus current, final MatchStatus expected) {
+  public InvalidMatchStateException(final MatchStatus current, final MatchStatus expected) {
 
-        super("Invalid match state. Current: " + current + ", expected: " + expected);
-    }
+    super("Invalid match state. Current: " + current + ", expected: " + expected);
+  }
 
 }

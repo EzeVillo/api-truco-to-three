@@ -4,9 +4,9 @@ import java.util.UUID;
 
 public record RoundId(UUID value) {
 
-    public static RoundId generate() {
+  public static RoundId generate() {
 
-        return new RoundId(UUID.randomUUID());
-    }
+    return new RoundId(UUID.randomUUID());
+  }
 
 }

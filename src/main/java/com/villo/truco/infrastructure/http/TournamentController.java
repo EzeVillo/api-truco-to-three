@@ -23,48 +23,48 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tournaments")
 public final class TournamentController {
 
-    private final CreateTournamentUseCase createTournament;
-    private final RegisterTournamentMatchResultUseCase registerTournamentMatchResult;
-    private final GetTournamentStateUseCase getTournamentState;
+  private final CreateTournamentUseCase createTournament;
+  private final RegisterTournamentMatchResultUseCase registerTournamentMatchResult;
+  private final GetTournamentStateUseCase getTournamentState;
 
-    public TournamentController(final CreateTournamentUseCase createTournament,
-        final RegisterTournamentMatchResultUseCase registerTournamentMatchResult,
-        final GetTournamentStateUseCase getTournamentState) {
+  public TournamentController(final CreateTournamentUseCase createTournament,
+      final RegisterTournamentMatchResultUseCase registerTournamentMatchResult,
+      final GetTournamentStateUseCase getTournamentState) {
 
-        this.createTournament = Objects.requireNonNull(createTournament);
-        this.registerTournamentMatchResult = Objects.requireNonNull(registerTournamentMatchResult);
-        this.getTournamentState = Objects.requireNonNull(getTournamentState);
-    }
+    this.createTournament = Objects.requireNonNull(createTournament);
+    this.registerTournamentMatchResult = Objects.requireNonNull(registerTournamentMatchResult);
+    this.getTournamentState = Objects.requireNonNull(getTournamentState);
+  }
 
-    @PostMapping
-    @Transactional
-    public ResponseEntity<CreateTournamentResponse> createTournament(
-        @RequestBody final CreateTournamentRequest request) {
+  @PostMapping
+  @Transactional
+  public ResponseEntity<CreateTournamentResponse> createTournament(
+      @RequestBody final CreateTournamentRequest request) {
 
-        final var dto = this.createTournament.handle(
-            CreateTournamentCommand.fromPlayerIds(request.playerIds()));
+    final var dto = this.createTournament.handle(
+        CreateTournamentCommand.fromPlayerIds(request.playerIds()));
 
-        return ResponseEntity.ok(CreateTournamentResponse.from(dto));
-    }
+    return ResponseEntity.ok(CreateTournamentResponse.from(dto));
+  }
 
-    @PostMapping("/{tournamentId}/matches/{matchId}/sync-result")
-    @Transactional
-    public ResponseEntity<Void> syncMatchResult(@PathVariable final String tournamentId,
-        @PathVariable final String matchId) {
+  @PostMapping("/{tournamentId}/matches/{matchId}/sync-result")
+  @Transactional
+  public ResponseEntity<Void> syncMatchResult(@PathVariable final String tournamentId,
+      @PathVariable final String matchId) {
 
-        this.registerTournamentMatchResult.handle(
-            new RegisterTournamentMatchResultCommand(tournamentId, matchId));
+    this.registerTournamentMatchResult.handle(
+        new RegisterTournamentMatchResultCommand(tournamentId, matchId));
 
-        return ResponseEntity.noContent().build();
-    }
+    return ResponseEntity.noContent().build();
+  }
 
-    @GetMapping("/{tournamentId}")
-    public ResponseEntity<TournamentStateResponse> getTournamentState(
-        @PathVariable final String tournamentId) {
+  @GetMapping("/{tournamentId}")
+  public ResponseEntity<TournamentStateResponse> getTournamentState(
+      @PathVariable final String tournamentId) {
 
-        final var dto = this.getTournamentState.handle(new GetTournamentStateQuery(tournamentId));
+    final var dto = this.getTournamentState.handle(new GetTournamentStateQuery(tournamentId));
 
-        return ResponseEntity.ok(TournamentStateResponse.from(dto));
-    }
+    return ResponseEntity.ok(TournamentStateResponse.from(dto));
+  }
 
 }

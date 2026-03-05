@@ -5,9 +5,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class MatchNotPartOfTournamentException extends DomainException {
 
-    public MatchNotPartOfTournamentException(final MatchId matchId) {
+  public MatchNotPartOfTournamentException(final MatchId matchId) {
 
-        super("Match is not part of tournament: " + matchId.value());
-    }
+    super("Match is not part of tournament: " + matchId.value());
+  }
 
 }
