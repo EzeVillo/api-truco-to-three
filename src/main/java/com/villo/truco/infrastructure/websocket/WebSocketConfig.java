@@ -1,10 +1,9 @@
 package com.villo.truco.infrastructure.websocket;
 
-import com.villo.truco.application.ports.PlayerTokenProvider;
-import java.util.Objects;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -13,11 +12,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-  private final PlayerTokenProvider tokenProvider;
+  private final JwtDecoder jwtDecoder;
 
-  public WebSocketConfig(final PlayerTokenProvider tokenProvider) {
+  public WebSocketConfig(final JwtDecoder jwtDecoder) {
 
-    this.tokenProvider = Objects.requireNonNull(tokenProvider);
+    this.jwtDecoder = jwtDecoder;
   }
 
   @Override
@@ -42,7 +41,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void configureClientInboundChannel(final ChannelRegistration registration) {
 
-    registration.interceptors(new WebSocketAuthInterceptor(this.tokenProvider));
+    registration.interceptors(new WebSocketAuthInterceptor(this.jwtDecoder));
   }
 
 }

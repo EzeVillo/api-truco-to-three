@@ -1,19 +1,20 @@
 package com.villo.truco.infrastructure.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import com.villo.truco.application.ports.MatchLockManager;
 import com.villo.truco.application.ports.PlayerTokenProvider;
-import com.villo.truco.application.ports.SessionGrantProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
 import com.villo.truco.application.ports.in.CreateTournamentUseCase;
-import com.villo.truco.application.ports.in.ExchangeSessionGrantUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetMatchStateUseCase;
 import com.villo.truco.application.ports.in.GetTournamentStateUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
-import com.villo.truco.application.ports.in.RefreshSessionUseCase;
 import com.villo.truco.application.ports.in.RegisterTournamentMatchResultUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -22,12 +23,10 @@ import com.villo.truco.application.usecases.commands.CallEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.CallTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateTournamentCommandHandler;
-import com.villo.truco.application.usecases.commands.ExchangeSessionGrantCommandHandler;
 import com.villo.truco.application.usecases.commands.FoldCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchResolver;
 import com.villo.truco.application.usecases.commands.PlayCardCommandHandler;
-import com.villo.truco.application.usecases.commands.RefreshSessionCommandHandler;
 import com.villo.truco.application.usecases.commands.RegisterTournamentMatchResultCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
@@ -41,9 +40,6 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(MatchRulesProperties.class)
@@ -63,18 +59,18 @@ public class UseCaseConfiguration {
 
   @Bean
   CreateMatchUseCase createMatchCommandHandler(final MatchRepository matchRepository,
-      final MatchRules matchRules, final SessionGrantProvider sessionGrantProvider) {
+      final MatchRules matchRules, final PlayerTokenProvider tokenProvider) {
 
-    return new CreateMatchCommandHandler(matchRepository, matchRules, sessionGrantProvider);
+    return new CreateMatchCommandHandler(matchRepository, matchRules, tokenProvider);
   }
 
   @Bean
   JoinMatchUseCase joinMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final SessionGrantProvider sessionGrantProvider) {
+      final PlayerTokenProvider tokenProvider) {
 
     return new JoinMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        sessionGrantProvider);
+        tokenProvider);
   }
 
   @Bean
@@ -84,19 +80,6 @@ public class UseCaseConfiguration {
 
     return new StartMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
         matchLockManager);
-  }
-
-  @Bean
-  ExchangeSessionGrantUseCase exchangeSessionGrantCommandHandler(
-      final SessionGrantProvider sessionGrantProvider, final PlayerTokenProvider tokenProvider) {
-
-    return new ExchangeSessionGrantCommandHandler(sessionGrantProvider, tokenProvider);
-  }
-
-  @Bean
-  RefreshSessionUseCase refreshSessionCommandHandler(final PlayerTokenProvider tokenProvider) {
-
-    return new RefreshSessionCommandHandler(tokenProvider);
   }
 
   @Bean

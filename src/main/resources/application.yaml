@@ -7,7 +7,7 @@ truco:
     games-to-win: 3
     points-to-win-game: 3
   security:
-    jwt-secret: ${TRUCO_JWT_SECRET:change-me-in-production}
-    access-token-expiration-seconds: 900
-    refresh-token-expiration-seconds: 86400
-    session-grant-expiration-seconds: 60
+    jwt-secret: ${TRUCO_JWT_SECRET}
+    issuer: ${TRUCO_JWT_ISSUER:truco-api}
+    audience: ${TRUCO_JWT_AUDIENCE:truco-clients}
+    access-token-expiration-seconds: 86400

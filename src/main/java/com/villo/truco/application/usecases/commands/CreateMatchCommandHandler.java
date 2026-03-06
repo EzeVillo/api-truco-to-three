@@ -2,7 +2,7 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.CreateMatchCommand;
 import com.villo.truco.application.dto.CreateMatchDTO;
-import com.villo.truco.application.ports.SessionGrantProvider;
+import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
@@ -13,14 +13,14 @@ public final class CreateMatchCommandHandler implements CreateMatchUseCase {
 
   private final MatchRepository matchRepository;
   private final MatchRules matchRules;
-  private final SessionGrantProvider sessionGrantProvider;
+  private final PlayerTokenProvider tokenProvider;
 
   public CreateMatchCommandHandler(final MatchRepository matchRepository,
-      final MatchRules matchRules, final SessionGrantProvider sessionGrantProvider) {
+      final MatchRules matchRules, final PlayerTokenProvider tokenProvider) {
 
     this.matchRepository = matchRepository;
     this.matchRules = matchRules;
-    this.sessionGrantProvider = sessionGrantProvider;
+    this.tokenProvider = tokenProvider;
   }
 
   @Override
@@ -32,9 +32,9 @@ public final class CreateMatchCommandHandler implements CreateMatchUseCase {
 
     this.matchRepository.save(match);
 
-    final var sessionGrant = this.sessionGrantProvider.generateGrant(match.getId(), playerOneId);
+    final var accessToken = this.tokenProvider.generateAccessToken(match.getId(), playerOneId);
 
-    return new CreateMatchDTO(match.getId().value().toString(), sessionGrant,
+    return new CreateMatchDTO(match.getId().value().toString(), accessToken,
         match.getInviteCode().value());
   }
 

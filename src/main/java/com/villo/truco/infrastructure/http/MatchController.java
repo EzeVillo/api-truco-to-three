@@ -10,8 +10,6 @@ import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
 import com.villo.truco.application.commands.StartMatchCommand;
 import com.villo.truco.application.exceptions.UnauthorizedAccessException;
-import com.villo.truco.application.ports.PlayerIdentity;
-import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
@@ -33,12 +31,13 @@ import com.villo.truco.infrastructure.http.dto.response.JoinMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
 import java.util.Objects;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,14 +55,12 @@ public final class MatchController {
   private final RespondEnvidoUseCase respondEnvido;
   private final FoldUseCase fold;
   private final GetMatchStateUseCase getMatchState;
-  private final PlayerTokenProvider tokenProvider;
 
   public MatchController(final CreateMatchUseCase createMatch, final JoinMatchUseCase joinMatch,
       final StartMatchUseCase startMatch, final PlayCardUseCase playCard,
       final CallTrucoUseCase callTruco, final RespondTrucoUseCase respondTruco,
       final CallEnvidoUseCase callEnvido, final RespondEnvidoUseCase respondEnvido,
-      final FoldUseCase fold, final GetMatchStateUseCase getMatchState,
-      final PlayerTokenProvider tokenProvider) {
+      final FoldUseCase fold, final GetMatchStateUseCase getMatchState) {
 
     this.createMatch = Objects.requireNonNull(createMatch);
     this.joinMatch = Objects.requireNonNull(joinMatch);
@@ -75,7 +72,6 @@ public final class MatchController {
     this.respondEnvido = Objects.requireNonNull(respondEnvido);
     this.fold = Objects.requireNonNull(fold);
     this.getMatchState = Objects.requireNonNull(getMatchState);
-    this.tokenProvider = Objects.requireNonNull(tokenProvider);
   }
 
   @PostMapping
@@ -98,81 +94,69 @@ public final class MatchController {
   @PostMapping("/{matchId}/start")
   @Transactional
   public ResponseEntity<Void> startMatch(@PathVariable final String matchId,
-      @RequestHeader("Authorization") final String authHeader) {
+      @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.startMatch.handle(new StartMatchCommand(matchId, identity.playerId().value().toString()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.startMatch.handle(new StartMatchCommand(matchId, playerId));
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/{matchId}")
   public ResponseEntity<MatchStateResponse> getMatchState(@PathVariable final String matchId,
-      @RequestHeader("Authorization") final String authHeader) {
+      @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    final var state = this.getMatchState.handle(
-        new GetMatchStateQuery(matchId, identity.playerId().value().toString()));
+    final var playerId = this.authenticate(matchId, jwt);
+    final var state = this.getMatchState.handle(new GetMatchStateQuery(matchId, playerId));
     return ResponseEntity.ok(MatchStateResponse.from(state));
   }
 
   @PostMapping("/{matchId}/play-card")
   @Transactional
   public ResponseEntity<Void> playCard(@PathVariable final String matchId,
-      @RequestBody final PlayCardRequest request,
-      @RequestHeader("Authorization") final String authHeader) {
+      @RequestBody final PlayCardRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.playCard.handle(
-        new PlayCardCommand(matchId, identity.playerId().value().toString(), request.suit(),
-            request.number()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.playCard.handle(new PlayCardCommand(matchId, playerId, request.suit(), request.number()));
     return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{matchId}/truco")
   @Transactional
   public ResponseEntity<Void> callTruco(@PathVariable final String matchId,
-      @RequestHeader("Authorization") final String authHeader) {
+      @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.callTruco.handle(new CallTrucoCommand(matchId, identity.playerId().value().toString()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.callTruco.handle(new CallTrucoCommand(matchId, playerId));
     return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{matchId}/truco/respond")
   @Transactional
   public ResponseEntity<Void> respondTruco(@PathVariable final String matchId,
-      @RequestBody final RespondTrucoRequest request,
-      @RequestHeader("Authorization") final String authHeader) {
+      @RequestBody final RespondTrucoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.respondTruco.handle(
-        new RespondTrucoCommand(matchId, identity.playerId().value().toString(),
-            request.response()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.respondTruco.handle(new RespondTrucoCommand(matchId, playerId, request.response()));
     return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{matchId}/envido")
   @Transactional
   public ResponseEntity<Void> callEnvido(@PathVariable final String matchId,
-      @RequestBody final CallEnvidoRequest request,
-      @RequestHeader("Authorization") final String authHeader) {
+      @RequestBody final CallEnvidoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.callEnvido.handle(
-        new CallEnvidoCommand(matchId, identity.playerId().value().toString(), request.call()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.callEnvido.handle(new CallEnvidoCommand(matchId, playerId, request.call()));
     return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{matchId}/envido/respond")
   @Transactional
   public ResponseEntity<Void> respondEnvido(@PathVariable final String matchId,
-      @RequestBody final RespondEnvidoRequest request,
-      @RequestHeader("Authorization") final String authHeader) {
+      @RequestBody final RespondEnvidoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.respondEnvido.handle(
-        new RespondEnvidoCommand(matchId, identity.playerId().value().toString(),
-            request.response()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.respondEnvido.handle(new RespondEnvidoCommand(matchId, playerId, request.response()));
 
     return ResponseEntity.noContent().build();
   }
@@ -180,31 +164,25 @@ public final class MatchController {
   @PostMapping("/{matchId}/fold")
   @Transactional
   public ResponseEntity<Void> fold(@PathVariable final String matchId,
-      @RequestHeader("Authorization") final String authHeader) {
+      @AuthenticationPrincipal final Jwt jwt) {
 
-    final var identity = this.authenticate(matchId, authHeader);
-    this.fold.handle(new FoldCommand(matchId, identity.playerId().value().toString()));
+    final var playerId = this.authenticate(matchId, jwt);
+    this.fold.handle(new FoldCommand(matchId, playerId));
     return ResponseEntity.noContent().build();
   }
 
-  private PlayerIdentity authenticate(final String matchId, final String authHeader) {
+  private String authenticate(final String matchId, final Jwt jwt) {
 
-    final var token = this.extractBearerToken(authHeader);
-    final var identity = this.tokenProvider.validateAccessToken(token);
+    if (jwt == null) {
+      throw new UnauthorizedAccessException("Missing authentication token");
+    }
 
-    if (!identity.matchId().value().toString().equals(matchId)) {
+    final var tokenMatchId = jwt.getClaimAsString("matchId");
+    if (!matchId.equals(tokenMatchId)) {
       throw new UnauthorizedAccessException("Token does not belong to this match");
     }
 
-    return identity;
-  }
-
-  private String extractBearerToken(final String authHeader) {
-
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedAccessException("Missing or invalid Authorization header");
-    }
-    return authHeader.substring(7);
+    return jwt.getSubject();
   }
 
 }

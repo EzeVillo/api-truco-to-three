@@ -7,10 +7,4 @@ public interface PlayerTokenProvider {
 
   String generateAccessToken(MatchId matchId, PlayerId playerId);
 
-  PlayerIdentity validateAccessToken(String token);
-
-  String generateRefreshToken(MatchId matchId, PlayerId playerId);
-
-  PlayerIdentity validateRefreshToken(String token);
-
 }

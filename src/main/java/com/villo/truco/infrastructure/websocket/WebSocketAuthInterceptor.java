@@ -1,8 +1,9 @@
 package com.villo.truco.infrastructure.websocket;
 
-import com.villo.truco.application.ports.PlayerIdentity;
-import com.villo.truco.application.ports.PlayerTokenProvider;
+import com.villo.truco.domain.model.match.valueobjects.MatchId;
+import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import java.util.Objects;
+import java.util.UUID;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
@@ -10,17 +11,20 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 
 public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
-  private static final String IDENTITY_ATTR = "playerIdentity";
+  private static final String IDENTITY_ATTR = "authenticatedPlayer";
   private static final String TOKEN_HEADER = "Authorization";
 
-  private final PlayerTokenProvider tokenProvider;
+  private final JwtDecoder jwtDecoder;
 
-  public WebSocketAuthInterceptor(final PlayerTokenProvider tokenProvider) {
+  public WebSocketAuthInterceptor(final JwtDecoder jwtDecoder) {
 
-    this.tokenProvider = Objects.requireNonNull(tokenProvider);
+    this.jwtDecoder = Objects.requireNonNull(jwtDecoder);
   }
 
   @Override
@@ -51,10 +55,17 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     }
 
     final var token = authHeader.substring(7);
-    final var identity = this.tokenProvider.validateAccessToken(token);
+    final var jwt = this.decode(token);
+    final var matchId = jwt.getClaimAsString("matchId");
+    final var playerId = jwt.getSubject();
 
-    accessor.getSessionAttributes().put(IDENTITY_ATTR, identity);
-    final var userName = WebSocketUserNaming.userName(identity.matchId(), identity.playerId());
+    if (matchId == null || playerId == null) {
+      throw new MessageDeliveryException("Invalid authentication token claims");
+    }
+
+    accessor.getSessionAttributes().put(IDENTITY_ATTR, playerId);
+    final var userName = WebSocketUserNaming.userName(new MatchId(UUID.fromString(matchId)),
+        new PlayerId(UUID.fromString(playerId)));
     accessor.setUser(() -> userName);
 
     return message;
@@ -62,8 +73,8 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
   private Message<?> handleSubscribe(final Message<?> message, final StompHeaderAccessor accessor) {
 
-    final var identity = (PlayerIdentity) accessor.getSessionAttributes().get(IDENTITY_ATTR);
-    if (identity == null) {
+    final var authenticatedPlayer = accessor.getSessionAttributes().get(IDENTITY_ATTR);
+    if (authenticatedPlayer == null) {
       throw new MessageDeliveryException("Not authenticated");
     }
 
@@ -84,6 +95,15 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     }
 
     throw new MessageDeliveryException("Not authorized to subscribe to this topic");
+  }
+
+  private Jwt decode(final String token) {
+
+    try {
+      return this.jwtDecoder.decode(token);
+    } catch (final JwtException ex) {
+      throw new MessageDeliveryException("Invalid authentication token");
+    }
   }
 
 }

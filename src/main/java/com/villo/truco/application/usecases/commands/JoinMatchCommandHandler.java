@@ -1,28 +1,29 @@
 package com.villo.truco.application.usecases.commands;
 
+import java.util.Objects;
+
 import com.villo.truco.application.commands.JoinMatchCommand;
 import com.villo.truco.application.dto.JoinMatchDTO;
-import com.villo.truco.application.ports.SessionGrantProvider;
+import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
-import java.util.Objects;
 
 public final class JoinMatchCommandHandler implements JoinMatchUseCase {
 
   private final MatchResolver matchResolver;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
-  private final SessionGrantProvider sessionGrantProvider;
+  private final PlayerTokenProvider tokenProvider;
 
   public JoinMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final SessionGrantProvider sessionGrantProvider) {
+      final PlayerTokenProvider tokenProvider) {
 
     this.matchResolver = Objects.requireNonNull(matchResolver);
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
-    this.sessionGrantProvider = Objects.requireNonNull(sessionGrantProvider);
+    this.tokenProvider = Objects.requireNonNull(tokenProvider);
   }
 
   @Override
@@ -37,10 +38,10 @@ public final class JoinMatchCommandHandler implements JoinMatchUseCase {
         match.getPlayerTwo(), match.getDomainEvents());
     match.clearDomainEvents();
 
-    final var sessionGrant = this.sessionGrantProvider.generateGrant(match.getId(),
+    final var accessToken = this.tokenProvider.generateAccessToken(match.getId(),
         match.getPlayerTwo());
 
-    return new JoinMatchDTO(sessionGrant);
+    return new JoinMatchDTO(accessToken);
   }
 
 }
