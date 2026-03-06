@@ -8,7 +8,15 @@ import com.villo.truco.application.ports.in.RegisterTournamentMatchResultUseCase
 import com.villo.truco.application.queries.GetTournamentStateQuery;
 import com.villo.truco.infrastructure.http.dto.request.CreateTournamentRequest;
 import com.villo.truco.infrastructure.http.dto.response.CreateTournamentResponse;
+import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import com.villo.truco.infrastructure.http.dto.response.TournamentStateResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/tournaments")
+@Tag(name = "Torneos", description = "Endpoints para crear y consultar torneos")
 public final class TournamentController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TournamentController.class);
@@ -42,6 +51,10 @@ public final class TournamentController {
 
   @PostMapping
   @Transactional
+  @Operation(summary = "Crear torneo", description = "Crea un torneo round-robin con los jugadores indicados", security = {})
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Torneo creado", content = @Content(schema = @Schema(implementation = CreateTournamentResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Datos inválidos para crear el torneo", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<CreateTournamentResponse> createTournament(
       @RequestBody final CreateTournamentRequest request) {
 
@@ -55,8 +68,13 @@ public final class TournamentController {
 
   @PostMapping("/{tournamentId}/matches/{matchId}/sync-result")
   @Transactional
-  public ResponseEntity<Void> syncMatchResult(@PathVariable final String tournamentId,
-      @PathVariable final String matchId) {
+  @Operation(summary = "Sincronizar resultado de partido", description = "Actualiza en el torneo el resultado final de una partida", security = {})
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Resultado sincronizado"),
+      @ApiResponse(responseCode = "404", description = "Torneo o partida no encontrados", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se puede sincronizar en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> syncMatchResult(
+      @Parameter(description = "ID del torneo", example = "tournament-123") @PathVariable final String tournamentId,
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId) {
 
     LOGGER.info("HTTP syncMatchResult requested: tournamentId={}, matchId={}", tournamentId,
         matchId);
@@ -68,8 +86,12 @@ public final class TournamentController {
   }
 
   @GetMapping("/{tournamentId}")
+  @Operation(summary = "Obtener estado de torneo", description = "Devuelve estado completo, tabla y fixtures del torneo", security = {})
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Estado del torneo", content = @Content(schema = @Schema(implementation = TournamentStateResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Torneo no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<TournamentStateResponse> getTournamentState(
-      @PathVariable final String tournamentId) {
+      @Parameter(description = "ID del torneo", example = "tournament-123") @PathVariable final String tournamentId) {
 
     LOGGER.debug("HTTP getTournamentState requested: tournamentId={}", tournamentId);
 

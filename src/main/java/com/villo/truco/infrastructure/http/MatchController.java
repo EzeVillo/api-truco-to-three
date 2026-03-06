@@ -27,8 +27,17 @@ import com.villo.truco.infrastructure.http.dto.request.PlayCardRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondEnvidoRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondTrucoRequest;
 import com.villo.truco.infrastructure.http.dto.response.CreateMatchResponse;
+import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import com.villo.truco.infrastructure.http.dto.response.JoinMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +54,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/matches")
+@Tag(name = "Partidas", description = "Endpoints para crear, unir y jugar partidas de Truco")
 public final class MatchController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MatchController.class);
@@ -80,6 +90,10 @@ public final class MatchController {
 
   @PostMapping
   @Transactional
+  @Operation(summary = "Crear partida", description = "Crea una nueva partida y devuelve token del jugador anfitrión", security = {})
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateMatchResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se pudo crear la partida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<CreateMatchResponse> createMatch() {
 
     LOGGER.info("HTTP createMatch requested");
@@ -89,7 +103,13 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/join")
   @Transactional
-  public ResponseEntity<JoinMatchResponse> joinMatch(@PathVariable final String matchId,
+  @Operation(summary = "Unirse a partida", description = "Une un jugador a una partida usando invite code", security = {})
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinMatchResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Invite code inválido o estado inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<JoinMatchResponse> joinMatch(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final JoinMatchRequest request) {
 
     LOGGER.info("HTTP joinMatch requested: matchId={}", matchId);
@@ -99,7 +119,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/start")
   @Transactional
-  public ResponseEntity<Void> startMatch(@PathVariable final String matchId,
+  @Operation(summary = "Iniciar partida", description = "Inicia una partida. Requiere token Bearer del jugador de esa partida", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Partida iniciada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se puede iniciar en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> startMatch(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -108,7 +133,13 @@ public final class MatchController {
   }
 
   @GetMapping("/{matchId}")
-  public ResponseEntity<MatchStateResponse> getMatchState(@PathVariable final String matchId,
+  @Operation(summary = "Obtener estado de partida", description = "Devuelve estado completo de la partida para el jugador autenticado", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Estado de partida", content = @Content(schema = @Schema(implementation = MatchStateResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<MatchStateResponse> getMatchState(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -118,7 +149,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/play-card")
   @Transactional
-  public ResponseEntity<Void> playCard(@PathVariable final String matchId,
+  @Operation(summary = "Jugar carta", description = "Juega una carta de la mano actual", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Carta jugada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Jugada inválida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> playCard(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final PlayCardRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -128,7 +164,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/truco")
   @Transactional
-  public ResponseEntity<Void> callTruco(@PathVariable final String matchId,
+  @Operation(summary = "Cantar Truco", description = "Realiza un canto de Truco", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Canto registrado"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Canto inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> callTruco(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -138,7 +179,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/truco/respond")
   @Transactional
-  public ResponseEntity<Void> respondTruco(@PathVariable final String matchId,
+  @Operation(summary = "Responder Truco", description = "Responde al último canto de Truco", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Respuesta registrada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Respuesta inválida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> respondTruco(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final RespondTrucoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -148,7 +194,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/envido")
   @Transactional
-  public ResponseEntity<Void> callEnvido(@PathVariable final String matchId,
+  @Operation(summary = "Cantar Envido", description = "Realiza un canto de Envido", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Canto registrado"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Canto inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> callEnvido(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final CallEnvidoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -158,7 +209,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/envido/respond")
   @Transactional
-  public ResponseEntity<Void> respondEnvido(@PathVariable final String matchId,
+  @Operation(summary = "Responder Envido", description = "Responde al último canto de Envido", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Respuesta registrada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Respuesta inválida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> respondEnvido(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final RespondEnvidoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);
@@ -169,7 +225,12 @@ public final class MatchController {
 
   @PostMapping("/{matchId}/fold")
   @Transactional
-  public ResponseEntity<Void> fold(@PathVariable final String matchId,
+  @Operation(summary = "Irse al mazo", description = "Abandona la ronda actual", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Acción registrada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Acción inválida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> fold(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     final var playerId = this.authenticate(matchId, jwt);

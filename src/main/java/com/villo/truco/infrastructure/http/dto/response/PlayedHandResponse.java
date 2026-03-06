@@ -1,9 +1,13 @@
 package com.villo.truco.infrastructure.http.dto.response;
 
 import com.villo.truco.application.dto.PlayedHandDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-public record PlayedHandResponse(CardResponse cardPlayerOne, CardResponse cardPlayerTwo,
-                                 String winner) {
+@Schema(description = "Resultado de una mano ya jugada")
+public record PlayedHandResponse(
+    @Schema(description = "Carta jugada por player one") CardResponse cardPlayerOne,
+    @Schema(description = "Carta jugada por player two") CardResponse cardPlayerTwo,
+    @Schema(description = "Ganador de la mano", example = "player-1") String winner) {
 
   public static PlayedHandResponse from(final PlayedHandDTO dto) {
 
