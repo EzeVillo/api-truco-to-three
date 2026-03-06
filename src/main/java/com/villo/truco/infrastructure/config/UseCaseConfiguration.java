@@ -1,9 +1,5 @@
 package com.villo.truco.infrastructure.config;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import com.villo.truco.application.ports.MatchLockManager;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
@@ -40,6 +36,9 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(MatchRulesProperties.class)

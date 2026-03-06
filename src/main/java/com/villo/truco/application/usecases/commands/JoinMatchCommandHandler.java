@@ -1,13 +1,12 @@
 package com.villo.truco.application.usecases.commands;
 
-import java.util.Objects;
-
 import com.villo.truco.application.commands.JoinMatchCommand;
 import com.villo.truco.application.dto.JoinMatchDTO;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
+import java.util.Objects;
 
 public final class JoinMatchCommandHandler implements JoinMatchUseCase {
 
