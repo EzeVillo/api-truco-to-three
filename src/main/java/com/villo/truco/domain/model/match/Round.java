@@ -292,7 +292,11 @@ final class Round extends EntityBase<RoundId> {
     this.validateCanCallEnvido(playerId);
 
     if (this.status != RoundStatus.ENVIDO_IN_PROGRESS) {
-      this.turnBeforeEnvidoCall = this.currentTurn;
+      if (this.status == RoundStatus.TRUCO_IN_PROGRESS && this.turnBeforeTrucoCall != null) {
+        this.turnBeforeEnvidoCall = this.turnBeforeTrucoCall;
+      } else {
+        this.turnBeforeEnvidoCall = this.currentTurn;
+      }
     }
 
     this.envidoFlow.call(call);

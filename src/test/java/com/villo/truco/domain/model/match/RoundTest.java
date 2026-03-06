@@ -309,6 +309,28 @@ class RoundTest {
   }
 
   @Test
+  void shouldRestoreTurnToTrucoCallerAfterRejectingEnvidoCalledDuringTruco() {
+
+    this.round.callTruco(this.mano);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+    this.round.rejectEnvido(this.mano);
+
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.PLAYING);
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
+
+  @Test
+  void shouldRestoreTurnToTrucoCallerAfterAcceptingEnvidoCalledDuringTruco() {
+
+    this.round.callTruco(this.mano);
+    this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
+    this.round.acceptEnvido(this.mano, 0, 0);
+
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.PLAYING);
+    assertThat(this.round.getCurrentTurn()).isEqualTo(this.mano);
+  }
+
+  @Test
   void shouldReturnOnePointWhenRejectingSingleEnvido() {
 
     this.round.callEnvido(this.mano, EnvidoCall.REAL_ENVIDO);
