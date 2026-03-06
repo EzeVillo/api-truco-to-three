@@ -10,6 +10,8 @@ import com.villo.truco.infrastructure.http.dto.request.CreateTournamentRequest;
 import com.villo.truco.infrastructure.http.dto.response.CreateTournamentResponse;
 import com.villo.truco.infrastructure.http.dto.response.TournamentStateResponse;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/tournaments")
 public final class TournamentController {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TournamentController.class);
 
   private final CreateTournamentUseCase createTournament;
   private final RegisterTournamentMatchResultUseCase registerTournamentMatchResult;
@@ -41,6 +45,8 @@ public final class TournamentController {
   public ResponseEntity<CreateTournamentResponse> createTournament(
       @RequestBody final CreateTournamentRequest request) {
 
+    LOGGER.info("HTTP createTournament requested: players={}", request.playerIds().size());
+
     final var dto = this.createTournament.handle(
         CreateTournamentCommand.fromPlayerIds(request.playerIds()));
 
@@ -52,6 +58,9 @@ public final class TournamentController {
   public ResponseEntity<Void> syncMatchResult(@PathVariable final String tournamentId,
       @PathVariable final String matchId) {
 
+    LOGGER.info("HTTP syncMatchResult requested: tournamentId={}, matchId={}", tournamentId,
+        matchId);
+
     this.registerTournamentMatchResult.handle(
         new RegisterTournamentMatchResultCommand(tournamentId, matchId));
 
@@ -61,6 +70,8 @@ public final class TournamentController {
   @GetMapping("/{tournamentId}")
   public ResponseEntity<TournamentStateResponse> getTournamentState(
       @PathVariable final String tournamentId) {
+
+    LOGGER.debug("HTTP getTournamentState requested: tournamentId={}", tournamentId);
 
     final var dto = this.getTournamentState.handle(new GetTournamentStateQuery(tournamentId));
 

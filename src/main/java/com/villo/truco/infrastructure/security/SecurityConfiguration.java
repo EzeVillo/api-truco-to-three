@@ -29,10 +29,18 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableConfigurationProperties(TrucoSecurityProperties.class)
 public class SecurityConfiguration {
 
+  private static final int MIN_HS256_SECRET_BYTES = 32;
+
   @Bean
   SecretKey jwtSecretKey(final TrucoSecurityProperties properties) {
 
-    return new SecretKeySpec(properties.jwtSecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    final byte[] secretBytes = properties.jwtSecret().getBytes(StandardCharsets.UTF_8);
+    if (secretBytes.length < MIN_HS256_SECRET_BYTES) {
+      throw new IllegalStateException(
+          "Property truco.security.jwt-secret must be at least 32 bytes (256 bits) for HS256");
+    }
+
+    return new SecretKeySpec(secretBytes, "HmacSHA256");
   }
 
   @Bean

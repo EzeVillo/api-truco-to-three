@@ -30,6 +30,8 @@ import com.villo.truco.infrastructure.http.dto.response.CreateMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.JoinMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -44,6 +46,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/matches")
 public final class MatchController {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MatchController.class);
 
   private final CreateMatchUseCase createMatch;
   private final JoinMatchUseCase joinMatch;
@@ -78,6 +82,7 @@ public final class MatchController {
   @Transactional
   public ResponseEntity<CreateMatchResponse> createMatch() {
 
+    LOGGER.info("HTTP createMatch requested");
     final var dto = this.createMatch.handle(new CreateMatchCommand());
     return ResponseEntity.ok(CreateMatchResponse.from(dto));
   }
@@ -87,6 +92,7 @@ public final class MatchController {
   public ResponseEntity<JoinMatchResponse> joinMatch(@PathVariable final String matchId,
       @RequestBody final JoinMatchRequest request) {
 
+    LOGGER.info("HTTP joinMatch requested: matchId={}", matchId);
     final var dto = this.joinMatch.handle(new JoinMatchCommand(matchId, request.inviteCode()));
     return ResponseEntity.ok(JoinMatchResponse.from(dto));
   }
@@ -174,11 +180,14 @@ public final class MatchController {
   private String authenticate(final String matchId, final Jwt jwt) {
 
     if (jwt == null) {
+      LOGGER.warn("Authentication failed: missing JWT for matchId={}", matchId);
       throw new UnauthorizedAccessException("Missing authentication token");
     }
 
     final var tokenMatchId = jwt.getClaimAsString("matchId");
     if (!matchId.equals(tokenMatchId)) {
+      LOGGER.warn("Authentication failed: token matchId mismatch requested={} token={}", matchId,
+          tokenMatchId);
       throw new UnauthorizedAccessException("Token does not belong to this match");
     }
 

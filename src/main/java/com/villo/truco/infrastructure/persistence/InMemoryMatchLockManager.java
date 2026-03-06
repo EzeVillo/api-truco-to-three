@@ -6,10 +6,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public final class InMemoryMatchLockManager implements MatchLockManager {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryMatchLockManager.class);
 
   private final ConcurrentHashMap<MatchId, LockEntry> locks = new ConcurrentHashMap<>();
 
@@ -17,12 +21,16 @@ public final class InMemoryMatchLockManager implements MatchLockManager {
   public <T> T executeWithLock(final MatchId matchId, final Supplier<T> action) {
 
     final var entry = this.acquireEntry(matchId);
+    LOGGER.debug("Trying to acquire lock: matchId={}, refs={}, queueLength={}", matchId,
+        entry.references(), entry.queueLength());
     entry.lock().lock();
     try {
+      LOGGER.debug("Lock acquired: matchId={}", matchId);
       return action.get();
     } finally {
       entry.lock().unlock();
       this.releaseEntry(matchId, entry);
+      LOGGER.debug("Lock released: matchId={}", matchId);
     }
   }
 
@@ -65,6 +73,16 @@ public final class InMemoryMatchLockManager implements MatchLockManager {
     private int decrementRefs() {
 
       return this.refs.decrementAndGet();
+    }
+
+    private int references() {
+
+      return this.refs.get();
+    }
+
+    private int queueLength() {
+
+      return this.lock.getQueueLength();
     }
 
   }

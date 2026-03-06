@@ -7,7 +7,14 @@ truco:
     games-to-win: 3
     points-to-win-game: 3
   security:
-    jwt-secret: ${TRUCO_JWT_SECRET}
+    jwt-secret: ${TRUCO_JWT_SECRET:truco-local-dev-secret-key-32-bytes}
     issuer: ${TRUCO_JWT_ISSUER:truco-api}
     audience: ${TRUCO_JWT_AUDIENCE:truco-clients}
     access-token-expiration-seconds: 86400
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{requestId:-no-request}] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.villo.truco: DEBUG

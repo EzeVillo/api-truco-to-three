@@ -4,6 +4,8 @@ import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import java.util.Objects;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
@@ -19,6 +21,7 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
   private static final String IDENTITY_ATTR = "authenticatedPlayer";
   private static final String TOKEN_HEADER = "Authorization";
+  private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
 
   private final JwtDecoder jwtDecoder;
 
@@ -51,6 +54,7 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     final var authHeader = accessor.getFirstNativeHeader(TOKEN_HEADER);
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      LOGGER.warn("WS connect rejected: missing/invalid Authorization header");
       throw new MessageDeliveryException("Missing or invalid Authorization header");
     }
 
@@ -60,6 +64,7 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     final var playerId = jwt.getSubject();
 
     if (matchId == null || playerId == null) {
+      LOGGER.warn("WS connect rejected: missing claims in JWT");
       throw new MessageDeliveryException("Invalid authentication token claims");
     }
 
@@ -67,6 +72,7 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     final var userName = WebSocketUserNaming.userName(new MatchId(UUID.fromString(matchId)),
         new PlayerId(UUID.fromString(playerId)));
     accessor.setUser(() -> userName);
+    LOGGER.info("WS client authenticated: playerId={}, matchId={}", playerId, matchId);
 
     return message;
   }
@@ -75,12 +81,14 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     final var authenticatedPlayer = accessor.getSessionAttributes().get(IDENTITY_ATTR);
     if (authenticatedPlayer == null) {
+      LOGGER.warn("WS subscribe rejected: unauthenticated session");
       throw new MessageDeliveryException("Not authenticated");
     }
 
     final var destination = accessor.getDestination();
     if (destination != null) {
       this.validateTopicAccess(destination);
+      LOGGER.debug("WS subscribe authorized: destination={}", destination);
     }
 
     return message;
@@ -102,6 +110,7 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
     try {
       return this.jwtDecoder.decode(token);
     } catch (final JwtException ex) {
+      LOGGER.warn("WS connect rejected: invalid JWT");
       throw new MessageDeliveryException("Invalid authentication token");
     }
   }

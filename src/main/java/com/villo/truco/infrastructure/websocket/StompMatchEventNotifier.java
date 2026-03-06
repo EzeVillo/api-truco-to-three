@@ -9,11 +9,15 @@ import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
 import java.util.List;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 public final class StompMatchEventNotifier implements MatchEventNotifier {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(StompMatchEventNotifier.class);
 
   private final SimpMessagingTemplate messagingTemplate;
 
@@ -25,6 +29,8 @@ public final class StompMatchEventNotifier implements MatchEventNotifier {
   @Override
   public void publishDomainEvents(final MatchId matchId, final PlayerId playerOneId,
       final PlayerId playerTwoId, final List<DomainEventBase> events) {
+
+    LOGGER.debug("Publishing {} domain events for matchId={}", events.size(), matchId);
 
     for (final var event : events) {
       final var wsEvent = MatchWsEvent.from(event);
@@ -43,6 +49,8 @@ public final class StompMatchEventNotifier implements MatchEventNotifier {
   private void sendEvent(final MatchId matchId, final PlayerId playerId, final Object message) {
 
     final var userName = WebSocketUserNaming.userName(matchId, playerId);
+    LOGGER.debug("Sending WS event to user={} matchId={} type={}", userName, matchId,
+        message.getClass().getSimpleName());
     this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
   }
 

@@ -17,8 +17,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class Tournament extends AggregateBase<TournamentId> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Tournament.class);
 
   private final List<PlayerId> participants;
   private final List<Fixture> fixtures;
@@ -59,8 +63,11 @@ public final class Tournament extends AggregateBase<TournamentId> {
       winsByPlayer.put(participant, 0);
     }
 
-    return new Tournament(TournamentId.generate(), participants, fixtures, winsByPlayer,
-        TournamentStatus.IN_PROGRESS);
+    final var tournament = new Tournament(TournamentId.generate(), participants, fixtures,
+        winsByPlayer, TournamentStatus.IN_PROGRESS);
+    LOGGER.info("Tournament created: tournamentId={}, participants={}, fixtures={}",
+        tournament.getId(), participants.size(), fixtures.size());
+    return tournament;
   }
 
   private static List<Fixture> generateRoundRobinFixtures(final List<PlayerId> participants) {
@@ -112,10 +119,14 @@ public final class Tournament extends AggregateBase<TournamentId> {
         .orElseThrow(() -> new MatchNotPartOfTournamentException(matchId));
 
     if (fixture.status() == FixtureStatus.LIBRE) {
+      LOGGER.debug("Skipping match link for LIBRE fixture: tournamentId={}, fixtureId={}", this.id,
+          fixtureId);
       return;
     }
 
     fixture.linkMatch(matchId);
+    LOGGER.info("Fixture linked: tournamentId={}, fixtureId={}, matchId={}", this.id, fixtureId,
+        matchId);
   }
 
   public void recordMatchWinner(final MatchId matchId, final PlayerId winner) {
@@ -137,12 +148,15 @@ public final class Tournament extends AggregateBase<TournamentId> {
 
     fixture.resolve(winner);
     this.winsByPlayer.merge(winner, 1, Integer::sum);
+    LOGGER.info("Tournament result registered: tournamentId={}, matchId={}, winner={}", this.id,
+        matchId, winner);
 
     final var allResolved = this.fixtures.stream()
         .allMatch(it -> it.status() != FixtureStatus.PENDING);
 
     if (allResolved) {
       this.status = TournamentStatus.FINISHED;
+      LOGGER.info("Tournament finished: tournamentId={}, leaders={}", this.id, this.getLeaders());
     }
   }
 

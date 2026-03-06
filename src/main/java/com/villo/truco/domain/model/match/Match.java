@@ -25,8 +25,12 @@ import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.shared.AggregateBase;
 import java.util.List;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class Match extends AggregateBase<MatchId> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Match.class);
 
   private final MatchRules rules;
 
@@ -80,7 +84,12 @@ public final class Match extends AggregateBase<MatchId> {
     if (playerOne.equals(playerTwo)) {
       throw new SamePlayerMatchException();
     }
-    return new Match(MatchId.generate(), playerOne, playerTwo, InviteCode.generate(), rules);
+    final var match = new Match(MatchId.generate(), playerOne, playerTwo, InviteCode.generate(),
+        rules);
+    LOGGER.info(
+        "Match created: matchId={}, playerOne={}, playerTwo={}, rules={{gamesToWin={}, pointsToWinGame={}}}",
+        match.getId(), playerOne, playerTwo, rules.gamesToWin(), rules.pointsToWinGame());
+    return match;
   }
 
   public void join(final InviteCode inviteCode) {
@@ -95,6 +104,7 @@ public final class Match extends AggregateBase<MatchId> {
       throw new InvalidInviteCodeException();
     }
 
+    LOGGER.info("Player joined match: matchId={}", this.id);
     this.addDomainEvent(new PlayerJoinedEvent());
   }
 
@@ -103,6 +113,9 @@ public final class Match extends AggregateBase<MatchId> {
     Objects.requireNonNull(playerId, "PlayerId cannot be null");
 
     if (this.status == MatchStatus.IN_PROGRESS) {
+      LOGGER.debug(
+          "startMatch ignored because match is already in progress: matchId={}, playerId={}",
+          this.id, playerId);
       return;
     }
 
@@ -114,11 +127,13 @@ public final class Match extends AggregateBase<MatchId> {
 
     if (playerId.equals(this.playerOne)) {
       if (this.readyPlayerOne) {
+        LOGGER.debug("Player already marked ready: matchId={}, playerId={}", this.id, playerId);
         return;
       }
       this.readyPlayerOne = true;
     } else {
       if (this.readyPlayerTwo) {
+        LOGGER.debug("Player already marked ready: matchId={}, playerId={}", this.id, playerId);
         return;
       }
       this.readyPlayerTwo = true;
@@ -128,6 +143,7 @@ public final class Match extends AggregateBase<MatchId> {
 
     if (this.readyPlayerOne && this.readyPlayerTwo) {
       this.status = MatchStatus.IN_PROGRESS;
+      LOGGER.info("Match moved to IN_PROGRESS: matchId={}", this.id);
       this.startNewGame();
     }
   }
@@ -138,6 +154,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     this.currentRound.playCard(playerId, card);
+    LOGGER.debug("Card played: matchId={}, playerId={}, card={}", this.id, playerId, card);
     this.collectRoundEvents();
 
     this.currentRound.getRoundWinner().ifPresent(winner -> {
@@ -156,6 +173,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     this.currentRound.callTruco(playerId);
+    LOGGER.info("Truco called: matchId={}, playerId={}", this.id, playerId);
     this.collectRoundEvents();
   }
 
@@ -165,6 +183,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     this.currentRound.acceptTruco(playerId);
+    LOGGER.info("Truco accepted: matchId={}, playerId={}", this.id, playerId);
     this.collectRoundEvents();
   }
 
@@ -174,6 +193,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     final var result = this.currentRound.rejectTruco(playerId);
+    LOGGER.info("Truco rejected: matchId={}, playerId={}, winner={}, points={}", this.id, playerId,
+        result.winner(), result.points());
     this.collectRoundEvents();
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
@@ -189,6 +210,9 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     final var result = this.currentRound.acceptTrucoAndFold(playerId);
+    LOGGER.info(
+        "Player folded after accepting truco: matchId={}, playerId={}, winner={}, points={}",
+        this.id, playerId, result.winner(), result.points());
     this.collectRoundEvents();
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
@@ -204,6 +228,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     final var result = this.currentRound.fold(playerId);
+    LOGGER.info("Player folded: matchId={}, playerId={}, winner={}, points={}", this.id, playerId,
+        result.winner(), result.points());
     this.collectRoundEvents();
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
@@ -219,6 +245,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     this.currentRound.callEnvido(playerId, call);
+    LOGGER.info("Envido called: matchId={}, playerId={}, call={}", this.id, playerId, call);
     this.collectRoundEvents();
   }
 
@@ -229,6 +256,8 @@ public final class Match extends AggregateBase<MatchId> {
 
     final var result = this.currentRound.acceptEnvido(playerId, this.scorePlayerOne,
         this.scorePlayerTwo);
+    LOGGER.info("Envido accepted: matchId={}, playerId={}, winner={}, pointsWon={}", this.id,
+        playerId, result.winner(), result.pointsWon());
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.pointsWon());
@@ -240,6 +269,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.validatePlayerInMatch(playerId);
 
     final var result = this.currentRound.rejectEnvido(playerId);
+    LOGGER.info("Envido rejected: matchId={}, playerId={}, winner={}, points={}", this.id, playerId,
+        result.winner(), result.points());
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.points());
@@ -253,6 +284,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.scorePlayerTwo = 0;
     this.roundNumber = 0;
     this.firstManoOfGame = this.gameNumber % 2 == 1 ? this.playerOne : this.playerTwo;
+    LOGGER.info("Game started: matchId={}, gameNumber={}, firstMano={}", this.id, this.gameNumber,
+        this.firstManoOfGame);
     this.addDomainEvent(new GameStartedEvent(this.gameNumber));
     this.startNewRound();
   }
@@ -264,6 +297,8 @@ public final class Match extends AggregateBase<MatchId> {
         this.roundNumber % 2 == 1 ? this.firstManoOfGame : this.getOpponent(this.firstManoOfGame);
     this.currentRound = Round.create(this.roundNumber, mano, this.playerOne, this.playerTwo,
         this.rules);
+    LOGGER.debug("Round started: matchId={}, gameNumber={}, roundNumber={}, mano={}", this.id,
+        this.gameNumber, this.roundNumber, mano);
     this.collectRoundEvents();
   }
 
@@ -276,6 +311,9 @@ public final class Match extends AggregateBase<MatchId> {
     } else {
       this.scorePlayerTwo += points;
     }
+
+    LOGGER.info("Score changed: matchId={}, winner={}, points={}, score={} - {}", this.id, winner,
+        points, this.scorePlayerOne, this.scorePlayerTwo);
 
     this.addDomainEvent(new ScoreChangedEvent(this.scorePlayerOne, this.scorePlayerTwo));
     this.checkGameFinished();
@@ -299,9 +337,14 @@ public final class Match extends AggregateBase<MatchId> {
       this.gamesWonPlayerTwo++;
     }
 
+    LOGGER.info("Game resolved: matchId={}, gameWinner={}, gamesWon={} - {}", this.id, gameWinner,
+        this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
+
     if (evaluation.matchFinished()) {
       this.status = MatchStatus.FINISHED;
       this.currentRound = null;
+      LOGGER.info("Match finished: matchId={}, winner={}, finalGames={} - {}", this.id, gameWinner,
+          this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
       this.addDomainEvent(new MatchFinishedEvent(this.seatOf(gameWinner), this.gamesWonPlayerOne,
           this.gamesWonPlayerTwo));
     } else {

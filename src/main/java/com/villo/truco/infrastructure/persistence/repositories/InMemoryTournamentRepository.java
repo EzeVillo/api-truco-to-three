@@ -7,11 +7,15 @@ import com.villo.truco.domain.ports.TournamentRepository;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public final class InMemoryTournamentRepository implements TournamentRepository,
     TournamentQueryRepository {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryTournamentRepository.class);
 
   private final Map<TournamentId, Tournament> store = new ConcurrentHashMap<>();
 
@@ -19,12 +23,16 @@ public final class InMemoryTournamentRepository implements TournamentRepository,
   public void save(final Tournament tournament) {
 
     this.store.put(tournament.getId(), tournament);
+    LOGGER.debug("Tournament saved in memory: tournamentId={}, totalStored={}", tournament.getId(),
+        this.store.size());
   }
 
   @Override
   public Optional<Tournament> findById(final TournamentId tournamentId) {
 
-    return Optional.ofNullable(this.store.get(tournamentId));
+    final var tournament = this.store.get(tournamentId);
+    LOGGER.debug("Tournament lookup: tournamentId={}, found={}", tournamentId, tournament != null);
+    return Optional.ofNullable(tournament);
   }
 
 }
