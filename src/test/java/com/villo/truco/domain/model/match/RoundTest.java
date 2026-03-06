@@ -258,6 +258,16 @@ class RoundTest {
   }
 
   @Test
+  void shouldThrowWhenCallingEnvidoAfterRetruco() {
+
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+
+    assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
+  }
+
+  @Test
   void shouldAllowEnvidoChain() {
 
     this.round.callEnvido(this.mano, EnvidoCall.ENVIDO);
@@ -439,6 +449,34 @@ class RoundTest {
     assertThat(actionsOfType(actions, "RESPOND_TRUCO")).containsExactlyInAnyOrder("QUIERO",
         "NO_QUIERO", "QUIERO_Y_ME_VOY_AL_MAZO");
     assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("RETRUCO");
+    assertThat(actionsOfType(actions, "CALL_ENVIDO")).containsExactlyInAnyOrder("ENVIDO",
+        "REAL_ENVIDO", "FALTA_ENVIDO");
+  }
+
+  @Test
+  @DisplayName("estado TRUCO_IN_PROGRESS con RETRUCO → no aparece CALL_ENVIDO")
+  void noEnvidoActionsWhenRetrucoInProgress() {
+
+    this.round.callTruco(this.mano);
+    this.round.callTruco(this.pie);
+
+    final var actions = this.round.getAvailableActions(this.mano);
+
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+  }
+
+  @Test
+  @DisplayName("respondiendo truco y habiendo jugado carta → no puede cantar envido")
+  void noEnvidoWhenRespondingTrucoAfterPlayingCard() {
+
+    this.playCardFromHand(this.mano);
+    this.round.callTruco(this.pie);
+
+    final var actions = this.round.getAvailableActions(this.mano);
+
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+    assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
   }
 
   @Test

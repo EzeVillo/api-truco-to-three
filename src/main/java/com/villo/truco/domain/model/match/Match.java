@@ -284,23 +284,14 @@ public final class Match extends AggregateBase<MatchId> {
 
   private void checkGameFinished() {
 
-    final boolean oneExceeded = this.scorePlayerOne > this.rules.pointsToWinGame();
-    final boolean twoExceeded = this.scorePlayerTwo > this.rules.pointsToWinGame();
-    final boolean oneWon = this.scorePlayerOne == this.rules.pointsToWinGame();
-    final boolean twoWon = this.scorePlayerTwo == this.rules.pointsToWinGame();
+    final var evaluation = ScoringPolicy.evaluate(this.scorePlayerOne, this.scorePlayerTwo,
+        this.gamesWonPlayerOne, this.gamesWonPlayerTwo, this.playerOne, this.playerTwo, this.rules);
 
-    final PlayerId gameWinner;
-    if (oneExceeded) {
-      gameWinner = this.playerTwo;
-    } else if (twoExceeded) {
-      gameWinner = this.playerOne;
-    } else if (oneWon) {
-      gameWinner = this.playerOne;
-    } else if (twoWon) {
-      gameWinner = this.playerTwo;
-    } else {
+    if (!evaluation.isGameOver()) {
       return;
     }
+
+    final var gameWinner = evaluation.gameWinner();
 
     if (gameWinner.equals(this.playerOne)) {
       this.gamesWonPlayerOne++;
@@ -308,8 +299,7 @@ public final class Match extends AggregateBase<MatchId> {
       this.gamesWonPlayerTwo++;
     }
 
-    if (this.gamesWonPlayerOne >= this.rules.gamesToWin()
-        || this.gamesWonPlayerTwo >= this.rules.gamesToWin()) {
+    if (evaluation.matchFinished()) {
       this.status = MatchStatus.FINISHED;
       this.currentRound = null;
       this.addDomainEvent(new MatchFinishedEvent(this.seatOf(gameWinner), this.gamesWonPlayerOne,

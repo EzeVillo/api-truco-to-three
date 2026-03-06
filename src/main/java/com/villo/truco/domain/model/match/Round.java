@@ -15,9 +15,7 @@ import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
 import com.villo.truco.domain.model.match.exceptions.InvalidRoundStateException;
-import com.villo.truco.domain.model.match.exceptions.InvalidTrucoCallException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
-import com.villo.truco.domain.model.match.valueobjects.ActionType;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.CurrentHandInfo;
@@ -52,15 +50,12 @@ final class Round extends EntityBase<RoundId> {
   private final Hand handPlayerTwo;
   private final List<PlayedHand> playedHands = new ArrayList<>();
   private final List<CardPlay> currentHandCards = new ArrayList<>();
-  private final List<EnvidoCall> envidoChain = new ArrayList<>();
+  private final TrucoFlow trucoFlow = new TrucoFlow();
+  private final EnvidoFlow envidoFlow = new EnvidoFlow();
   private RoundStatus status;
   private PlayerId currentTurn;
-  private PlayerId trucoCaller = null;
   private PlayerId turnBeforeTrucoCall = null;
-  private TrucoCall currentTrucoCall = null;
-  private int trucoPointsAtStake = 1;
   private PlayerId turnBeforeEnvidoCall = null;
-  private boolean envidoResolved = false;
 
   private Round(final RoundId id, final int roundNumber, final PlayerId mano,
       final PlayerId playerOne, final PlayerId playerTwo, final Hand handPlayerOne,
@@ -205,21 +200,14 @@ final class Round extends EntityBase<RoundId> {
     }
     this.validateTurn(playerId);
 
-    if (this.currentTrucoCall == null) {
-      this.currentTrucoCall = TrucoCall.TRUCO;
-    } else if (this.currentTrucoCall.hasNext() && !playerId.equals(trucoCaller)) {
-      this.currentTrucoCall = this.currentTrucoCall.next();
-    } else {
-      throw new InvalidTrucoCallException();
-    }
+    final var callLevel = this.trucoFlow.call(playerId);
 
     if (this.status != RoundStatus.TRUCO_IN_PROGRESS) {
       this.turnBeforeTrucoCall = this.currentTurn;
     }
 
-    this.trucoCaller = playerId;
     this.status = RoundStatus.TRUCO_IN_PROGRESS;
-    this.addDomainEvent(new TrucoCalledEvent(this.seatOf(playerId), this.currentTrucoCall));
+    this.addDomainEvent(new TrucoCalledEvent(this.seatOf(playerId), callLevel));
     this.changeTurnTo(this.getOpponent(playerId));
   }
 
@@ -228,8 +216,8 @@ final class Round extends EntityBase<RoundId> {
     this.validateStatus(RoundStatus.TRUCO_IN_PROGRESS);
     this.validateTurn(playerId);
 
-    final var currentCall = this.currentTrucoCall;
-    this.trucoPointsAtStake = this.currentTrucoCall.pointsIfAccepted();
+    final var currentCall = this.trucoFlow.getCurrentCall();
+    this.trucoFlow.accept();
     this.status = RoundStatus.PLAYING;
     final var nextTurn = this.turnBeforeTrucoCall;
     this.turnBeforeTrucoCall = null;
@@ -243,14 +231,15 @@ final class Round extends EntityBase<RoundId> {
     this.validateStatus(RoundStatus.TRUCO_IN_PROGRESS);
     this.validateTurn(playerId);
 
-    final var currentCall = this.currentTrucoCall;
+    final var currentCall = this.trucoFlow.getCurrentCall();
+    final var points = this.trucoFlow.pointsIfRejected();
     final var winner = this.getOpponent(playerId);
     this.status = RoundStatus.FINISHED;
     this.addDomainEvent(
         new TrucoRespondedEvent(this.seatOf(playerId), TrucoResponse.NO_QUIERO, currentCall));
     this.addDomainEvent(new RoundEndedEvent(this.seatOf(winner)));
     this.emitAvailableActionsUpdates();
-    return new ScoringResult(winner, this.currentTrucoCall.pointsIfRejected());
+    return new ScoringResult(winner, points);
   }
 
   ScoringResult acceptTrucoAndFold(final PlayerId playerId) {
@@ -258,7 +247,8 @@ final class Round extends EntityBase<RoundId> {
     this.validateStatus(RoundStatus.TRUCO_IN_PROGRESS);
     this.validateTurn(playerId);
 
-    final var currentCall = this.currentTrucoCall;
+    final var currentCall = this.trucoFlow.getCurrentCall();
+    final var points = this.trucoFlow.pointsIfAccepted();
     final var winner = this.getOpponent(playerId);
     this.status = RoundStatus.FINISHED;
     this.addDomainEvent(
@@ -266,7 +256,7 @@ final class Round extends EntityBase<RoundId> {
             currentCall));
     this.addDomainEvent(new RoundEndedEvent(this.seatOf(winner)));
     this.emitAvailableActionsUpdates();
-    return new ScoringResult(winner, this.currentTrucoCall.pointsIfAccepted());
+    return new ScoringResult(winner, points);
   }
 
   ScoringResult fold(final PlayerId playerId) {
@@ -283,13 +273,13 @@ final class Round extends EntityBase<RoundId> {
     this.addDomainEvent(new RoundEndedEvent(this.seatOf(winner)));
     this.emitAvailableActionsUpdates();
 
-    if (this.currentTrucoCall != null) {
-      return new ScoringResult(winner, this.currentTrucoCall.pointsIfAccepted());
+    if (this.trucoFlow.hasBeenCalled()) {
+      return new ScoringResult(winner, this.trucoFlow.getPointsAtStake());
     }
 
     final var isMano = playerId.equals(this.mano);
 
-    if (isMano && this.isFirstHand() && !this.envidoResolved) {
+    if (isMano && this.isFirstHand() && !this.envidoFlow.isResolved()) {
       return new ScoringResult(winner, 2);
     }
 
@@ -299,19 +289,18 @@ final class Round extends EntityBase<RoundId> {
   void callEnvido(final PlayerId playerId, final EnvidoCall call) {
 
     this.validateTurn(playerId);
-    this.validateCanCallEnvido(playerId, call);
+    this.validateCanCallEnvido(playerId);
 
     if (this.status != RoundStatus.ENVIDO_IN_PROGRESS) {
       this.turnBeforeEnvidoCall = this.currentTurn;
     }
 
-    this.envidoChain.add(call);
+    this.envidoFlow.call(call);
     this.status = RoundStatus.ENVIDO_IN_PROGRESS;
     this.addDomainEvent(new EnvidoCalledEvent(this.seatOf(playerId), call));
 
-    if (this.currentTrucoCall != null) {
-      this.currentTrucoCall = null;
-      this.trucoCaller = null;
+    if (this.trucoFlow.hasBeenCalled()) {
+      this.trucoFlow.cancel();
       this.turnBeforeTrucoCall = null;
     }
 
@@ -329,9 +318,10 @@ final class Round extends EntityBase<RoundId> {
         this.getHandOf(this.getOpponent(this.mano)).getCards());
 
     final var winner = pointsMano >= pointsPie ? this.mano : this.getOpponent(this.mano);
-    final var pointsWon = this.calculateEnvidoChainPoints(scorePlayerOne, scorePlayerTwo, winner);
+    final var pointsWon = this.envidoFlow.calculateAcceptedPoints(scorePlayerOne, scorePlayerTwo,
+        winner, this.playerOne, this.rules.pointsToWinGame());
 
-    this.envidoResolved = true;
+    this.envidoFlow.resolve();
     this.status = RoundStatus.PLAYING;
     final var winnerSeat = this.seatOf(winner);
     final var nextTurn = this.turnBeforeEnvidoCall;
@@ -351,8 +341,8 @@ final class Round extends EntityBase<RoundId> {
 
     final var winner = this.getOpponent(playerId);
 
-    final var points = this.calculateRejectedEnvidoPoints();
-    this.envidoResolved = true;
+    final var points = this.envidoFlow.calculateRejectedPoints();
+    this.envidoFlow.resolve();
     this.status = RoundStatus.PLAYING;
     this.addDomainEvent(
         new EnvidoResolvedEvent(EnvidoResponse.NO_QUIERO, this.seatOf(winner), null, null));
@@ -363,85 +353,39 @@ final class Round extends EntityBase<RoundId> {
     return new ScoringResult(winner, points);
   }
 
-  private void validateCanCallEnvido(final PlayerId playerId, final EnvidoCall call) {
+  private void validateCanCallEnvido(final PlayerId playerId) {
 
     if (!this.isFirstHand()) {
       throw new EnvidoNotAllowedException("El envido solo se puede cantar en la primera mano");
     }
 
-    if (this.hasPlayerPlayedInCurrentHand(playerId)
-        && this.status != RoundStatus.ENVIDO_IN_PROGRESS) {
+    if (this.status == RoundStatus.PLAYING && this.hasPlayerPlayedInCurrentHand(playerId)) {
       throw new EnvidoNotAllowedException("No podes cantar envido si ya jugaste una carta");
     }
 
-    if (this.envidoResolved) {
+    if (this.status == RoundStatus.TRUCO_IN_PROGRESS && this.hasPlayerPlayedInCurrentHand(
+        playerId)) {
+      throw new EnvidoNotAllowedException("No podes cantar envido si ya jugaste una carta");
+    }
+
+    if (this.envidoFlow.isResolved()) {
       throw new EnvidoNotAllowedException("El envido ya fue resuelto en esta ronda");
     }
 
-    if (this.status == RoundStatus.ENVIDO_IN_PROGRESS) {
-      final var lastCall = envidoChain.getLast();
-      if (!this.canRaiseEnvidoWith(call)) {
-        throw new EnvidoNotAllowedException("No se puede responder " + lastCall + " con " + call);
-      }
-
-      final boolean alreadyHasTwoEnvidos =
-          this.envidoChain.stream().filter(c -> c == EnvidoCall.ENVIDO).count() >= 2;
-
-      if (call == EnvidoCall.ENVIDO && alreadyHasTwoEnvidos) {
-        throw new EnvidoNotAllowedException("No se puede cantar más de dos envidos");
-      }
-
-    } else if (status != RoundStatus.PLAYING && status != RoundStatus.TRUCO_IN_PROGRESS) {
+    if (this.status != RoundStatus.ENVIDO_IN_PROGRESS && this.status != RoundStatus.PLAYING
+        && this.status != RoundStatus.TRUCO_IN_PROGRESS) {
       throw new EnvidoNotAllowedException("No se puede cantar envido en este momento");
     }
-  }
 
-  private boolean canRaiseEnvidoWith(final EnvidoCall call) {
-
-    if (this.envidoChain.isEmpty()) {
-      return true;
+    if (this.status == RoundStatus.TRUCO_IN_PROGRESS
+        && this.trucoFlow.getCurrentCall() != TrucoCall.TRUCO) {
+      throw new EnvidoNotAllowedException("Solo podes cantar envido cuando el truco es TRUCO");
     }
-
-    final var lastCall = this.envidoChain.getLast();
-    if (!lastCall.canBeRaisedWith(call)) {
-      return false;
-    }
-
-    if (call == EnvidoCall.ENVIDO) {
-      final long envidoCount = this.envidoChain.stream().filter(c -> c == EnvidoCall.ENVIDO)
-          .count();
-      return envidoCount < 2;
-    }
-    return true;
-  }
-
-  private int calculateEnvidoChainPoints(final int scorePlayerOne, final int scorePlayerTwo,
-      final PlayerId winner) {
-
-    final var hasFaltaEnvido = this.envidoChain.contains(EnvidoCall.FALTA_ENVIDO);
-
-    if (hasFaltaEnvido) {
-      final var rivalScore = winner.equals(this.playerOne) ? scorePlayerTwo : scorePlayerOne;
-      return this.rules.pointsToWinGame() - rivalScore;
-    }
-
-    return this.envidoChain.stream().mapToInt(EnvidoCall::points).sum();
-  }
-
-  private int calculateRejectedEnvidoPoints() {
-
-    if (this.envidoChain.size() == 1) {
-      return 1;
-    }
-
-    final var chainWithoutLast = this.envidoChain.subList(0, this.envidoChain.size() - 1);
-    return chainWithoutLast.stream().filter(call -> call != EnvidoCall.FALTA_ENVIDO)
-        .mapToInt(EnvidoCall::points).sum();
   }
 
   TrucoCall getCurrentTrucoCall() {
 
-    return currentTrucoCall;
+    return this.trucoFlow.getCurrentCall();
   }
 
   boolean isFirstHand() {
@@ -456,75 +400,8 @@ final class Round extends EntityBase<RoundId> {
 
   List<AvailableAction> getAvailableActions(final PlayerId playerId) {
 
-    if (this.status == RoundStatus.FINISHED) {
-      return List.of();
-    }
-
-    if (!this.currentTurn.equals(playerId)) {
-      return List.of();
-    }
-
-    final var actions = new ArrayList<AvailableAction>();
-
-    if (this.status == RoundStatus.PLAYING) {
-      actions.add(AvailableAction.of(ActionType.PLAY_CARD));
-      actions.add(AvailableAction.of(ActionType.FOLD));
-      this.addTrucoActions(playerId, actions);
-      this.addEnvidoActions(playerId, actions);
-    }
-
-    if (this.status == RoundStatus.TRUCO_IN_PROGRESS) {
-      actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO, TrucoResponse.QUIERO.name()));
-      actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO, TrucoResponse.NO_QUIERO.name()));
-      actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO,
-          TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO.name()));
-
-      if (this.currentTrucoCall.hasNext()) {
-        actions.add(AvailableAction.of(ActionType.CALL_TRUCO, this.currentTrucoCall.next().name()));
-      }
-    }
-
-    if (this.status == RoundStatus.ENVIDO_IN_PROGRESS) {
-      actions.add(AvailableAction.of(ActionType.RESPOND_ENVIDO, EnvidoResponse.QUIERO.name()));
-      actions.add(AvailableAction.of(ActionType.RESPOND_ENVIDO, EnvidoResponse.NO_QUIERO.name()));
-      this.addEnvidoRaiseActions(actions);
-    }
-
-    return actions;
-  }
-
-  private void addTrucoActions(final PlayerId playerId, final List<AvailableAction> actions) {
-
-    if (this.currentTrucoCall == null) {
-      actions.add(AvailableAction.of(ActionType.CALL_TRUCO, TrucoCall.TRUCO.name()));
-    } else if (this.currentTrucoCall.hasNext() && !playerId.equals(this.trucoCaller)) {
-      actions.add(AvailableAction.of(ActionType.CALL_TRUCO, this.currentTrucoCall.next().name()));
-    }
-  }
-
-  private void addEnvidoActions(final PlayerId playerId, final List<AvailableAction> actions) {
-
-    if (!this.isFirstHand() || this.envidoResolved) {
-      return;
-    }
-    if (this.hasPlayerPlayedInCurrentHand(playerId)) {
-      return;
-    }
-
-    if (this.envidoChain.isEmpty()) {
-      actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, EnvidoCall.ENVIDO.name()));
-      actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, EnvidoCall.REAL_ENVIDO.name()));
-      actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, EnvidoCall.FALTA_ENVIDO.name()));
-    }
-  }
-
-  private void addEnvidoRaiseActions(final List<AvailableAction> actions) {
-
-    for (final var call : EnvidoCall.values()) {
-      if (this.canRaiseEnvidoWith(call)) {
-        actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, call.name()));
-      }
-    }
+    return AvailableActionsPolicy.resolve(this.status, playerId, this.currentTurn, this.trucoFlow,
+        this.envidoFlow, this.isFirstHand(), this.hasPlayerPlayedInCurrentHand(playerId));
   }
 
   List<PlayedHandInfo> getPlayedHands() {
@@ -559,7 +436,7 @@ final class Round extends EntityBase<RoundId> {
 
   int getTrucoPointsAtStake() {
 
-    return trucoPointsAtStake;
+    return this.trucoFlow.getPointsAtStake();
   }
 
   RoundStatus getStatus() {
