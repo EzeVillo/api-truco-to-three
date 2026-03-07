@@ -22,6 +22,7 @@ import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
 import com.villo.truco.application.queries.GetMatchStateQuery;
 import com.villo.truco.infrastructure.http.dto.request.CallEnvidoRequest;
+import com.villo.truco.infrastructure.http.dto.request.CreateMatchRequest;
 import com.villo.truco.infrastructure.http.dto.request.JoinMatchRequest;
 import com.villo.truco.infrastructure.http.dto.request.PlayCardRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondEnvidoRequest;
@@ -94,10 +95,11 @@ public final class MatchController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateMatchResponse.class))),
       @ApiResponse(responseCode = "422", description = "No se pudo crear la partida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<CreateMatchResponse> createMatch() {
+  public ResponseEntity<CreateMatchResponse> createMatch(
+      @RequestBody final CreateMatchRequest request) {
 
     LOGGER.info("HTTP createMatch requested");
-    final var dto = this.createMatch.handle(new CreateMatchCommand());
+    final var dto = this.createMatch.handle(new CreateMatchCommand(request.gamesToPlay()));
     return ResponseEntity.ok(CreateMatchResponse.from(dto));
   }
 

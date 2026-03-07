@@ -74,12 +74,27 @@ class HttpSecurityIntegrationTest {
   @Test
   void shouldAllowUnauthenticatedCreateMatchEndpoint() throws Exception {
 
+    final var body = "{\"gamesToPlay\":3}";
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/matches"))
-        .POST(HttpRequest.BodyPublishers.noBody()).build();
+        .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body))
+        .build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
     assertEquals(200, response.statusCode());
+  }
+
+  @Test
+  void shouldRejectInvalidGamesToPlayOnCreateMatch() throws Exception {
+
+    final var body = "{\"gamesToPlay\":7}";
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/matches"))
+        .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body))
+        .build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(422, response.statusCode());
   }
 
   @Test

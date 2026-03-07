@@ -5,6 +5,8 @@ import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 
 final class ScoringPolicy {
 
+  private static final int POINTS_TO_WIN_GAME = 3;
+
   private ScoringPolicy() {
 
   }
@@ -13,10 +15,10 @@ final class ScoringPolicy {
       final int gamesWonPlayerOne, final int gamesWonPlayerTwo, final PlayerId playerOne,
       final PlayerId playerTwo, final MatchRules rules) {
 
-    final boolean oneExceeded = scorePlayerOne > rules.pointsToWinGame();
-    final boolean twoExceeded = scorePlayerTwo > rules.pointsToWinGame();
-    final boolean oneWon = scorePlayerOne == rules.pointsToWinGame();
-    final boolean twoWon = scorePlayerTwo == rules.pointsToWinGame();
+    final boolean oneExceeded = scorePlayerOne > POINTS_TO_WIN_GAME;
+    final boolean twoExceeded = scorePlayerTwo > POINTS_TO_WIN_GAME;
+    final boolean oneWon = scorePlayerOne == POINTS_TO_WIN_GAME;
+    final boolean twoWon = scorePlayerTwo == POINTS_TO_WIN_GAME;
 
     final PlayerId gameWinner;
     if (oneExceeded) {

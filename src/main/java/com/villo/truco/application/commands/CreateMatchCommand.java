@@ -1,5 +1,5 @@
 package com.villo.truco.application.commands;
 
-public record CreateMatchCommand() {
+public record CreateMatchCommand(int gamesToPlay) {
 
 }

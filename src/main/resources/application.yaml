@@ -3,9 +3,6 @@ spring:
     name: truco
 
 truco:
-  match:
-    games-to-win: 3
-    points-to-win-game: 3
   security:
     jwt-secret: ${TRUCO_JWT_SECRET:truco-local-dev-secret-key-32-bytes}
     issuer: ${TRUCO_JWT_ISSUER:truco-api}

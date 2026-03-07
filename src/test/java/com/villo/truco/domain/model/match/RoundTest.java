@@ -10,7 +10,6 @@ import com.villo.truco.domain.model.match.exceptions.InvalidTrucoCallException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
-import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import java.util.List;
@@ -30,7 +29,7 @@ class RoundTest {
 
     this.mano = PlayerId.generate();
     this.pie = PlayerId.generate();
-    this.round = Round.create(1, this.mano, this.mano, this.pie, MatchRules.defaultRules());
+    this.round = Round.create(1, this.mano, this.mano, this.pie);
   }
 
   private void playCardFromHand(final PlayerId playerId) {

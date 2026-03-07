@@ -9,6 +9,8 @@ import java.util.List;
 
 final class EnvidoFlow {
 
+  private static final int POINTS_TO_WIN_GAME = 3;
+
   private final List<EnvidoCall> chain = new ArrayList<>();
   private boolean resolved;
 
@@ -74,13 +76,13 @@ final class EnvidoFlow {
   }
 
   int calculateAcceptedPoints(final int scorePlayerOne, final int scorePlayerTwo,
-      final PlayerId winner, final PlayerId playerOne, final int pointsToWinGame) {
+      final PlayerId winner, final PlayerId playerOne) {
 
     final var hasFaltaEnvido = this.chain.contains(EnvidoCall.FALTA_ENVIDO);
 
     if (hasFaltaEnvido) {
       final var rivalScore = winner.equals(playerOne) ? scorePlayerTwo : scorePlayerOne;
-      return pointsToWinGame - rivalScore;
+      return POINTS_TO_WIN_GAME - rivalScore;
     }
 
     return this.chain.stream().mapToInt(EnvidoCall::points).sum();

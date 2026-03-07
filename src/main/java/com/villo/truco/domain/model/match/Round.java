@@ -22,7 +22,6 @@ import com.villo.truco.domain.model.match.valueobjects.CurrentHandInfo;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResult;
-import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.PlayedHandInfo;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
@@ -34,7 +33,6 @@ import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.shared.EntityBase;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 final class Round extends EntityBase<RoundId> {
@@ -44,7 +42,6 @@ final class Round extends EntityBase<RoundId> {
 
   private final PlayerId playerOne;
   private final PlayerId playerTwo;
-  private final MatchRules rules;
 
   private final Hand handPlayerOne;
   private final Hand handPlayerTwo;
@@ -59,14 +56,13 @@ final class Round extends EntityBase<RoundId> {
 
   private Round(final RoundId id, final int roundNumber, final PlayerId mano,
       final PlayerId playerOne, final PlayerId playerTwo, final Hand handPlayerOne,
-      final Hand handPlayerTwo, final MatchRules rules) {
+      final Hand handPlayerTwo) {
 
     super(id);
     this.roundNumber = roundNumber;
     this.mano = mano;
     this.playerOne = playerOne;
     this.playerTwo = playerTwo;
-    this.rules = rules;
     this.handPlayerOne = handPlayerOne;
     this.handPlayerTwo = handPlayerTwo;
     this.currentTurn = mano;
@@ -74,16 +70,14 @@ final class Round extends EntityBase<RoundId> {
   }
 
   static Round create(final int roundNumber, final PlayerId mano, final PlayerId playerOne,
-      final PlayerId playerTwo, final MatchRules rules) {
-
-    Objects.requireNonNull(rules, "MatchRules cannot be null");
+      final PlayerId playerTwo) {
 
     final var deck = Deck.create();
     final var handPlayerOne = Hand.of(deck.dealOne(), deck.dealOne(), deck.dealOne());
     final var handPlayerTwo = Hand.of(deck.dealOne(), deck.dealOne(), deck.dealOne());
 
     final var round = new Round(RoundId.generate(), roundNumber, mano, playerOne, playerTwo,
-        handPlayerOne, handPlayerTwo, rules);
+        handPlayerOne, handPlayerTwo);
     round.emitInitialPrivateState();
     return round;
   }
@@ -323,7 +317,7 @@ final class Round extends EntityBase<RoundId> {
 
     final var winner = pointsMano >= pointsPie ? this.mano : this.getOpponent(this.mano);
     final var pointsWon = this.envidoFlow.calculateAcceptedPoints(scorePlayerOne, scorePlayerTwo,
-        winner, this.playerOne, this.rules.pointsToWinGame());
+        winner, this.playerOne);
 
     this.envidoFlow.resolve();
     this.status = RoundStatus.PLAYING;

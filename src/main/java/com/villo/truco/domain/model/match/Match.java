@@ -73,7 +73,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public static Match create(final PlayerId playerOne, final PlayerId playerTwo) {
 
-    return create(playerOne, playerTwo, MatchRules.defaultRules());
+    return create(playerOne, playerTwo, MatchRules.fromGamesToPlay(5));
   }
 
   public static Match create(final PlayerId playerOne, final PlayerId playerTwo,
@@ -87,9 +87,8 @@ public final class Match extends AggregateBase<MatchId> {
     }
     final var match = new Match(MatchId.generate(), playerOne, playerTwo, InviteCode.generate(),
         rules);
-    LOGGER.info(
-        "Match created: matchId={}, playerOne={}, playerTwo={}, rules={{gamesToWin={}, pointsToWinGame={}}}",
-        match.getId(), playerOne, playerTwo, rules.gamesToWin(), rules.pointsToWinGame());
+    LOGGER.info("Match created: matchId={}, playerOne={}, playerTwo={}, rules={gamesToWin={}}",
+        match.getId(), playerOne, playerTwo, rules.gamesToWin());
     return match;
   }
 
@@ -290,8 +289,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.roundNumber++;
     final var mano =
         this.roundNumber % 2 == 1 ? this.firstManoOfGame : this.getOpponent(this.firstManoOfGame);
-    this.currentRound = Round.create(this.roundNumber, mano, this.playerOne, this.playerTwo,
-        this.rules);
+    this.currentRound = Round.create(this.roundNumber, mano, this.playerOne, this.playerTwo);
     LOGGER.debug("Round started: matchId={}, gameNumber={}, roundNumber={}, mano={}", this.id,
         this.gameNumber, this.roundNumber, mano);
     this.collectRoundEvents();

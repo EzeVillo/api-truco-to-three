@@ -36,18 +36,16 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(MatchRulesProperties.class)
 public class UseCaseConfiguration {
 
   @Bean
-  MatchRules matchRules(final MatchRulesProperties properties) {
+  MatchRules matchRules() {
 
-    return new MatchRules(properties.getGamesToWin(), properties.getPointsToWinGame());
+    return MatchRules.fromGamesToPlay(5);
   }
 
   @Bean
@@ -58,9 +56,9 @@ public class UseCaseConfiguration {
 
   @Bean
   CreateMatchUseCase createMatchCommandHandler(final MatchRepository matchRepository,
-      final MatchRules matchRules, final PlayerTokenProvider tokenProvider) {
+      final PlayerTokenProvider tokenProvider) {
 
-    return new CreateMatchCommandHandler(matchRepository, matchRules, tokenProvider);
+    return new CreateMatchCommandHandler(matchRepository, tokenProvider);
   }
 
   @Bean

@@ -2,10 +2,7 @@ package com.villo.truco.domain.model.match.valueobjects;
 
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchRulesException;
 
-public record MatchRules(int gamesToWin, int pointsToWinGame) {
-
-  private static final int DEFAULT_GAMES_TO_WIN = 3;
-  private static final int DEFAULT_POINTS_TO_WIN_GAME = 3;
+public record MatchRules(int gamesToWin) {
 
   public MatchRules {
 
@@ -13,14 +10,16 @@ public record MatchRules(int gamesToWin, int pointsToWinGame) {
       throw new InvalidMatchRulesException("gamesToWin must be greater than zero");
     }
 
-    if (pointsToWinGame <= 0) {
-      throw new InvalidMatchRulesException("pointsToWinGame must be greater than zero");
-    }
   }
 
-  public static MatchRules defaultRules() {
+  public static MatchRules fromGamesToPlay(final int gamesToPlay) {
 
-    return new MatchRules(DEFAULT_GAMES_TO_WIN, DEFAULT_POINTS_TO_WIN_GAME);
+    if (gamesToPlay != 1 && gamesToPlay != 3 && gamesToPlay != 5) {
+      throw new InvalidMatchRulesException("gamesToPlay must be one of: 1, 3, 5");
+    }
+
+    final var gamesToWin = gamesToPlay / 2 + 1;
+    return new MatchRules(gamesToWin);
   }
 
 }

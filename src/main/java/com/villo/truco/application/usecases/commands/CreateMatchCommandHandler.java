@@ -12,14 +12,12 @@ import com.villo.truco.domain.ports.MatchRepository;
 public final class CreateMatchCommandHandler implements CreateMatchUseCase {
 
   private final MatchRepository matchRepository;
-  private final MatchRules matchRules;
   private final PlayerTokenProvider tokenProvider;
 
   public CreateMatchCommandHandler(final MatchRepository matchRepository,
-      final MatchRules matchRules, final PlayerTokenProvider tokenProvider) {
+      final PlayerTokenProvider tokenProvider) {
 
     this.matchRepository = matchRepository;
-    this.matchRules = matchRules;
     this.tokenProvider = tokenProvider;
   }
 
@@ -28,7 +26,8 @@ public final class CreateMatchCommandHandler implements CreateMatchUseCase {
 
     final var playerOneId = PlayerId.generate();
     final var playerTwoId = PlayerId.generate();
-    final var match = Match.create(playerOneId, playerTwoId, this.matchRules);
+    final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay());
+    final var match = Match.create(playerOneId, playerTwoId, rules);
 
     this.matchRepository.save(match);
 
