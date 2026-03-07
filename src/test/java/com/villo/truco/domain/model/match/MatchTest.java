@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
+import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
@@ -535,6 +536,21 @@ class MatchTest {
       // el score del nuevo juego debe ser 0-0
       assertThat(match.getScorePlayerOne()).isZero();
       assertThat(match.getScorePlayerTwo()).isZero();
+    }
+
+    @Test
+    @DisplayName("emite GAME_SCORE_CHANGED cuando cambia la serie")
+    void emitsGameScoreChangedWhenSeriesScoreChanges() {
+
+      final var match = matchInProgress();
+      match.clearDomainEvents();
+
+      finishGame(match, playerOne);
+
+      assertThat(match.getDomainEvents()).anyMatch(event ->
+          event instanceof GameScoreChangedEvent gameScoreChangedEvent
+              && gameScoreChangedEvent.getGamesWonPlayerOne() == 1
+              && gameScoreChangedEvent.getGamesWonPlayerTwo() == 0);
     }
 
   }

@@ -1,6 +1,7 @@
 package com.villo.truco.domain.model.match;
 
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
+import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
@@ -330,6 +331,9 @@ public final class Match extends AggregateBase<MatchId> {
     } else {
       this.gamesWonPlayerTwo++;
     }
+
+    this.addDomainEvent(
+        new GameScoreChangedEvent(this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
 
     LOGGER.info("Game resolved: matchId={}, gameWinner={}, gamesWon={} - {}", this.id, gameWinner,
         this.gamesWonPlayerOne, this.gamesWonPlayerTwo);

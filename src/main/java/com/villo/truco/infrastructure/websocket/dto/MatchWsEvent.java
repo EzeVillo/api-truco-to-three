@@ -5,6 +5,7 @@ import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
 import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
 import com.villo.truco.domain.model.match.events.FoldedEvent;
+import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
@@ -39,6 +40,7 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
       case RoundStartedEvent e -> mapRoundStarted(e);
       case RoundEndedEvent e -> mapRoundEnded(e);
       case GameStartedEvent e -> mapGameStarted(e);
+      case GameScoreChangedEvent e -> mapGameScoreChanged(e);
       case MatchFinishedEvent e -> mapMatchFinished(e);
       case FoldedEvent e -> mapFolded(e);
       case PlayerHandUpdatedEvent e -> mapPlayerHandUpdated(e);
@@ -136,6 +138,14 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
   private static Map<String, Object> mapGameStarted(final GameStartedEvent event) {
 
     return Map.of("gameNumber", event.getGameNumber());
+  }
+
+  private static Map<String, Object> mapGameScoreChanged(final GameScoreChangedEvent event) {
+
+    final var map = new LinkedHashMap<String, Object>();
+    map.put("gamesWonPlayerOne", event.getGamesWonPlayerOne());
+    map.put("gamesWonPlayerTwo", event.getGamesWonPlayerTwo());
+    return map;
   }
 
   private static Map<String, Object> mapMatchFinished(final MatchFinishedEvent event) {
