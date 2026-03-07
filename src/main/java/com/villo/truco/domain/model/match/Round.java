@@ -1,5 +1,10 @@
 package com.villo.truco.domain.model.match;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
@@ -32,10 +37,6 @@ import com.villo.truco.domain.model.match.valueobjects.ScoringResult;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.shared.EntityBase;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 final class Round extends EntityBase<RoundId> {
 
@@ -374,6 +375,10 @@ final class Round extends EntityBase<RoundId> {
 
     if (this.envidoFlow.isResolved()) {
       throw new EnvidoNotAllowedException("El envido ya fue resuelto en esta ronda");
+    }
+
+    if (this.status == RoundStatus.PLAYING && this.trucoFlow.hasBeenCalled()) {
+      throw new EnvidoNotAllowedException("No podes cantar envido despues de aceptar el truco");
     }
 
     if (this.status != RoundStatus.ENVIDO_IN_PROGRESS && this.status != RoundStatus.PLAYING

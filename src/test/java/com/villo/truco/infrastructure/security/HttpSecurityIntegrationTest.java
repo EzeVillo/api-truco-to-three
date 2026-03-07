@@ -1,20 +1,21 @@
 package com.villo.truco.infrastructure.security;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import com.villo.truco.application.ports.PlayerTokenProvider;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
+import com.villo.truco.application.ports.PlayerTokenProvider;
+import com.villo.truco.domain.model.match.valueobjects.MatchId;
+import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
     "truco.security.issuer=test-issuer",
@@ -76,6 +77,22 @@ class HttpSecurityIntegrationTest {
 
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/matches"))
         .POST(HttpRequest.BodyPublishers.noBody()).build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(200, response.statusCode());
+  }
+
+  @Test
+  void shouldAllowPreflightForJoinEndpoint() throws Exception {
+
+    final var matchId = UUID.randomUUID().toString();
+    final var request = HttpRequest.newBuilder(
+            URI.create(this.baseUrl() + "/api/matches/" + matchId + "/join"))
+        .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+        .header("Origin", "http://localhost:5173")
+        .header("Access-Control-Request-Method", "POST")
+        .build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 

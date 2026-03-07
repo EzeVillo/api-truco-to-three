@@ -1,8 +1,14 @@
 package com.villo.truco.domain.model.match;
 
+import java.util.List;
+import java.util.Objects;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
@@ -13,11 +19,6 @@ import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
-import java.util.List;
-import java.util.Objects;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 class RoundTest {
 
@@ -398,6 +399,16 @@ class RoundTest {
   }
 
   @Test
+  void shouldThrowWhenCallingEnvidoAfterTrucoAccepted() {
+
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
+
+    assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
+        EnvidoNotAllowedException.class);
+  }
+
+  @Test
   @DisplayName("no es tu turno → lista vacía")
   void noActionsWhenNotYourTurn() {
 
@@ -499,6 +510,18 @@ class RoundTest {
     assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
     assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
         EnvidoNotAllowedException.class);
+  }
+
+  @Test
+  @DisplayName("truco aceptado y sin cartas jugadas → no aparece CALL_ENVIDO")
+  void noEnvidoActionsAfterTrucoAccepted() {
+
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
+
+    final var actions = this.round.getAvailableActions(this.mano);
+
+    assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
   }
 
   @Test

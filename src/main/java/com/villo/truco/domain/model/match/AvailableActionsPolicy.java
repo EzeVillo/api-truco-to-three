@@ -35,7 +35,9 @@ final class AvailableActionsPolicy {
       actions.add(AvailableAction.of(ActionType.PLAY_CARD));
       actions.add(AvailableAction.of(ActionType.FOLD));
       addTrucoActions(playerId, trucoFlow, actions);
-      addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoFlow, isFirstHand, actions);
+      if (!trucoFlow.hasBeenCalled()) {
+        addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoFlow, isFirstHand, actions);
+      }
     }
 
     if (status == RoundStatus.TRUCO_IN_PROGRESS) {
