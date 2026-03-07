@@ -19,7 +19,7 @@ final class AvailableActionsPolicy {
 
   static List<AvailableAction> resolve(final RoundStatus status, final PlayerId playerId,
       final PlayerId currentTurn, final TrucoFlow trucoFlow, final EnvidoFlow envidoFlow,
-      final boolean isFirstHand, final boolean hasPlayerPlayedInCurrentHand) {
+      final boolean isFirstHand, final boolean hasPlayerPlayedInCurrentHand, final boolean isMano) {
 
     if (status == RoundStatus.FINISHED) {
       return List.of();
@@ -33,7 +33,9 @@ final class AvailableActionsPolicy {
 
     if (status == RoundStatus.PLAYING) {
       actions.add(AvailableAction.of(ActionType.PLAY_CARD));
-      actions.add(AvailableAction.of(ActionType.FOLD));
+      if (canFold(trucoFlow, envidoFlow, isFirstHand, isMano)) {
+        actions.add(AvailableAction.of(ActionType.FOLD));
+      }
       addTrucoActions(playerId, trucoFlow, actions);
       if (!trucoFlow.hasBeenCalled()) {
         addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoFlow, isFirstHand, actions);
@@ -74,6 +76,12 @@ final class AvailableActionsPolicy {
       actions.add(
           AvailableAction.of(ActionType.CALL_TRUCO, trucoFlow.getCurrentCall().next().name()));
     }
+  }
+
+  private static boolean canFold(final TrucoFlow trucoFlow, final EnvidoFlow envidoFlow,
+      final boolean isFirstHand, final boolean isMano) {
+
+    return !isMano || !isFirstHand || envidoFlow.isResolved() || trucoFlow.hasBeenCalled();
   }
 
   private static void addEnvidoActions(final boolean hasPlayerPlayedInCurrentHand,

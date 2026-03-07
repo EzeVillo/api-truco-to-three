@@ -4,14 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
+import com.villo.truco.domain.model.match.exceptions.FoldNotAllowedException;
 import com.villo.truco.domain.model.match.exceptions.InvalidTrucoCallException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
+import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import java.util.List;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
@@ -218,12 +221,37 @@ class RoundTest {
   }
 
   @Test
+  @DisplayName("no permite irse al mazo siendo mano en primera mano sin envido ni truco aceptado")
+  void shouldBlockFoldForManoOnFirstHandWithoutEnvidoAndWithoutAcceptedTruco() {
+
+    assertThatThrownBy(() -> this.round.fold(this.mano)).isInstanceOf(
+        FoldNotAllowedException.class);
+  }
+
+  @Test
+  @DisplayName("permite irse al mazo siendo mano si el truco ya fue aceptado")
+  void shouldAllowFoldForManoAfterAcceptedTruco() {
+
+    this.round.callTruco(this.mano);
+    this.round.acceptTruco(this.pie);
+
+    final var result = this.round.fold(this.mano);
+
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(result.points()).isEqualTo(2);
+    assertThat(result.winner()).isEqualTo(this.pie);
+  }
+
+  @Test
   void trucoCancelledWhenEnvidoCalled() {
 
+    this.round.clearDomainEvents();
     this.round.callTruco(this.mano);
     this.round.callEnvido(this.pie, EnvidoCall.ENVIDO);
 
     assertThat(this.round.getStatus()).isEqualTo(RoundStatus.ENVIDO_IN_PROGRESS);
+    assertThat(this.round.getDomainEvents()).anyMatch(
+        event -> event instanceof TrucoCancelledByEnvidoEvent);
   }
 
   // ===== ENVIDO =====
@@ -264,6 +292,8 @@ class RoundTest {
 
     assertThatThrownBy(() -> this.round.callEnvido(this.mano, EnvidoCall.ENVIDO)).isInstanceOf(
         EnvidoNotAllowedException.class);
+    assertThat(this.round.getStatus()).isEqualTo(RoundStatus.TRUCO_IN_PROGRESS);
+    assertThat(this.round.getCurrentTrucoCall()).isEqualTo(TrucoCall.RETRUCO);
   }
 
   @Test
@@ -414,13 +444,13 @@ class RoundTest {
   }
 
   @Test
-  @DisplayName("es tu turno en primera mano → PLAY_CARD, FOLD, CALL_TRUCO(TRUCO), CALL_ENVIDO(ENVIDO, REAL_ENVIDO, FALTA_ENVIDO)")
+  @DisplayName("es tu turno siendo mano en primera mano sin envido/truco aceptado → sin FOLD")
   void allActionsAvailableOnFirstHandWithTurn() {
 
     final var actions = this.round.getAvailableActions(this.mano);
 
     assertThat(actionsOfType(actions, "PLAY_CARD")).isEmpty(); // sin parámetros
-    assertThat(actionsOfType(actions, "FOLD")).isEmpty();
+    assertThat(hasActionType(actions, "FOLD")).isFalse();
     assertThat(actionsOfType(actions, "CALL_TRUCO")).containsExactly("TRUCO");
     assertThat(actionsOfType(actions, "CALL_ENVIDO")).containsExactlyInAnyOrder("ENVIDO",
         "REAL_ENVIDO", "FALTA_ENVIDO");
@@ -520,6 +550,7 @@ class RoundTest {
     final var actions = this.round.getAvailableActions(this.mano);
 
     assertThat(hasActionType(actions, "CALL_ENVIDO")).isFalse();
+    assertThat(hasActionType(actions, "FOLD")).isTrue();
   }
 
   @Test

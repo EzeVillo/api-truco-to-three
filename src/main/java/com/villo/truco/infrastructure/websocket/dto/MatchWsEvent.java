@@ -16,6 +16,7 @@ import com.villo.truco.domain.model.match.events.RoundEndedEvent;
 import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.events.ScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.TrucoCalledEvent;
+import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
 import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
@@ -33,6 +34,7 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
       case HandResolvedEvent e -> mapHandResolved(e);
       case TurnChangedEvent e -> mapTurnChanged(e);
       case TrucoCalledEvent e -> mapTrucoCalled(e);
+      case TrucoCancelledByEnvidoEvent e -> mapTrucoCancelledByEnvido(e);
       case TrucoRespondedEvent e -> mapTrucoResponded(e);
       case EnvidoCalledEvent e -> mapEnvidoCalled(e);
       case EnvidoResolvedEvent e -> mapEnvidoResolved(e);
@@ -81,6 +83,12 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
     map.put("callerSeat", event.getCallerSeat().name());
     map.put("call", event.getCall().name());
     return map;
+  }
+
+  private static Map<String, Object> mapTrucoCancelledByEnvido(
+      final TrucoCancelledByEnvidoEvent event) {
+
+    return Map.of();
   }
 
   private static Map<String, Object> mapTrucoResponded(final TrucoRespondedEvent event) {

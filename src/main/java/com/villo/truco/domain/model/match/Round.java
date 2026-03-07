@@ -11,9 +11,11 @@ import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.RoundEndedEvent;
 import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.events.TrucoCalledEvent;
+import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
 import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
+import com.villo.truco.domain.model.match.exceptions.FoldNotAllowedException;
 import com.villo.truco.domain.model.match.exceptions.InvalidRoundStateException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
@@ -261,6 +263,8 @@ final class Round extends EntityBase<RoundId> {
       throw new InvalidRoundStateException(this.status, RoundStatus.PLAYING);
     }
 
+    this.validateFoldAllowed(playerId);
+
     this.status = RoundStatus.FINISHED;
     final var winner = this.getOpponent(playerId);
     this.addDomainEvent(new FoldedEvent(this.seatOf(playerId)));
@@ -271,17 +275,32 @@ final class Round extends EntityBase<RoundId> {
       return new ScoringResult(winner, this.trucoFlow.getPointsAtStake());
     }
 
-    final var isMano = playerId.equals(this.mano);
-
-    if (isMano && this.isFirstHand() && !this.envidoFlow.isResolved()) {
-      return new ScoringResult(winner, 2);
-    }
+    // Regla anterior comentada: en primera mano, si mano se iba al mazo sin envido resuelto,
+    // se otorgaban 2 puntos al rival. En partidas a 3 puntos exactos esta regla habilitaba
+    // un loop de folds que rompía la partida. Ahora ese fold está bloqueado en
+    // validateFoldAllowed(...), salvo que el truco ya haya sido cantado y aceptado.
+    // if (isMano && this.isFirstHand() && !this.envidoFlow.isResolved()) {
+    //   return new ScoringResult(winner, 2);
+    // }
 
     return new ScoringResult(winner, 1);
   }
 
+  private void validateFoldAllowed(final PlayerId playerId) {
+
+    final var isMano = playerId.equals(this.mano);
+
+    if (isMano && this.isFirstHand() && !this.envidoFlow.isResolved()
+        && !this.trucoFlow.hasBeenCalled()) {
+      throw new FoldNotAllowedException(
+          "No podes irte al mazo siendo mano en primera mano sin envido cantado. "
+              + "Solo se permite si el truco fue cantado y aceptado.");
+    }
+  }
+
   void callEnvido(final PlayerId playerId, final EnvidoCall call) {
 
+    final var previousStatus = this.status;
     this.validateTurn(playerId);
     this.validateCanCallEnvido(playerId);
 
@@ -297,9 +316,11 @@ final class Round extends EntityBase<RoundId> {
     this.status = RoundStatus.ENVIDO_IN_PROGRESS;
     this.addDomainEvent(new EnvidoCalledEvent(this.seatOf(playerId), call));
 
-    if (this.trucoFlow.hasBeenCalled()) {
+    if (previousStatus == RoundStatus.TRUCO_IN_PROGRESS
+        && this.trucoFlow.getCurrentCall() == TrucoCall.TRUCO) {
       this.trucoFlow.cancel();
       this.turnBeforeTrucoCall = null;
+      this.addDomainEvent(new TrucoCancelledByEnvidoEvent());
     }
 
     this.changeTurnTo(this.getOpponent(playerId));
@@ -403,7 +424,8 @@ final class Round extends EntityBase<RoundId> {
   List<AvailableAction> getAvailableActions(final PlayerId playerId) {
 
     return AvailableActionsPolicy.resolve(this.status, playerId, this.currentTurn, this.trucoFlow,
-        this.envidoFlow, this.isFirstHand(), this.hasPlayerPlayedInCurrentHand(playerId));
+        this.envidoFlow, this.isFirstHand(), this.hasPlayerPlayedInCurrentHand(playerId),
+        this.mano.equals(playerId));
   }
 
   List<PlayedHandInfo> getPlayedHands() {
