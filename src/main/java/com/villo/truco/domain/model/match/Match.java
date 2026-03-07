@@ -1,5 +1,11 @@
 package com.villo.truco.domain.model.match;
 
+import java.util.List;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -23,10 +29,6 @@ import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.shared.AggregateBase;
-import java.util.List;
-import java.util.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class Match extends AggregateBase<MatchId> {
 
@@ -160,10 +162,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.currentRound.getRoundWinner().ifPresent(winner -> {
       final var newGameStarted = this.addGamePoints(winner,
           this.currentRound.getTrucoPointsAtStake());
-
-      if (!newGameStarted) {
-        this.startNewRound();
-      }
+      this.startNewRoundIfNeeded(newGameStarted);
     });
   }
 
@@ -198,10 +197,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
-
-    if (!newGameStarted) {
-      this.startNewRound();
-    }
+    this.startNewRoundIfNeeded(newGameStarted);
   }
 
   public void acceptTrucoAndFold(final PlayerId playerId) {
@@ -216,10 +212,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
-
-    if (!newGameStarted) {
-      this.startNewRound();
-    }
+    this.startNewRoundIfNeeded(newGameStarted);
   }
 
   public void fold(final PlayerId playerId) {
@@ -233,10 +226,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
-
-    if (!newGameStarted) {
-      this.startNewRound();
-    }
+    this.startNewRoundIfNeeded(newGameStarted);
   }
 
   public void callEnvido(final PlayerId playerId, final EnvidoCall call) {
@@ -274,7 +264,13 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.points());
-    this.checkGameFinished();
+  }
+
+  private void startNewRoundIfNeeded(final boolean newGameStarted) {
+
+    if (!newGameStarted && this.status == MatchStatus.IN_PROGRESS) {
+      this.startNewRound();
+    }
   }
 
   private void startNewGame() {
@@ -387,6 +383,7 @@ public final class Match extends AggregateBase<MatchId> {
     }
   }
 
+  @Override
   public MatchId getId() {
 
     return this.id;

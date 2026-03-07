@@ -2,7 +2,14 @@ package com.villo.truco.domain.model.match;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
+import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
+import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
+import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
@@ -12,10 +19,7 @@ import com.villo.truco.domain.model.match.valueobjects.InviteCode;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.villo.truco.domain.shared.DomainEventBase;
 
 class MatchTest {
 
@@ -533,6 +537,75 @@ class MatchTest {
       assertThat(match.getScorePlayerTwo()).isZero();
     }
 
+  }
+
+  @Nested
+  @DisplayName("regresion: eventos tras match terminado")
+  class EventosDespuesDeFinalizar {
+
+    @Test
+    @DisplayName("no inicia nueva ronda al finalizar por truco rechazado")
+    void doesNotStartNewRoundAfterMatchFinishedByRejectedTruco() {
+
+      final var match = Match.create(playerOne, playerTwo, new MatchRules(1, 1));
+      match.join(match.getInviteCode());
+      match.startMatch(playerOne);
+      match.startMatch(playerTwo);
+      match.clearDomainEvents();
+
+      final var trucoCaller = match.getCurrentTurn();
+      final var trucoResponder = trucoCaller.equals(playerOne) ? playerTwo : playerOne;
+
+      match.callTruco(trucoCaller);
+      match.rejectTruco(trucoResponder);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getCurrentRound()).isNull();
+      assertThat(match.getCurrentTurn()).isNull();
+
+      final var events = match.getDomainEvents();
+      assertNoRoundEventsAfterMatchFinished(events);
+    }
+
+    @Test
+    @DisplayName("no inicia nueva ronda al finalizar por fold")
+    void doesNotStartNewRoundAfterMatchFinishedByFold() {
+
+      final var match = Match.create(playerOne, playerTwo, new MatchRules(1, 1));
+      match.join(match.getInviteCode());
+      match.startMatch(playerOne);
+      match.startMatch(playerTwo);
+      match.clearDomainEvents();
+
+      final var folder = match.getCurrentTurn();
+
+      match.fold(folder);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getCurrentRound()).isNull();
+      assertThat(match.getCurrentTurn()).isNull();
+
+      final var events = match.getDomainEvents();
+      assertNoRoundEventsAfterMatchFinished(events);
+    }
+
+    private void assertNoRoundEventsAfterMatchFinished(final java.util.List<DomainEventBase> events) {
+
+      final var matchFinishedIndex =
+          java.util.stream.IntStream.range(0, events.size())
+              .filter(i -> events.get(i) instanceof MatchFinishedEvent)
+              .findFirst()
+              .orElse(-1);
+
+      assertThat(matchFinishedIndex).isGreaterThanOrEqualTo(0);
+
+      final var hasRoundEventsAfterMatchFinished = events.subList(matchFinishedIndex + 1,
+          events.size()).stream().anyMatch(
+              event -> event instanceof RoundStartedEvent
+                  || event instanceof AvailableActionsUpdatedEvent);
+
+      assertThat(hasRoundEventsAfterMatchFinished).isFalse();
+    }
   }
 
 }
