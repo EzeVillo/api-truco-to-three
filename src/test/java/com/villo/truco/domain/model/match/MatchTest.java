@@ -547,8 +547,8 @@ class MatchTest {
 
       finishGame(match, playerOne);
 
-      assertThat(match.getDomainEvents()).anyMatch(event ->
-          event instanceof GameScoreChangedEvent gameScoreChangedEvent
+      assertThat(match.getDomainEvents()).anyMatch(
+          event -> event instanceof GameScoreChangedEvent gameScoreChangedEvent
               && gameScoreChangedEvent.getGamesWonPlayerOne() == 1
               && gameScoreChangedEvent.getGamesWonPlayerTwo() == 0);
     }
