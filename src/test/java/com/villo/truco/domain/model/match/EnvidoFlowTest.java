@@ -294,7 +294,7 @@ class EnvidoFlowTest {
 
       flow.call(EnvidoCall.ENVIDO);
 
-      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne, 15)).isEqualTo(2);
+      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne)).isEqualTo(2);
     }
 
     @Test
@@ -303,7 +303,7 @@ class EnvidoFlowTest {
       flow.call(EnvidoCall.ENVIDO);
       flow.call(EnvidoCall.ENVIDO);
 
-      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne, 15)).isEqualTo(4);
+      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne)).isEqualTo(4);
     }
 
     @Test
@@ -311,7 +311,7 @@ class EnvidoFlowTest {
 
       flow.call(EnvidoCall.REAL_ENVIDO);
 
-      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne, 15)).isEqualTo(3);
+      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne)).isEqualTo(3);
     }
 
     @Test
@@ -320,17 +320,16 @@ class EnvidoFlowTest {
       flow.call(EnvidoCall.ENVIDO);
       flow.call(EnvidoCall.REAL_ENVIDO);
 
-      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne, 15)).isEqualTo(5);
+      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne)).isEqualTo(5);
     }
 
     @Test
-    @DisplayName("FALTA_ENVIDO con rival en 10 puntos y 15 para ganar → 5 puntos")
+    @DisplayName("FALTA_ENVIDO con rival en 0 puntos y 3 para ganar → 3 puntos")
     void faltaEnvidoCalculatesRemainingPointsForRival() {
 
       flow.call(EnvidoCall.FALTA_ENVIDO);
 
-      // playerOne wins, rival (playerTwo) has 10, points to win = 15
-      assertThat(flow.calculateAcceptedPoints(5, 10, playerOne, playerOne, 15)).isEqualTo(5);
+      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne)).isEqualTo(3);
     }
 
     @Test
@@ -339,8 +338,7 @@ class EnvidoFlowTest {
 
       flow.call(EnvidoCall.FALTA_ENVIDO);
 
-      // playerTwo wins, rival (playerOne) has 8, points to win = 15
-      assertThat(flow.calculateAcceptedPoints(8, 3, playerTwo, playerOne, 15)).isEqualTo(7);
+      assertThat(flow.calculateAcceptedPoints(1, 1, playerTwo, playerOne)).isEqualTo(2);
     }
 
     @Test
@@ -351,8 +349,7 @@ class EnvidoFlowTest {
       flow.call(EnvidoCall.REAL_ENVIDO);
       flow.call(EnvidoCall.FALTA_ENVIDO);
 
-      // playerOne wins, rival has 12, needs 15 → 3 points
-      assertThat(flow.calculateAcceptedPoints(5, 12, playerOne, playerOne, 15)).isEqualTo(3);
+      assertThat(flow.calculateAcceptedPoints(0, 0, playerOne, playerOne)).isEqualTo(3);
     }
 
   }
