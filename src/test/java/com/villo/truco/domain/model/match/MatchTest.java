@@ -2,10 +2,6 @@ package com.villo.truco.domain.model.match;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
@@ -20,6 +16,10 @@ import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.DomainEventBase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class MatchTest {
 
@@ -589,23 +589,21 @@ class MatchTest {
       assertNoRoundEventsAfterMatchFinished(events);
     }
 
-    private void assertNoRoundEventsAfterMatchFinished(final java.util.List<DomainEventBase> events) {
+    private void assertNoRoundEventsAfterMatchFinished(
+        final java.util.List<DomainEventBase> events) {
 
-      final var matchFinishedIndex =
-          java.util.stream.IntStream.range(0, events.size())
-              .filter(i -> events.get(i) instanceof MatchFinishedEvent)
-              .findFirst()
-              .orElse(-1);
+      final var matchFinishedIndex = java.util.stream.IntStream.range(0, events.size())
+          .filter(i -> events.get(i) instanceof MatchFinishedEvent).findFirst().orElse(-1);
 
       assertThat(matchFinishedIndex).isGreaterThanOrEqualTo(0);
 
       final var hasRoundEventsAfterMatchFinished = events.subList(matchFinishedIndex + 1,
-          events.size()).stream().anyMatch(
-              event -> event instanceof RoundStartedEvent
-                  || event instanceof AvailableActionsUpdatedEvent);
+          events.size()).stream().anyMatch(event -> event instanceof RoundStartedEvent
+          || event instanceof AvailableActionsUpdatedEvent);
 
       assertThat(hasRoundEventsAfterMatchFinished).isFalse();
     }
+
   }
 
 }

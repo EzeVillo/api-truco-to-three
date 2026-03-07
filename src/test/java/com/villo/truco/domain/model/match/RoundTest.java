@@ -1,14 +1,8 @@
 package com.villo.truco.domain.model.match;
 
-import java.util.List;
-import java.util.Objects;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
@@ -19,6 +13,11 @@ import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
+import java.util.List;
+import java.util.Objects;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class RoundTest {
 

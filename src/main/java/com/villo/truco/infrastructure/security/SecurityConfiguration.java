@@ -1,11 +1,10 @@
 package com.villo.truco.infrastructure.security;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,8 +24,6 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @Configuration
 @EnableConfigurationProperties(TrucoSecurityProperties.class)
@@ -71,13 +68,12 @@ public class SecurityConfiguration {
   SecurityFilterChain securityFilterChain(final HttpSecurity http) {
 
     return http.cors(Customizer.withDefaults()).csrf(AbstractHttpConfigurer::disable)
-      .sessionManagement(
+        .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(
-        auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-          .requestMatchers(HttpMethod.POST, "/api/matches").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/matches/*/join").permitAll()
-                .requestMatchers("/api/matches/**").authenticated().anyRequest().permitAll())
+        .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/matches").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/matches/*/join").permitAll()
+            .requestMatchers("/api/matches/**").authenticated().anyRequest().permitAll())
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults())).build();
   }
 
