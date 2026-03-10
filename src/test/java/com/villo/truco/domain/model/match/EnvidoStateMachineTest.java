@@ -12,18 +12,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class EnvidoFlowTest {
+class EnvidoStateMachineTest {
 
   private PlayerId playerOne;
   private PlayerId playerTwo;
-  private EnvidoFlow flow;
+  private EnvidoStateMachine flow;
 
   @BeforeEach
   void setUp() {
 
     this.playerOne = PlayerId.generate();
     this.playerTwo = PlayerId.generate();
-    this.flow = new EnvidoFlow();
+    this.flow = new EnvidoStateMachine();
   }
 
   @Nested

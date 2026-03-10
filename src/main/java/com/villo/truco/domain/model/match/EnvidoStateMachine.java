@@ -7,33 +7,33 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class EnvidoFlow {
+final class EnvidoStateMachine {
 
   private static final int POINTS_TO_WIN_GAME = 3;
 
   private final List<EnvidoCall> chain = new ArrayList<>();
   private boolean resolved;
 
-  EnvidoFlow() {
+  public EnvidoStateMachine() {
 
   }
 
-  boolean isResolved() {
+  public boolean isResolved() {
 
     return this.resolved;
   }
 
-  boolean isEmpty() {
+  public boolean isEmpty() {
 
     return this.chain.isEmpty();
   }
 
-  List<EnvidoCall> getChain() {
+  public List<EnvidoCall> getChain() {
 
     return Collections.unmodifiableList(this.chain);
   }
 
-  boolean canRaiseWith(final EnvidoCall call) {
+  public boolean canRaiseWith(final EnvidoCall call) {
 
     if (this.chain.isEmpty()) {
       return true;
@@ -45,13 +45,13 @@ final class EnvidoFlow {
     }
 
     if (call == EnvidoCall.ENVIDO) {
-      final long envidoCount = this.chain.stream().filter(c -> c == EnvidoCall.ENVIDO).count();
+      final var envidoCount = this.chain.stream().filter(c -> c == EnvidoCall.ENVIDO).count();
       return envidoCount < 2;
     }
     return true;
   }
 
-  void call(final EnvidoCall call) {
+  public void call(final EnvidoCall call) {
 
     if (!this.chain.isEmpty()) {
       final var lastCall = this.chain.getLast();
@@ -70,12 +70,12 @@ final class EnvidoFlow {
     this.chain.add(call);
   }
 
-  void resolve() {
+  public void resolve() {
 
     this.resolved = true;
   }
 
-  int calculateAcceptedPoints(final int scorePlayerOne, final int scorePlayerTwo,
+  public int calculateAcceptedPoints(final int scorePlayerOne, final int scorePlayerTwo,
       final PlayerId winner, final PlayerId playerOne) {
 
     final var hasFaltaEnvido = this.chain.contains(EnvidoCall.FALTA_ENVIDO);
@@ -88,7 +88,7 @@ final class EnvidoFlow {
     return this.chain.stream().mapToInt(EnvidoCall::points).sum();
   }
 
-  int calculateRejectedPoints() {
+  public int calculateRejectedPoints() {
 
     if (this.chain.size() == 1) {
       return 1;

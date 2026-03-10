@@ -125,23 +125,20 @@ public final class Match extends AggregateBase<MatchId> {
 
     this.validatePlayerInMatch(playerId);
 
-    if (playerId.equals(this.playerOne)) {
-      if (this.readyPlayerOne) {
-        LOGGER.debug("Player already marked ready: matchId={}, playerId={}", this.id, playerId);
-        return;
-      }
-      this.readyPlayerOne = true;
-    } else {
-      if (this.readyPlayerTwo) {
-        LOGGER.debug("Player already marked ready: matchId={}, playerId={}", this.id, playerId);
-        return;
-      }
-      this.readyPlayerTwo = true;
+    final var readyState = MatchReadyPolicy.markReady(this.readyPlayerOne, this.readyPlayerTwo,
+        playerId.equals(this.playerOne));
+
+    if (!readyState.changed()) {
+      LOGGER.debug("Player already marked ready: matchId={}, playerId={}", this.id, playerId);
+      return;
     }
+
+    this.readyPlayerOne = readyState.readyPlayerOne();
+    this.readyPlayerTwo = readyState.readyPlayerTwo();
 
     this.addDomainEvent(new PlayerReadyEvent(this.seatOf(playerId)));
 
-    if (this.readyPlayerOne && this.readyPlayerTwo) {
+    if (readyState.bothReady()) {
       this.status = MatchStatus.IN_PROGRESS;
       LOGGER.info("Match moved to IN_PROGRESS: matchId={}", this.id);
       this.startNewGame();
@@ -273,11 +270,14 @@ public final class Match extends AggregateBase<MatchId> {
 
   private void startNewGame() {
 
-    this.gameNumber++;
-    this.scorePlayerOne = 0;
-    this.scorePlayerTwo = 0;
-    this.roundNumber = 0;
-    this.firstManoOfGame = this.gameNumber % 2 == 1 ? this.playerOne : this.playerTwo;
+    final var state = MatchLifecyclePolicy.startNextGame(this.gameNumber, this.playerOne,
+        this.playerTwo);
+    this.gameNumber = state.gameNumber();
+    this.scorePlayerOne = state.scorePlayerOne();
+    this.scorePlayerTwo = state.scorePlayerTwo();
+    this.roundNumber = state.roundNumber();
+    this.firstManoOfGame = state.firstManoOfGame();
+
     LOGGER.info("Game started: matchId={}, gameNumber={}, firstMano={}", this.id, this.gameNumber,
         this.firstManoOfGame);
     this.addDomainEvent(new GameStartedEvent(this.gameNumber));
@@ -286,9 +286,11 @@ public final class Match extends AggregateBase<MatchId> {
 
   private void startNewRound() {
 
-    this.roundNumber++;
-    final var mano =
-        this.roundNumber % 2 == 1 ? this.firstManoOfGame : this.getOpponent(this.firstManoOfGame);
+    final var nextRoundNumber = this.roundNumber + 1;
+    final var mano = MatchLifecyclePolicy.resolveRoundMano(nextRoundNumber, this.firstManoOfGame,
+        this.playerOne, this.playerTwo);
+    this.roundNumber = nextRoundNumber;
+
     this.currentRound = Round.create(this.roundNumber, mano, this.playerOne, this.playerTwo);
     LOGGER.debug("Round started: matchId={}, gameNumber={}, roundNumber={}, mano={}", this.id,
         this.gameNumber, this.roundNumber, mano);
@@ -299,52 +301,42 @@ public final class Match extends AggregateBase<MatchId> {
 
     final var gameBefore = this.gameNumber;
 
-    if (winner.equals(this.playerOne)) {
-      this.scorePlayerOne += points;
-    } else {
-      this.scorePlayerTwo += points;
-    }
+    final var progression = MatchProgressionService.applyPoints(this.scorePlayerOne,
+        this.scorePlayerTwo, this.gamesWonPlayerOne, this.gamesWonPlayerTwo, this.playerOne,
+        this.playerTwo, this.rules, winner, points);
+
+    this.scorePlayerOne = progression.scorePlayerOne();
+    this.scorePlayerTwo = progression.scorePlayerTwo();
 
     LOGGER.info("Score changed: matchId={}, winner={}, points={}, score={} - {}", this.id, winner,
         points, this.scorePlayerOne, this.scorePlayerTwo);
 
     this.addDomainEvent(new ScoreChangedEvent(this.scorePlayerOne, this.scorePlayerTwo));
-    this.checkGameFinished();
+
+    if (progression.gameOver()) {
+      this.gamesWonPlayerOne = progression.gamesWonPlayerOne();
+      this.gamesWonPlayerTwo = progression.gamesWonPlayerTwo();
+
+      this.addDomainEvent(
+          new GameScoreChangedEvent(this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
+
+      LOGGER.info("Game resolved: matchId={}, gameWinner={}, gamesWon={} - {}", this.id,
+          progression.gameWinner(), this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
+
+      if (progression.matchFinished()) {
+        this.status = MatchStatus.FINISHED;
+        this.currentRound = null;
+        LOGGER.info("Match finished: matchId={}, winner={}, finalGames={} - {}", this.id,
+            progression.gameWinner(), this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
+        this.addDomainEvent(
+            new MatchFinishedEvent(this.seatOf(progression.gameWinner()), this.gamesWonPlayerOne,
+                this.gamesWonPlayerTwo));
+      } else {
+        this.startNewGame();
+      }
+    }
+
     return this.gameNumber != gameBefore;
-  }
-
-  private void checkGameFinished() {
-
-    final var evaluation = ScoringPolicy.evaluate(this.scorePlayerOne, this.scorePlayerTwo,
-        this.gamesWonPlayerOne, this.gamesWonPlayerTwo, this.playerOne, this.playerTwo, this.rules);
-
-    if (!evaluation.isGameOver()) {
-      return;
-    }
-
-    final var gameWinner = evaluation.gameWinner();
-
-    if (gameWinner.equals(this.playerOne)) {
-      this.gamesWonPlayerOne++;
-    } else {
-      this.gamesWonPlayerTwo++;
-    }
-
-    this.addDomainEvent(new GameScoreChangedEvent(this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
-
-    LOGGER.info("Game resolved: matchId={}, gameWinner={}, gamesWon={} - {}", this.id, gameWinner,
-        this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
-
-    if (evaluation.matchFinished()) {
-      this.status = MatchStatus.FINISHED;
-      this.currentRound = null;
-      LOGGER.info("Match finished: matchId={}, winner={}, finalGames={} - {}", this.id, gameWinner,
-          this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
-      this.addDomainEvent(new MatchFinishedEvent(this.seatOf(gameWinner), this.gamesWonPlayerOne,
-          this.gamesWonPlayerTwo));
-    } else {
-      this.startNewGame();
-    }
   }
 
   private PlayerSeat seatOf(final PlayerId playerId) {
@@ -355,14 +347,8 @@ public final class Match extends AggregateBase<MatchId> {
   private void collectRoundEvents() {
 
     if (this.currentRound != null) {
-      this.domainEvents.addAll(this.currentRound.getDomainEvents());
-      this.currentRound.clearDomainEvents();
+      this.domainEvents.addAll(RoundDomainEventDrain.drainFrom(this.currentRound));
     }
-  }
-
-  private PlayerId getOpponent(final PlayerId playerId) {
-
-    return playerId.equals(this.playerOne) ? this.playerTwo : this.playerOne;
   }
 
   private void validateMatchInProgress() {

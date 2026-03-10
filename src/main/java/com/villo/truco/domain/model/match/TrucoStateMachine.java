@@ -4,37 +4,37 @@ import com.villo.truco.domain.model.match.exceptions.InvalidTrucoCallException;
 import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 
-final class TrucoFlow {
+final class TrucoStateMachine {
 
   private TrucoCall currentCall;
   private PlayerId caller;
   private int pointsAtStake = 1;
 
-  TrucoFlow() {
+  public TrucoStateMachine() {
 
   }
 
-  boolean hasBeenCalled() {
+  public boolean hasBeenCalled() {
 
     return this.currentCall != null;
   }
 
-  TrucoCall getCurrentCall() {
+  public TrucoCall getCurrentCall() {
 
     return this.currentCall;
   }
 
-  PlayerId getCaller() {
+  public PlayerId getCaller() {
 
     return this.caller;
   }
 
-  int getPointsAtStake() {
+  public int getPointsAtStake() {
 
     return this.pointsAtStake;
   }
 
-  boolean canEscalate(final PlayerId playerId) {
+  public boolean canEscalate(final PlayerId playerId) {
 
     if (this.currentCall == null) {
       return true;
@@ -42,7 +42,7 @@ final class TrucoFlow {
     return this.currentCall.hasNext() && !playerId.equals(this.caller);
   }
 
-  TrucoCall call(final PlayerId playerId) {
+  public TrucoCall call(final PlayerId playerId) {
 
     if (this.currentCall == null) {
       this.currentCall = TrucoCall.TRUCO;
@@ -55,22 +55,22 @@ final class TrucoFlow {
     return this.currentCall;
   }
 
-  void accept() {
+  public void accept() {
 
     this.pointsAtStake = this.currentCall.pointsIfAccepted();
   }
 
-  int pointsIfRejected() {
+  public int pointsIfRejected() {
 
     return this.currentCall.pointsIfRejected();
   }
 
-  int pointsIfAccepted() {
+  public int pointsIfAccepted() {
 
     return this.currentCall.pointsIfAccepted();
   }
 
-  void cancel() {
+  public void cancel() {
 
     this.currentCall = null;
     this.caller = null;

@@ -11,18 +11,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class TrucoFlowTest {
+class TrucoStateMachineTest {
 
   private PlayerId playerA;
   private PlayerId playerB;
-  private TrucoFlow flow;
+  private TrucoStateMachine flow;
 
   @BeforeEach
   void setUp() {
 
     this.playerA = PlayerId.generate();
     this.playerB = PlayerId.generate();
-    this.flow = new TrucoFlow();
+    this.flow = new TrucoStateMachine();
   }
 
   @Nested

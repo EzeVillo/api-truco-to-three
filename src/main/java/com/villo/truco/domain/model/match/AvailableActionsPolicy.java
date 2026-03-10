@@ -18,8 +18,9 @@ final class AvailableActionsPolicy {
   }
 
   static List<AvailableAction> resolve(final RoundStatus status, final PlayerId playerId,
-      final PlayerId currentTurn, final TrucoFlow trucoFlow, final EnvidoFlow envidoFlow,
-      final boolean isFirstHand, final boolean hasPlayerPlayedInCurrentHand, final boolean isMano) {
+      final PlayerId currentTurn, final TrucoStateMachine trucoStateMachine,
+      final EnvidoStateMachine envidoStateMachine, final boolean isFirstHand,
+      final boolean hasPlayerPlayedInCurrentHand, final boolean isMano) {
 
     if (status == RoundStatus.FINISHED) {
       return List.of();
@@ -33,12 +34,12 @@ final class AvailableActionsPolicy {
 
     if (status == RoundStatus.PLAYING) {
       actions.add(AvailableAction.of(ActionType.PLAY_CARD));
-      if (canFold(trucoFlow, envidoFlow, isFirstHand, isMano)) {
+      if (canFold(trucoStateMachine, envidoStateMachine, isFirstHand, isMano)) {
         actions.add(AvailableAction.of(ActionType.FOLD));
       }
-      addTrucoActions(playerId, trucoFlow, actions);
-      if (!trucoFlow.hasBeenCalled()) {
-        addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoFlow, isFirstHand, actions);
+      addTrucoActions(playerId, trucoStateMachine, actions);
+      if (!trucoStateMachine.hasBeenCalled()) {
+        addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoStateMachine, isFirstHand, actions);
       }
     }
 
@@ -48,64 +49,67 @@ final class AvailableActionsPolicy {
       actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO,
           TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO.name()));
 
-      if (trucoFlow.getCurrentCall() == TrucoCall.TRUCO) {
-        addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoFlow, isFirstHand, actions);
+      if (trucoStateMachine.getCurrentCall() == TrucoCall.TRUCO) {
+        addEnvidoActions(hasPlayerPlayedInCurrentHand, envidoStateMachine, isFirstHand, actions);
       }
 
-      if (trucoFlow.getCurrentCall().hasNext()) {
-        actions.add(
-            AvailableAction.of(ActionType.CALL_TRUCO, trucoFlow.getCurrentCall().next().name()));
+      if (trucoStateMachine.getCurrentCall().hasNext()) {
+        actions.add(AvailableAction.of(ActionType.CALL_TRUCO,
+            trucoStateMachine.getCurrentCall().next().name()));
       }
     }
 
     if (status == RoundStatus.ENVIDO_IN_PROGRESS) {
       actions.add(AvailableAction.of(ActionType.RESPOND_ENVIDO, EnvidoResponse.QUIERO.name()));
       actions.add(AvailableAction.of(ActionType.RESPOND_ENVIDO, EnvidoResponse.NO_QUIERO.name()));
-      addEnvidoRaiseActions(envidoFlow, actions);
+      addEnvidoRaiseActions(envidoStateMachine, actions);
     }
 
     return actions;
   }
 
-  private static void addTrucoActions(final PlayerId playerId, final TrucoFlow trucoFlow,
-      final List<AvailableAction> actions) {
+  private static void addTrucoActions(final PlayerId playerId,
+      final TrucoStateMachine trucoStateMachine, final List<AvailableAction> actions) {
 
-    if (!trucoFlow.hasBeenCalled()) {
+    if (!trucoStateMachine.hasBeenCalled()) {
       actions.add(AvailableAction.of(ActionType.CALL_TRUCO, TrucoCall.TRUCO.name()));
-    } else if (trucoFlow.canEscalate(playerId)) {
-      actions.add(
-          AvailableAction.of(ActionType.CALL_TRUCO, trucoFlow.getCurrentCall().next().name()));
+    } else if (trucoStateMachine.canEscalate(playerId)) {
+      actions.add(AvailableAction.of(ActionType.CALL_TRUCO,
+          trucoStateMachine.getCurrentCall().next().name()));
     }
   }
 
-  private static boolean canFold(final TrucoFlow trucoFlow, final EnvidoFlow envidoFlow,
-      final boolean isFirstHand, final boolean isMano) {
+  private static boolean canFold(final TrucoStateMachine trucoStateMachine,
+      final EnvidoStateMachine envidoStateMachine, final boolean isFirstHand,
+      final boolean isMano) {
 
-    return !isMano || !isFirstHand || envidoFlow.isResolved() || trucoFlow.hasBeenCalled();
+    return !isMano || !isFirstHand || envidoStateMachine.isResolved()
+        || trucoStateMachine.hasBeenCalled();
   }
 
   private static void addEnvidoActions(final boolean hasPlayerPlayedInCurrentHand,
-      final EnvidoFlow envidoFlow, final boolean isFirstHand, final List<AvailableAction> actions) {
+      final EnvidoStateMachine envidoStateMachine, final boolean isFirstHand,
+      final List<AvailableAction> actions) {
 
-    if (!isFirstHand || envidoFlow.isResolved()) {
+    if (!isFirstHand || envidoStateMachine.isResolved()) {
       return;
     }
     if (hasPlayerPlayedInCurrentHand) {
       return;
     }
 
-    if (envidoFlow.isEmpty()) {
+    if (envidoStateMachine.isEmpty()) {
       actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, EnvidoCall.ENVIDO.name()));
       actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, EnvidoCall.REAL_ENVIDO.name()));
       actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, EnvidoCall.FALTA_ENVIDO.name()));
     }
   }
 
-  private static void addEnvidoRaiseActions(final EnvidoFlow envidoFlow,
+  private static void addEnvidoRaiseActions(final EnvidoStateMachine envidoStateMachine,
       final List<AvailableAction> actions) {
 
     for (final var call : EnvidoCall.values()) {
-      if (envidoFlow.canRaiseWith(call)) {
+      if (envidoStateMachine.canRaiseWith(call)) {
         actions.add(AvailableAction.of(ActionType.CALL_ENVIDO, call.name()));
       }
     }

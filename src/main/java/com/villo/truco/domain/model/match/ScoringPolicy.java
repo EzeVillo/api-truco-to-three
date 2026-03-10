@@ -47,7 +47,7 @@ final class ScoringPolicy {
 
     static final GameEvaluation NO_WINNER = new GameEvaluation(null, false);
 
-    boolean isGameOver() {
+    public boolean isGameOver() {
 
       return this.gameWinner != null;
     }
