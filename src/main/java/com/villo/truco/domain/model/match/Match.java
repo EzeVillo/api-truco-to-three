@@ -147,8 +147,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void playCard(final PlayerId playerId, final Card card) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     this.currentRound.playCard(playerId, card);
     LOGGER.debug("Card played: matchId={}, playerId={}, card={}", this.id, playerId, card);
@@ -163,8 +162,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void callTruco(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     this.currentRound.callTruco(playerId);
     LOGGER.info("Truco called: matchId={}, playerId={}", this.id, playerId);
@@ -173,8 +171,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void acceptTruco(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     this.currentRound.acceptTruco(playerId);
     LOGGER.info("Truco accepted: matchId={}, playerId={}", this.id, playerId);
@@ -183,8 +180,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void rejectTruco(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     final var result = this.currentRound.rejectTruco(playerId);
     LOGGER.info("Truco rejected: matchId={}, playerId={}, winner={}, points={}", this.id, playerId,
@@ -197,8 +193,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void acceptTrucoAndFold(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     final var result = this.currentRound.acceptTrucoAndFold(playerId);
     LOGGER.info(
@@ -212,8 +207,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void fold(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     final var result = this.currentRound.fold(playerId);
     LOGGER.info("Player folded: matchId={}, playerId={}, winner={}, points={}", this.id, playerId,
@@ -226,8 +220,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void callEnvido(final PlayerId playerId, final EnvidoCall call) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     this.currentRound.callEnvido(playerId, call);
     LOGGER.info("Envido called: matchId={}, playerId={}, call={}", this.id, playerId, call);
@@ -236,8 +229,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void acceptEnvido(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     final var result = this.currentRound.acceptEnvido(playerId, this.scorePlayerOne,
         this.scorePlayerTwo);
@@ -250,8 +242,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void rejectEnvido(final PlayerId playerId) {
 
-    this.validateMatchInProgress();
-    this.validatePlayerInMatch(playerId);
+    this.validateCanActInCurrentRound(playerId);
 
     final var result = this.currentRound.rejectEnvido(playerId);
     LOGGER.info("Envido rejected: matchId={}, playerId={}, winner={}, points={}", this.id, playerId,
@@ -353,19 +344,22 @@ public final class Match extends AggregateBase<MatchId> {
 
   private void validateMatchInProgress() {
 
-    if (this.status != MatchStatus.IN_PROGRESS) {
+    if (!MatchActionSpecification.canExecuteInRound(this.status)) {
       throw new InvalidMatchStateException(this.status, MatchStatus.IN_PROGRESS);
     }
   }
 
   private void validatePlayerInMatch(final PlayerId playerId) {
 
-    final var isPlayerOne = playerId.equals(this.playerOne);
-    final var isPlayerTwo = playerId.equals(this.playerTwo);
-
-    if (!isPlayerOne && !isPlayerTwo) {
+    if (!PlayerInMatchSpecification.isSatisfiedBy(playerId, this.playerOne, this.playerTwo)) {
       throw new PlayerNotInMatchException(playerId);
     }
+  }
+
+  private void validateCanActInCurrentRound(final PlayerId playerId) {
+
+    this.validateMatchInProgress();
+    this.validatePlayerInMatch(playerId);
   }
 
   @Override

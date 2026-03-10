@@ -35,38 +35,25 @@ final class EnvidoStateMachine {
 
   public boolean canRaiseWith(final EnvidoCall call) {
 
-    if (this.chain.isEmpty()) {
-      return true;
-    }
-
-    final var lastCall = this.chain.getLast();
-    if (!lastCall.canBeRaisedWith(call)) {
-      return false;
-    }
-
-    if (call == EnvidoCall.ENVIDO) {
-      final var envidoCount = this.chain.stream().filter(c -> c == EnvidoCall.ENVIDO).count();
-      return envidoCount < 2;
-    }
-    return true;
+    return EnvidoRaiseSpecification.isSatisfiedBy(this.chain, call);
   }
 
   public void call(final EnvidoCall call) {
 
-    if (!this.chain.isEmpty()) {
-      final var lastCall = this.chain.getLast();
+    if (!EnvidoRaiseSpecification.isSatisfiedBy(this.chain, call)) {
 
-      if (!lastCall.canBeRaisedWith(call)) {
+      if (!this.chain.isEmpty() && !this.chain.getLast().canBeRaisedWith(call)) {
+        final var lastCall = this.chain.getLast();
         throw new EnvidoNotAllowedException("No se puede responder " + lastCall + " con " + call);
       }
 
       if (call == EnvidoCall.ENVIDO) {
-        final var envidoCount = this.chain.stream().filter(c -> c == EnvidoCall.ENVIDO).count();
-        if (envidoCount >= 2) {
-          throw new EnvidoNotAllowedException("No se puede cantar más de dos envidos");
-        }
+        throw new EnvidoNotAllowedException("No se puede cantar más de dos envidos");
       }
+
+      throw new EnvidoNotAllowedException("No se puede cantar envido en este momento");
     }
+
     this.chain.add(call);
   }
 

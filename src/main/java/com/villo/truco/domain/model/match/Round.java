@@ -93,7 +93,9 @@ final class Round extends EntityBase<RoundId> {
 
   void playCard(final PlayerId playerId, final Card card) {
 
-    this.validateStatus(RoundStatus.PLAYING);
+    if (!RoundActionStatusSpecification.canPlayCard(this.status)) {
+      throw new InvalidRoundStateException(this.status, RoundStatus.PLAYING);
+    }
     this.validateTurn(playerId);
 
     this.getHandOf(playerId).play(card);
@@ -166,9 +168,9 @@ final class Round extends EntityBase<RoundId> {
 
   void callTruco(final PlayerId playerId) {
 
-    if (this.status != RoundStatus.PLAYING && this.status != RoundStatus.TRUCO_IN_PROGRESS) {
+    if (!RoundActionStatusSpecification.canCallTruco(this.status)) {
       throw new InvalidRoundStateException(this.status,
-          List.of(RoundStatus.PLAYING, RoundStatus.TRUCO_IN_PROGRESS));
+          RoundActionStatusSpecification.trucoCallAllowedStatuses());
     }
     this.validateTurn(playerId);
 
@@ -184,7 +186,9 @@ final class Round extends EntityBase<RoundId> {
 
   void acceptTruco(final PlayerId playerId) {
 
-    this.validateStatus(RoundStatus.TRUCO_IN_PROGRESS);
+    if (!RoundActionStatusSpecification.canRespondTruco(this.status)) {
+      throw new InvalidRoundStateException(this.status, RoundStatus.TRUCO_IN_PROGRESS);
+    }
     this.validateTurn(playerId);
 
     final var currentCall = this.trucoStateMachine.getCurrentCall();
@@ -199,7 +203,9 @@ final class Round extends EntityBase<RoundId> {
 
   ScoringResult rejectTruco(final PlayerId playerId) {
 
-    this.validateStatus(RoundStatus.TRUCO_IN_PROGRESS);
+    if (!RoundActionStatusSpecification.canRespondTruco(this.status)) {
+      throw new InvalidRoundStateException(this.status, RoundStatus.TRUCO_IN_PROGRESS);
+    }
     this.validateTurn(playerId);
 
     final var currentCall = this.trucoStateMachine.getCurrentCall();
@@ -215,7 +221,9 @@ final class Round extends EntityBase<RoundId> {
 
   ScoringResult acceptTrucoAndFold(final PlayerId playerId) {
 
-    this.validateStatus(RoundStatus.TRUCO_IN_PROGRESS);
+    if (!RoundActionStatusSpecification.canRespondTruco(this.status)) {
+      throw new InvalidRoundStateException(this.status, RoundStatus.TRUCO_IN_PROGRESS);
+    }
     this.validateTurn(playerId);
 
     final var currentCall = this.trucoStateMachine.getCurrentCall();
@@ -234,7 +242,7 @@ final class Round extends EntityBase<RoundId> {
 
     this.validateTurn(playerId);
 
-    if (this.status != RoundStatus.PLAYING) {
+    if (!RoundActionStatusSpecification.canFold(this.status)) {
       throw new InvalidRoundStateException(this.status, RoundStatus.PLAYING);
     }
 
@@ -293,7 +301,9 @@ final class Round extends EntityBase<RoundId> {
   EnvidoResult acceptEnvido(final PlayerId playerId, final int scorePlayerOne,
       final int scorePlayerTwo) {
 
-    this.validateStatus(RoundStatus.ENVIDO_IN_PROGRESS);
+    if (!RoundActionStatusSpecification.canRespondEnvido(this.status)) {
+      throw new InvalidRoundStateException(this.status, RoundStatus.ENVIDO_IN_PROGRESS);
+    }
     this.validateTurn(playerId);
 
     final var pointsMano = EnvidoCalculator.calculate(this.getHandOf(this.mano).getCards());
@@ -319,7 +329,9 @@ final class Round extends EntityBase<RoundId> {
 
   ScoringResult rejectEnvido(final PlayerId playerId) {
 
-    this.validateStatus(RoundStatus.ENVIDO_IN_PROGRESS);
+    if (!RoundActionStatusSpecification.canRespondEnvido(this.status)) {
+      throw new InvalidRoundStateException(this.status, RoundStatus.ENVIDO_IN_PROGRESS);
+    }
     this.validateTurn(playerId);
 
     final var winner = this.getOpponent(playerId);
@@ -465,13 +477,6 @@ final class Round extends EntityBase<RoundId> {
 
     if (!this.currentTurn.equals(playerId)) {
       throw new NotYourTurnException(playerId);
-    }
-  }
-
-  private void validateStatus(final RoundStatus expected) {
-
-    if (this.status != expected) {
-      throw new InvalidRoundStateException(this.status, expected);
     }
   }
 

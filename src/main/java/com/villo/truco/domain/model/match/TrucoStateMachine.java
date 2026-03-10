@@ -36,21 +36,16 @@ final class TrucoStateMachine {
 
   public boolean canEscalate(final PlayerId playerId) {
 
-    if (this.currentCall == null) {
-      return true;
-    }
-    return this.currentCall.hasNext() && !playerId.equals(this.caller);
+    return TrucoEscalationSpecification.isSatisfiedBy(this.currentCall, this.caller, playerId);
   }
 
   public TrucoCall call(final PlayerId playerId) {
 
-    if (this.currentCall == null) {
-      this.currentCall = TrucoCall.TRUCO;
-    } else if (this.currentCall.hasNext() && !playerId.equals(this.caller)) {
-      this.currentCall = this.currentCall.next();
-    } else {
+    if (!TrucoEscalationSpecification.isSatisfiedBy(this.currentCall, this.caller, playerId)) {
       throw new InvalidTrucoCallException();
     }
+
+    this.currentCall = TrucoEscalationSpecification.nextCall(this.currentCall);
     this.caller = playerId;
     return this.currentCall;
   }
