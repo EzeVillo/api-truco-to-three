@@ -24,7 +24,7 @@ public final class GlobalExceptionHandler {
     LOGGER.warn("Application exception mapped to {}: {}", status, ex.getMessage(), ex);
 
     return ResponseEntity.status(status)
-        .body(new ErrorResponse(ex.getClass().getName(), ex.getMessage(), Instant.now()));
+        .body(new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now()));
   }
 
   private HttpStatus resolveStatus(final ApplicationStatus status) {
@@ -43,7 +43,7 @@ public final class GlobalExceptionHandler {
         ex.getMessage(), ex);
 
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
-        .body(new ErrorResponse(ex.getClass().getName(), ex.getMessage(), Instant.now()));
+        .body(new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now()));
   }
 
   @ExceptionHandler(Exception.class)
