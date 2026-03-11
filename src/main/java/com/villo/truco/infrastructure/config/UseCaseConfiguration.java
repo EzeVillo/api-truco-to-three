@@ -64,10 +64,10 @@ public class UseCaseConfiguration {
   @Bean
   JoinMatchUseCase joinMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final PlayerTokenProvider tokenProvider) {
+      final PlayerTokenProvider tokenProvider, final MatchLockManager matchLockManager) {
 
     return new JoinMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        tokenProvider);
+        tokenProvider, matchLockManager);
   }
 
   @Bean
@@ -81,44 +81,56 @@ public class UseCaseConfiguration {
 
   @Bean
   PlayCardUseCase playCardCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
 
-    return new PlayCardCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return new PlayCardCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean
   CallTrucoUseCase callTrucoCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
 
-    return new CallTrucoCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return new CallTrucoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean
   RespondTrucoUseCase respondTrucoCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
 
-    return new RespondTrucoCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return new RespondTrucoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean
   CallEnvidoUseCase callEnvidoCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
 
-    return new CallEnvidoCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return new CallEnvidoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean
   RespondEnvidoUseCase respondEnvidoCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
 
-    return new RespondEnvidoCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return new RespondEnvidoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean
   FoldUseCase foldCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final MatchLockManager matchLockManager) {
 
-    return new FoldCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return new FoldCommandHandler(matchResolver, matchRepository, matchEventNotifier,
+        matchLockManager);
   }
 
   @Bean
