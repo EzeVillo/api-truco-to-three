@@ -7,6 +7,7 @@ import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,8 +24,9 @@ public final class GlobalExceptionHandler {
     final var status = this.resolveStatus(ex.getStatus());
     LOGGER.warn("Application exception mapped to {}: {}", status, ex.getMessage(), ex);
 
-    return ResponseEntity.status(status)
-        .body(new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now()));
+    return ResponseEntity.status(status).body(
+        new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now(),
+            MDC.get("requestId")));
   }
 
   private HttpStatus resolveStatus(final ApplicationStatus status) {
@@ -42,8 +44,9 @@ public final class GlobalExceptionHandler {
     LOGGER.warn("Domain exception mapped to {}: {}", HttpStatus.UNPROCESSABLE_CONTENT,
         ex.getMessage(), ex);
 
-    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
-        .body(new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now()));
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(
+        new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now(),
+            MDC.get("requestId")));
   }
 
   @ExceptionHandler(Exception.class)
@@ -53,7 +56,7 @@ public final class GlobalExceptionHandler {
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
         new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-            "An unexpected error occurred", Instant.now()));
+            "An unexpected error occurred", Instant.now(), MDC.get("requestId")));
   }
 
 }
