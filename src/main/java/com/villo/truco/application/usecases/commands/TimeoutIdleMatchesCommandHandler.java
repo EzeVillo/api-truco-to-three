@@ -8,8 +8,6 @@ import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.ports.TournamentQueryRepository;
-import com.villo.truco.domain.ports.TournamentRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,22 +24,16 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
   private final MatchQueryRepository matchQueryRepository;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
-  private final TournamentQueryRepository tournamentQueryRepository;
-  private final TournamentRepository tournamentRepository;
   private final TransactionalRunner transactionalRunner;
   private final Duration idleTimeout;
 
   public TimeoutIdleMatchesCommandHandler(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final TournamentQueryRepository tournamentQueryRepository,
-      final TournamentRepository tournamentRepository,
       final TransactionalRunner transactionalRunner, final Duration idleTimeout) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
-    this.tournamentQueryRepository = Objects.requireNonNull(tournamentQueryRepository);
-    this.tournamentRepository = Objects.requireNonNull(tournamentRepository);
     this.transactionalRunner = Objects.requireNonNull(transactionalRunner);
     this.idleTimeout = Objects.requireNonNull(idleTimeout);
   }
@@ -83,24 +75,13 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
       return;
     }
 
-    final var loser =
-        winner.equals(match.getPlayerOne()) ? match.getPlayerTwo() : match.getPlayerOne();
-
     match.forfeit(winner);
     this.matchRepository.save(match);
     this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
         match.getPlayerTwo(), match.getDomainEvents());
     match.clearDomainEvents();
 
-    LOGGER.info("Match forfeited by timeout: matchId={}, winner={}, loser={}", matchId, winner,
-        loser);
-
-    this.tournamentQueryRepository.findByMatchId(matchId).ifPresent(tournament -> {
-      tournament.forfeitPlayer(loser);
-      this.tournamentRepository.save(tournament);
-      LOGGER.info("Tournament updated after match forfeit: tournamentId={}, forfeiter={}",
-          tournament.getId(), loser);
-    });
+    LOGGER.info("Match forfeited by timeout: matchId={}, winner={}", matchId, winner);
   }
 
   private PlayerId determineWinner(final Match match) {

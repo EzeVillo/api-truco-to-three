@@ -1,5 +1,7 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.TournamentMatchFinishedHandler;
+import com.villo.truco.application.eventhandlers.TournamentMatchForfeitedHandler;
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
@@ -16,7 +18,6 @@ import com.villo.truco.application.ports.in.JoinTournamentUseCase;
 import com.villo.truco.application.ports.in.LeaveTournamentUseCase;
 import com.villo.truco.application.ports.in.LoginUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
-import com.villo.truco.application.ports.in.RegisterTournamentMatchResultUseCase;
 import com.villo.truco.application.ports.in.RegisterUserUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -36,7 +37,6 @@ import com.villo.truco.application.usecases.commands.LeaveTournamentCommandHandl
 import com.villo.truco.application.usecases.commands.LoginCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchResolver;
 import com.villo.truco.application.usecases.commands.PlayCardCommandHandler;
-import com.villo.truco.application.usecases.commands.RegisterTournamentMatchResultCommandHandler;
 import com.villo.truco.application.usecases.commands.RegisterUserCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
@@ -52,14 +52,17 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
 import com.villo.truco.domain.ports.UserRepository;
+import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
 import com.villo.truco.infrastructure.pipeline.TransactionalBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
+import com.villo.truco.infrastructure.websocket.StompMatchEventNotifier;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -279,17 +282,6 @@ public class UseCaseConfiguration {
   }
 
   @Bean
-  RegisterTournamentMatchResultUseCase registerTournamentMatchResultCommandHandler(
-      final TournamentResolver tournamentResolver, final TournamentRepository tournamentRepository,
-      final MatchQueryRepository matchQueryRepository,
-      final UseCasePipeline transactionalPipeline) {
-
-    final var handler = new RegisterTournamentMatchResultCommandHandler(tournamentResolver,
-        tournamentRepository, matchQueryRepository);
-    return transactionalPipeline.wrap(handler)::handle;
-  }
-
-  @Bean
   GetTournamentStateUseCase getTournamentStateQueryHandler(
       final TournamentResolver tournamentResolver) {
 
@@ -297,16 +289,44 @@ public class UseCaseConfiguration {
   }
 
   @Bean
+  StompMatchEventNotifier stompMatchEventNotifier(final SimpMessagingTemplate messagingTemplate) {
+
+    return new StompMatchEventNotifier(messagingTemplate);
+  }
+
+  @Bean
+  TournamentMatchFinishedHandler tournamentMatchFinishedHandler(
+      final TournamentQueryRepository tournamentQueryRepository,
+      final TournamentRepository tournamentRepository) {
+
+    return new TournamentMatchFinishedHandler(tournamentQueryRepository, tournamentRepository);
+  }
+
+  @Bean
+  TournamentMatchForfeitedHandler tournamentMatchForfeitedHandler(
+      final TournamentQueryRepository tournamentQueryRepository,
+      final TournamentRepository tournamentRepository) {
+
+    return new TournamentMatchForfeitedHandler(tournamentQueryRepository, tournamentRepository);
+  }
+
+  @Bean
+  MatchEventNotifier matchEventNotifier(final StompMatchEventNotifier wsHandler,
+      final TournamentMatchFinishedHandler finishedHandler,
+      final TournamentMatchForfeitedHandler forfeitedHandler) {
+
+    return new CompositeMatchEventNotifier(List.of(wsHandler, finishedHandler, forfeitedHandler));
+  }
+
+  @Bean
   TimeoutIdleMatchesUseCase timeoutIdleMatchesCommandHandler(
       final MatchQueryRepository matchQueryRepository, final MatchRepository matchRepository,
       final MatchEventNotifier matchEventNotifier,
-      final TournamentQueryRepository tournamentQueryRepository,
-      final TournamentRepository tournamentRepository,
       final com.villo.truco.application.ports.TransactionalRunner transactionalRunner,
       final MatchTimeoutProperties matchTimeoutProperties) {
 
     return new TimeoutIdleMatchesCommandHandler(matchQueryRepository, matchRepository,
-        matchEventNotifier, tournamentQueryRepository, tournamentRepository, transactionalRunner,
+        matchEventNotifier, transactionalRunner,
         Duration.ofSeconds(matchTimeoutProperties.getIdleTimeoutSeconds()));
   }
 

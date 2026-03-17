@@ -3,13 +3,11 @@ package com.villo.truco.infrastructure.http;
 import com.villo.truco.application.commands.CreateTournamentCommand;
 import com.villo.truco.application.commands.JoinTournamentCommand;
 import com.villo.truco.application.commands.LeaveTournamentCommand;
-import com.villo.truco.application.commands.RegisterTournamentMatchResultCommand;
 import com.villo.truco.application.commands.StartTournamentCommand;
 import com.villo.truco.application.ports.in.CreateTournamentUseCase;
 import com.villo.truco.application.ports.in.GetTournamentStateUseCase;
 import com.villo.truco.application.ports.in.JoinTournamentUseCase;
 import com.villo.truco.application.ports.in.LeaveTournamentUseCase;
-import com.villo.truco.application.ports.in.RegisterTournamentMatchResultUseCase;
 import com.villo.truco.application.ports.in.StartTournamentUseCase;
 import com.villo.truco.application.queries.GetTournamentStateQuery;
 import com.villo.truco.infrastructure.http.dto.request.CreateTournamentRequest;
@@ -50,20 +48,17 @@ public class TournamentController {
   private final JoinTournamentUseCase joinTournament;
   private final LeaveTournamentUseCase leaveTournament;
   private final StartTournamentUseCase startTournament;
-  private final RegisterTournamentMatchResultUseCase registerTournamentMatchResult;
   private final GetTournamentStateUseCase getTournamentState;
 
   public TournamentController(final CreateTournamentUseCase createTournament,
       final JoinTournamentUseCase joinTournament, final LeaveTournamentUseCase leaveTournament,
       final StartTournamentUseCase startTournament,
-      final RegisterTournamentMatchResultUseCase registerTournamentMatchResult,
       final GetTournamentStateUseCase getTournamentState) {
 
     this.createTournament = Objects.requireNonNull(createTournament);
     this.joinTournament = Objects.requireNonNull(joinTournament);
     this.leaveTournament = Objects.requireNonNull(leaveTournament);
     this.startTournament = Objects.requireNonNull(startTournament);
-    this.registerTournamentMatchResult = Objects.requireNonNull(registerTournamentMatchResult);
     this.getTournamentState = Objects.requireNonNull(getTournamentState);
   }
 
@@ -133,24 +128,6 @@ public class TournamentController {
         jwt.getSubject());
 
     this.startTournament.handle(new StartTournamentCommand(tournamentId, jwt.getSubject()));
-
-    return ResponseEntity.noContent().build();
-  }
-
-  @PostMapping("/{tournamentId}/matches/{matchId}/sync-result")
-  @Operation(summary = "Sincronizar resultado de partido", description = "Actualiza en el torneo el resultado final de una partida", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Resultado sincronizado"),
-      @ApiResponse(responseCode = "404", description = "Torneo o partida no encontrados", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "No se puede sincronizar en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<Void> syncMatchResult(
-      @Parameter(description = "ID del torneo", example = "tournament-123") @PathVariable final String tournamentId,
-      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId) {
-
-    LOGGER.info("HTTP syncMatchResult requested: tournamentId={}, matchId={}", tournamentId,
-        matchId);
-
-    this.registerTournamentMatchResult.handle(
-        new RegisterTournamentMatchResultCommand(tournamentId, matchId));
 
     return ResponseEntity.noContent().build();
   }
