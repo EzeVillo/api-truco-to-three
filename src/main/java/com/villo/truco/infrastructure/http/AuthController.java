@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Autenticación", description = "Endpoints para registrar usuarios, hacer login y acceder como invitado")
-public final class AuthController {
+public class AuthController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 

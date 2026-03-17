@@ -55,7 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/matches")
 @Tag(name = "Partidas", description = "Endpoints para crear, unir y jugar partidas de Truco")
-public final class MatchController {
+public class MatchController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MatchController.class);
 

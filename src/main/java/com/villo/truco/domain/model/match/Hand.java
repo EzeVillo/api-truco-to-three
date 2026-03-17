@@ -40,5 +40,10 @@ final class Hand extends EntityBase<HandId> {
     return Collections.unmodifiableList(cards);
   }
 
+  static Hand reconstruct(final HandId id, final List<Card> cards) {
+
+    return new Hand(id, cards);
+  }
+
 }
 

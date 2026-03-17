@@ -25,7 +25,7 @@ public final class RegisterTournamentMatchResultCommandHandler implements
   }
 
   @Override
-  public void handle(final RegisterTournamentMatchResultCommand command) {
+  public Void handle(final RegisterTournamentMatchResultCommand command) {
 
     final var tournament = this.tournamentResolver.resolve(command.tournamentId());
 
@@ -33,11 +33,13 @@ public final class RegisterTournamentMatchResultCommandHandler implements
         .orElseThrow(() -> new MatchNotPartOfTournamentException(command.matchId()));
 
     if (match.getStatus() != MatchStatus.FINISHED || match.getMatchWinner() == null) {
-      return;
+      return null;
     }
 
     tournament.recordMatchWinner(command.matchId(), match.getMatchWinner());
     this.tournamentRepository.save(tournament);
+
+    return null;
   }
 
 }

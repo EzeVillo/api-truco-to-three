@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/tournaments")
 @Tag(name = "Torneos", description = "Endpoints para crear y consultar torneos")
-public final class TournamentController {
+public class TournamentController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TournamentController.class);
 

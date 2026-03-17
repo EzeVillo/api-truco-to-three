@@ -480,11 +480,88 @@ final class Round extends EntityBase<RoundId> {
     }
   }
 
-  private record CardPlay(PlayerId playerId, Card card) {
+  static Round reconstruct(final RoundId id, final int roundNumber, final PlayerId mano,
+      final PlayerId playerOne, final PlayerId playerTwo, final Hand handPlayerOne,
+      final Hand handPlayerTwo, final List<PlayedHand> playedHands,
+      final List<CardPlay> currentHandCards, final RoundStatus status, final PlayerId currentTurn,
+      final PlayerId turnBeforeTrucoCall, final PlayerId turnBeforeEnvidoCall) {
+
+    final var round = new Round(id, roundNumber, mano, playerOne, playerTwo, handPlayerOne,
+        handPlayerTwo);
+    round.playedHands.addAll(playedHands);
+    round.currentHandCards.addAll(currentHandCards);
+    round.status = status;
+    round.currentTurn = currentTurn;
+    round.turnBeforeTrucoCall = turnBeforeTrucoCall;
+    round.turnBeforeEnvidoCall = turnBeforeEnvidoCall;
+    return round;
+  }
+
+  int getRoundNumber() {
+
+    return this.roundNumber;
+  }
+
+  PlayerId getMano() {
+
+    return this.mano;
+  }
+
+  PlayerId getPlayerOne() {
+
+    return this.playerOne;
+  }
+
+  PlayerId getPlayerTwo() {
+
+    return this.playerTwo;
+  }
+
+  Hand getHandPlayerOne() {
+
+    return this.handPlayerOne;
+  }
+
+  Hand getHandPlayerTwo() {
+
+    return this.handPlayerTwo;
+  }
+
+  List<PlayedHand> getPlayedHandsInternal() {
+
+    return this.playedHands;
+  }
+
+  List<CardPlay> getCurrentHandCards() {
+
+    return this.currentHandCards;
+  }
+
+  TrucoStateMachine getTrucoStateMachine() {
+
+    return this.trucoStateMachine;
+  }
+
+  EnvidoStateMachine getEnvidoStateMachine() {
+
+    return this.envidoStateMachine;
+  }
+
+  PlayerId getTurnBeforeTrucoCall() {
+
+    return this.turnBeforeTrucoCall;
+  }
+
+  PlayerId getTurnBeforeEnvidoCall() {
+
+    return this.turnBeforeEnvidoCall;
+  }
+
+  record CardPlay(PlayerId playerId, Card card) {
 
   }
 
-  private record PlayedHand(Card cardMano, Card cardPie, PlayerId winner) {
+  record PlayedHand(Card cardMano, Card cardPie, PlayerId winner) {
 
   }
 

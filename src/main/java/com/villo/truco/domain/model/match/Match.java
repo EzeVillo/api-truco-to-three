@@ -497,4 +497,45 @@ public final class Match extends AggregateBase<MatchId> {
     return this.currentRound;
   }
 
+  static Match reconstruct(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
+      final InviteCode inviteCode, final MatchRules rules, final MatchStatus status,
+      final int gamesWonPlayerOne, final int gamesWonPlayerTwo, final int gameNumber,
+      final int scorePlayerOne, final int scorePlayerTwo, final int roundNumber,
+      final boolean readyPlayerOne, final boolean readyPlayerTwo, final PlayerId firstManoOfGame,
+      final Round currentRound) {
+
+    final var match = new Match(id, playerOne, playerTwo, inviteCode, rules, status);
+    match.gamesWonPlayerOne = gamesWonPlayerOne;
+    match.gamesWonPlayerTwo = gamesWonPlayerTwo;
+    match.gameNumber = gameNumber;
+    match.scorePlayerOne = scorePlayerOne;
+    match.scorePlayerTwo = scorePlayerTwo;
+    match.roundNumber = roundNumber;
+    match.readyPlayerOne = readyPlayerOne;
+    match.readyPlayerTwo = readyPlayerTwo;
+    match.firstManoOfGame = firstManoOfGame;
+    match.currentRound = currentRound;
+    return match;
+  }
+
+  MatchRules getRules() {
+
+    return this.rules;
+  }
+
+  int getGameNumber() {
+
+    return this.gameNumber;
+  }
+
+  int getRoundNumber() {
+
+    return this.roundNumber;
+  }
+
+  PlayerId getFirstManoOfGame() {
+
+    return this.firstManoOfGame;
+  }
+
 }

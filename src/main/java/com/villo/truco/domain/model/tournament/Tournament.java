@@ -311,7 +311,31 @@ public final class Tournament extends AggregateBase<TournamentId> {
 
   }
 
-  private static final class Fixture {
+  static Tournament reconstruct(final TournamentId id, final List<PlayerId> participants,
+      final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
+      final TournamentStatus status, final int capacity, final GamesToPlay gamesToPlay,
+      final InviteCode inviteCode) {
+
+    return new Tournament(id, participants, fixtures, winsByPlayer, status, capacity, gamesToPlay,
+        inviteCode);
+  }
+
+  List<PlayerId> getParticipants() {
+
+    return this.participants;
+  }
+
+  int getCapacity() {
+
+    return this.capacity;
+  }
+
+  List<Fixture> getFixturesInternal() {
+
+    return this.fixtures;
+  }
+
+  static final class Fixture {
 
     private final FixtureId id;
     private final int matchdayNumber;
@@ -331,36 +355,56 @@ public final class Tournament extends AggregateBase<TournamentId> {
       this.status = status;
     }
 
-    private static Fixture pending(final FixtureId id, final int matchdayNumber,
+    static Fixture pending(final FixtureId id, final int matchdayNumber,
         final PlayerId playerOne, final PlayerId playerTwo) {
 
       return new Fixture(id, matchdayNumber, playerOne, playerTwo, FixtureStatus.PENDING);
     }
 
-    private static Fixture free(final FixtureId id, final int matchdayNumber,
+    static Fixture free(final FixtureId id, final int matchdayNumber,
         final PlayerId freePlayer) {
 
       return new Fixture(id, matchdayNumber, freePlayer, null, FixtureStatus.LIBRE);
     }
 
-    private FixtureId id() {
+    static Fixture reconstruct(final FixtureId id, final int matchdayNumber,
+        final PlayerId playerOne, final PlayerId playerTwo, final MatchId matchId,
+        final PlayerId winner, final FixtureStatus status) {
+
+      final var fixture = new Fixture(id, matchdayNumber, playerOne, playerTwo, status);
+      fixture.matchId = matchId;
+      fixture.winner = winner;
+      return fixture;
+    }
+
+    FixtureId id() {
 
       return this.id;
     }
 
-    private MatchId matchId() {
+    MatchId matchId() {
 
       return this.matchId;
     }
 
-    private FixtureStatus status() {
+    FixtureStatus status() {
 
       return this.status;
     }
 
-    private int matchdayNumber() {
+    int matchdayNumber() {
 
       return this.matchdayNumber;
+    }
+
+    PlayerId playerOne() {
+
+      return this.playerOne;
+    }
+
+    PlayerId playerTwo() {
+
+      return this.playerTwo;
     }
 
     private boolean containsPlayer(final PlayerId playerId) {
@@ -380,7 +424,12 @@ public final class Tournament extends AggregateBase<TournamentId> {
       this.status = FixtureStatus.FINISHED;
     }
 
-    private FixtureView toView() {
+    PlayerId winner() {
+
+      return this.winner;
+    }
+
+    FixtureView toView() {
 
       return new FixtureView(this.id, this.matchdayNumber, this.playerOne, this.playerTwo,
           this.matchId, this.winner, this.status);

@@ -16,8 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
-    "truco.security.issuer=test-issuer",
-    "truco.security.audience=test-audience"}, webEnvironment = WebEnvironment.RANDOM_PORT)
+    "truco.security.issuer=test-issuer", "truco.security.audience=test-audience",
+    "spring.profiles.active=test"}, webEnvironment = WebEnvironment.RANDOM_PORT)
 class HttpSecurityIntegrationTest {
 
   private final HttpClient httpClient = HttpClient.newHttpClient();

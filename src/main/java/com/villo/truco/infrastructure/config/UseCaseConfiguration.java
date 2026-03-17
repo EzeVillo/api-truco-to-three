@@ -1,6 +1,5 @@
 package com.villo.truco.infrastructure.config;
 
-import com.villo.truco.application.ports.AggregateLockManager;
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
@@ -43,16 +42,17 @@ import com.villo.truco.application.usecases.commands.StartTournamentCommandHandl
 import com.villo.truco.application.usecases.commands.TournamentResolver;
 import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetTournamentStateQueryHandler;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.tournament.valueobjects.TournamentId;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
 import com.villo.truco.domain.ports.UserRepository;
-import com.villo.truco.infrastructure.persistence.InMemoryAggregateLockManager;
-import com.villo.truco.infrastructure.persistence.repositories.InMemoryUserRepository;
+import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
+import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
+import java.time.Duration;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -60,21 +60,12 @@ import org.springframework.context.annotation.Configuration;
 public class UseCaseConfiguration {
 
   @Bean
-  AggregateLockManager<MatchId> matchLockManager() {
+  UseCasePipeline optimisticRetryPipeline(
+      @Value("${truco.retry.max-retries:3}") final int maxRetries,
+      @Value("${truco.retry.delay-ms:200}") final long delayMs) {
 
-    return new InMemoryAggregateLockManager<>();
-  }
-
-  @Bean
-  AggregateLockManager<TournamentId> tournamentLockManager() {
-
-    return new InMemoryAggregateLockManager<>();
-  }
-
-  @Bean
-  UserRepository userRepository() {
-
-    return new InMemoryUserRepository();
+    return new UseCasePipeline(
+        List.of(new OptimisticLockRetryBehavior(maxRetries, Duration.ofMillis(delayMs))));
   }
 
   @Bean
@@ -112,74 +103,80 @@ public class UseCaseConfiguration {
   @Bean
   JoinMatchUseCase joinMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new JoinMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new JoinMatchCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   StartMatchUseCase startMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchQueryRepository matchQueryRepository,
-      final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final MatchEventNotifier matchEventNotifier, final UseCasePipeline optimisticRetryPipeline) {
 
-    return new StartMatchCommandHandler(matchResolver, matchRepository, matchQueryRepository,
-        matchEventNotifier, matchLockManager);
+    final var handler = new StartMatchCommandHandler(matchResolver, matchRepository,
+        matchQueryRepository, matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   PlayCardUseCase playCardCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new PlayCardCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new PlayCardCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   CallTrucoUseCase callTrucoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new CallTrucoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new CallTrucoCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   RespondTrucoUseCase respondTrucoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new RespondTrucoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new RespondTrucoCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   CallEnvidoUseCase callEnvidoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new CallEnvidoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new CallEnvidoCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   RespondEnvidoUseCase respondEnvidoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new RespondEnvidoCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new RespondEnvidoCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   FoldUseCase foldCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final AggregateLockManager<MatchId> matchLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new FoldCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    final var handler = new FoldCommandHandler(matchResolver, matchRepository, matchEventNotifier);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
@@ -204,28 +201,29 @@ public class UseCaseConfiguration {
   @Bean
   JoinTournamentUseCase joinTournamentCommandHandler(final TournamentResolver tournamentResolver,
       final TournamentRepository tournamentRepository,
-      final AggregateLockManager<TournamentId> tournamentLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new JoinTournamentCommandHandler(tournamentResolver, tournamentRepository,
-        tournamentLockManager);
+    final var handler = new JoinTournamentCommandHandler(tournamentResolver, tournamentRepository);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   StartTournamentUseCase startTournamentCommandHandler(final TournamentResolver tournamentResolver,
       final TournamentRepository tournamentRepository, final MatchRepository matchRepository,
-      final AggregateLockManager<TournamentId> tournamentLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new StartTournamentCommandHandler(tournamentResolver, tournamentRepository,
-        matchRepository, tournamentLockManager);
+    final var handler = new StartTournamentCommandHandler(tournamentResolver, tournamentRepository,
+        matchRepository);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean
   LeaveTournamentUseCase leaveTournamentCommandHandler(final TournamentResolver tournamentResolver,
       final TournamentRepository tournamentRepository,
-      final AggregateLockManager<TournamentId> tournamentLockManager) {
+      final UseCasePipeline optimisticRetryPipeline) {
 
-    return new LeaveTournamentCommandHandler(tournamentResolver, tournamentRepository,
-        tournamentLockManager);
+    final var handler = new LeaveTournamentCommandHandler(tournamentResolver, tournamentRepository);
+    return optimisticRetryPipeline.wrap(handler)::handle;
   }
 
   @Bean

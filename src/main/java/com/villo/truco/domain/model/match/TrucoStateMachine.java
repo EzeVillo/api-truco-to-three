@@ -71,4 +71,12 @@ final class TrucoStateMachine {
     this.caller = null;
   }
 
+  void initializeState(final TrucoCall currentCall, final PlayerId caller,
+      final int pointsAtStake) {
+
+    this.currentCall = currentCall;
+    this.caller = caller;
+    this.pointsAtStake = pointsAtStake;
+  }
+
 }

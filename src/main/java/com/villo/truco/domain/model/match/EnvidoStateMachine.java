@@ -86,4 +86,11 @@ final class EnvidoStateMachine {
         .mapToInt(EnvidoCall::points).sum();
   }
 
+  void initializeState(final List<EnvidoCall> chain, final boolean resolved) {
+
+    this.chain.clear();
+    this.chain.addAll(chain);
+    this.resolved = resolved;
+  }
+
 }

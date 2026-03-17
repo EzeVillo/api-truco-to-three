@@ -11,7 +11,29 @@
       "Bash(grep -r \"class Tournament\\\\|fixture\\\\|playerOne\\\\|playerTwo\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/domain/model/tournament --include=\"*.java\" 2>/dev/null | head -20)",
       "Bash(grep -r \"MatchQueryRepository\\\\|findByPlayer\\\\|filter.*player\\\\|stream\\(\\)\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application --include=\"*.java\" 2>/dev/null | head -15)",
       "Bash(grep -r \"IN_PROGRESS\\\\|READY\\\\|WAITING\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application --include=\"*.java\" 2>/dev/null | head -15)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ls -la /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/*Handler.java)",
+      "Bash(./gradlew compileJava)",
+      "Bash(./gradlew compileTestJava)",
+      "Bash(xargs cat:*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(mv src/main/java/com/villo/truco/infrastructure/persistence/repositories/InMemoryMatchRepository.java src/test/java/com/villo/truco/infrastructure/persistence/repositories/)",
+      "Bash(mv src/main/java/com/villo/truco/infrastructure/persistence/repositories/InMemoryTournamentRepository.java src/test/java/com/villo/truco/infrastructure/persistence/repositories/)",
+      "Bash(mv src/main/java/com/villo/truco/infrastructure/persistence/repositories/InMemoryUserRepository.java src/test/java/com/villo/truco/infrastructure/persistence/repositories/)",
+      "Bash(cd:*)",
+      "Bash(for f:*)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Read(//c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/**)",
+      "Bash(fi)",
+      "Bash(./gradlew bootRun)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(./gradlew bootRun --args='--debug')",
+      "Bash(./gradlew dependencies:*)",
+      "Bash(./gradlew bootRun 2)",
+      "Read(//tmp/**)"
     ]
   }
 }
