@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -69,7 +68,6 @@ public class TournamentController {
   }
 
   @PostMapping
-  @Transactional
   @Operation(summary = "Crear torneo", description = "Crea un torneo round-robin. El creador se une automáticamente.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Torneo creado", content = @Content(schema = @Schema(implementation = CreateTournamentResponse.class))),
@@ -88,7 +86,6 @@ public class TournamentController {
   }
 
   @PostMapping("/join")
-  @Transactional
   @Operation(summary = "Unirse a torneo", description = "Une el jugador autenticado al torneo usando el código de invitación", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinTournamentResponse.class))),
@@ -107,7 +104,6 @@ public class TournamentController {
   }
 
   @PostMapping("/{tournamentId}/leave")
-  @Transactional
   @Operation(summary = "Salir de torneo", description = "Remueve al jugador del torneo (solo antes de que arranque)", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Jugador removido"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -125,7 +121,6 @@ public class TournamentController {
   }
 
   @PostMapping("/{tournamentId}/start")
-  @Transactional
   @Operation(summary = "Iniciar torneo", description = "El creador inicia el torneo una vez que todos los jugadores se unieron", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Torneo iniciado"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -143,7 +138,6 @@ public class TournamentController {
   }
 
   @PostMapping("/{tournamentId}/matches/{matchId}/sync-result")
-  @Transactional
   @Operation(summary = "Sincronizar resultado de partido", description = "Actualiza en el torneo el resultado final de una partida", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Resultado sincronizado"),
       @ApiResponse(responseCode = "404", description = "Torneo o partida no encontrados", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),

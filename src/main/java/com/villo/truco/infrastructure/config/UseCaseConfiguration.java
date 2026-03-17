@@ -49,23 +49,51 @@ import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
 import com.villo.truco.domain.ports.UserRepository;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
+import com.villo.truco.infrastructure.pipeline.TransactionalBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 public class UseCaseConfiguration {
 
   @Bean
-  UseCasePipeline optimisticRetryPipeline(
+  TransactionTemplate transactionTemplate(final PlatformTransactionManager txManager) {
+
+    return new TransactionTemplate(txManager);
+  }
+
+  @Bean
+  OptimisticLockRetryBehavior optimisticLockRetryBehavior(
       @Value("${truco.retry.max-retries:3}") final int maxRetries,
       @Value("${truco.retry.delay-ms:200}") final long delayMs) {
 
-    return new UseCasePipeline(
-        List.of(new OptimisticLockRetryBehavior(maxRetries, Duration.ofMillis(delayMs))));
+    return new OptimisticLockRetryBehavior(maxRetries, Duration.ofMillis(delayMs));
+  }
+
+  @Bean
+  TransactionalBehavior transactionalBehavior(final TransactionTemplate transactionTemplate) {
+
+    return new TransactionalBehavior(transactionTemplate);
+  }
+
+  @Bean
+  UseCasePipeline retryTransactionalPipeline(
+      final OptimisticLockRetryBehavior optimisticLockRetryBehavior,
+      final TransactionalBehavior transactionalBehavior) {
+
+    return new UseCasePipeline(List.of(optimisticLockRetryBehavior, transactionalBehavior));
+  }
+
+  @Bean
+  UseCasePipeline transactionalPipeline(final TransactionalBehavior transactionalBehavior) {
+
+    return new UseCasePipeline(List.of(transactionalBehavior));
   }
 
   @Bean
@@ -76,16 +104,21 @@ public class UseCaseConfiguration {
 
   @Bean
   RegisterUserUseCase registerUserCommandHandler(final UserRepository userRepository,
-      final PasswordHasher passwordHasher, final PlayerTokenProvider tokenProvider) {
+      final PasswordHasher passwordHasher, final PlayerTokenProvider tokenProvider,
+      final UseCasePipeline transactionalPipeline) {
 
-    return new RegisterUserCommandHandler(userRepository, passwordHasher, tokenProvider);
+    final var handler = new RegisterUserCommandHandler(userRepository, passwordHasher,
+        tokenProvider);
+    return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   LoginUseCase loginCommandHandler(final UserRepository userRepository,
-      final PasswordHasher passwordHasher, final PlayerTokenProvider tokenProvider) {
+      final PasswordHasher passwordHasher, final PlayerTokenProvider tokenProvider,
+      final UseCasePipeline transactionalPipeline) {
 
-    return new LoginCommandHandler(userRepository, passwordHasher, tokenProvider);
+    final var handler = new LoginCommandHandler(userRepository, passwordHasher, tokenProvider);
+    return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
@@ -95,88 +128,91 @@ public class UseCaseConfiguration {
   }
 
   @Bean
-  CreateMatchUseCase createMatchCommandHandler(final MatchRepository matchRepository) {
+  CreateMatchUseCase createMatchCommandHandler(final MatchRepository matchRepository,
+      final UseCasePipeline transactionalPipeline) {
 
-    return new CreateMatchCommandHandler(matchRepository);
+    final var handler = new CreateMatchCommandHandler(matchRepository);
+    return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   JoinMatchUseCase joinMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new JoinMatchCommandHandler(matchResolver, matchRepository,
         matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   StartMatchUseCase startMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchQueryRepository matchQueryRepository,
-      final MatchEventNotifier matchEventNotifier, final UseCasePipeline optimisticRetryPipeline) {
+      final MatchEventNotifier matchEventNotifier,
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new StartMatchCommandHandler(matchResolver, matchRepository,
         matchQueryRepository, matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   PlayCardUseCase playCardCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new PlayCardCommandHandler(matchResolver, matchRepository,
         matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   CallTrucoUseCase callTrucoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new CallTrucoCommandHandler(matchResolver, matchRepository,
         matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   RespondTrucoUseCase respondTrucoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new RespondTrucoCommandHandler(matchResolver, matchRepository,
         matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   CallEnvidoUseCase callEnvidoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new CallEnvidoCommandHandler(matchResolver, matchRepository,
         matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   RespondEnvidoUseCase respondEnvidoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new RespondEnvidoCommandHandler(matchResolver, matchRepository,
         matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   FoldUseCase foldCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new FoldCommandHandler(matchResolver, matchRepository, matchEventNotifier);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
@@ -193,46 +229,50 @@ public class UseCaseConfiguration {
 
   @Bean
   CreateTournamentUseCase createTournamentCommandHandler(
-      final TournamentRepository tournamentRepository) {
+      final TournamentRepository tournamentRepository,
+      final UseCasePipeline transactionalPipeline) {
 
-    return new CreateTournamentCommandHandler(tournamentRepository);
+    final var handler = new CreateTournamentCommandHandler(tournamentRepository);
+    return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   JoinTournamentUseCase joinTournamentCommandHandler(final TournamentResolver tournamentResolver,
       final TournamentRepository tournamentRepository,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new JoinTournamentCommandHandler(tournamentResolver, tournamentRepository);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   StartTournamentUseCase startTournamentCommandHandler(final TournamentResolver tournamentResolver,
       final TournamentRepository tournamentRepository, final MatchRepository matchRepository,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new StartTournamentCommandHandler(tournamentResolver, tournamentRepository,
         matchRepository);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   LeaveTournamentUseCase leaveTournamentCommandHandler(final TournamentResolver tournamentResolver,
       final TournamentRepository tournamentRepository,
-      final UseCasePipeline optimisticRetryPipeline) {
+      final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new LeaveTournamentCommandHandler(tournamentResolver, tournamentRepository);
-    return optimisticRetryPipeline.wrap(handler)::handle;
+    return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   RegisterTournamentMatchResultUseCase registerTournamentMatchResultCommandHandler(
       final TournamentResolver tournamentResolver, final TournamentRepository tournamentRepository,
-      final MatchQueryRepository matchQueryRepository) {
+      final MatchQueryRepository matchQueryRepository,
+      final UseCasePipeline transactionalPipeline) {
 
-    return new RegisterTournamentMatchResultCommandHandler(tournamentResolver, tournamentRepository,
-        matchQueryRepository);
+    final var handler = new RegisterTournamentMatchResultCommandHandler(tournamentResolver,
+        tournamentRepository, matchQueryRepository);
+    return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean

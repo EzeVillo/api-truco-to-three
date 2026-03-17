@@ -55,6 +55,63 @@ class UseCasePipelineTest {
   }
 
   @Test
+  @DisplayName("retry (outer) -> tx (inner): cada reintento abre una tx nueva")
+  void retryOutsideTxInsideOpensNewTransactionPerAttempt() {
+
+    final var txOpenCount = new ArrayList<String>();
+    final var attemptCount = new int[]{0};
+
+    final var pipeline = getUseCasePipeline(txOpenCount);
+    final UseCase<String, String> handler = command -> {
+      attemptCount[0]++;
+      if (attemptCount[0] < 3) {
+        throw new RuntimeException("conflict");
+      }
+      return "done";
+    };
+
+    final var result = pipeline.wrap(handler).handle("cmd");
+
+    assertThat(result).isEqualTo("done");
+    assertThat(attemptCount[0]).isEqualTo(3);
+    // cada intento abre y cierra su propia tx
+    assertThat(txOpenCount).containsExactly("tx-open", "tx-open", "tx-open", "tx-commit");
+  }
+
+  private UseCasePipeline getUseCasePipeline(final ArrayList<String> txOpenCount) {
+
+    final PipelineBehavior retryBehavior = new PipelineBehavior() {
+      @Override
+      public <C, R> R handle(final C command, final Supplier<R> next) {
+
+        for (int i = 0; i < 3; i++) {
+          try {
+            return next.get();
+          } catch (final RuntimeException e) {
+            if (i == 2) {
+              throw e;
+            }
+          }
+        }
+        throw new IllegalStateException("unreachable");
+      }
+    };
+
+    final PipelineBehavior txBehavior = new PipelineBehavior() {
+      @Override
+      public <C, R> R handle(final C command, final Supplier<R> next) {
+
+        txOpenCount.add("tx-open");
+        final var result = next.get();
+        txOpenCount.add("tx-commit");
+        return result;
+      }
+    };
+
+    return new UseCasePipeline(List.of(retryBehavior, txBehavior));
+  }
+
+  @Test
   @DisplayName("múltiples behaviors se ejecutan en orden (primer behavior es el más externo)")
   void multipleBehaviorsExecuteInOrder() {
 

@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -89,7 +88,6 @@ public class MatchController {
   }
 
   @PostMapping
-  @Transactional
   @Operation(summary = "Crear partida", description = "Crea una nueva partida para el jugador autenticado", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateMatchResponse.class))),
@@ -105,7 +103,6 @@ public class MatchController {
   }
 
   @PostMapping("/join")
-  @Transactional
   @Operation(summary = "Unirse a partida", description = "Une el jugador autenticado a una partida usando invite code", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinMatchResponse.class))),
@@ -122,7 +119,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/start")
-  @Transactional
   @Operation(summary = "Iniciar partida", description = "Inicia una partida. Requiere token Bearer del jugador de esa partida", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Partida iniciada"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -150,7 +146,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/play-card")
-  @Transactional
   @Operation(summary = "Jugar carta", description = "Juega una carta de la mano actual", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Carta jugada"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -165,7 +160,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/truco")
-  @Transactional
   @Operation(summary = "Cantar Truco", description = "Realiza un canto de Truco", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Canto registrado"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -179,7 +173,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/truco/respond")
-  @Transactional
   @Operation(summary = "Responder Truco", description = "Responde al último canto de Truco", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Respuesta registrada"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -194,7 +187,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/envido")
-  @Transactional
   @Operation(summary = "Cantar Envido", description = "Realiza un canto de Envido", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Canto registrado"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -208,7 +200,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/envido/respond")
-  @Transactional
   @Operation(summary = "Responder Envido", description = "Responde al último canto de Envido", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Respuesta registrada"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -223,7 +214,6 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/fold")
-  @Transactional
   @Operation(summary = "Irse al mazo", description = "Abandona la ronda actual", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Acción registrada"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
