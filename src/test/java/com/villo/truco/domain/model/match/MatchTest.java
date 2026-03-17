@@ -7,6 +7,7 @@ import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
+import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
@@ -169,13 +170,13 @@ class MatchTest {
   class StartMatch {
 
     @Test
-    @DisplayName("falla si no se hizo join antes")
+    @DisplayName("lanza MatchNotFullException si no se hizo join antes")
     void failsIfNoJoin() {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
 
       assertThatThrownBy(() -> match.startMatch(playerOne)).isInstanceOf(
-          InvalidMatchStateException.class);
+          MatchNotFullException.class);
     }
 
     @Test

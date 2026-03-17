@@ -9,6 +9,7 @@ import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
 import com.villo.truco.domain.model.match.events.ScoreChangedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
+import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
@@ -131,6 +132,10 @@ public final class Match extends AggregateBase<MatchId> {
           "startMatch ignored because match is already in progress: matchId={}, playerId={}",
           this.id, playerId);
       return;
+    }
+
+    if (this.status == MatchStatus.WAITING_FOR_PLAYERS) {
+      throw new MatchNotFullException();
     }
 
     if (this.status != MatchStatus.READY) {

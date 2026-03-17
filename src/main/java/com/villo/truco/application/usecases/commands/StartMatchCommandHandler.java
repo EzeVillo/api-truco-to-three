@@ -36,7 +36,8 @@ public final class StartMatchCommandHandler implements StartMatchUseCase {
       if (this.matchQueryRepository.hasActiveMatch(match.getPlayerOne())) {
         throw new PlayerAlreadyInActiveMatchException();
       }
-      if (this.matchQueryRepository.hasActiveMatch(match.getPlayerTwo())) {
+      if (match.getPlayerTwo() != null && this.matchQueryRepository.hasActiveMatch(
+          match.getPlayerTwo())) {
         throw new PlayerAlreadyInActiveMatchException();
       }
     }
