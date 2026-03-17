@@ -9,6 +9,8 @@ import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.MatchMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataMatchRepository;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
@@ -57,6 +59,12 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   public boolean hasActiveMatch(final PlayerId playerId) {
 
     return this.springDataRepo.hasActiveMatch(playerId.value());
+  }
+
+  @Override
+  public List<MatchId> findIdleMatchIds(final Instant idleSince) {
+
+    return this.springDataRepo.findIdleMatchIds(idleSince).stream().map(MatchId::new).toList();
   }
 
 }

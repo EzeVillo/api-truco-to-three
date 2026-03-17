@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.config;
 
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
+import com.villo.truco.application.ports.in.AbandonMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
@@ -21,6 +22,8 @@ import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
 import com.villo.truco.application.ports.in.StartTournamentUseCase;
+import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
+import com.villo.truco.application.usecases.commands.AbandonMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.CallEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.CallTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
@@ -39,6 +42,7 @@ import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.StartTournamentCommandHandler;
+import com.villo.truco.application.usecases.commands.TimeoutIdleMatchesCommandHandler;
 import com.villo.truco.application.usecases.commands.TournamentResolver;
 import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetTournamentStateQueryHandler;
@@ -207,6 +211,16 @@ public class UseCaseConfiguration {
   }
 
   @Bean
+  AbandonMatchUseCase abandonMatchCommandHandler(final MatchResolver matchResolver,
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final UseCasePipeline retryTransactionalPipeline) {
+
+    final var handler = new AbandonMatchCommandHandler(matchResolver, matchRepository,
+        matchEventNotifier);
+    return retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
   FoldUseCase foldCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
       final UseCasePipeline retryTransactionalPipeline) {
@@ -280,6 +294,20 @@ public class UseCaseConfiguration {
       final TournamentResolver tournamentResolver) {
 
     return new GetTournamentStateQueryHandler(tournamentResolver);
+  }
+
+  @Bean
+  TimeoutIdleMatchesUseCase timeoutIdleMatchesCommandHandler(
+      final MatchQueryRepository matchQueryRepository, final MatchRepository matchRepository,
+      final MatchEventNotifier matchEventNotifier,
+      final TournamentQueryRepository tournamentQueryRepository,
+      final TournamentRepository tournamentRepository,
+      final com.villo.truco.application.ports.TransactionalRunner transactionalRunner,
+      final MatchTimeoutProperties matchTimeoutProperties) {
+
+    return new TimeoutIdleMatchesCommandHandler(matchQueryRepository, matchRepository,
+        matchEventNotifier, tournamentQueryRepository, tournamentRepository, transactionalRunner,
+        Duration.ofSeconds(matchTimeoutProperties.getIdleTimeoutSeconds()));
   }
 
 }

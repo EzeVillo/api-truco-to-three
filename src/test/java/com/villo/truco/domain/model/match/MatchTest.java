@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
+import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
@@ -12,6 +13,7 @@ import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
+import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -571,6 +573,85 @@ class MatchTest {
           event -> event instanceof GameScoreChangedEvent gameScoreChangedEvent
               && gameScoreChangedEvent.getGamesWonPlayerOne() == 1
               && gameScoreChangedEvent.getGamesWonPlayerTwo() == 0);
+    }
+
+  }
+
+  @Nested
+  @DisplayName("forfeit")
+  class Forfeit {
+
+    @Test
+    @DisplayName("playerOne gana cuando playerTwo hace forfeit")
+    void playerOneWinsWhenPlayerTwoForfeits() {
+
+      final var match = matchInProgress();
+
+      match.forfeit(playerOne);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(playerOne);
+    }
+
+    @Test
+    @DisplayName("playerTwo gana cuando playerOne hace forfeit")
+    void playerTwoWinsWhenPlayerOneForfeits() {
+
+      final var match = matchInProgress();
+
+      match.forfeit(playerTwo);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(playerTwo);
+    }
+
+    @Test
+    @DisplayName("emite MatchForfeitedEvent con el seat del ganador correcto")
+    void emitsMatchForfeitedEventWithCorrectWinnerSeat() {
+
+      final var match = matchInProgress();
+      match.clearDomainEvents();
+
+      match.forfeit(playerTwo);
+
+      assertThat(match.getDomainEvents()).anyMatch(
+          event -> event instanceof MatchForfeitedEvent forfeited
+              && forfeited.getWinnerSeat() == PlayerSeat.PLAYER_TWO);
+    }
+
+    @Test
+    @DisplayName("forfeit en WAITING_FOR_PLAYERS lanza InvalidMatchStateException")
+    void forfeitInWaitingForPlayersThrows() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+
+      assertThatThrownBy(() -> match.forfeit(playerOne)).isInstanceOf(
+          InvalidMatchStateException.class);
+    }
+
+    @Test
+    @DisplayName("forfeit cuando ya está FINISHED es idempotente")
+    void forfeitWhenAlreadyFinishedIsIdempotent() {
+
+      final var match = matchInProgress();
+      match.forfeit(playerOne);
+      match.clearDomainEvents();
+
+      match.forfeit(playerOne);
+
+      assertThat(match.getDomainEvents()).isEmpty();
+      assertThat(match.getMatchWinner()).isEqualTo(playerOne);
+    }
+
+    @Test
+    @DisplayName("forfeit con jugador ajeno lanza PlayerNotInMatchException")
+    void forfeitWithStrangerThrows() {
+
+      final var match = matchInProgress();
+      final var stranger = PlayerId.generate();
+
+      assertThatThrownBy(() -> match.forfeit(stranger)).isInstanceOf(
+          PlayerNotInMatchException.class);
     }
 
   }

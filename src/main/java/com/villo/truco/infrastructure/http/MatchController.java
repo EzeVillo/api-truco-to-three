@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.http;
 
+import com.villo.truco.application.commands.AbandonMatchCommand;
 import com.villo.truco.application.commands.CallEnvidoCommand;
 import com.villo.truco.application.commands.CallTrucoCommand;
 import com.villo.truco.application.commands.CreateMatchCommand;
@@ -9,6 +10,7 @@ import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
 import com.villo.truco.application.commands.StartMatchCommand;
+import com.villo.truco.application.ports.in.AbandonMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
@@ -67,13 +69,15 @@ public class MatchController {
   private final CallEnvidoUseCase callEnvido;
   private final RespondEnvidoUseCase respondEnvido;
   private final FoldUseCase fold;
+  private final AbandonMatchUseCase abandonMatch;
   private final GetMatchStateUseCase getMatchState;
 
   public MatchController(final CreateMatchUseCase createMatch, final JoinMatchUseCase joinMatch,
       final StartMatchUseCase startMatch, final PlayCardUseCase playCard,
       final CallTrucoUseCase callTruco, final RespondTrucoUseCase respondTruco,
       final CallEnvidoUseCase callEnvido, final RespondEnvidoUseCase respondEnvido,
-      final FoldUseCase fold, final GetMatchStateUseCase getMatchState) {
+      final FoldUseCase fold, final AbandonMatchUseCase abandonMatch,
+      final GetMatchStateUseCase getMatchState) {
 
     this.createMatch = Objects.requireNonNull(createMatch);
     this.joinMatch = Objects.requireNonNull(joinMatch);
@@ -84,6 +88,7 @@ public class MatchController {
     this.callEnvido = Objects.requireNonNull(callEnvido);
     this.respondEnvido = Objects.requireNonNull(respondEnvido);
     this.fold = Objects.requireNonNull(fold);
+    this.abandonMatch = Objects.requireNonNull(abandonMatch);
     this.getMatchState = Objects.requireNonNull(getMatchState);
   }
 
@@ -223,6 +228,19 @@ public class MatchController {
       @AuthenticationPrincipal final Jwt jwt) {
 
     this.fold.handle(new FoldCommand(matchId, jwt.getSubject()));
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{matchId}/abandon")
+  @Operation(summary = "Abandonar partida", description = "El jugador autenticado abandona voluntariamente la partida; el oponente gana", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Partida abandonada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se puede abandonar en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> abandonMatch(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    this.abandonMatch.handle(new AbandonMatchCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
   }
 

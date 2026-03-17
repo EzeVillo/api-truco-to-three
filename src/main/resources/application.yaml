@@ -20,6 +20,9 @@ truco:
   retry:
     max-retries: 3
     delay-ms: 200
+  match:
+    idle-timeout-seconds: 300
+    timeout-check-interval-ms: 30000
   security:
     jwt-secret: ${TRUCO_JWT_SECRET:truco-local-dev-secret-key-32-bytes}
     issuer: ${TRUCO_JWT_ISSUER:truco-api}

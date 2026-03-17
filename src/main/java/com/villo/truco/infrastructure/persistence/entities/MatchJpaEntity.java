@@ -3,8 +3,11 @@ package com.villo.truco.infrastructure.persistence.entities;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.time.Instant;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -62,11 +65,26 @@ public class MatchJpaEntity {
   @Column(name = "current_round", columnDefinition = "jsonb")
   private RoundData currentRound;
 
+  @Column(name = "last_activity_at", nullable = false)
+  private Instant lastActivityAt;
+
   @Version
   private int version;
 
   public MatchJpaEntity() {
 
+  }
+
+  @PrePersist
+  void onPrePersist() {
+
+    this.lastActivityAt = Instant.now();
+  }
+
+  @PreUpdate
+  void onPreUpdate() {
+
+    this.lastActivityAt = Instant.now();
   }
 
   public UUID getId() {

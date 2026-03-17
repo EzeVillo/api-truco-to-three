@@ -3,6 +3,7 @@ package com.villo.truco.domain.model.match;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
+import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
 import com.villo.truco.domain.model.match.events.ScoreChangedEvent;
@@ -263,6 +264,33 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.points());
+  }
+
+  public void forfeit(final PlayerId winner) {
+
+    Objects.requireNonNull(winner, "Winner cannot be null");
+    this.validatePlayerInMatch(winner);
+
+    if (this.status == MatchStatus.FINISHED) {
+      return;
+    }
+
+    if (this.status == MatchStatus.WAITING_FOR_PLAYERS) {
+      throw new InvalidMatchStateException(this.status, MatchStatus.READY);
+    }
+
+    final var winningSeat = this.seatOf(winner);
+    if (winningSeat == PlayerSeat.PLAYER_ONE) {
+      this.gamesWonPlayerOne = this.rules.gamesToWin();
+    } else {
+      this.gamesWonPlayerTwo = this.rules.gamesToWin();
+    }
+
+    this.status = MatchStatus.FINISHED;
+    this.currentRound = null;
+    LOGGER.info("Match forfeited by timeout: matchId={}, winner={}", this.id, winner);
+    this.addDomainEvent(
+        new MatchForfeitedEvent(winningSeat, this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
   }
 
   private void startNewRoundIfNeeded(final boolean newGameStarted) {

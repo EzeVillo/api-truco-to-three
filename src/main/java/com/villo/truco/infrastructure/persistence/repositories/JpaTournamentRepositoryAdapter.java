@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.persistence.repositories;
 
+import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.tournament.Tournament;
 import com.villo.truco.domain.model.tournament.valueobjects.TournamentId;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
@@ -52,6 +53,12 @@ public class JpaTournamentRepositoryAdapter implements TournamentRepository,
   public Optional<Tournament> findByInviteCode(final InviteCode inviteCode) {
 
     return this.springDataRepo.findByInviteCode(inviteCode.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public Optional<Tournament> findByMatchId(final MatchId matchId) {
+
+    return this.springDataRepo.findByMatchId(matchId.value()).map(this.mapper::toDomain);
   }
 
 }

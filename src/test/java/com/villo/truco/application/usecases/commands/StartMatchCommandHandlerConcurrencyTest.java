@@ -95,6 +95,13 @@ class StartMatchCommandHandlerConcurrencyTest {
           m -> m.getStatus() == MatchStatus.IN_PROGRESS && (playerId.equals(m.getPlayerOne())
               || playerId.equals(m.getPlayerTwo())));
     }
+
+    @Override
+    public java.util.List<com.villo.truco.domain.model.match.valueobjects.MatchId> findIdleMatchIds(
+        final java.time.Instant idleSince) {
+
+      return java.util.List.of();
+    }
   };
 
   private static void awaitLatch(final CountDownLatch latch) {

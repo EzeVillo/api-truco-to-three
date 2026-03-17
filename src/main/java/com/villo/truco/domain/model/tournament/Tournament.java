@@ -219,6 +219,36 @@ public final class Tournament extends AggregateBase<TournamentId> {
         matchId);
   }
 
+  public void forfeitPlayer(final PlayerId forfeiter) {
+
+    Objects.requireNonNull(forfeiter, "Forfeiter cannot be null");
+
+    if (!this.participants.contains(forfeiter)) {
+      throw new PlayerNotInTournamentException();
+    }
+
+    final var pendingFixtures = this.fixtures.stream()
+        .filter(f -> f.status() == FixtureStatus.PENDING && f.containsPlayer(forfeiter)).toList();
+
+    for (final var fixture : pendingFixtures) {
+      final var rival =
+          fixture.playerOne().equals(forfeiter) ? fixture.playerTwo() : fixture.playerOne();
+      fixture.resolve(rival);
+      this.winsByPlayer.merge(rival, 1, Integer::sum);
+      LOGGER.info("Fixture auto-resolved by forfeit: tournamentId={}, fixtureId={}, winner={}",
+          this.id, fixture.id(), rival);
+    }
+
+    final var allResolved = this.fixtures.stream()
+        .allMatch(f -> f.status() != FixtureStatus.PENDING);
+
+    if (allResolved) {
+      this.status = TournamentStatus.FINISHED;
+      LOGGER.info("Tournament finished by forfeit: tournamentId={}, leaders={}", this.id,
+          this.getLeaders());
+    }
+  }
+
   public void recordMatchWinner(final MatchId matchId, final PlayerId winner) {
 
     Objects.requireNonNull(matchId, "MatchId cannot be null");
