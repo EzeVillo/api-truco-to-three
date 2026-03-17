@@ -4,6 +4,7 @@ import com.villo.truco.application.exceptions.TournamentNotFoundException;
 import com.villo.truco.domain.model.tournament.Tournament;
 import com.villo.truco.domain.model.tournament.valueobjects.TournamentId;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import java.util.Objects;
 
 public final class TournamentResolver {
@@ -19,6 +20,12 @@ public final class TournamentResolver {
 
     return this.tournamentQueryRepository.findById(tournamentId)
         .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+  }
+
+  public Tournament resolve(final InviteCode inviteCode) {
+
+    return this.tournamentQueryRepository.findByInviteCode(inviteCode)
+        .orElseThrow(() -> new TournamentNotFoundException(inviteCode));
   }
 
 }

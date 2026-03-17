@@ -5,11 +5,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Respuesta al unirse a partida")
 public record JoinMatchResponse(
-    @Schema(description = "JWT Bearer del jugador que se unió") String accessToken) {
+    @Schema(description = "ID de la partida a la que se unió") String matchId) {
 
   public static JoinMatchResponse from(final JoinMatchDTO dto) {
 
-    return new JoinMatchResponse(dto.accessToken());
+    return new JoinMatchResponse(dto.matchId());
   }
 
 }

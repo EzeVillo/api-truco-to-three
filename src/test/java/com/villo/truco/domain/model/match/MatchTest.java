@@ -5,14 +5,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
+import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
-import com.villo.truco.domain.model.match.valueobjects.InviteCode;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,8 +36,8 @@ class MatchTest {
 
   private Match matchInProgress() {
 
-    final var match = Match.create(playerOne, playerTwo);
-    match.join(match.getInviteCode());
+    final var match = Match.createReady(playerOne, playerTwo,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
     return match;
@@ -73,7 +75,7 @@ class MatchTest {
     @DisplayName("crea el match en WAITING_FOR_PLAYERS")
     void createsMatchInWaitingState() {
 
-      final var match = Match.create(playerOne, playerTwo);
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
 
       assertThat(match.getStatus()).isEqualTo(MatchStatus.WAITING_FOR_PLAYERS);
     }
@@ -82,7 +84,7 @@ class MatchTest {
     @DisplayName("inicializa juegos ganados en 0")
     void initializesWinsAtZero() {
 
-      final var match = Match.create(playerOne, playerTwo);
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
 
       assertThat(match.getGamesWonPlayerOne()).isZero();
       assertThat(match.getGamesWonPlayerTwo()).isZero();
@@ -92,15 +94,16 @@ class MatchTest {
     @DisplayName("no tiene ganador al crearse")
     void hasNoWinnerOnCreation() {
 
-      assertThat(Match.create(playerOne, playerTwo).getMatchWinner()).isNull();
+      assertThat(Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)))
+          .getMatchWinner()).isNull();
     }
 
     @Test
     @DisplayName("permite crear match con reglas custom")
     void createsMatchWithCustomRules() {
 
-      final var match = Match.create(playerOne, playerTwo, new MatchRules(1));
-      match.join(match.getInviteCode());
+      final var match = Match.create(playerOne, new MatchRules(1));
+      match.join(playerTwo, match.getInviteCode());
       match.startMatch(playerOne);
       match.startMatch(playerTwo);
 
@@ -122,17 +125,28 @@ class MatchTest {
     @DisplayName("no arranca el juego todavía — no hay turno asignado")
     void doesNotStartGame() {
 
-      final var match = Match.create(playerOne, playerTwo);
-      match.join(match.getInviteCode());
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      match.join(playerTwo, match.getInviteCode());
 
       assertThat(match.getCurrentTurn()).isNull();
+    }
+
+    @Test
+    @DisplayName("transiciona el estado a READY")
+    void transitionsToReady() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+      match.join(playerTwo, match.getInviteCode());
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.READY);
     }
 
     @Test
     @DisplayName("falla si el mismo jugador intenta hacer join")
     void failsIfSamePlayer() {
 
-      assertThatThrownBy(() -> Match.create(playerOne, playerOne)).isInstanceOf(
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      assertThatThrownBy(() -> match.join(playerOne, match.getInviteCode())).isInstanceOf(
           SamePlayerMatchException.class);
     }
 
@@ -140,9 +154,9 @@ class MatchTest {
     @DisplayName("falla si el inviteCode no coincide con el esperado")
     void failsIfWrongInviteCode() {
 
-      final var match = Match.create(playerOne, playerTwo);
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
 
-      assertThatThrownBy(() -> match.join(InviteCode.generate())).isInstanceOf(
+      assertThatThrownBy(() -> match.join(playerTwo, InviteCode.generate())).isInstanceOf(
           InvalidInviteCodeException.class);
     }
 
@@ -153,11 +167,21 @@ class MatchTest {
   class StartMatch {
 
     @Test
+    @DisplayName("falla si no se hizo join antes")
+    void failsIfNoJoin() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+
+      assertThatThrownBy(() -> match.startMatch(playerOne)).isInstanceOf(
+          InvalidMatchStateException.class);
+    }
+
+    @Test
     @DisplayName("un solo jugador ready no inicia el match")
     void singleReadyDoesNotStart() {
 
-      final var match = Match.create(playerOne, playerTwo);
-      match.join(match.getInviteCode());
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      match.join(playerTwo, match.getInviteCode());
       match.startMatch(playerOne);
 
       assertThat(match.getStatus()).isNotEqualTo(MatchStatus.IN_PROGRESS);
@@ -189,8 +213,8 @@ class MatchTest {
     @DisplayName("startMatch es idempotente")
     void startMatchIsIdempotent() {
 
-      final var match = Match.create(playerOne, playerTwo);
-      match.join(match.getInviteCode());
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      match.join(playerTwo, match.getInviteCode());
       match.startMatch(playerOne);
       match.startMatch(playerOne);
 

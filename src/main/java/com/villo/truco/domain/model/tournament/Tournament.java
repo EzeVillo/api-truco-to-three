@@ -1,19 +1,28 @@
 package com.villo.truco.domain.model.tournament;
 
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.tournament.exceptions.FixtureAlreadyResolvedException;
+import com.villo.truco.domain.model.tournament.exceptions.InvalidTournamentInviteCodeException;
 import com.villo.truco.domain.model.tournament.exceptions.InvalidTournamentPlayersException;
 import com.villo.truco.domain.model.tournament.exceptions.MatchNotPartOfTournamentException;
+import com.villo.truco.domain.model.tournament.exceptions.OnlyCreatorCanStartException;
+import com.villo.truco.domain.model.tournament.exceptions.PlayerAlreadyInTournamentException;
+import com.villo.truco.domain.model.tournament.exceptions.PlayerNotInTournamentException;
+import com.villo.truco.domain.model.tournament.exceptions.TournamentCreatorCannotLeaveException;
+import com.villo.truco.domain.model.tournament.exceptions.TournamentFullException;
+import com.villo.truco.domain.model.tournament.exceptions.TournamentNotReadyException;
+import com.villo.truco.domain.model.tournament.exceptions.TournamentNotWaitingException;
 import com.villo.truco.domain.model.tournament.exceptions.WinnerNotInFixtureException;
 import com.villo.truco.domain.model.tournament.valueobjects.FixtureId;
 import com.villo.truco.domain.model.tournament.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.tournament.valueobjects.TournamentId;
 import com.villo.truco.domain.model.tournament.valueobjects.TournamentStatus;
 import com.villo.truco.domain.shared.AggregateBase;
+import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,47 +36,128 @@ public final class Tournament extends AggregateBase<TournamentId> {
   private final List<PlayerId> participants;
   private final List<Fixture> fixtures;
   private final Map<PlayerId, Integer> winsByPlayer;
+  private final int capacity;
+  private final GamesToPlay gamesToPlay;
+  private final InviteCode inviteCode;
   private TournamentStatus status;
 
   private Tournament(final TournamentId id, final List<PlayerId> participants,
       final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
-      final TournamentStatus status) {
+      final TournamentStatus status, final int capacity, final GamesToPlay gamesToPlay,
+      final InviteCode inviteCode) {
 
     super(id);
     this.participants = participants;
     this.fixtures = fixtures;
     this.winsByPlayer = winsByPlayer;
     this.status = status;
+    this.capacity = capacity;
+    this.gamesToPlay = gamesToPlay;
+    this.inviteCode = inviteCode;
   }
 
-  public static Tournament create(final List<PlayerId> participantIds) {
+  public static Tournament create(final PlayerId creatorId, final int capacity,
+      final GamesToPlay gamesToPlay) {
 
-    Objects.requireNonNull(participantIds, "Participants cannot be null");
+    Objects.requireNonNull(creatorId, "Creator cannot be null");
+    Objects.requireNonNull(gamesToPlay, "GamesToPlay cannot be null");
 
-    if (participantIds.size() < 2) {
-      throw new InvalidTournamentPlayersException("Tournament requires at least 2 players");
+    if (capacity < 3 || capacity > 8) {
+      throw new InvalidTournamentPlayersException("Tournament capacity must be between 3 and 8");
     }
 
-    final var unique = new LinkedHashSet<>(participantIds);
+    final var participants = new ArrayList<PlayerId>();
+    participants.add(creatorId);
 
-    if (unique.size() != participantIds.size()) {
-      throw new InvalidTournamentPlayersException("Tournament participants must be unique");
-    }
-
-    final var participants = List.copyOf(participantIds);
-    final var fixtures = new ArrayList<>(generateRoundRobinFixtures(participants));
-
-    final var winsByPlayer = new LinkedHashMap<PlayerId, Integer>();
-
-    for (final var participant : participants) {
-      winsByPlayer.put(participant, 0);
-    }
-
-    final var tournament = new Tournament(TournamentId.generate(), participants, fixtures,
-        winsByPlayer, TournamentStatus.IN_PROGRESS);
-    LOGGER.info("Tournament created: tournamentId={}, participants={}, fixtures={}",
-        tournament.getId(), participants.size(), fixtures.size());
+    final var tournament = new Tournament(TournamentId.generate(), participants, new ArrayList<>(),
+        new LinkedHashMap<>(), TournamentStatus.WAITING_FOR_PLAYERS, capacity, gamesToPlay,
+        InviteCode.generate());
+    LOGGER.info("Tournament created: tournamentId={}, creator={}, capacity={}, gamesToPlay={}",
+        tournament.getId(), creatorId, capacity, gamesToPlay);
     return tournament;
+  }
+
+  public void join(final PlayerId playerId, final InviteCode inviteCode) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+    Objects.requireNonNull(inviteCode, "InviteCode cannot be null");
+
+    if (this.status != TournamentStatus.WAITING_FOR_PLAYERS) {
+      throw new TournamentNotWaitingException();
+    }
+
+    if (!this.inviteCode.equals(inviteCode)) {
+      throw new InvalidTournamentInviteCodeException();
+    }
+
+    if (this.participants.contains(playerId)) {
+      throw new PlayerAlreadyInTournamentException();
+    }
+
+    if (this.participants.size() >= this.capacity) {
+      throw new TournamentFullException();
+    }
+
+    this.participants.add(playerId);
+    LOGGER.info("Player joined tournament: tournamentId={}, playerId={}, participants={}/{}",
+        this.id, playerId, this.participants.size(), this.capacity);
+
+    if (this.participants.size() == this.capacity) {
+      this.status = TournamentStatus.WAITING_FOR_START;
+      LOGGER.info("Tournament ready: tournamentId={}, participants={}", this.id,
+          this.participants.size());
+    }
+  }
+
+  public void start(final PlayerId playerId) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+
+    if (this.status != TournamentStatus.WAITING_FOR_START) {
+      throw new TournamentNotReadyException();
+    }
+
+    if (!this.participants.getFirst().equals(playerId)) {
+      throw new OnlyCreatorCanStartException();
+    }
+
+    this.initializeFixtures();
+  }
+
+  public void leave(final PlayerId playerId) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+
+    if (this.status != TournamentStatus.WAITING_FOR_PLAYERS
+        && this.status != TournamentStatus.WAITING_FOR_START) {
+      throw new TournamentNotWaitingException();
+    }
+
+    if (!this.participants.contains(playerId)) {
+      throw new PlayerNotInTournamentException();
+    }
+
+    if (this.participants.getFirst().equals(playerId)) {
+      throw new TournamentCreatorCannotLeaveException();
+    }
+
+    this.participants.remove(playerId);
+    this.status = TournamentStatus.WAITING_FOR_PLAYERS;
+    LOGGER.info("Player left tournament: tournamentId={}, playerId={}, participants={}/{}", this.id,
+        playerId, this.participants.size(), this.capacity);
+  }
+
+  private void initializeFixtures() {
+
+    this.fixtures.addAll(generateRoundRobinFixtures(this.participants));
+
+    for (final var participant : this.participants) {
+      this.winsByPlayer.put(participant, 0);
+    }
+
+    this.status = TournamentStatus.IN_PROGRESS;
+    LOGGER.info("Tournament started: tournamentId={}, participants={}, fixtures={}", this.id,
+        this.participants.size(), this.fixtures.size());
   }
 
   private static List<Fixture> generateRoundRobinFixtures(final List<PlayerId> participants) {
@@ -163,6 +253,16 @@ public final class Tournament extends AggregateBase<TournamentId> {
   public TournamentStatus getStatus() {
 
     return this.status;
+  }
+
+  public InviteCode getInviteCode() {
+
+    return this.inviteCode;
+  }
+
+  public GamesToPlay getGamesToPlay() {
+
+    return this.gamesToPlay;
   }
 
   public List<FixtureView> getFixtures() {

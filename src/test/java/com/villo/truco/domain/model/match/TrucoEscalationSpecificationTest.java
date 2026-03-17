@@ -2,8 +2,8 @@ package com.villo.truco.domain.model.match;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import org.junit.jupiter.api.Test;
 
 class TrucoEscalationSpecificationTest {

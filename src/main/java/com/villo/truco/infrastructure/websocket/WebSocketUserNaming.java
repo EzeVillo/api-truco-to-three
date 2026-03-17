@@ -1,7 +1,6 @@
 package com.villo.truco.infrastructure.websocket;
 
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 
 public final class WebSocketUserNaming {
 
@@ -9,9 +8,9 @@ public final class WebSocketUserNaming {
 
   }
 
-  public static String userName(final MatchId matchId, final PlayerId playerId) {
+  public static String userName(final PlayerId playerId) {
 
-    return matchId.value() + "__" + playerId.value();
+    return playerId.value().toString();
   }
 
 }

@@ -1,7 +1,7 @@
 package com.villo.truco.domain.model.match;
 
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 
 final class MatchProgressionService {

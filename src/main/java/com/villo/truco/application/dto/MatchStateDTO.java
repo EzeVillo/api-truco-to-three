@@ -2,7 +2,7 @@ package com.villo.truco.application.dto;
 
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
 
 public record MatchStateDTO(String matchId, String status, int gamesWonPlayerOne,

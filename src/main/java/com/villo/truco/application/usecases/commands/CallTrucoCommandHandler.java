@@ -1,7 +1,7 @@
 package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.CallTrucoCommand;
-import com.villo.truco.application.ports.MatchLockManager;
+import com.villo.truco.application.ports.AggregateLockManager;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.MatchEventNotifier;
@@ -13,11 +13,11 @@ public final class CallTrucoCommandHandler implements CallTrucoUseCase {
   private final MatchResolver matchResolver;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
-  private final MatchLockManager matchLockManager;
+  private final AggregateLockManager<MatchId> matchLockManager;
 
   public CallTrucoCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final MatchLockManager matchLockManager) {
+      final AggregateLockManager<MatchId> matchLockManager) {
 
     this.matchResolver = Objects.requireNonNull(matchResolver);
     this.matchRepository = Objects.requireNonNull(matchRepository);

@@ -1,8 +1,7 @@
 package com.villo.truco.infrastructure.security;
 
 import com.villo.truco.application.ports.PlayerTokenProvider;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
@@ -30,21 +29,20 @@ public final class JwtPlayerTokenProvider implements PlayerTokenProvider {
   }
 
   @Override
-  public String generateAccessToken(final MatchId matchId, final PlayerId playerId) {
+  public String generateAccessToken(final PlayerId playerId) {
 
     final var now = Instant.now();
     final var claims = JwtClaimsSet.builder().issuer(this.securityProperties.issuer())
         .subject(playerId.value().toString()).audience(List.of(this.securityProperties.audience()))
         .issuedAt(now)
-        .expiresAt(now.plusSeconds(this.securityProperties.accessTokenExpirationSeconds()))
-        .claim("matchId", matchId.value().toString()).build();
+        .expiresAt(now.plusSeconds(this.securityProperties.accessTokenExpirationSeconds())).build();
 
     final var jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
 
     final var token = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims))
         .getTokenValue();
-    LOGGER.debug("Access token generated: matchId={}, playerId={}, expiresInSeconds={}", matchId,
-        playerId, this.securityProperties.accessTokenExpirationSeconds());
+    LOGGER.debug("Access token generated: playerId={}, expiresInSeconds={}", playerId,
+        this.securityProperties.accessTokenExpirationSeconds());
     return token;
   }
 

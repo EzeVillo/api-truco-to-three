@@ -4,12 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.CreateMatchCommand;
-import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.domain.model.match.Match;
-import com.villo.truco.domain.model.match.exceptions.InvalidMatchRulesException;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.DomainException;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,10 +21,9 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final PlayerTokenProvider tokenProvider = (matchId, playerId) -> "token";
-    final var handler = new CreateMatchCommandHandler(repository, tokenProvider);
+    final var handler = new CreateMatchCommandHandler(repository);
 
-    handler.handle(new CreateMatchCommand(3));
+    handler.handle(new CreateMatchCommand(PlayerId.generate().value().toString(), 3));
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getId()).isNotNull();
@@ -39,36 +36,28 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final PlayerTokenProvider tokenProvider = (matchId, playerId) -> "token";
-    final var handler = new CreateMatchCommandHandler(repository, tokenProvider);
+    final var handler = new CreateMatchCommandHandler(repository);
 
-    assertThatThrownBy(() -> handler.handle(new CreateMatchCommand(7))).isInstanceOf(
-        InvalidMatchRulesException.class).hasMessage("gamesToPlay must be one of: 1, 3, 5");
+    assertThatThrownBy(() -> handler.handle(
+        new CreateMatchCommand(PlayerId.generate().value().toString(), 7))).isInstanceOf(
+        DomainException.class);
 
     assertThat(savedMatch.get()).isNull();
   }
 
   @Test
-  @DisplayName("genera token con id de match creado y player host")
-  void generatesTokenForCreatedMatchAndHostPlayer() {
+  @DisplayName("el match creado pertenece al jugador del comando")
+  void matchBelongsToCommandPlayer() {
 
-    final var capturedMatchId = new AtomicReference<MatchId>();
-    final var capturedPlayerId = new AtomicReference<PlayerId>();
     final var savedMatch = new AtomicReference<Match>();
-
     final MatchRepository repository = savedMatch::set;
-    final PlayerTokenProvider tokenProvider = (matchId, playerId) -> {
-      capturedMatchId.set(matchId);
-      capturedPlayerId.set(playerId);
-      return "token";
-    };
-    final var handler = new CreateMatchCommandHandler(repository, tokenProvider);
+    final var handler = new CreateMatchCommandHandler(repository);
+    final var playerId = PlayerId.generate();
 
-    handler.handle(new CreateMatchCommand(5));
+    handler.handle(new CreateMatchCommand(playerId.value().toString(), 5));
 
     assertThat(savedMatch.get()).isNotNull();
-    assertThat(capturedMatchId.get()).isEqualTo(savedMatch.get().getId());
-    assertThat(capturedPlayerId.get()).isEqualTo(savedMatch.get().getPlayerOne());
+    assertThat(savedMatch.get().getPlayerOne()).isEqualTo(playerId);
   }
 
 }

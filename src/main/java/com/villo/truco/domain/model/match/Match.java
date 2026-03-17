@@ -14,16 +14,16 @@ import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.CurrentHandInfo;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
-import com.villo.truco.domain.model.match.valueobjects.InviteCode;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayedHandInfo;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.shared.AggregateBase;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public final class Match extends AggregateBase<MatchId> {
   private final MatchRules rules;
 
   private final PlayerId playerOne;
-  private final PlayerId playerTwo;
+  private PlayerId playerTwo;
   private final InviteCode inviteCode;
   private PlayerId firstManoOfGame = null;
 
@@ -56,14 +56,14 @@ public final class Match extends AggregateBase<MatchId> {
   private boolean readyPlayerTwo;
 
   private Match(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
-      final InviteCode inviteCode, final MatchRules rules) {
+      final InviteCode inviteCode, final MatchRules rules, final MatchStatus initialStatus) {
 
     super(id);
     this.playerOne = playerOne;
     this.playerTwo = playerTwo;
     this.inviteCode = inviteCode;
     this.rules = rules;
-    this.status = MatchStatus.WAITING_FOR_PLAYERS;
+    this.status = initialStatus;
     this.gamesWonPlayerOne = 0;
     this.gamesWonPlayerTwo = 0;
     this.gameNumber = 0;
@@ -71,12 +71,18 @@ public final class Match extends AggregateBase<MatchId> {
     this.readyPlayerTwo = false;
   }
 
-  public static Match create(final PlayerId playerOne, final PlayerId playerTwo) {
+  public static Match create(final PlayerId playerOne, final MatchRules rules) {
 
-    return create(playerOne, playerTwo, MatchRules.fromGamesToPlay(5));
+    Objects.requireNonNull(playerOne, "PlayerOne cannot be null");
+    Objects.requireNonNull(rules, "MatchRules cannot be null");
+    final var match = new Match(MatchId.generate(), playerOne, null, InviteCode.generate(), rules,
+        MatchStatus.WAITING_FOR_PLAYERS);
+    LOGGER.info("Match created: matchId={}, playerOne={}, rules={gamesToWin={}}", match.getId(),
+        playerOne, rules.gamesToWin());
+    return match;
   }
 
-  public static Match create(final PlayerId playerOne, final PlayerId playerTwo,
+  public static Match createReady(final PlayerId playerOne, final PlayerId playerTwo,
       final MatchRules rules) {
 
     Objects.requireNonNull(playerOne, "PlayerOne cannot be null");
@@ -85,15 +91,16 @@ public final class Match extends AggregateBase<MatchId> {
     if (playerOne.equals(playerTwo)) {
       throw new SamePlayerMatchException();
     }
-    final var match = new Match(MatchId.generate(), playerOne, playerTwo, InviteCode.generate(),
-        rules);
-    LOGGER.info("Match created: matchId={}, playerOne={}, playerTwo={}, rules={gamesToWin={}}",
-        match.getId(), playerOne, playerTwo, rules.gamesToWin());
+    final var match = new Match(MatchId.generate(), playerOne, playerTwo, null, rules,
+        MatchStatus.READY);
+    LOGGER.info("Ready match created: matchId={}, playerOne={}, playerTwo={}", match.getId(),
+        playerOne, playerTwo);
     return match;
   }
 
-  public void join(final InviteCode inviteCode) {
+  public void join(final PlayerId playerTwo, final InviteCode inviteCode) {
 
+    Objects.requireNonNull(playerTwo, "PlayerTwo cannot be null");
     Objects.requireNonNull(inviteCode, "InviteCode cannot be null");
 
     if (this.status != MatchStatus.WAITING_FOR_PLAYERS) {
@@ -104,7 +111,13 @@ public final class Match extends AggregateBase<MatchId> {
       throw new InvalidInviteCodeException();
     }
 
-    LOGGER.info("Player joined match: matchId={}", this.id);
+    if (playerTwo.equals(this.playerOne)) {
+      throw new SamePlayerMatchException();
+    }
+
+    this.playerTwo = playerTwo;
+    this.status = MatchStatus.READY;
+    LOGGER.info("Player joined match: matchId={}, playerTwo={}", this.id, playerTwo);
     this.addDomainEvent(new PlayerJoinedEvent());
   }
 
@@ -119,8 +132,8 @@ public final class Match extends AggregateBase<MatchId> {
       return;
     }
 
-    if (this.status != MatchStatus.WAITING_FOR_PLAYERS) {
-      throw new InvalidMatchStateException(this.status, MatchStatus.WAITING_FOR_PLAYERS);
+    if (this.status != MatchStatus.READY) {
+      throw new InvalidMatchStateException(this.status, MatchStatus.READY);
     }
 
     this.validatePlayerInMatch(playerId);

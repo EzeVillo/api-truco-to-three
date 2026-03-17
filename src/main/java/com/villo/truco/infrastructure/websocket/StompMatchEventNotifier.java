@@ -2,10 +2,10 @@ package com.villo.truco.infrastructure.websocket;
 
 import com.villo.truco.domain.model.match.events.SeatTargetedEvent;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
 import java.util.List;
 import java.util.Objects;
@@ -38,18 +38,18 @@ public final class StompMatchEventNotifier implements MatchEventNotifier {
       if (event instanceof SeatTargetedEvent targeted) {
         final var recipient =
             targeted.getTargetSeat() == PlayerSeat.PLAYER_ONE ? playerOneId : playerTwoId;
-        this.sendEvent(matchId, recipient, wsEvent);
+        this.sendEvent(recipient, wsEvent);
       } else {
-        this.sendEvent(matchId, playerOneId, wsEvent);
-        this.sendEvent(matchId, playerTwoId, wsEvent);
+        this.sendEvent(playerOneId, wsEvent);
+        this.sendEvent(playerTwoId, wsEvent);
       }
     }
   }
 
-  private void sendEvent(final MatchId matchId, final PlayerId playerId, final Object message) {
+  private void sendEvent(final PlayerId playerId, final Object message) {
 
-    final var userName = WebSocketUserNaming.userName(matchId, playerId);
-    LOGGER.debug("Sending WS event to user={} matchId={} type={}", userName, matchId,
+    final var userName = WebSocketUserNaming.userName(playerId);
+    LOGGER.debug("Sending WS event to user={} type={}", userName,
         message.getClass().getSimpleName());
     this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
   }

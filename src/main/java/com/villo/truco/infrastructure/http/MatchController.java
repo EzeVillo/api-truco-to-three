@@ -9,7 +9,6 @@ import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
 import com.villo.truco.application.commands.StartMatchCommand;
-import com.villo.truco.application.exceptions.UnauthorizedAccessException;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
@@ -91,31 +90,34 @@ public final class MatchController {
 
   @PostMapping
   @Transactional
-  @Operation(summary = "Crear partida", description = "Crea una nueva partida y devuelve token del jugador anfitrión", security = {})
+  @Operation(summary = "Crear partida", description = "Crea una nueva partida para el jugador autenticado", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateMatchResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "No se pudo crear la partida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<CreateMatchResponse> createMatch(
-      @RequestBody final CreateMatchRequest request) {
+      @RequestBody final CreateMatchRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP createMatch requested");
-    final var dto = this.createMatch.handle(new CreateMatchCommand(request.gamesToPlay()));
+    final var dto = this.createMatch.handle(
+        new CreateMatchCommand(jwt.getSubject(), request.gamesToPlay()));
     return ResponseEntity.ok(CreateMatchResponse.from(dto));
   }
 
-  @PostMapping("/{matchId}/join")
+  @PostMapping("/join")
   @Transactional
-  @Operation(summary = "Unirse a partida", description = "Une un jugador a una partida usando invite code", security = {})
+  @Operation(summary = "Unirse a partida", description = "Une el jugador autenticado a una partida usando invite code", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinMatchResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "Invite code inválido o estado inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinMatchResponse> joinMatch(
-      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
-      @RequestBody final JoinMatchRequest request) {
+  public ResponseEntity<JoinMatchResponse> joinMatch(@RequestBody final JoinMatchRequest request,
+      @AuthenticationPrincipal final Jwt jwt) {
 
-    LOGGER.info("HTTP joinMatch requested: matchId={}", matchId);
-    final var dto = this.joinMatch.handle(new JoinMatchCommand(matchId, request.inviteCode()));
+    LOGGER.info("HTTP joinMatch requested: inviteCode={}", request.inviteCode());
+    final var dto = this.joinMatch.handle(
+        new JoinMatchCommand(jwt.getSubject(), request.inviteCode()));
     return ResponseEntity.ok(JoinMatchResponse.from(dto));
   }
 
@@ -129,8 +131,7 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.startMatch.handle(new StartMatchCommand(matchId, playerId));
+    this.startMatch.handle(new StartMatchCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
   }
 
@@ -144,8 +145,7 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    final var state = this.getMatchState.handle(new GetMatchStateQuery(matchId, playerId));
+    final var state = this.getMatchState.handle(new GetMatchStateQuery(matchId, jwt.getSubject()));
     return ResponseEntity.ok(MatchStateResponse.from(state));
   }
 
@@ -159,8 +159,8 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final PlayCardRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.playCard.handle(new PlayCardCommand(matchId, playerId, request.suit(), request.number()));
+    this.playCard.handle(
+        new PlayCardCommand(matchId, jwt.getSubject(), request.suit(), request.number()));
     return ResponseEntity.noContent().build();
   }
 
@@ -174,8 +174,7 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.callTruco.handle(new CallTrucoCommand(matchId, playerId));
+    this.callTruco.handle(new CallTrucoCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
   }
 
@@ -189,8 +188,8 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final RespondTrucoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.respondTruco.handle(new RespondTrucoCommand(matchId, playerId, request.response()));
+    this.respondTruco.handle(
+        new RespondTrucoCommand(matchId, jwt.getSubject(), request.response()));
     return ResponseEntity.noContent().build();
   }
 
@@ -204,8 +203,7 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final CallEnvidoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.callEnvido.handle(new CallEnvidoCommand(matchId, playerId, request.call()));
+    this.callEnvido.handle(new CallEnvidoCommand(matchId, jwt.getSubject(), request.call()));
     return ResponseEntity.noContent().build();
   }
 
@@ -219,9 +217,8 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @RequestBody final RespondEnvidoRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.respondEnvido.handle(new RespondEnvidoCommand(matchId, playerId, request.response()));
-
+    this.respondEnvido.handle(
+        new RespondEnvidoCommand(matchId, jwt.getSubject(), request.response()));
     return ResponseEntity.noContent().build();
   }
 
@@ -235,26 +232,8 @@ public final class MatchController {
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
-    final var playerId = this.authenticate(matchId, jwt);
-    this.fold.handle(new FoldCommand(matchId, playerId));
+    this.fold.handle(new FoldCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
-  }
-
-  private String authenticate(final String matchId, final Jwt jwt) {
-
-    if (jwt == null) {
-      LOGGER.warn("Authentication failed: missing JWT for matchId={}", matchId);
-      throw new UnauthorizedAccessException("Missing authentication token");
-    }
-
-    final var tokenMatchId = jwt.getClaimAsString("matchId");
-    if (!matchId.equals(tokenMatchId)) {
-      LOGGER.warn("Authentication failed: token matchId mismatch requested={} token={}", matchId,
-          tokenMatchId);
-      throw new UnauthorizedAccessException("Token does not belong to this match");
-    }
-
-    return jwt.getSubject();
   }
 
 }

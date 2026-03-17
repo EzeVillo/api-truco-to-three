@@ -1,6 +1,6 @@
 package com.villo.truco.domain.model.tournament.valueobjects;
 
-import com.villo.truco.domain.model.match.valueobjects.exceptions.InvalidIdException;
+import com.villo.truco.domain.shared.exceptions.InvalidIdException;
 import java.util.UUID;
 
 public record TournamentId(UUID value) {

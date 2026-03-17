@@ -4,6 +4,7 @@ import com.villo.truco.domain.model.tournament.Tournament;
 import com.villo.truco.domain.model.tournament.valueobjects.TournamentId;
 import com.villo.truco.domain.ports.TournamentQueryRepository;
 import com.villo.truco.domain.ports.TournamentRepository;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +34,13 @@ public final class InMemoryTournamentRepository implements TournamentRepository,
     final var tournament = this.store.get(tournamentId);
     LOGGER.debug("Tournament lookup: tournamentId={}, found={}", tournamentId, tournament != null);
     return Optional.ofNullable(tournament);
+  }
+
+  @Override
+  public Optional<Tournament> findByInviteCode(final InviteCode inviteCode) {
+
+    return this.store.values().stream()
+        .filter(tournament -> tournament.getInviteCode().equals(inviteCode)).findFirst();
   }
 
 }

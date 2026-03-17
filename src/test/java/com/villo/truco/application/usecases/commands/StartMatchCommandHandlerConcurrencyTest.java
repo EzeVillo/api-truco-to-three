@@ -3,16 +3,19 @@ package com.villo.truco.application.usecases.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.application.commands.StartMatchCommand;
-import com.villo.truco.application.ports.MatchLockManager;
+import com.villo.truco.application.ports.AggregateLockManager;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
+import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.DomainEventBase;
-import com.villo.truco.infrastructure.persistence.InMemoryMatchLockManager;
+import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.InMemoryAggregateLockManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,11 +41,30 @@ class StartMatchCommandHandlerConcurrencyTest {
       new ArrayList<>());
 
   private final MatchRepository matchRepository = match -> store.put(match.getId(), match);
-  private final MatchQueryRepository matchQueryRepository = id -> Optional.ofNullable(
-      store.get(id));
+  private final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
+    @Override
+    public Optional<Match> findById(final MatchId id) {
+
+      return Optional.ofNullable(store.get(id));
+    }
+
+    @Override
+    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+
+      return store.values().stream().filter(m -> m.getInviteCode().equals(inviteCode)).findFirst();
+    }
+
+    @Override
+    public boolean hasActiveMatch(final PlayerId playerId) {
+
+      return store.values().stream().anyMatch(
+          m -> m.getStatus() == MatchStatus.IN_PROGRESS && (playerId.equals(m.getPlayerOne())
+              || playerId.equals(m.getPlayerTwo())));
+    }
+  };
   private final MatchEventNotifier matchEventNotifier = (matchId, p1, p2, events) -> publishedEvents.addAll(
       events);
-  private final MatchLockManager matchLockManager = new InMemoryMatchLockManager();
+  private final AggregateLockManager<MatchId> matchLockManager = new InMemoryAggregateLockManager<>();
 
   private MatchResolver matchResolver;
   private StartMatchCommandHandler handler;
@@ -67,13 +89,12 @@ class StartMatchCommandHandlerConcurrencyTest {
     publishedEvents.clear();
 
     matchResolver = new MatchResolver(matchQueryRepository);
-    handler = new StartMatchCommandHandler(matchResolver, matchRepository, matchEventNotifier,
-        matchLockManager);
+    handler = new StartMatchCommandHandler(matchResolver, matchRepository, matchQueryRepository,
+        matchEventNotifier, matchLockManager);
 
     playerOne = PlayerId.generate();
     playerTwo = PlayerId.generate();
-    match = Match.create(playerOne, playerTwo);
-    match.join(match.getInviteCode());
+    match = Match.createReady(playerOne, playerTwo, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
     store.put(match.getId(), match);
   }
 
@@ -169,7 +190,7 @@ class StartMatchCommandHandlerConcurrencyTest {
     };
 
     final var blockingHandler = new StartMatchCommandHandler(matchResolver, matchRepository,
-        blockingNotifier, matchLockManager);
+        matchQueryRepository, blockingNotifier, matchLockManager);
 
     try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
       final Future<MatchId> first = executor.submit(() -> blockingHandler.handle(

@@ -2,8 +2,8 @@ package com.villo.truco.application.commands;
 
 import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.Suit;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 
 public record PlayCardCommand(MatchId matchId, PlayerId playerId, Card card) {

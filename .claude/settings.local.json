@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -1 /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/ | grep -E \"Handler\\\\.java$\")",
+      "Bash(ls -1 /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/queries/ | grep -E \"Handler\\\\.java$\")",
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(grep -r \"PlayerInMatchException\\\\|PlayerAlreadyInMatch\\\\|ConcurrentMatch\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src --include=\"*.java\" 2>/dev/null | head -20)",
+      "Bash(grep -r \"findByPlayer\\\\|getMatchesByPlayer\\\\|findAllMatches\\\\|getAll\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java --include=\"*.java\" 2>/dev/null | head -30)",
+      "Bash(grep -r \"class MatchController\\\\|@RestController\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java --include=\"*.java\" 2>/dev/null | head -5)",
+      "Bash(grep -r \"class Tournament\\\\|fixture\\\\|playerOne\\\\|playerTwo\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/domain/model/tournament --include=\"*.java\" 2>/dev/null | head -20)",
+      "Bash(grep -r \"MatchQueryRepository\\\\|findByPlayer\\\\|filter.*player\\\\|stream\\(\\)\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application --include=\"*.java\" 2>/dev/null | head -15)",
+      "Bash(grep -r \"IN_PROGRESS\\\\|READY\\\\|WAITING\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application --include=\"*.java\" 2>/dev/null | head -15)",
+      "Bash(find:*)"
+    ]
+  }
+}

@@ -3,8 +3,7 @@ package com.villo.truco.infrastructure.security;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.villo.truco.application.ports.PlayerTokenProvider;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -55,16 +54,28 @@ class HttpSecurityIntegrationTest {
   }
 
   @Test
-  void shouldRejectTokenFromAnotherMatch() throws Exception {
+  void shouldReturn404ForUnknownMatchWithValidToken() throws Exception {
 
-    final var tokenMatchId = new MatchId(UUID.randomUUID());
-    final var requestedMatchId = UUID.randomUUID().toString();
     final var playerId = PlayerId.generate();
+    final var requestedMatchId = UUID.randomUUID().toString();
 
-    final var token = this.tokenProvider.generateAccessToken(tokenMatchId, playerId);
+    final var token = this.tokenProvider.generateAccessToken(playerId);
     final var request = HttpRequest.newBuilder(
             URI.create(this.baseUrl() + "/api/matches/" + requestedMatchId))
         .header("Authorization", "Bearer " + token).GET().build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(404, response.statusCode());
+  }
+
+  @Test
+  void shouldRequireAuthForCreateMatchEndpoint() throws Exception {
+
+    final var body = "{\"gamesToPlay\":3}";
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/matches"))
+        .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body))
+        .build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -72,10 +83,10 @@ class HttpSecurityIntegrationTest {
   }
 
   @Test
-  void shouldAllowUnauthenticatedCreateMatchEndpoint() throws Exception {
+  void shouldAllowUnauthenticatedRegisterEndpoint() throws Exception {
 
-    final var body = "{\"gamesToPlay\":3}";
-    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/matches"))
+    final var body = "{\"username\":\"testuser\",\"password\":\"testpassword\"}";
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/register"))
         .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body))
         .build();
 
@@ -85,16 +96,34 @@ class HttpSecurityIntegrationTest {
   }
 
   @Test
-  void shouldRejectInvalidGamesToPlayOnCreateMatch() throws Exception {
+  void shouldAllowUnauthenticatedLoginEndpoint() throws Exception {
 
-    final var body = "{\"gamesToPlay\":7}";
-    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/matches"))
-        .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body))
+    final var registerBody = "{\"username\":\"logintest\",\"password\":\"testpassword\"}";
+    this.httpClient.send(HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/register"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(registerBody)).build(),
+        HttpResponse.BodyHandlers.ofString());
+
+    final var loginBody = "{\"username\":\"logintest\",\"password\":\"testpassword\"}";
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
+        .header("Content-Type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(loginBody)).build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(200, response.statusCode());
+  }
+
+  @Test
+  void shouldAllowUnauthenticatedGuestEndpoint() throws Exception {
+
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/guest"))
+        .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString("{}"))
         .build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-    assertEquals(422, response.statusCode());
+    assertEquals(200, response.statusCode());
   }
 
   @Test

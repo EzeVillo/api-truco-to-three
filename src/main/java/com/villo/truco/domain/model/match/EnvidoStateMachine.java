@@ -2,7 +2,7 @@ package com.villo.truco.domain.model.match;
 
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.villo.truco.domain.model.match.valueobjects;
+package com.villo.truco.domain.shared.valueobjects;
 
 import java.security.SecureRandom;
 import java.util.Objects;

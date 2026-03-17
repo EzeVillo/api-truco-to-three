@@ -1,7 +1,6 @@
 package com.villo.truco.infrastructure.websocket;
 
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -60,19 +59,17 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     final var token = authHeader.substring(7);
     final var jwt = this.decode(token);
-    final var matchId = jwt.getClaimAsString("matchId");
-    final var playerId = jwt.getSubject();
+    final var playerIdStr = jwt.getSubject();
 
-    if (matchId == null || playerId == null) {
-      LOGGER.warn("WS connect rejected: missing claims in JWT");
+    if (playerIdStr == null) {
+      LOGGER.warn("WS connect rejected: missing subject in JWT");
       throw new MessageDeliveryException("Invalid authentication token claims");
     }
 
-    accessor.getSessionAttributes().put(IDENTITY_ATTR, playerId);
-    final var userName = WebSocketUserNaming.userName(new MatchId(UUID.fromString(matchId)),
-        new PlayerId(UUID.fromString(playerId)));
+    accessor.getSessionAttributes().put(IDENTITY_ATTR, playerIdStr);
+    final var userName = WebSocketUserNaming.userName(new PlayerId(UUID.fromString(playerIdStr)));
     accessor.setUser(() -> userName);
-    LOGGER.info("WS client authenticated: playerId={}, matchId={}", playerId, matchId);
+    LOGGER.info("WS client authenticated: playerId={}", playerIdStr);
 
     return message;
   }
@@ -96,8 +93,6 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
   private void validateTopicAccess(final String destination) {
 
-    // Topic format:
-    //   /user/queue/events
     if ("/user/queue/events".equals(destination)) {
       return;
     }

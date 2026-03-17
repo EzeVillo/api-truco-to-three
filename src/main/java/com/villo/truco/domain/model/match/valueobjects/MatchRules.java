@@ -1,6 +1,7 @@
 package com.villo.truco.domain.model.match.valueobjects;
 
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchRulesException;
+import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 
 public record MatchRules(int gamesToWin) {
 
@@ -12,13 +13,9 @@ public record MatchRules(int gamesToWin) {
 
   }
 
-  public static MatchRules fromGamesToPlay(final int gamesToPlay) {
+  public static MatchRules fromGamesToPlay(final GamesToPlay gamesToPlay) {
 
-    if (gamesToPlay != 1 && gamesToPlay != 3 && gamesToPlay != 5) {
-      throw new InvalidMatchRulesException("gamesToPlay must be one of: 1, 3, 5");
-    }
-
-    final var gamesToWin = gamesToPlay / 2 + 1;
+    final var gamesToWin = gamesToPlay.value() / 2 + 1;
     return new MatchRules(gamesToWin);
   }
 

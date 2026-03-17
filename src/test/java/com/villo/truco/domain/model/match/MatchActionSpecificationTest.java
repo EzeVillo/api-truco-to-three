@@ -13,6 +13,7 @@ class MatchActionSpecificationTest {
     assertThat(MatchActionSpecification.canExecuteInRound(MatchStatus.IN_PROGRESS)).isTrue();
     assertThat(
         MatchActionSpecification.canExecuteInRound(MatchStatus.WAITING_FOR_PLAYERS)).isFalse();
+    assertThat(MatchActionSpecification.canExecuteInRound(MatchStatus.READY)).isFalse();
     assertThat(MatchActionSpecification.canExecuteInRound(MatchStatus.FINISHED)).isFalse();
   }
 

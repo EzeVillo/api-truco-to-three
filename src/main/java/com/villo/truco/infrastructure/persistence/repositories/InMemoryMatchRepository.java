@@ -2,8 +2,11 @@ package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
+import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +35,21 @@ public final class InMemoryMatchRepository implements MatchRepository, MatchQuer
     final var match = this.store.get(id);
     LOGGER.debug("Match lookup: matchId={}, found={}", id, match != null);
     return Optional.ofNullable(match);
+  }
+
+  @Override
+  public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+
+    return this.store.values().stream().filter(match -> match.getInviteCode().equals(inviteCode))
+        .findFirst();
+  }
+
+  @Override
+  public boolean hasActiveMatch(final PlayerId playerId) {
+
+    return this.store.values().stream().anyMatch(
+        match -> match.getStatus() == MatchStatus.IN_PROGRESS && (
+            playerId.equals(match.getPlayerOne()) || playerId.equals(match.getPlayerTwo())));
   }
 
 }

@@ -1,4 +1,4 @@
-package com.villo.truco.domain.model.match.valueobjects.exceptions;
+package com.villo.truco.domain.shared.exceptions;
 
 import com.villo.truco.domain.shared.DomainException;
 

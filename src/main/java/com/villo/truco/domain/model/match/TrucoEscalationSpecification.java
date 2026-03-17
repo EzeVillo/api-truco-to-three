@@ -1,7 +1,7 @@
 package com.villo.truco.domain.model.match;
 
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 
 final class TrucoEscalationSpecification {
 

@@ -4,10 +4,10 @@ import com.villo.truco.domain.model.match.valueobjects.ActionType;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.List;
 

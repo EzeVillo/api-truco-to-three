@@ -1,10 +1,9 @@
 package com.villo.truco.application.ports;
 
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 
 public interface PlayerTokenProvider {
 
-  String generateAccessToken(MatchId matchId, PlayerId playerId);
+  String generateAccessToken(PlayerId playerId);
 
 }
