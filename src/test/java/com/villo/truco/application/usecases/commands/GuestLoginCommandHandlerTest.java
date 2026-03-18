@@ -15,7 +15,7 @@ class GuestLoginCommandHandlerTest {
 
     final var handler = new GuestLoginCommandHandler(playerId -> "token-" + playerId.value());
 
-    final var dto = handler.handle(new GuestLoginCommand(null));
+    final var dto = handler.handle(new GuestLoginCommand());
 
     assertThat(dto.playerId()).isNotNull();
     assertThat(dto.accessToken()).isNotNull();
@@ -27,8 +27,8 @@ class GuestLoginCommandHandlerTest {
 
     final var handler = new GuestLoginCommandHandler(playerId -> "token-" + playerId.value());
 
-    final var dto1 = handler.handle(new GuestLoginCommand(null));
-    final var dto2 = handler.handle(new GuestLoginCommand("Invitado"));
+    final var dto1 = handler.handle(new GuestLoginCommand());
+    final var dto2 = handler.handle(new GuestLoginCommand());
 
     assertThat(dto1.playerId()).isNotEqualTo(dto2.playerId());
   }

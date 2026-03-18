@@ -6,7 +6,6 @@ import com.villo.truco.application.commands.RegisterUserCommand;
 import com.villo.truco.application.ports.in.GuestLoginUseCase;
 import com.villo.truco.application.ports.in.LoginUseCase;
 import com.villo.truco.application.ports.in.RegisterUserUseCase;
-import com.villo.truco.infrastructure.http.dto.request.GuestLoginRequest;
 import com.villo.truco.infrastructure.http.dto.request.LoginRequest;
 import com.villo.truco.infrastructure.http.dto.request.RegisterUserRequest;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
@@ -77,12 +76,10 @@ public class AuthController {
   @Operation(summary = "Acceso como invitado", description = "Genera un PlayerId efímero y devuelve un JWT sin persistir cuenta.")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Acceso como invitado concedido", content = @Content(schema = @Schema(implementation = GuestLoginResponse.class)))})
-  public ResponseEntity<GuestLoginResponse> guest(
-      @RequestBody(required = false) final GuestLoginRequest request) {
+  public ResponseEntity<GuestLoginResponse> guest() {
 
-    final var displayName = request != null ? request.displayName() : null;
-    LOGGER.info("HTTP guest login requested: displayName={}", displayName);
-    final var dto = this.guestLogin.handle(new GuestLoginCommand(displayName));
+    LOGGER.info("HTTP guest login requested");
+    final var dto = this.guestLogin.handle(new GuestLoginCommand());
     return ResponseEntity.ok(GuestLoginResponse.from(dto));
   }
 
