@@ -33,7 +33,13 @@
       "Bash(./gradlew bootRun --args='--debug')",
       "Bash(./gradlew dependencies:*)",
       "Bash(./gradlew bootRun 2)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(bash /tmp/rename_to_league.sh)",
+      "Bash(echo $TEMP)",
+      "Bash(echo $TMP)",
+      "Bash(bash rename_to_league.sh)",
+      "Bash(SED_EXPR='s/Tournament/League/g; s/tournament/league/g; s/Torneo/Liga/g; s/torneo/liga/g')",
+      "Bash(sed -i \"$SED_EXPR\" docs/CONTRATOS_API.md README.md CLAUDE.md)"
     ]
   }
 }
