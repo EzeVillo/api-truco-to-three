@@ -1,5 +1,5 @@
 package com.villo.truco.application.dto;
 
-public record JoinTournamentDTO(String tournamentId, boolean tournamentReady) {
+public record JoinTournamentDTO(String tournamentId) {
 
 }

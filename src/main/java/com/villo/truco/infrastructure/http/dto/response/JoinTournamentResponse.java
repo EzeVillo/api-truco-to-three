@@ -5,12 +5,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Respuesta al unirse a un torneo")
 public record JoinTournamentResponse(
-    @Schema(description = "ID del torneo al que se unió") String tournamentId,
-    @Schema(description = "Indica si el torneo está listo para ser iniciado por el creador") boolean tournamentReady) {
+    @Schema(description = "ID del torneo al que se unió") String tournamentId) {
 
   public static JoinTournamentResponse from(final JoinTournamentDTO dto) {
 
-    return new JoinTournamentResponse(dto.tournamentId(), dto.tournamentReady());
+    return new JoinTournamentResponse(dto.tournamentId());
   }
 
 }
