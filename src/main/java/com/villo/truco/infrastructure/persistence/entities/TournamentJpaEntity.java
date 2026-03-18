@@ -20,8 +20,8 @@ public class TournamentJpaEntity {
   @Id
   private UUID id;
 
-  @Column(nullable = false)
-  private int capacity;
+  @Column(name = "capacity", nullable = false)
+  private int numberOfPlayers;
 
   @Column(name = "games_to_play", nullable = false)
   private int gamesToPlay;
@@ -62,14 +62,14 @@ public class TournamentJpaEntity {
     this.id = id;
   }
 
-  public int getCapacity() {
+  public int getNumberOfPlayers() {
 
-    return capacity;
+    return numberOfPlayers;
   }
 
-  public void setCapacity(int capacity) {
+  public void setNumberOfPlayers(int numberOfPlayers) {
 
-    this.capacity = capacity;
+    this.numberOfPlayers = numberOfPlayers;
   }
 
   public int getGamesToPlay() {

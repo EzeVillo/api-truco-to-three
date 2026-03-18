@@ -36,14 +36,14 @@ public final class Tournament extends AggregateBase<TournamentId> {
   private final List<PlayerId> participants;
   private final List<Fixture> fixtures;
   private final Map<PlayerId, Integer> winsByPlayer;
-  private final int capacity;
+  private final int numberOfPlayers;
   private final GamesToPlay gamesToPlay;
   private final InviteCode inviteCode;
   private TournamentStatus status;
 
   private Tournament(final TournamentId id, final List<PlayerId> participants,
       final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
-      final TournamentStatus status, final int capacity, final GamesToPlay gamesToPlay,
+      final TournamentStatus status, final int numberOfPlayers, final GamesToPlay gamesToPlay,
       final InviteCode inviteCode) {
 
     super(id);
@@ -51,30 +51,57 @@ public final class Tournament extends AggregateBase<TournamentId> {
     this.fixtures = fixtures;
     this.winsByPlayer = winsByPlayer;
     this.status = status;
-    this.capacity = capacity;
+    this.numberOfPlayers = numberOfPlayers;
     this.gamesToPlay = gamesToPlay;
     this.inviteCode = inviteCode;
   }
 
-  public static Tournament create(final PlayerId creatorId, final int capacity,
+  public static Tournament create(final PlayerId creatorId, final int numberOfPlayers,
       final GamesToPlay gamesToPlay) {
 
     Objects.requireNonNull(creatorId, "Creator cannot be null");
     Objects.requireNonNull(gamesToPlay, "GamesToPlay cannot be null");
 
-    if (capacity < 3 || capacity > 8) {
-      throw new InvalidTournamentPlayersException("Tournament capacity must be between 3 and 8");
+    if (numberOfPlayers < 3 || numberOfPlayers > 8) {
+      throw new InvalidTournamentPlayersException(
+          "Tournament numberOfPlayers must be between 3 and 8");
     }
 
     final var participants = new ArrayList<PlayerId>();
     participants.add(creatorId);
 
     final var tournament = new Tournament(TournamentId.generate(), participants, new ArrayList<>(),
-        new LinkedHashMap<>(), TournamentStatus.WAITING_FOR_PLAYERS, capacity, gamesToPlay,
+        new LinkedHashMap<>(), TournamentStatus.WAITING_FOR_PLAYERS, numberOfPlayers, gamesToPlay,
         InviteCode.generate());
-    LOGGER.info("Tournament created: tournamentId={}, creator={}, capacity={}, gamesToPlay={}",
-        tournament.getId(), creatorId, capacity, gamesToPlay);
+    LOGGER.info(
+        "Tournament created: tournamentId={}, creator={}, numberOfPlayers={}, gamesToPlay={}",
+        tournament.getId(), creatorId, numberOfPlayers, gamesToPlay);
     return tournament;
+  }
+
+  static Tournament reconstruct(final TournamentId id, final List<PlayerId> participants,
+      final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
+      final TournamentStatus status, final int numberOfPlayers, final GamesToPlay gamesToPlay,
+      final InviteCode inviteCode) {
+
+    return new Tournament(id, participants, fixtures, winsByPlayer, status, numberOfPlayers,
+        gamesToPlay,
+        inviteCode);
+  }
+
+  public void start(final PlayerId playerId) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+
+    if (this.status != TournamentStatus.WAITING_FOR_START) {
+      throw new TournamentNotReadyException();
+    }
+
+    if (!this.participants.getFirst().equals(playerId)) {
+      throw new OnlyCreatorCanStartException();
+    }
+
+    this.initializeFixtures();
   }
 
   public void join(final PlayerId playerId, final InviteCode inviteCode) {
@@ -94,57 +121,19 @@ public final class Tournament extends AggregateBase<TournamentId> {
       throw new PlayerAlreadyInTournamentException();
     }
 
-    if (this.participants.size() >= this.capacity) {
+    if (this.participants.size() >= this.numberOfPlayers) {
       throw new TournamentFullException();
     }
 
     this.participants.add(playerId);
     LOGGER.info("Player joined tournament: tournamentId={}, playerId={}, participants={}/{}",
-        this.id, playerId, this.participants.size(), this.capacity);
+        this.id, playerId, this.participants.size(), this.numberOfPlayers);
 
-    if (this.participants.size() == this.capacity) {
+    if (this.participants.size() == this.numberOfPlayers) {
       this.status = TournamentStatus.WAITING_FOR_START;
       LOGGER.info("Tournament ready: tournamentId={}, participants={}", this.id,
           this.participants.size());
     }
-  }
-
-  public void start(final PlayerId playerId) {
-
-    Objects.requireNonNull(playerId, "PlayerId cannot be null");
-
-    if (this.status != TournamentStatus.WAITING_FOR_START) {
-      throw new TournamentNotReadyException();
-    }
-
-    if (!this.participants.getFirst().equals(playerId)) {
-      throw new OnlyCreatorCanStartException();
-    }
-
-    this.initializeFixtures();
-  }
-
-  public void leave(final PlayerId playerId) {
-
-    Objects.requireNonNull(playerId, "PlayerId cannot be null");
-
-    if (this.status != TournamentStatus.WAITING_FOR_PLAYERS
-        && this.status != TournamentStatus.WAITING_FOR_START) {
-      throw new TournamentNotWaitingException();
-    }
-
-    if (!this.participants.contains(playerId)) {
-      throw new PlayerNotInTournamentException();
-    }
-
-    if (this.participants.getFirst().equals(playerId)) {
-      throw new TournamentCreatorCannotLeaveException();
-    }
-
-    this.participants.remove(playerId);
-    this.status = TournamentStatus.WAITING_FOR_PLAYERS;
-    LOGGER.info("Player left tournament: tournamentId={}, playerId={}, participants={}/{}", this.id,
-        playerId, this.participants.size(), this.capacity);
   }
 
   private void initializeFixtures() {
@@ -349,13 +338,27 @@ public final class Tournament extends AggregateBase<TournamentId> {
 
   }
 
-  static Tournament reconstruct(final TournamentId id, final List<PlayerId> participants,
-      final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
-      final TournamentStatus status, final int capacity, final GamesToPlay gamesToPlay,
-      final InviteCode inviteCode) {
+  public void leave(final PlayerId playerId) {
 
-    return new Tournament(id, participants, fixtures, winsByPlayer, status, capacity, gamesToPlay,
-        inviteCode);
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+
+    if (this.status != TournamentStatus.WAITING_FOR_PLAYERS
+        && this.status != TournamentStatus.WAITING_FOR_START) {
+      throw new TournamentNotWaitingException();
+    }
+
+    if (!this.participants.contains(playerId)) {
+      throw new PlayerNotInTournamentException();
+    }
+
+    if (this.participants.getFirst().equals(playerId)) {
+      throw new TournamentCreatorCannotLeaveException();
+    }
+
+    this.participants.remove(playerId);
+    this.status = TournamentStatus.WAITING_FOR_PLAYERS;
+    LOGGER.info("Player left tournament: tournamentId={}, playerId={}, participants={}/{}", this.id,
+        playerId, this.participants.size(), this.numberOfPlayers);
   }
 
   List<PlayerId> getParticipants() {
@@ -363,9 +366,9 @@ public final class Tournament extends AggregateBase<TournamentId> {
     return this.participants;
   }
 
-  int getCapacity() {
+  int getNumberOfPlayers() {
 
-    return this.capacity;
+    return this.numberOfPlayers;
   }
 
   List<Fixture> getFixturesInternal() {

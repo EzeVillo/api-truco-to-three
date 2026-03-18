@@ -16,7 +16,7 @@ public final class TournamentSnapshotExtractor {
 
     return new TournamentSnapshot.TournamentData(tournament.getId(),
         List.copyOf(tournament.getParticipants()), fixtures,
-        new LinkedHashMap<>(tournament.getWinsByPlayer()), tournament.getCapacity(),
+        new LinkedHashMap<>(tournament.getWinsByPlayer()), tournament.getNumberOfPlayers(),
         tournament.getGamesToPlay(), tournament.getInviteCode(), tournament.getStatus());
   }
 

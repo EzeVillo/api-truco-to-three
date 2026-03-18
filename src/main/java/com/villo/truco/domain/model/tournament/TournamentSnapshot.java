@@ -19,7 +19,7 @@ public final class TournamentSnapshot {
 
   public record TournamentData(TournamentId id, List<PlayerId> participants,
                                List<FixtureData> fixtures, Map<PlayerId, Integer> winsByPlayer,
-                               int capacity, GamesToPlay gamesToPlay, InviteCode inviteCode,
+                               int numberOfPlayers, GamesToPlay gamesToPlay, InviteCode inviteCode,
                                TournamentStatus status) {
 
   }

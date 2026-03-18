@@ -19,7 +19,7 @@ public final class CreateTournamentCommandHandler implements CreateTournamentUse
   @Override
   public CreateTournamentDTO handle(final CreateTournamentCommand command) {
 
-    final var tournament = Tournament.create(command.playerId(), command.capacity(),
+    final var tournament = Tournament.create(command.playerId(), command.numberOfPlayers(),
         command.gamesToPlay());
 
     this.tournamentRepository.save(tournament);

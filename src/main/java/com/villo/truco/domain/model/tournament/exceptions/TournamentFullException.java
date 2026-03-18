@@ -6,7 +6,7 @@ public final class TournamentFullException extends DomainException {
 
   public TournamentFullException() {
 
-    super("Tournament has reached its maximum capacity");
+    super("Tournament has reached its maximum number of players");
   }
 
 }

@@ -71,11 +71,13 @@ public class TournamentController {
   public ResponseEntity<CreateTournamentResponse> createTournament(
       @RequestBody final CreateTournamentRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
-    LOGGER.info("HTTP createTournament requested: capacity={}, gamesToPlay={}", request.capacity(),
+    LOGGER.info("HTTP createTournament requested: numberOfPlayers={}, gamesToPlay={}",
+        request.numberOfPlayers(),
         request.gamesToPlay());
 
     final var dto = this.createTournament.handle(
-        new CreateTournamentCommand(jwt.getSubject(), request.capacity(), request.gamesToPlay()));
+        new CreateTournamentCommand(jwt.getSubject(), request.numberOfPlayers(),
+            request.gamesToPlay()));
 
     return ResponseEntity.ok(CreateTournamentResponse.from(dto));
   }

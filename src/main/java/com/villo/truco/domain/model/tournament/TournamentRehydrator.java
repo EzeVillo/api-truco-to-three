@@ -19,7 +19,7 @@ public final class TournamentRehydrator {
     }
 
     return Tournament.reconstruct(snapshot.id(), new ArrayList<>(snapshot.participants()), fixtures,
-        new LinkedHashMap<>(snapshot.winsByPlayer()), snapshot.status(), snapshot.capacity(),
+        new LinkedHashMap<>(snapshot.winsByPlayer()), snapshot.status(), snapshot.numberOfPlayers(),
         snapshot.gamesToPlay(), snapshot.inviteCode());
   }
 

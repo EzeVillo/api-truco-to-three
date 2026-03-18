@@ -31,7 +31,7 @@ public class TournamentMapper {
     final var tournamentId = snapshot.id().value();
 
     entity.setId(tournamentId);
-    entity.setCapacity(snapshot.capacity());
+    entity.setNumberOfPlayers(snapshot.numberOfPlayers());
     entity.setGamesToPlay(snapshot.gamesToPlay().value());
     entity.setInviteCode(snapshot.inviteCode().value());
     entity.setStatus(snapshot.status().name());
@@ -88,7 +88,7 @@ public class TournamentMapper {
     }
 
     final var snapshot = new TournamentSnapshot.TournamentData(new TournamentId(entity.getId()),
-        new ArrayList<>(participants), fixtures, winsByPlayer, entity.getCapacity(),
+        new ArrayList<>(participants), fixtures, winsByPlayer, entity.getNumberOfPlayers(),
         GamesToPlay.of(entity.getGamesToPlay()), InviteCode.of(entity.getInviteCode()),
         TournamentStatus.valueOf(entity.getStatus()));
 
