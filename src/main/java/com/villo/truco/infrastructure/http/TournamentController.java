@@ -133,16 +133,20 @@ public class TournamentController {
   }
 
   @GetMapping("/{tournamentId}")
-  @Operation(summary = "Obtener estado de torneo", description = "Devuelve estado completo, tabla y fixtures del torneo", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Obtener estado de torneo", description = "Devuelve estado completo, tabla y fixtures del torneo. Solo participantes del torneo pueden consultarlo.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Estado del torneo", content = @Content(schema = @Schema(implementation = TournamentStateResponse.class))),
-      @ApiResponse(responseCode = "404", description = "Torneo no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Torneo no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "Jugador no pertenece al torneo", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<TournamentStateResponse> getTournamentState(
-      @Parameter(description = "ID del torneo", example = "tournament-123") @PathVariable final String tournamentId) {
+      @Parameter(description = "ID del torneo", example = "tournament-123") @PathVariable final String tournamentId,
+      @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.debug("HTTP getTournamentState requested: tournamentId={}", tournamentId);
 
-    final var dto = this.getTournamentState.handle(new GetTournamentStateQuery(tournamentId));
+    final var dto = this.getTournamentState.handle(
+        new GetTournamentStateQuery(tournamentId, jwt.getSubject()));
 
     return ResponseEntity.ok(TournamentStateResponse.from(dto));
   }

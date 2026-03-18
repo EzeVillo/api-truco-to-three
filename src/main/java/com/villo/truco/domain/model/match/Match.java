@@ -509,6 +509,11 @@ public final class Match extends AggregateBase<MatchId> {
     return this.currentRound.getAvailableActions(playerId);
   }
 
+  public boolean hasPlayer(final PlayerId playerId) {
+
+    return PlayerInMatchSpecification.isSatisfiedBy(playerId, this.playerOne, this.playerTwo);
+  }
+
   public List<Card> getCardsOf(final PlayerId playerId) {
 
     if (this.status != MatchStatus.IN_PROGRESS) {

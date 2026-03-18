@@ -4,6 +4,7 @@ import com.villo.truco.application.dto.MatchStateDTO;
 import com.villo.truco.application.exceptions.MatchNotFoundException;
 import com.villo.truco.application.ports.in.GetMatchStateUseCase;
 import com.villo.truco.application.queries.GetMatchStateQuery;
+import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import java.util.Objects;
 
@@ -21,6 +22,10 @@ public final class GetMatchStateQueryHandler implements GetMatchStateUseCase {
 
     final var match = this.queryRepository.findById(query.matchId())
         .orElseThrow(() -> new MatchNotFoundException(query.matchId()));
+
+    if (!match.hasPlayer(query.requestingPlayer())) {
+      throw new PlayerNotInMatchException(query.requestingPlayer());
+    }
 
     return MatchStateDTO.of(match, query.requestingPlayer());
   }

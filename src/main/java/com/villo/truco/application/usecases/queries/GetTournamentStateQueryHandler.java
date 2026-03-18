@@ -7,6 +7,7 @@ import com.villo.truco.application.dto.TournamentStateDTO;
 import com.villo.truco.application.ports.in.GetTournamentStateUseCase;
 import com.villo.truco.application.queries.GetTournamentStateQuery;
 import com.villo.truco.application.usecases.commands.TournamentResolver;
+import com.villo.truco.domain.model.tournament.exceptions.PlayerNotInTournamentException;
 import java.util.Objects;
 
 public final class GetTournamentStateQueryHandler implements GetTournamentStateUseCase {
@@ -22,6 +23,10 @@ public final class GetTournamentStateQueryHandler implements GetTournamentStateU
   public TournamentStateDTO handle(final GetTournamentStateQuery query) {
 
     final var tournament = this.tournamentResolver.resolve(query.tournamentId());
+
+    if (!tournament.hasPlayer(query.requestingPlayer())) {
+      throw new PlayerNotInTournamentException();
+    }
 
     final var standings = tournament.getWinsByPlayer().entrySet().stream().map(
             entry -> new TournamentStandingDTO(entry.getKey().value().toString(), entry.getValue()))

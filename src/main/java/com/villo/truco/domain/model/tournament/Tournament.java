@@ -280,6 +280,11 @@ public final class Tournament extends AggregateBase<TournamentId> {
     }
   }
 
+  public boolean hasPlayer(final PlayerId playerId) {
+
+    return this.participants.contains(playerId);
+  }
+
   public TournamentStatus getStatus() {
 
     return this.status;
