@@ -161,4 +161,27 @@ class TournamentTest {
     assertThat(tournament.getLeaders()).containsExactly(p1);
   }
 
+  @Test
+  @DisplayName("ningún jugador es siempre playerOne en todos sus fixtures")
+  void noPlayerIsAlwaysPlayerOneInAllFixtures() {
+
+    final var players = new PlayerId[]{PlayerId.generate(), PlayerId.generate(),
+        PlayerId.generate(), PlayerId.generate()};
+
+    final var tournament = createStartedTournament(players);
+
+    final var pendingFixtures = tournament.getFixtures().stream()
+        .filter(f -> f.status() == FixtureStatus.PENDING).toList();
+
+    for (final var player : players) {
+      final var fixturesAsPlayerOne = pendingFixtures.stream()
+          .filter(f -> f.playerOne().equals(player)).count();
+      final var fixturesAsPlayerTwo = pendingFixtures.stream()
+          .filter(f -> f.playerTwo().equals(player)).count();
+
+      assertThat(fixturesAsPlayerOne).as("Player %s should not be playerOne in ALL fixtures",
+          player).isLessThan(fixturesAsPlayerOne + fixturesAsPlayerTwo);
+    }
+  }
+
 }

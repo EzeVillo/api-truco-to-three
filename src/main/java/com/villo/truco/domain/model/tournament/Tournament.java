@@ -177,13 +177,16 @@ public final class Tournament extends AggregateBase<TournamentId> {
 
     for (var matchday = 1; matchday <= matchdays; matchday++) {
       for (var matchIndex = 0; matchIndex < matchesPerMatchday; matchIndex++) {
-        final var playerOne = rotation.get(matchIndex);
-        final var playerTwo = rotation.get(teamCount - 1 - matchIndex);
+        final var home = rotation.get(matchIndex);
+        final var away = rotation.get(teamCount - 1 - matchIndex);
 
-        if (playerOne == null || playerTwo == null) {
-          final var freePlayer = playerOne != null ? playerOne : playerTwo;
+        if (home == null || away == null) {
+          final var freePlayer = home != null ? home : away;
           fixtures.add(Fixture.free(FixtureId.generate(), matchday, freePlayer));
         } else {
+          final var shouldSwap = matchday % 2 == 0;
+          final var playerOne = shouldSwap ? away : home;
+          final var playerTwo = shouldSwap ? home : away;
           fixtures.add(Fixture.pending(FixtureId.generate(), matchday, playerOne, playerTwo));
         }
       }
