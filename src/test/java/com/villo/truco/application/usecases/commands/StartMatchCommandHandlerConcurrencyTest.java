@@ -55,13 +55,6 @@ class StartMatchCommandHandlerConcurrencyTest {
       events);
   private final UseCasePipeline pipeline = new UseCasePipeline(
       List.of(new OptimisticLockRetryBehavior(3, Duration.ZERO)));
-
-  private StartMatchUseCase handler;
-
-  private PlayerId playerOne;
-  private PlayerId playerTwo;
-  private Match match;
-
   private final MatchRepository matchRepository = match -> {
     synchronized (store) {
       final var currentVersion = versions.computeIfAbsent(match.getId(), k -> new AtomicLong(0));
@@ -117,6 +110,10 @@ class StartMatchCommandHandlerConcurrencyTest {
       return List.of();
     }
   };
+  private StartMatchUseCase handler;
+  private PlayerId playerOne;
+  private PlayerId playerTwo;
+  private Match match;
 
   private static void awaitLatch(final CountDownLatch latch) {
 

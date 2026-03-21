@@ -286,8 +286,7 @@ class PlayerAvailabilityCheckerTest {
     final var checker = checker(false, true, Optional.empty(), Optional.empty(), Optional.empty(),
         Optional.empty());
 
-    assertThatThrownBy(
-        () -> checker.ensureCanStartMatch(PlayerId.generate())).isInstanceOf(
+    assertThatThrownBy(() -> checker.ensureCanStartMatch(PlayerId.generate())).isInstanceOf(
         PlayerAlreadyInActiveMatchException.class);
   }
 
@@ -310,39 +309,39 @@ class PlayerAvailabilityCheckerTest {
         PlayerBusyInLeagueException.class);
   }
 
-  private record StubMatchQueryRepository(boolean unfinished,
-      boolean activeMatch) implements MatchQueryRepository {
+  private record StubMatchQueryRepository(boolean unfinished, boolean activeMatch) implements
+      MatchQueryRepository {
 
     @Override
-      public Optional<Match> findById(final MatchId matchId) {
+    public Optional<Match> findById(final MatchId matchId) {
 
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public boolean hasActiveMatch(final PlayerId playerId) {
-
-        return this.activeMatch;
-      }
-
-      @Override
-      public boolean hasUnfinishedMatch(final PlayerId playerId) {
-
-        return this.unfinished;
-      }
-
-      @Override
-      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
+      return Optional.empty();
     }
+
+    @Override
+    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public boolean hasActiveMatch(final PlayerId playerId) {
+
+      return this.activeMatch;
+    }
+
+    @Override
+    public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+      return this.unfinished;
+    }
+
+    @Override
+    public List<MatchId> findIdleMatchIds(final Instant idleSince) {
+
+      return List.of();
+    }
+
+  }
 
 }

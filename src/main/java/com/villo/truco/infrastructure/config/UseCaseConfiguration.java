@@ -281,8 +281,7 @@ public class UseCaseConfiguration {
   }
 
   @Bean
-  CreateLeagueUseCase createLeagueCommandHandler(
-      final LeagueRepository leagueRepository,
+  CreateLeagueUseCase createLeagueCommandHandler(final LeagueRepository leagueRepository,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline transactionalPipeline) {
 
@@ -314,16 +313,14 @@ public class UseCaseConfiguration {
 
   @Bean
   LeaveLeagueUseCase leaveLeagueCommandHandler(final LeagueResolver leagueResolver,
-      final LeagueRepository leagueRepository,
-      final UseCasePipeline retryTransactionalPipeline) {
+      final LeagueRepository leagueRepository, final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new LeaveLeagueCommandHandler(leagueResolver, leagueRepository);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
-  GetLeagueStateUseCase getLeagueStateQueryHandler(
-      final LeagueResolver leagueResolver) {
+  GetLeagueStateUseCase getLeagueStateQueryHandler(final LeagueResolver leagueResolver) {
 
     return new GetLeagueStateQueryHandler(leagueResolver);
   }
@@ -336,16 +333,14 @@ public class UseCaseConfiguration {
 
   @Bean
   LeagueMatchFinishedEventHandler leagueMatchFinishedHandler(
-      final LeagueQueryRepository leagueQueryRepository,
-      final LeagueRepository leagueRepository) {
+      final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository) {
 
     return new LeagueMatchFinishedEventHandler(leagueQueryRepository, leagueRepository);
   }
 
   @Bean
   LeagueMatchForfeitedEventHandler leagueMatchForfeitedHandler(
-      final LeagueQueryRepository leagueQueryRepository,
-      final LeagueRepository leagueRepository) {
+      final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository) {
 
     return new LeagueMatchForfeitedEventHandler(leagueQueryRepository, leagueRepository);
   }
@@ -427,8 +422,7 @@ public class UseCaseConfiguration {
 
   @Bean
   CupMatchForfeitedEventHandler cupMatchForfeitedHandler(
-      final CupQueryRepository cupQueryRepository,
-      final ForfeitCupUseCase forfeitCupUseCase) {
+      final CupQueryRepository cupQueryRepository, final ForfeitCupUseCase forfeitCupUseCase) {
 
     return new CupMatchForfeitedEventHandler(cupQueryRepository, forfeitCupUseCase);
   }

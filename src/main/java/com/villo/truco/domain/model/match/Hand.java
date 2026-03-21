@@ -24,6 +24,11 @@ final class Hand extends EntityBase<HandId> {
     return new Hand(HandId.generate(), List.of(cardOne, cardTwo, cardThree));
   }
 
+  static Hand reconstruct(final HandId id, final List<Card> cards) {
+
+    return new Hand(id, cards);
+  }
+
   Card play(final Card card) {
 
     if (!cards.contains(card)) {
@@ -38,11 +43,6 @@ final class Hand extends EntityBase<HandId> {
   List<Card> getCards() {
 
     return Collections.unmodifiableList(cards);
-  }
-
-  static Hand reconstruct(final HandId id, final List<Card> cards) {
-
-    return new Hand(id, cards);
   }
 
 }

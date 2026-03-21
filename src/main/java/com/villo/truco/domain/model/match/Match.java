@@ -39,8 +39,8 @@ public final class Match extends AggregateBase<MatchId> {
   private final MatchRules rules;
 
   private final PlayerId playerOne;
-  private PlayerId playerTwo;
   private final InviteCode inviteCode;
+  private PlayerId playerTwo;
   private PlayerId firstManoOfGame = null;
 
   private MatchStatus status;
@@ -98,6 +98,27 @@ public final class Match extends AggregateBase<MatchId> {
         MatchStatus.READY);
     LOGGER.info("Ready match created: matchId={}, playerOne={}, playerTwo={}", match.getId(),
         playerOne, playerTwo);
+    return match;
+  }
+
+  static Match reconstruct(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
+      final InviteCode inviteCode, final MatchRules rules, final MatchStatus status,
+      final int gamesWonPlayerOne, final int gamesWonPlayerTwo, final int gameNumber,
+      final int scorePlayerOne, final int scorePlayerTwo, final int roundNumber,
+      final boolean readyPlayerOne, final boolean readyPlayerTwo, final PlayerId firstManoOfGame,
+      final Round currentRound) {
+
+    final var match = new Match(id, playerOne, playerTwo, inviteCode, rules, status);
+    match.gamesWonPlayerOne = gamesWonPlayerOne;
+    match.gamesWonPlayerTwo = gamesWonPlayerTwo;
+    match.gameNumber = gameNumber;
+    match.scorePlayerOne = scorePlayerOne;
+    match.scorePlayerTwo = scorePlayerTwo;
+    match.roundNumber = roundNumber;
+    match.readyPlayerOne = readyPlayerOne;
+    match.readyPlayerTwo = readyPlayerTwo;
+    match.firstManoOfGame = firstManoOfGame;
+    match.currentRound = currentRound;
     return match;
   }
 
@@ -549,27 +570,6 @@ public final class Match extends AggregateBase<MatchId> {
   Round getCurrentRound() {
 
     return this.currentRound;
-  }
-
-  static Match reconstruct(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
-      final InviteCode inviteCode, final MatchRules rules, final MatchStatus status,
-      final int gamesWonPlayerOne, final int gamesWonPlayerTwo, final int gameNumber,
-      final int scorePlayerOne, final int scorePlayerTwo, final int roundNumber,
-      final boolean readyPlayerOne, final boolean readyPlayerTwo, final PlayerId firstManoOfGame,
-      final Round currentRound) {
-
-    final var match = new Match(id, playerOne, playerTwo, inviteCode, rules, status);
-    match.gamesWonPlayerOne = gamesWonPlayerOne;
-    match.gamesWonPlayerTwo = gamesWonPlayerTwo;
-    match.gameNumber = gameNumber;
-    match.scorePlayerOne = scorePlayerOne;
-    match.scorePlayerTwo = scorePlayerTwo;
-    match.roundNumber = roundNumber;
-    match.readyPlayerOne = readyPlayerOne;
-    match.readyPlayerTwo = readyPlayerTwo;
-    match.firstManoOfGame = firstManoOfGame;
-    match.currentRound = currentRound;
-    return match;
   }
 
   MatchRules getRules() {

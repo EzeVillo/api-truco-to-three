@@ -76,22 +76,19 @@ class CreateMatchCommandHandlerTest {
     }
 
     @Override
-    public Optional<League> findByMatchId(
-        final MatchId matchId) {
+    public Optional<League> findByMatchId(final MatchId matchId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<League> findInProgressByPlayer(
-        final PlayerId playerId) {
+    public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<League> findWaitingByPlayer(
-        final PlayerId playerId) {
+    public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
       return Optional.empty();
     }
@@ -124,15 +121,13 @@ class CreateMatchCommandHandlerTest {
     }
 
     @Override
-    public Optional<Cup> findInProgressByPlayer(
-        final PlayerId playerId) {
+    public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<Cup> findWaitingByPlayer(
-        final PlayerId playerId) {
+    public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
       return Optional.empty();
     }

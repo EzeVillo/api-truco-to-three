@@ -82,6 +82,23 @@ final class Round extends EntityBase<RoundId> {
     return round;
   }
 
+  static Round reconstruct(final RoundId id, final int roundNumber, final PlayerId mano,
+      final PlayerId playerOne, final PlayerId playerTwo, final Hand handPlayerOne,
+      final Hand handPlayerTwo, final List<PlayedHand> playedHands,
+      final List<CardPlay> currentHandCards, final RoundStatus status, final PlayerId currentTurn,
+      final PlayerId turnBeforeTrucoCall, final PlayerId turnBeforeEnvidoCall) {
+
+    final var round = new Round(id, roundNumber, mano, playerOne, playerTwo, handPlayerOne,
+        handPlayerTwo);
+    round.playedHands.addAll(playedHands);
+    round.currentHandCards.addAll(currentHandCards);
+    round.status = status;
+    round.currentTurn = currentTurn;
+    round.turnBeforeTrucoCall = turnBeforeTrucoCall;
+    round.turnBeforeEnvidoCall = turnBeforeEnvidoCall;
+    return round;
+  }
+
   private void emitInitialPrivateState() {
 
     this.addDomainEvent(new RoundStartedEvent(this.roundNumber, this.seatOf(this.mano)));
@@ -488,23 +505,6 @@ final class Round extends EntityBase<RoundId> {
     if (!this.currentTurn.equals(playerId)) {
       throw new NotYourTurnException(playerId);
     }
-  }
-
-  static Round reconstruct(final RoundId id, final int roundNumber, final PlayerId mano,
-      final PlayerId playerOne, final PlayerId playerTwo, final Hand handPlayerOne,
-      final Hand handPlayerTwo, final List<PlayedHand> playedHands,
-      final List<CardPlay> currentHandCards, final RoundStatus status, final PlayerId currentTurn,
-      final PlayerId turnBeforeTrucoCall, final PlayerId turnBeforeEnvidoCall) {
-
-    final var round = new Round(id, roundNumber, mano, playerOne, playerTwo, handPlayerOne,
-        handPlayerTwo);
-    round.playedHands.addAll(playedHands);
-    round.currentHandCards.addAll(currentHandCards);
-    round.status = status;
-    round.currentTurn = currentTurn;
-    round.turnBeforeTrucoCall = turnBeforeTrucoCall;
-    round.turnBeforeEnvidoCall = turnBeforeEnvidoCall;
-    return round;
   }
 
   int getRoundNumber() {
