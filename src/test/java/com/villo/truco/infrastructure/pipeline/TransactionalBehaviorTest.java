@@ -42,16 +42,17 @@ class TransactionalBehaviorTest {
   }
 
   @Test
-  @DisplayName("lanza NullPointerException si el supplier retorna null")
-  void throwsIfSupplierReturnsNull() {
+  @DisplayName("retorna null cuando el supplier retorna null (soporte para handlers Void)")
+  void returnsNullWhenSupplierReturnsNull() {
 
     when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
       TransactionCallback<?> callback = invocation.getArgument(0);
       return callback.doInTransaction(null);
     });
 
-    assertThatThrownBy(() -> behavior.handle("cmd", () -> null)).isInstanceOf(
-        NullPointerException.class);
+    final var result = behavior.handle("cmd", () -> null);
+
+    assertThat(result).isNull();
   }
 
   @Test

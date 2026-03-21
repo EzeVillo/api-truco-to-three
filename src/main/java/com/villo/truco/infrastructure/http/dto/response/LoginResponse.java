@@ -4,8 +4,9 @@ import com.villo.truco.application.dto.LoginDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Respuesta al hacer login")
-public record LoginResponse(@Schema(description = "ID del jugador") String playerId,
-                            @Schema(description = "JWT Bearer para endpoints protegidos") String accessToken) {
+public record LoginResponse(
+    @Schema(description = "ID del jugador", example = "player-abc123") String playerId,
+    @Schema(description = "JWT Bearer para endpoints protegidos", example = "eyJhbGciOi...") String accessToken) {
 
   public static LoginResponse from(final LoginDTO dto) {
 

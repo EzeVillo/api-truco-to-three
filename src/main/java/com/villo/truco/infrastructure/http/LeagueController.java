@@ -104,7 +104,7 @@ public class LeagueController {
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "No se puede salir en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<Void> leaveLeague(
-      @Parameter(description = "ID del liga") @PathVariable final String leagueId,
+      @Parameter(description = "ID del liga", example = "league-123") @PathVariable final String leagueId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP leaveLeague requested: leagueId={}, playerId={}", leagueId, jwt.getSubject());
@@ -120,7 +120,7 @@ public class LeagueController {
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "No se puede iniciar en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<Void> startLeague(
-      @Parameter(description = "ID del liga") @PathVariable final String leagueId,
+      @Parameter(description = "ID del liga", example = "league-123") @PathVariable final String leagueId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP startLeague requested: leagueId={}, playerId={}", leagueId, jwt.getSubject());

@@ -5,8 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Respuesta al acceder como invitado")
 public record GuestLoginResponse(
-    @Schema(description = "ID efímero del jugador invitado") String playerId,
-    @Schema(description = "JWT Bearer para endpoints protegidos") String accessToken) {
+    @Schema(description = "ID efímero del jugador invitado", example = "guest-abc123") String playerId,
+    @Schema(description = "JWT Bearer para endpoints protegidos", example = "eyJhbGciOi...") String accessToken) {
 
   public static GuestLoginResponse from(final GuestLoginDTO dto) {
 

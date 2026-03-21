@@ -20,7 +20,7 @@ public class LeagueJpaEntity {
   @Id
   private UUID id;
 
-  @Column(name = "capacity", nullable = false)
+  @Column(name = "number_of_players", nullable = false)
   private int numberOfPlayers;
 
   @Column(name = "games_to_play", nullable = false)

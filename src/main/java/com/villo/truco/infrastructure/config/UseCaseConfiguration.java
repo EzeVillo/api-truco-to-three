@@ -1,38 +1,54 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.CupMatchFinishedHandler;
+import com.villo.truco.application.eventhandlers.CupMatchForfeitedHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchFinishedHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedHandler;
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
+import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
-import com.villo.truco.application.ports.in.CreateMatchUseCase;
+import com.villo.truco.application.ports.in.CreateCupUseCase;
 import com.villo.truco.application.ports.in.CreateLeagueUseCase;
+import com.villo.truco.application.ports.in.CreateMatchUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
-import com.villo.truco.application.ports.in.GetMatchStateUseCase;
+import com.villo.truco.application.ports.in.ForfeitCupUseCase;
+import com.villo.truco.application.ports.in.GetCupStateUseCase;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
+import com.villo.truco.application.ports.in.GetMatchStateUseCase;
 import com.villo.truco.application.ports.in.GuestLoginUseCase;
-import com.villo.truco.application.ports.in.JoinMatchUseCase;
+import com.villo.truco.application.ports.in.JoinCupUseCase;
 import com.villo.truco.application.ports.in.JoinLeagueUseCase;
+import com.villo.truco.application.ports.in.JoinMatchUseCase;
+import com.villo.truco.application.ports.in.LeaveCupUseCase;
 import com.villo.truco.application.ports.in.LeaveLeagueUseCase;
 import com.villo.truco.application.ports.in.LoginUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RegisterUserUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
-import com.villo.truco.application.ports.in.StartMatchUseCase;
+import com.villo.truco.application.ports.in.StartCupUseCase;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
+import com.villo.truco.application.ports.in.StartMatchUseCase;
 import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
 import com.villo.truco.application.usecases.commands.AbandonMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.AdvanceCupCommandHandler;
 import com.villo.truco.application.usecases.commands.CallEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.CallTrucoCommandHandler;
-import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.CreateCupCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateLeagueCommandHandler;
+import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.CupResolver;
 import com.villo.truco.application.usecases.commands.FoldCommandHandler;
+import com.villo.truco.application.usecases.commands.ForfeitCupCommandHandler;
 import com.villo.truco.application.usecases.commands.GuestLoginCommandHandler;
-import com.villo.truco.application.usecases.commands.JoinMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.JoinCupCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinLeagueCommandHandler;
+import com.villo.truco.application.usecases.commands.JoinMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.LeagueResolver;
+import com.villo.truco.application.usecases.commands.LeaveCupCommandHandler;
 import com.villo.truco.application.usecases.commands.LeaveLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.LoginCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchResolver;
@@ -40,17 +56,20 @@ import com.villo.truco.application.usecases.commands.PlayCardCommandHandler;
 import com.villo.truco.application.usecases.commands.RegisterUserCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
-import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.StartCupCommandHandler;
 import com.villo.truco.application.usecases.commands.StartLeagueCommandHandler;
+import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.TimeoutIdleMatchesCommandHandler;
-import com.villo.truco.application.usecases.commands.LeagueResolver;
-import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
+import com.villo.truco.application.usecases.queries.GetCupStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetLeagueStateQueryHandler;
+import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
+import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.CupRepository;
+import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.ports.UserRepository;
 import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
@@ -311,11 +330,92 @@ public class UseCaseConfiguration {
   }
 
   @Bean
-  MatchEventNotifier matchEventNotifier(final StompMatchEventNotifier wsHandler,
-      final LeagueMatchFinishedHandler finishedHandler,
-      final LeagueMatchForfeitedHandler forfeitedHandler) {
+  CupResolver cupResolver(final CupQueryRepository cupQueryRepository) {
 
-    return new CompositeMatchEventNotifier(List.of(wsHandler, finishedHandler, forfeitedHandler));
+    return new CupResolver(cupQueryRepository);
+  }
+
+  @Bean
+  CreateCupUseCase createCupCommandHandler(final CupRepository cupRepository,
+      final UseCasePipeline transactionalPipeline) {
+
+    final var handler = new CreateCupCommandHandler(cupRepository);
+    return transactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  JoinCupUseCase joinCupCommandHandler(final CupResolver cupResolver,
+      final CupRepository cupRepository, final UseCasePipeline retryTransactionalPipeline) {
+
+    final var handler = new JoinCupCommandHandler(cupResolver, cupRepository);
+    return retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  LeaveCupUseCase leaveCupCommandHandler(final CupResolver cupResolver,
+      final CupRepository cupRepository, final UseCasePipeline retryTransactionalPipeline) {
+
+    final var handler = new LeaveCupCommandHandler(cupResolver, cupRepository);
+    return retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  StartCupUseCase startCupCommandHandler(final CupResolver cupResolver,
+      final CupRepository cupRepository, final MatchRepository matchRepository,
+      final UseCasePipeline retryTransactionalPipeline) {
+
+    final var handler = new StartCupCommandHandler(cupResolver, cupRepository, matchRepository);
+    return retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  GetCupStateUseCase getCupStateQueryHandler(final CupResolver cupResolver) {
+
+    return new GetCupStateQueryHandler(cupResolver);
+  }
+
+  @Bean
+  AdvanceCupUseCase advanceCupCommandHandler(final CupResolver cupResolver,
+      final CupRepository cupRepository, final MatchRepository matchRepository,
+      final UseCasePipeline retryTransactionalPipeline) {
+
+    final var handler = new AdvanceCupCommandHandler(cupResolver, cupRepository, matchRepository);
+    return retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  ForfeitCupUseCase forfeitCupCommandHandler(final CupResolver cupResolver,
+      final CupRepository cupRepository, final MatchRepository matchRepository,
+      final UseCasePipeline retryTransactionalPipeline) {
+
+    final var handler = new ForfeitCupCommandHandler(cupResolver, cupRepository, matchRepository);
+    return retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  CupMatchFinishedHandler cupMatchFinishedHandler(final CupQueryRepository cupQueryRepository,
+      final AdvanceCupUseCase advanceCupUseCase) {
+
+    return new CupMatchFinishedHandler(cupQueryRepository, advanceCupUseCase);
+  }
+
+  @Bean
+  CupMatchForfeitedHandler cupMatchForfeitedHandler(final CupQueryRepository cupQueryRepository,
+      final ForfeitCupUseCase forfeitCupUseCase) {
+
+    return new CupMatchForfeitedHandler(cupQueryRepository, forfeitCupUseCase);
+  }
+
+  @Bean
+  MatchEventNotifier matchEventNotifier(final StompMatchEventNotifier wsHandler,
+      final LeagueMatchFinishedHandler leagueFinishedHandler,
+      final LeagueMatchForfeitedHandler leagueForfeitedHandler,
+      final CupMatchFinishedHandler cupFinishedHandler,
+      final CupMatchForfeitedHandler cupForfeitedHandler) {
+
+    return new CompositeMatchEventNotifier(
+        List.of(wsHandler, leagueFinishedHandler, leagueForfeitedHandler, cupFinishedHandler,
+            cupForfeitedHandler));
   }
 
   @Bean

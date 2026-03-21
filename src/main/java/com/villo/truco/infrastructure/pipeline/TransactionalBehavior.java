@@ -17,7 +17,7 @@ public final class TransactionalBehavior implements PipelineBehavior {
   @Override
   public <C, R> R handle(final C command, final Supplier<R> next) {
 
-    return Objects.requireNonNull(this.transactionTemplate.execute(status -> next.get()));
+    return this.transactionTemplate.execute(status -> next.get());
   }
 
 }
