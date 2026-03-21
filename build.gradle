@@ -78,9 +78,10 @@ tasks.named('check') {
 
 sonar {
     properties {
-        property 'sonar.projectKey', 'truco-master'
-        property 'sonar.projectName', 'truco-master'
-        property 'sonar.host.url', System.getenv('SONAR_HOST_URL')
-        property 'sonar.coverage.jacoco.xmlReportPaths', layout.buildDirectory.file('reports/jacoco/test/jacocoTestReport.xml').get().asFile.absolutePath
+        property 'sonar.projectKey', 'api-truco-to-three'
+        property 'sonar.organization', 'ezevillo'
+        property 'sonar.host.url', 'https://sonarcloud.io'
+        property 'sonar.coverage.jacoco.xmlReportPaths',
+                layout.buildDirectory.file('reports/jacoco/test/jacocoTestReport.xml').get().asFile.absolutePath
     }
 }
