@@ -36,8 +36,6 @@ class MatchTest {
     this.playerTwo = PlayerId.generate();
   }
 
-  // ===== CREACIÓN =====
-
   private Match matchInProgress() {
 
     final var match = Match.createReady(playerOne, playerTwo,
@@ -47,10 +45,6 @@ class MatchTest {
     return match;
   }
 
-  // ===== JOIN =====
-
-  // termina el juego actual acumulando 3 puntos para el ganador via truco rechazado
-  // quien tenga el turno canta, el otro rechaza — siempre gana 1 punto quien cantó
   private void finishGame(final Match match, final PlayerId winner) {
 
     final var loser = winner.equals(playerOne) ? playerTwo : playerOne;
@@ -68,8 +62,6 @@ class MatchTest {
       }
     }
   }
-
-  // ===== TURNOS =====
 
   @Nested
   @DisplayName("create")
@@ -118,8 +110,6 @@ class MatchTest {
     }
 
   }
-
-  // ===== TRUCO =====
 
   @Nested
   @DisplayName("join")
@@ -241,8 +231,6 @@ class MatchTest {
 
   }
 
-  // ===== ENVIDO =====
-
   @Nested
   @DisplayName("turnos")
   class Turnos {
@@ -272,8 +260,6 @@ class MatchTest {
 
   }
 
-  // ===== ALTERNANCIA DEL MANO ENTRE RONDAS =====
-
   @Nested
   @DisplayName("truco")
   class Truco {
@@ -289,6 +275,18 @@ class MatchTest {
 
       assertThat(match.getScorePlayerOne()).isEqualTo(1);
       assertThat(match.getScorePlayerTwo()).isZero();
+    }
+
+    @Test
+    @DisplayName("acceptTruco sube los puntos en juego a 2")
+    void acceptTrucoRaisesPointsAtStakeToTwo() {
+
+      final var match = matchInProgress();
+
+      match.callTruco(playerOne);
+      match.acceptTruco(playerTwo);
+
+      assertThat(match.getCurrentRound().getTrucoPointsAtStake()).isEqualTo(2);
     }
 
     @Test
@@ -380,6 +378,18 @@ class MatchTest {
 
       assertThat(match.getScorePlayerOne()).isZero();
       assertThat(match.getScorePlayerTwo()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("acceptEnvido suma los puntos del envido aceptado")
+    void acceptEnvidoAddsAcceptedPoints() {
+
+      final var match = matchInProgress();
+
+      match.callEnvido(playerOne, EnvidoCall.ENVIDO);
+      match.acceptEnvido(playerTwo);
+
+      assertThat(match.getScorePlayerOne() + match.getScorePlayerTwo()).isEqualTo(2);
     }
 
     @Test
@@ -757,8 +767,8 @@ class MatchTest {
       final var match = matchInProgress();
       final var stranger = PlayerId.generate();
 
-      assertThatThrownBy(() -> match.abandon(stranger))
-          .isInstanceOf(PlayerNotInMatchException.class);
+      assertThatThrownBy(() -> match.abandon(stranger)).isInstanceOf(
+          PlayerNotInMatchException.class);
     }
 
   }
