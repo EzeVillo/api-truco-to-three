@@ -55,4 +55,4 @@ jobs:
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew clean build sonar --no-daemon -Dsonar.token=${SONAR_TOKEN} -Dsonar.qualitygate.wait=true -Dsonar.qualitygate.timeout=300
+        run: ./gradlew clean build sonar --no-daemon -Dsonar.token=${SONAR_TOKEN} -Dsonar.qualitygate.timeout=300
