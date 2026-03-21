@@ -3,7 +3,6 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleLeaguesUseCase;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
 import java.time.Duration;
@@ -60,14 +59,11 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
     }
 
     final var league = leagueOpt.get();
-    final var status = league.getStatus();
-
-    if (status == LeagueStatus.FINISHED || status == LeagueStatus.CANCELLED
-        || status == LeagueStatus.IN_PROGRESS) {
+    final var statusBefore = league.getStatus();
+    league.cancel();
+    if (league.getStatus() == statusBefore) {
       return;
     }
-
-    league.cancel();
     this.leagueRepository.save(league);
     LOGGER.info("League cancelled by timeout: leagueId={}", leagueId);
   }

@@ -308,7 +308,56 @@ public final class Match extends AggregateBase<MatchId> {
     this.addDomainEvent(new MatchCancelledEvent());
   }
 
-  public void forfeit(final PlayerId winner) {
+  public void abandon(final PlayerId abandoner) {
+
+    Objects.requireNonNull(abandoner);
+    this.validatePlayerInMatch(abandoner);
+    final var winner = abandoner.equals(this.playerOne) ? this.playerTwo : this.playerOne;
+    this.forfeit(winner);
+  }
+
+  public boolean timeoutForfeit() {
+
+    if (this.isFinished()) {
+      return false;
+    }
+    if (this.status == MatchStatus.WAITING_FOR_PLAYERS) {
+      this.cancel();
+      return true;
+    }
+    final var winner = this.determineTimeoutWinner();
+    if (winner == null) {
+      return false;
+    }
+    this.forfeit(winner);
+    return true;
+  }
+
+  private PlayerId determineTimeoutWinner() {
+
+    if (this.status == MatchStatus.IN_PROGRESS) {
+      final var currentTurn = this.getCurrentTurn();
+      if (currentTurn == null) {
+        return null;
+      }
+      return currentTurn.equals(this.playerOne) ? this.playerTwo : this.playerOne;
+    }
+    if (this.status == MatchStatus.READY) {
+      if (this.playerTwo == null) {
+        return null;
+      }
+      if (!this.readyPlayerOne) {
+        return this.playerTwo;
+      }
+      if (!this.readyPlayerTwo) {
+        return this.playerOne;
+      }
+      return this.playerTwo;
+    }
+    return null;
+  }
+
+  void forfeit(final PlayerId winner) {
 
     Objects.requireNonNull(winner, "Winner cannot be null");
     this.validatePlayerInMatch(winner);

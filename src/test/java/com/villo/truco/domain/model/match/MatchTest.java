@@ -720,4 +720,113 @@ class MatchTest {
 
   }
 
+  // ===== ABANDON =====
+
+  @Nested
+  @DisplayName("abandon")
+  class Abandon {
+
+    @Test
+    @DisplayName("abandona P1 → gana P2, estado FINISHED")
+    void playerOneAbandonsMakesPlayerTwoWin() {
+
+      final var match = matchInProgress();
+
+      match.abandon(playerOne);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(playerTwo);
+    }
+
+    @Test
+    @DisplayName("abandona P2 → gana P1, estado FINISHED")
+    void playerTwoAbandonsMakesPlayerOneWin() {
+
+      final var match = matchInProgress();
+
+      match.abandon(playerTwo);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(playerOne);
+    }
+
+    @Test
+    @DisplayName("PlayerId no en match lanza PlayerNotInMatchException")
+    void unknownPlayerThrows() {
+
+      final var match = matchInProgress();
+      final var stranger = PlayerId.generate();
+
+      assertThatThrownBy(() -> match.abandon(stranger))
+          .isInstanceOf(PlayerNotInMatchException.class);
+    }
+
+  }
+
+  // ===== TIMEOUT FORFEIT =====
+
+  @Nested
+  @DisplayName("timeoutForfeit")
+  class TimeoutForfeit {
+
+    @Test
+    @DisplayName("estado WAITING_FOR_PLAYERS → se cancela, retorna true")
+    void waitingMatchIsCancelledAndReturnsTrue() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+
+      final var result = match.timeoutForfeit();
+
+      assertThat(result).isTrue();
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getDomainEvents()).anyMatch(e -> e instanceof MatchCancelledEvent);
+    }
+
+    @Test
+    @DisplayName("estado IN_PROGRESS con turno de P1 → gana P2, retorna true")
+    void inProgressWithP1TurnMakesP2Win() {
+
+      final var match = matchInProgress();
+      final var currentTurn = match.getCurrentTurn();
+      final var expectedWinner = currentTurn.equals(playerOne) ? playerTwo : playerOne;
+
+      final var result = match.timeoutForfeit();
+
+      assertThat(result).isTrue();
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(expectedWinner);
+      assertThat(match.getDomainEvents()).anyMatch(e -> e instanceof MatchForfeitedEvent);
+    }
+
+    @Test
+    @DisplayName("estado READY, P1 no ready → gana P2, retorna true")
+    void readyWithP1NotReadyMakesP2Win() {
+
+      final var match = Match.createReady(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+
+      final var result = match.timeoutForfeit();
+
+      assertThat(result).isTrue();
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(playerTwo);
+      assertThat(match.getDomainEvents()).anyMatch(e -> e instanceof MatchForfeitedEvent);
+    }
+
+    @Test
+    @DisplayName("estado FINISHED → retorna false, sin efecto")
+    void finishedMatchReturnsFalseWithNoEffect() {
+
+      final var match = matchInProgress();
+      match.abandon(playerOne);
+      match.clearDomainEvents();
+
+      final var result = match.timeoutForfeit();
+
+      assertThat(result).isFalse();
+      assertThat(match.getDomainEvents()).isEmpty();
+    }
+
+  }
+
 }

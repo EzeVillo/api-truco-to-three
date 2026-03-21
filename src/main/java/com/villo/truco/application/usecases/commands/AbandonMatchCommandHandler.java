@@ -2,10 +2,8 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.AbandonMatchCommand;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
-import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 
 public final class AbandonMatchCommandHandler implements AbandonMatchUseCase {
@@ -27,18 +25,7 @@ public final class AbandonMatchCommandHandler implements AbandonMatchUseCase {
 
     final var match = this.matchResolver.resolve(command.matchId());
 
-    final PlayerId abandoner = command.playerId();
-    final PlayerId winner;
-
-    if (abandoner.equals(match.getPlayerOne())) {
-      winner = match.getPlayerTwo();
-    } else if (abandoner.equals(match.getPlayerTwo())) {
-      winner = match.getPlayerOne();
-    } else {
-      throw new PlayerNotInMatchException(abandoner);
-    }
-
-    match.forfeit(winner);
+    match.abandon(command.playerId());
 
     this.matchRepository.save(match);
     this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),

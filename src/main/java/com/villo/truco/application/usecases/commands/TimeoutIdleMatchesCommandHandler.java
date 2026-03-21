@@ -2,13 +2,10 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
-import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -65,59 +62,15 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
     }
 
     final var match = matchOpt.get();
-    if (match.isFinished()) {
+    if (!match.timeoutForfeit()) {
+      LOGGER.debug("Cannot process idle match, skipping: matchId={}", matchId);
       return;
     }
 
-    if (match.getStatus() == MatchStatus.WAITING_FOR_PLAYERS) {
-      match.cancel();
-      this.matchRepository.save(match);
-      this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
-          match.getPlayerTwo(), match.getDomainEvents());
-      match.clearDomainEvents();
-      LOGGER.info("Match cancelled by timeout: matchId={}", matchId);
-      return;
-    }
-
-    final var winner = determineWinner(match);
-    if (winner == null) {
-      LOGGER.debug("Cannot determine winner for idle match, skipping: matchId={}", matchId);
-      return;
-    }
-
-    match.forfeit(winner);
     this.matchRepository.save(match);
     this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
         match.getPlayerTwo(), match.getDomainEvents());
     match.clearDomainEvents();
-
-    LOGGER.info("Match forfeited by timeout: matchId={}, winner={}", matchId, winner);
-  }
-
-  private PlayerId determineWinner(final Match match) {
-
-    if (match.getStatus() == MatchStatus.IN_PROGRESS) {
-      final var currentTurn = match.getCurrentTurn();
-      if (currentTurn == null) {
-        return null;
-      }
-      return currentTurn.equals(match.getPlayerOne()) ? match.getPlayerTwo() : match.getPlayerOne();
-    }
-
-    if (match.getStatus() == MatchStatus.READY) {
-      if (match.getPlayerTwo() == null) {
-        return null;
-      }
-      if (!match.isReadyPlayerOne()) {
-        return match.getPlayerTwo();
-      }
-      if (!match.isReadyPlayerTwo()) {
-        return match.getPlayerOne();
-      }
-      return match.getPlayerTwo();
-    }
-
-    return null;
   }
 
 }

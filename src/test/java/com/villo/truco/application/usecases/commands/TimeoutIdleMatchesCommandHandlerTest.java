@@ -187,7 +187,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
   void finishedMatchIsSkipped() {
 
     final var match = inProgressMatch();
-    match.forfeit(playerOne);
+    match.abandon(playerTwo);
     match.clearDomainEvents();
     final var savedMatch = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<DomainEventBase>();

@@ -3,7 +3,6 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleCupsUseCase;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
-import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
 import java.time.Duration;
@@ -59,14 +58,11 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
     }
 
     final var cup = cupOpt.get();
-    final var status = cup.getStatus();
-
-    if (status == CupStatus.FINISHED || status == CupStatus.CANCELLED
-        || status == CupStatus.IN_PROGRESS) {
+    final var statusBefore = cup.getStatus();
+    cup.cancel();
+    if (cup.getStatus() == statusBefore) {
       return;
     }
-
-    cup.cancel();
     this.cupRepository.save(cup);
     LOGGER.info("Cup cancelled by timeout: cupId={}", cupId);
   }
