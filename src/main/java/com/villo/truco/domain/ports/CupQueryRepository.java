@@ -5,6 +5,8 @@ import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface CupQueryRepository {
@@ -18,5 +20,7 @@ public interface CupQueryRepository {
   Optional<Cup> findInProgressByPlayer(PlayerId playerId);
 
   Optional<Cup> findWaitingByPlayer(PlayerId playerId);
+
+  List<CupId> findIdleCupIds(Instant idleSince);
 
 }

@@ -87,8 +87,7 @@ class StartMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(
-          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+      public Optional<League> findByInviteCode(InviteCode c) {
 
         return Optional.empty();
       }
@@ -110,6 +109,12 @@ class StartMatchCommandHandlerTest {
 
         return Optional.empty();
       }
+
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+        return List.of();
+      }
     };
     final CupQueryRepository cupQueryRepo = new CupQueryRepository() {
       @Override
@@ -119,8 +124,7 @@ class StartMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(
-          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+      public Optional<Cup> findByInviteCode(InviteCode c) {
 
         return Optional.empty();
       }
@@ -141,6 +145,12 @@ class StartMatchCommandHandlerTest {
       public Optional<Cup> findWaitingByPlayer(PlayerId p) {
 
         return Optional.empty();
+      }
+
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+        return List.of();
       }
     };
     final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo);

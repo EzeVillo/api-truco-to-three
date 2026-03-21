@@ -27,6 +27,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,8 +112,7 @@ class StartMatchCommandHandlerConcurrencyTest {
     }
 
     @Override
-    public List<MatchId> findIdleMatchIds(
-        final java.time.Instant idleSince) {
+    public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
       return List.of();
     }
@@ -166,6 +166,12 @@ class StartMatchCommandHandlerConcurrencyTest {
 
         return Optional.empty();
       }
+
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+        return List.of();
+      }
     };
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
@@ -197,6 +203,12 @@ class StartMatchCommandHandlerConcurrencyTest {
       public Optional<Cup> findWaitingByPlayer(PlayerId p) {
 
         return Optional.empty();
+      }
+
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+        return List.of();
       }
     };
     final var checker = new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,

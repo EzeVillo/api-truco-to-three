@@ -10,6 +10,8 @@ import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.LeagueMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataLeagueRepository;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
@@ -71,6 +73,12 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
     return this.springDataRepo.findWaitingByPlayer(playerId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+    return this.springDataRepo.findIdleLeagueIds(idleSince).stream().map(LeagueId::new).toList();
   }
 
 }

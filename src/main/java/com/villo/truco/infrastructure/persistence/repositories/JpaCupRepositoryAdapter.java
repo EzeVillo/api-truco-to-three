@@ -10,6 +10,8 @@ import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.CupMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataCupRepository;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
@@ -70,6 +72,12 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
   public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
     return this.springDataRepo.findWaitingByPlayer(playerId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+    return this.springDataRepo.findIdleCupIds(idleSince).stream().map(CupId::new).toList();
   }
 
 }

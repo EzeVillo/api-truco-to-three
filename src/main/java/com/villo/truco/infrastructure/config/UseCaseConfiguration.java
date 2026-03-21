@@ -32,6 +32,8 @@ import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.in.StartCupUseCase;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
+import com.villo.truco.application.ports.in.TimeoutIdleCupsUseCase;
+import com.villo.truco.application.ports.in.TimeoutIdleLeaguesUseCase;
 import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
 import com.villo.truco.application.usecases.commands.AbandonMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.AdvanceCupCommandHandler;
@@ -60,6 +62,8 @@ import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.StartCupCommandHandler;
 import com.villo.truco.application.usecases.commands.StartLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.TimeoutIdleCupsCommandHandler;
+import com.villo.truco.application.usecases.commands.TimeoutIdleLeaguesCommandHandler;
 import com.villo.truco.application.usecases.commands.TimeoutIdleMatchesCommandHandler;
 import com.villo.truco.application.usecases.queries.GetCupStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetLeagueStateQueryHandler;
@@ -451,6 +455,26 @@ public class UseCaseConfiguration {
     return new TimeoutIdleMatchesCommandHandler(matchQueryRepository, matchRepository,
         matchEventNotifier, transactionalRunner,
         Duration.ofSeconds(matchTimeoutProperties.getIdleTimeoutSeconds()));
+  }
+
+  @Bean
+  TimeoutIdleLeaguesUseCase timeoutIdleLeaguesCommandHandler(
+      final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository,
+      final com.villo.truco.application.ports.TransactionalRunner transactionalRunner,
+      final LeagueTimeoutProperties leagueTimeoutProperties) {
+
+    return new TimeoutIdleLeaguesCommandHandler(leagueQueryRepository, leagueRepository,
+        transactionalRunner, Duration.ofSeconds(leagueTimeoutProperties.getIdleTimeoutSeconds()));
+  }
+
+  @Bean
+  TimeoutIdleCupsUseCase timeoutIdleCupsCommandHandler(final CupQueryRepository cupQueryRepository,
+      final CupRepository cupRepository,
+      final com.villo.truco.application.ports.TransactionalRunner transactionalRunner,
+      final CupTimeoutProperties cupTimeoutProperties) {
+
+    return new TimeoutIdleCupsCommandHandler(cupQueryRepository, cupRepository, transactionalRunner,
+        Duration.ofSeconds(cupTimeoutProperties.getIdleTimeoutSeconds()));
   }
 
 }

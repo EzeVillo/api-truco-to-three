@@ -1,6 +1,8 @@
 package com.villo.truco.infrastructure.persistence.repositories.spring;
 
 import com.villo.truco.infrastructure.persistence.entities.LeagueJpaEntity;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,5 +23,10 @@ public interface SpringDataLeagueRepository extends JpaRepository<LeagueJpaEntit
   @Query("SELECT l FROM LeagueJpaEntity l JOIN l.participants p "
       + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId = :playerId")
   Optional<LeagueJpaEntity> findWaitingByPlayer(@Param("playerId") UUID playerId);
+
+  @Query("SELECT l.id FROM LeagueJpaEntity l "
+      + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') "
+      + "AND l.lastActivityAt < :idleSince")
+  List<UUID> findIdleLeagueIds(@Param("idleSince") Instant idleSince);
 
 }

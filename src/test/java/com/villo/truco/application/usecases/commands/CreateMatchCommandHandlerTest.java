@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.CreateMatchCommand;
+import com.villo.truco.domain.model.cup.Cup;
+import com.villo.truco.domain.model.cup.valueobjects.CupId;
+import com.villo.truco.domain.model.league.League;
+import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
@@ -60,75 +64,83 @@ class CreateMatchCommandHandlerTest {
   private static final LeagueQueryRepository NO_LEAGUE_REPO = new LeagueQueryRepository() {
 
     @Override
-    public Optional<com.villo.truco.domain.model.league.League> findById(
-        final com.villo.truco.domain.model.league.valueobjects.LeagueId leagueId) {
+    public Optional<League> findById(final LeagueId leagueId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.league.League> findByInviteCode(
-        final com.villo.truco.domain.shared.valueobjects.InviteCode inviteCode) {
+    public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.league.League> findByMatchId(
+    public Optional<League> findByMatchId(
         final MatchId matchId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.league.League> findInProgressByPlayer(
+    public Optional<League> findInProgressByPlayer(
         final PlayerId playerId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.league.League> findWaitingByPlayer(
+    public Optional<League> findWaitingByPlayer(
         final PlayerId playerId) {
 
       return Optional.empty();
+    }
+
+    @Override
+    public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+      return java.util.List.of();
     }
   };
 
   private static final CupQueryRepository NO_CUP_REPO = new CupQueryRepository() {
 
     @Override
-    public Optional<com.villo.truco.domain.model.cup.Cup> findById(
-        final com.villo.truco.domain.model.cup.valueobjects.CupId cupId) {
+    public Optional<Cup> findById(final CupId cupId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.cup.Cup> findByInviteCode(
-        final com.villo.truco.domain.shared.valueobjects.InviteCode inviteCode) {
+    public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.cup.Cup> findByMatchId(final MatchId matchId) {
+    public Optional<Cup> findByMatchId(final MatchId matchId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.cup.Cup> findInProgressByPlayer(
+    public Optional<Cup> findInProgressByPlayer(
         final PlayerId playerId) {
 
       return Optional.empty();
     }
 
     @Override
-    public Optional<com.villo.truco.domain.model.cup.Cup> findWaitingByPlayer(
+    public Optional<Cup> findWaitingByPlayer(
         final PlayerId playerId) {
 
       return Optional.empty();
+    }
+
+    @Override
+    public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+      return List.of();
     }
   };
 

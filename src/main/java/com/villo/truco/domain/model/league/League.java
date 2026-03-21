@@ -328,6 +328,16 @@ public final class League extends AggregateBase<LeagueId> {
         .map(Map.Entry::getKey).toList();
   }
 
+  public void cancel() {
+
+    if (this.status == LeagueStatus.WAITING_FOR_PLAYERS
+        || this.status == LeagueStatus.WAITING_FOR_START) {
+      this.participants.clear();
+      this.status = LeagueStatus.CANCELLED;
+      LOGGER.info("League cancelled by timeout: leagueId={}", this.id);
+    }
+  }
+
   public void leave(final PlayerId playerId) {
 
     Objects.requireNonNull(playerId, "PlayerId cannot be null");

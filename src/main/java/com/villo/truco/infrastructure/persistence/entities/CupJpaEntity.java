@@ -7,8 +7,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +38,9 @@ public class CupJpaEntity {
   @Column
   private UUID champion;
 
+  @Column(name = "last_activity_at", nullable = false)
+  private Instant lastActivityAt;
+
   @Version
   private int version;
 
@@ -53,6 +59,18 @@ public class CupJpaEntity {
 
   public CupJpaEntity() {
 
+  }
+
+  @PrePersist
+  void onPrePersist() {
+
+    this.lastActivityAt = Instant.now();
+  }
+
+  @PreUpdate
+  void onPreUpdate() {
+
+    this.lastActivityAt = Instant.now();
   }
 
   public UUID getId() {
@@ -113,6 +131,16 @@ public class CupJpaEntity {
   public void setChampion(UUID champion) {
 
     this.champion = champion;
+  }
+
+  public Instant getLastActivityAt() {
+
+    return lastActivityAt;
+  }
+
+  public void setLastActivityAt(Instant lastActivityAt) {
+
+    this.lastActivityAt = lastActivityAt;
   }
 
   public int getVersion() {

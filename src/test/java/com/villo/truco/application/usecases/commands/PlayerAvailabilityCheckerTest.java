@@ -81,6 +81,12 @@ class PlayerAvailabilityCheckerTest {
 
         return waitingLeague;
       }
+
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+        return List.of();
+      }
     };
     final CupQueryRepository cupRepo = new CupQueryRepository() {
 
@@ -112,6 +118,12 @@ class PlayerAvailabilityCheckerTest {
       public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
         return waitingCup;
+      }
+
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+        return List.of();
       }
     };
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo);

@@ -14,6 +14,8 @@ import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +77,12 @@ class LeagueMatchForfeitedEventHandlerTest {
       public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
         return Optional.empty();
+      }
+
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+        return List.of();
       }
     };
 

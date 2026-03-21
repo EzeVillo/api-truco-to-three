@@ -128,6 +128,16 @@ public final class Cup extends AggregateBase<CupId> {
     }
   }
 
+  public void cancel() {
+
+    if (this.status == CupStatus.WAITING_FOR_PLAYERS
+        || this.status == CupStatus.WAITING_FOR_START) {
+      this.participants.clear();
+      this.status = CupStatus.CANCELLED;
+      LOGGER.info("Cup cancelled by timeout: cupId={}", this.id);
+    }
+  }
+
   public void leave(final PlayerId playerId) {
 
     Objects.requireNonNull(playerId, "PlayerId cannot be null");

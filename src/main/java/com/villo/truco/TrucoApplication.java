@@ -1,5 +1,7 @@
 package com.villo.truco;
 
+import com.villo.truco.infrastructure.config.CupTimeoutProperties;
+import com.villo.truco.infrastructure.config.LeagueTimeoutProperties;
 import com.villo.truco.infrastructure.config.MatchTimeoutProperties;
 import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties(MatchTimeoutProperties.class)
+@EnableConfigurationProperties({MatchTimeoutProperties.class, LeagueTimeoutProperties.class,
+    CupTimeoutProperties.class})
 public class TrucoApplication {
 
   public static void main(String[] args) {
