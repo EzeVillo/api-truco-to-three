@@ -1,6 +1,7 @@
 package com.villo.truco.infrastructure.scheduler;
 
 import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
+import com.villo.truco.infrastructure.actuator.health.SchedulerHeartbeatRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,10 +13,13 @@ public class MatchTimeoutScheduler {
   private static final Logger LOGGER = LoggerFactory.getLogger(MatchTimeoutScheduler.class);
 
   private final TimeoutIdleMatchesUseCase timeoutIdleMatchesUseCase;
+  private final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry;
 
-  public MatchTimeoutScheduler(final TimeoutIdleMatchesUseCase timeoutIdleMatchesUseCase) {
+  public MatchTimeoutScheduler(final TimeoutIdleMatchesUseCase timeoutIdleMatchesUseCase,
+      final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry) {
 
     this.timeoutIdleMatchesUseCase = timeoutIdleMatchesUseCase;
+    this.schedulerHeartbeatRegistry = schedulerHeartbeatRegistry;
   }
 
   @Scheduled(fixedDelayString = "${truco.match.timeout-check-interval-ms:30000}")
@@ -23,6 +27,7 @@ public class MatchTimeoutScheduler {
 
     LOGGER.debug("Checking for idle matches...");
     this.timeoutIdleMatchesUseCase.handle();
+    this.schedulerHeartbeatRegistry.recordSuccessfulRun("match-timeout");
   }
 
 }

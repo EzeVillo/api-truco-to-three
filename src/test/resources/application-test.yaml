@@ -15,3 +15,21 @@ truco:
   retry:
     max-retries: 3
     delay-ms: 0
+  observability:
+    scheduler-heartbeat-max-age-ms: 180000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,schedulerHeartbeat

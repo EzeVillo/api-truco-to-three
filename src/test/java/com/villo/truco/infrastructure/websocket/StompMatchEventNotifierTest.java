@@ -14,6 +14,7 @@ import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.model.match.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ class StompMatchEventNotifierTest {
   void broadcastsToBothPlayers() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
-    final var notifier = new StompMatchEventNotifier(messaging);
+    final var notifier = new StompMatchEventNotifier(messaging,
+      mock(EventNotifierHealthRegistry.class));
     final var context = new MatchEventContext(MatchId.generate(), PlayerId.generate(),
         PlayerId.generate());
 
@@ -41,7 +43,8 @@ class StompMatchEventNotifierTest {
   void sendsSeatTargetedOnlyToRecipient() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
-    final var notifier = new StompMatchEventNotifier(messaging);
+    final var notifier = new StompMatchEventNotifier(messaging,
+      mock(EventNotifierHealthRegistry.class));
     final var context = new MatchEventContext(MatchId.generate(), PlayerId.generate(),
         PlayerId.generate());
     final var event = new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE,

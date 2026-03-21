@@ -1,6 +1,7 @@
 package com.villo.truco.infrastructure.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -139,6 +140,40 @@ class HttpSecurityIntegrationTest {
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
     assertEquals(200, response.statusCode());
+  }
+
+  @Test
+  void shouldAllowMissingTokenOnActuatorHealth() throws Exception {
+
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/actuator/health"))
+        .GET().build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertTrue(response.statusCode() == 200 || response.statusCode() == 503);
+  }
+
+  @Test
+  void shouldAllowActuatorReadinessWithoutToken() throws Exception {
+
+    final var request = HttpRequest.newBuilder(
+            URI.create(this.baseUrl() + "/actuator/health/readiness"))
+        .GET().build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertTrue(response.statusCode() == 200 || response.statusCode() == 503);
+  }
+
+  @Test
+  void shouldRejectMissingTokenOnActuatorMetrics() throws Exception {
+
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/actuator/metrics"))
+        .GET().build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(401, response.statusCode());
   }
 
   private String baseUrl() {

@@ -10,9 +10,12 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
+import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.infrastructure.actuator.metrics.MatchDomainEventMetricsHandler;
 import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
 import com.villo.truco.infrastructure.websocket.StompMatchEventNotifier;
 import java.util.List;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -26,11 +29,15 @@ public class EventNotifierConfiguration {
   private final CupQueryRepository cupQueryRepository;
   private final AdvanceCupUseCase advanceCupUseCase;
   private final ForfeitCupUseCase forfeitCupUseCase;
+  private final EventNotifierHealthRegistry eventNotifierHealthRegistry;
+  private final MeterRegistry meterRegistry;
 
   public EventNotifierConfiguration(final SimpMessagingTemplate messagingTemplate,
       final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository,
       final CupQueryRepository cupQueryRepository, final AdvanceCupUseCase advanceCupUseCase,
-      final ForfeitCupUseCase forfeitCupUseCase) {
+      final ForfeitCupUseCase forfeitCupUseCase,
+      final EventNotifierHealthRegistry eventNotifierHealthRegistry,
+      final MeterRegistry meterRegistry) {
 
     this.messagingTemplate = messagingTemplate;
     this.leagueQueryRepository = leagueQueryRepository;
@@ -38,12 +45,20 @@ public class EventNotifierConfiguration {
     this.cupQueryRepository = cupQueryRepository;
     this.advanceCupUseCase = advanceCupUseCase;
     this.forfeitCupUseCase = forfeitCupUseCase;
+    this.eventNotifierHealthRegistry = eventNotifierHealthRegistry;
+    this.meterRegistry = meterRegistry;
   }
 
   @Bean
   StompMatchEventNotifier stompMatchEventNotifier() {
 
-    return new StompMatchEventNotifier(this.messagingTemplate);
+    return new StompMatchEventNotifier(this.messagingTemplate, this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  MatchDomainEventMetricsHandler matchDomainEventMetricsHandler() {
+
+    return new MatchDomainEventMetricsHandler(this.meterRegistry);
   }
 
   @Bean
@@ -76,7 +91,7 @@ public class EventNotifierConfiguration {
     return new CompositeMatchEventNotifier(
         List.of(this.stompMatchEventNotifier(), this.leagueMatchFinishedHandler(),
             this.leagueMatchForfeitedHandler(), this.cupMatchFinishedHandler(),
-            this.cupMatchForfeitedHandler()));
+        this.cupMatchForfeitedHandler(), this.matchDomainEventMetricsHandler()));
   }
 
 }

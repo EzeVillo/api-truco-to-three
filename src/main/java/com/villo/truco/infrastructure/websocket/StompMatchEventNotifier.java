@@ -6,6 +6,7 @@ import com.villo.truco.domain.model.match.events.SeatTargetedEvent;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -17,10 +18,13 @@ public final class StompMatchEventNotifier implements MatchDomainEventHandler<Do
   private static final Logger LOGGER = LoggerFactory.getLogger(StompMatchEventNotifier.class);
 
   private final SimpMessagingTemplate messagingTemplate;
+  private final EventNotifierHealthRegistry healthRegistry;
 
-  public StompMatchEventNotifier(final SimpMessagingTemplate messagingTemplate) {
+  public StompMatchEventNotifier(final SimpMessagingTemplate messagingTemplate,
+      final EventNotifierHealthRegistry healthRegistry) {
 
     this.messagingTemplate = Objects.requireNonNull(messagingTemplate);
+    this.healthRegistry = Objects.requireNonNull(healthRegistry);
   }
 
   @Override
@@ -54,7 +58,13 @@ public final class StompMatchEventNotifier implements MatchDomainEventHandler<Do
     final var userName = WebSocketUserNaming.userName(playerId);
     LOGGER.debug("Sending WS event to user={} type={}", userName,
         message.getClass().getSimpleName());
-    this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+    try {
+      this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+      this.healthRegistry.recordSuccess();
+    } catch (final RuntimeException ex) {
+      this.healthRegistry.recordFailure(ex);
+      throw ex;
+    }
   }
 
 }
