@@ -36,7 +36,15 @@ public final class PlayerAvailabilityChecker {
     ensureNotInWaitingTournament(playerId);
   }
 
-  public void ensureNotInWaitingTournament(final PlayerId playerId) {
+  public void ensureCanStartMatch(final PlayerId playerId) {
+
+    if (this.matchQueryRepository.hasActiveMatch(playerId)) {
+      throw new PlayerAlreadyInActiveMatchException();
+    }
+    ensureNoActiveTournaments(playerId);
+  }
+
+  private void ensureNotInWaitingTournament(final PlayerId playerId) {
 
     this.leagueQueryRepository.findWaitingByPlayer(playerId).ifPresent(league -> {
       throw new PlayerAlreadyInWaitingLeagueException();
@@ -47,7 +55,7 @@ public final class PlayerAvailabilityChecker {
     });
   }
 
-  public void ensureNoActiveTournaments(final PlayerId playerId) {
+  private void ensureNoActiveTournaments(final PlayerId playerId) {
 
     this.leagueQueryRepository.findInProgressByPlayer(playerId)
         .filter(league -> league.hasPlayerPendingFixtures(playerId)).ifPresent(league -> {

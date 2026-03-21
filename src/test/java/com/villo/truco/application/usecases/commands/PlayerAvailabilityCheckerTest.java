@@ -32,14 +32,24 @@ class PlayerAvailabilityCheckerTest {
   private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
       final Optional<League> league, final Optional<Cup> cup) {
 
-    return checker(hasUnfinishedMatch, league, Optional.empty(), cup, Optional.empty());
+    return checker(hasUnfinishedMatch, false, league, Optional.empty(), cup, Optional.empty());
   }
 
   private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
       final Optional<League> inProgressLeague, final Optional<League> waitingLeague,
       final Optional<Cup> inProgressCup, final Optional<Cup> waitingCup) {
 
-    final MatchQueryRepository matchRepo = new StubMatchQueryRepository(hasUnfinishedMatch);
+    return checker(hasUnfinishedMatch, false, inProgressLeague, waitingLeague, inProgressCup,
+        waitingCup);
+  }
+
+  private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
+      final boolean hasActiveMatch, final Optional<League> inProgressLeague,
+      final Optional<League> waitingLeague, final Optional<Cup> inProgressCup,
+      final Optional<Cup> waitingCup) {
+
+    final MatchQueryRepository matchRepo = new StubMatchQueryRepository(hasUnfinishedMatch,
+        hasActiveMatch);
     final LeagueQueryRepository leagueRepo = new LeagueQueryRepository() {
 
       @Override
@@ -246,7 +256,50 @@ class PlayerAvailabilityCheckerTest {
         PlayerAlreadyInWaitingCupException.class);
   }
 
-  private record StubMatchQueryRepository(boolean unfinished) implements MatchQueryRepository {
+  @Test
+  @DisplayName("ensureCanStartMatch: jugador libre pasa sin excepción")
+  void canStartMatchWhenFree() {
+
+    final var checker = checker(false, false, Optional.empty(), Optional.empty(), Optional.empty(),
+        Optional.empty());
+
+    assertThatCode(
+        () -> checker.ensureCanStartMatch(PlayerId.generate())).doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("ensureCanStartMatch: jugador con partido activo → PlayerAlreadyInActiveMatchException")
+  void cannotStartMatchWhenHasActiveMatch() {
+
+    final var checker = checker(false, true, Optional.empty(), Optional.empty(), Optional.empty(),
+        Optional.empty());
+
+    assertThatThrownBy(
+        () -> checker.ensureCanStartMatch(PlayerId.generate())).isInstanceOf(
+        PlayerAlreadyInActiveMatchException.class);
+  }
+
+  @Test
+  @DisplayName("ensureCanStartMatch: jugador en torneo activo lanza excepción")
+  void cannotStartMatchWhenInActiveTournament() {
+
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    league.join(p2, league.getInviteCode());
+    league.join(p3, league.getInviteCode());
+    league.start(p1);
+
+    final var checker = checker(false, false, Optional.of(league), Optional.empty(),
+        Optional.empty(), Optional.empty());
+
+    assertThatThrownBy(() -> checker.ensureCanStartMatch(p1)).isInstanceOf(
+        PlayerBusyInLeagueException.class);
+  }
+
+  private record StubMatchQueryRepository(boolean unfinished,
+      boolean activeMatch) implements MatchQueryRepository {
 
     @Override
       public Optional<Match> findById(final MatchId matchId) {
@@ -263,7 +316,7 @@ class PlayerAvailabilityCheckerTest {
       @Override
       public boolean hasActiveMatch(final PlayerId playerId) {
 
-        return false;
+        return this.activeMatch;
       }
 
       @Override

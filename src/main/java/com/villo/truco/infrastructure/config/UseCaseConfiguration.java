@@ -186,13 +186,12 @@ public class UseCaseConfiguration {
 
   @Bean
   StartMatchUseCase startMatchCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchQueryRepository matchQueryRepository,
-      final MatchEventNotifier matchEventNotifier,
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new StartMatchCommandHandler(matchResolver, matchRepository,
-        matchQueryRepository, matchEventNotifier, playerAvailabilityChecker);
+        matchEventNotifier, playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 

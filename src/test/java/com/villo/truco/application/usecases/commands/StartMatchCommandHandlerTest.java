@@ -144,7 +144,7 @@ class StartMatchCommandHandlerTest {
       }
     };
     final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo);
-    return new StartMatchCommandHandler(resolver, matchRepository, queryRepo, notifier, checker);
+    return new StartMatchCommandHandler(resolver, matchRepository, notifier, checker);
   }
 
   @Test

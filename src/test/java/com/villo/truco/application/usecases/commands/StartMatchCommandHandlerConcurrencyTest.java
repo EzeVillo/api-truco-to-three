@@ -202,7 +202,7 @@ class StartMatchCommandHandlerConcurrencyTest {
     final var checker = new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
         cupQueryRepository);
     final var rawHandler = new StartMatchCommandHandler(matchResolver, matchRepository,
-        matchQueryRepository, matchEventNotifier, checker);
+        matchEventNotifier, checker);
     handler = pipeline.wrap(rawHandler)::handle;
 
     playerOne = PlayerId.generate();
