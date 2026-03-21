@@ -79,7 +79,7 @@ tasks.named('check') {
 sonar {
     properties {
         property 'sonar.projectKey', 'EzeVillo_api-truco-to-three'
-        property 'sonar.organization', 'EzeVillo'
+        property 'sonar.organization', 'ezevillo'
         property 'sonar.host.url', 'https://sonarcloud.io'
         property 'sonar.coverage.jacoco.xmlReportPaths',
                 layout.buildDirectory.file('reports/jacoco/test/jacocoTestReport.xml').get().asFile.absolutePath
