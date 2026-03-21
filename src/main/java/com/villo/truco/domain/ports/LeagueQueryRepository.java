@@ -17,4 +17,6 @@ public interface LeagueQueryRepository {
 
   Optional<League> findInProgressByPlayer(PlayerId playerId);
 
+  Optional<League> findWaitingByPlayer(PlayerId playerId);
+
 }

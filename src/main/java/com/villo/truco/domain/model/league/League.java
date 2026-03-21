@@ -3,7 +3,6 @@ package com.villo.truco.domain.model.league;
 import com.villo.truco.domain.model.league.exceptions.FixtureAlreadyResolvedException;
 import com.villo.truco.domain.model.league.exceptions.InvalidLeagueInviteCodeException;
 import com.villo.truco.domain.model.league.exceptions.InvalidLeaguePlayersException;
-import com.villo.truco.domain.model.league.exceptions.LeagueCreatorCannotLeaveException;
 import com.villo.truco.domain.model.league.exceptions.LeagueFullException;
 import com.villo.truco.domain.model.league.exceptions.LeagueNotReadyException;
 import com.villo.truco.domain.model.league.exceptions.LeagueNotWaitingException;
@@ -343,7 +342,10 @@ public final class League extends AggregateBase<LeagueId> {
     }
 
     if (this.participants.getFirst().equals(playerId)) {
-      throw new LeagueCreatorCannotLeaveException();
+      this.participants.clear();
+      this.status = LeagueStatus.CANCELLED;
+      LOGGER.info("League cancelled by creator: leagueId={}, creatorId={}", this.id, playerId);
+      return;
     }
 
     this.participants.remove(playerId);

@@ -18,4 +18,8 @@ public interface SpringDataCupRepository extends JpaRepository<CupJpaEntity, UUI
       + "WHERE c.status = 'IN_PROGRESS' AND p.playerId = :playerId")
   Optional<CupJpaEntity> findInProgressByPlayer(@Param("playerId") UUID playerId);
 
+  @Query("SELECT c FROM CupJpaEntity c JOIN c.participants p "
+      + "WHERE c.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId = :playerId")
+  Optional<CupJpaEntity> findWaitingByPlayer(@Param("playerId") UUID playerId);
+
 }

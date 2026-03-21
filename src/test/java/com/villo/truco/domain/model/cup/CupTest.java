@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.cup.exceptions.BoutAlreadyResolvedException;
-import com.villo.truco.domain.model.cup.exceptions.CupCreatorCannotLeaveException;
 import com.villo.truco.domain.model.cup.exceptions.CupNotReadyException;
 import com.villo.truco.domain.model.cup.exceptions.CupNotWaitingException;
 import com.villo.truco.domain.model.cup.exceptions.InvalidCupPlayersException;
@@ -113,14 +112,17 @@ class CupTest {
   }
 
   @Test
-  @DisplayName("leave: el creador no puede salir")
-  void leaveRejectsCreator() {
+  @DisplayName("leave: el creador cancela la copa")
+  void leaveCreatorCancelsCup() {
 
     final var creator = PlayerId.generate();
     final var cup = Cup.create(creator, 4, GamesToPlay.of(1));
     cup.join(PlayerId.generate(), cup.getInviteCode());
 
-    assertThatThrownBy(() -> cup.leave(creator)).isInstanceOf(CupCreatorCannotLeaveException.class);
+    cup.leave(creator);
+
+    assertThat(cup.getStatus()).isEqualTo(CupStatus.CANCELLED);
+    assertThat(cup.getParticipants()).isEmpty();
   }
 
   @Test

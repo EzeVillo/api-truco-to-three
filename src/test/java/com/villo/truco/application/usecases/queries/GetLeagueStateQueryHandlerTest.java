@@ -59,6 +59,12 @@ class GetLeagueStateQueryHandlerTest {
 
         return Optional.empty();
       }
+
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
     };
 
     final var resolver = new LeagueResolver(queryRepo);

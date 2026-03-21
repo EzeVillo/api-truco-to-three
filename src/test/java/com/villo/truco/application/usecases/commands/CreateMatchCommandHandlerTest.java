@@ -86,6 +86,13 @@ class CreateMatchCommandHandlerTest {
 
       return Optional.empty();
     }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.league.League> findWaitingByPlayer(
+        final PlayerId playerId) {
+
+      return Optional.empty();
+    }
   };
 
   private static final CupQueryRepository NO_CUP_REPO = new CupQueryRepository() {
@@ -112,6 +119,13 @@ class CreateMatchCommandHandlerTest {
 
     @Override
     public Optional<com.villo.truco.domain.model.cup.Cup> findInProgressByPlayer(
+        final PlayerId playerId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.cup.Cup> findWaitingByPlayer(
         final PlayerId playerId) {
 
       return Optional.empty();

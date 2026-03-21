@@ -18,4 +18,8 @@ public interface SpringDataLeagueRepository extends JpaRepository<LeagueJpaEntit
       + "WHERE l.status = 'IN_PROGRESS' AND p.playerId = :playerId")
   Optional<LeagueJpaEntity> findInProgressByPlayer(@Param("playerId") UUID playerId);
 
+  @Query("SELECT l FROM LeagueJpaEntity l JOIN l.participants p "
+      + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId = :playerId")
+  Optional<LeagueJpaEntity> findWaitingByPlayer(@Param("playerId") UUID playerId);
+
 }

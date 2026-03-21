@@ -67,4 +67,10 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
     return this.springDataRepo.findInProgressByPlayer(playerId.value()).map(this.mapper::toDomain);
   }
 
+  @Override
+  public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+
+    return this.springDataRepo.findWaitingByPlayer(playerId.value()).map(this.mapper::toDomain);
+  }
+
 }

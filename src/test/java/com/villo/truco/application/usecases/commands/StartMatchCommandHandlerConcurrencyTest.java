@@ -160,6 +160,12 @@ class StartMatchCommandHandlerConcurrencyTest {
 
         return Optional.empty();
       }
+
+      @Override
+      public Optional<League> findWaitingByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
     };
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
@@ -183,6 +189,12 @@ class StartMatchCommandHandlerConcurrencyTest {
 
       @Override
       public Optional<Cup> findInProgressByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findWaitingByPlayer(PlayerId p) {
 
         return Optional.empty();
       }

@@ -70,6 +70,12 @@ class LeagueMatchForfeitedEventHandlerTest {
 
         return Optional.empty();
       }
+
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
     };
 
     final LeagueRepository repo = saved::set;

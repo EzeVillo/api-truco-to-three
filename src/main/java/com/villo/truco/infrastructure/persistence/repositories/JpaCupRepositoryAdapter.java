@@ -66,4 +66,10 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
     return this.springDataRepo.findInProgressByPlayer(playerId.value()).map(this.mapper::toDomain);
   }
 
+  @Override
+  public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+
+    return this.springDataRepo.findWaitingByPlayer(playerId.value()).map(this.mapper::toDomain);
+  }
+
 }

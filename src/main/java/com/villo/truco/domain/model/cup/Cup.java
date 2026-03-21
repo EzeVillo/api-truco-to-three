@@ -3,7 +3,6 @@ package com.villo.truco.domain.model.cup;
 import com.villo.truco.domain.model.cup.MatchAdvancementResult.BoutPairing;
 import com.villo.truco.domain.model.cup.exceptions.BoutAlreadyResolvedException;
 import com.villo.truco.domain.model.cup.exceptions.BracketCorruptedException;
-import com.villo.truco.domain.model.cup.exceptions.CupCreatorCannotLeaveException;
 import com.villo.truco.domain.model.cup.exceptions.CupFullException;
 import com.villo.truco.domain.model.cup.exceptions.CupNotReadyException;
 import com.villo.truco.domain.model.cup.exceptions.CupNotWaitingException;
@@ -143,7 +142,10 @@ public final class Cup extends AggregateBase<CupId> {
     }
 
     if (this.participants.getFirst().equals(playerId)) {
-      throw new CupCreatorCannotLeaveException();
+      this.participants.clear();
+      this.status = CupStatus.CANCELLED;
+      LOGGER.info("Cup cancelled by creator: cupId={}, creatorId={}", this.id, playerId);
+      return;
     }
 
     this.participants.remove(playerId);

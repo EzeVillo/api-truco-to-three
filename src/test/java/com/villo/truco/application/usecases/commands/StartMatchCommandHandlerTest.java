@@ -104,6 +104,12 @@ class StartMatchCommandHandlerTest {
 
         return Optional.empty();
       }
+
+      @Override
+      public Optional<League> findWaitingByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
     };
     final CupQueryRepository cupQueryRepo = new CupQueryRepository() {
       @Override
@@ -127,6 +133,12 @@ class StartMatchCommandHandlerTest {
 
       @Override
       public Optional<Cup> findInProgressByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findWaitingByPlayer(PlayerId p) {
 
         return Optional.empty();
       }

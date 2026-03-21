@@ -1,6 +1,8 @@
 package com.villo.truco.application.usecases.commands;
 
+import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInWaitingCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerBusyInCupException;
+import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
 import com.villo.truco.domain.ports.CupQueryRepository;
@@ -31,6 +33,18 @@ public final class PlayerAvailabilityChecker {
     }
 
     ensureNoActiveTournaments(playerId);
+    ensureNotInWaitingTournament(playerId);
+  }
+
+  public void ensureNotInWaitingTournament(final PlayerId playerId) {
+
+    this.leagueQueryRepository.findWaitingByPlayer(playerId).ifPresent(league -> {
+      throw new PlayerAlreadyInWaitingLeagueException();
+    });
+
+    this.cupQueryRepository.findWaitingByPlayer(playerId).ifPresent(cup -> {
+      throw new PlayerAlreadyInWaitingCupException();
+    });
   }
 
   public void ensureNoActiveTournaments(final PlayerId playerId) {

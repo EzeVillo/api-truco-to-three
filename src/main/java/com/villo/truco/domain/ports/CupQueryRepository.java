@@ -17,4 +17,6 @@ public interface CupQueryRepository {
 
   Optional<Cup> findInProgressByPlayer(PlayerId playerId);
 
+  Optional<Cup> findWaitingByPlayer(PlayerId playerId);
+
 }

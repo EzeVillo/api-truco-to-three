@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.cup.Cup;
+import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInWaitingCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerBusyInCupException;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
+import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
@@ -29,6 +31,13 @@ class PlayerAvailabilityCheckerTest {
 
   private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
       final Optional<League> league, final Optional<Cup> cup) {
+
+    return checker(hasUnfinishedMatch, league, Optional.empty(), cup, Optional.empty());
+  }
+
+  private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
+      final Optional<League> inProgressLeague, final Optional<League> waitingLeague,
+      final Optional<Cup> inProgressCup, final Optional<Cup> waitingCup) {
 
     final MatchQueryRepository matchRepo = new StubMatchQueryRepository(hasUnfinishedMatch);
     final LeagueQueryRepository leagueRepo = new LeagueQueryRepository() {
@@ -54,7 +63,13 @@ class PlayerAvailabilityCheckerTest {
       @Override
       public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
-        return league;
+        return inProgressLeague;
+      }
+
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+
+        return waitingLeague;
       }
     };
     final CupQueryRepository cupRepo = new CupQueryRepository() {
@@ -80,7 +95,13 @@ class PlayerAvailabilityCheckerTest {
       @Override
       public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-        return cup;
+        return inProgressCup;
+      }
+
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+
+        return waitingCup;
       }
     };
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo);
@@ -197,6 +218,32 @@ class PlayerAvailabilityCheckerTest {
 
     assertThatThrownBy(() -> checker.ensureAvailable(p1)).isInstanceOf(
         PlayerAlreadyInActiveMatchException.class);
+  }
+
+  @Test
+  @DisplayName("jugador en liga WAITING_FOR_PLAYERS → PlayerAlreadyInWaitingLeagueException")
+  void throwsWhenPlayerInWaitingLeague() {
+
+    final var creator = PlayerId.generate();
+    final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3));
+    final var checker = checker(false, Optional.empty(), Optional.of(waitingLeague),
+        Optional.empty(), Optional.empty());
+
+    assertThatThrownBy(() -> checker.ensureAvailable(creator)).isInstanceOf(
+        PlayerAlreadyInWaitingLeagueException.class);
+  }
+
+  @Test
+  @DisplayName("jugador en copa WAITING_FOR_PLAYERS → PlayerAlreadyInWaitingCupException")
+  void throwsWhenPlayerInWaitingCup() {
+
+    final var creator = PlayerId.generate();
+    final var waitingCup = Cup.create(creator, 4, GamesToPlay.of(3));
+    final var checker = checker(false, Optional.empty(), Optional.empty(), Optional.empty(),
+        Optional.of(waitingCup));
+
+    assertThatThrownBy(() -> checker.ensureAvailable(creator)).isInstanceOf(
+        PlayerAlreadyInWaitingCupException.class);
   }
 
   private record StubMatchQueryRepository(boolean unfinished) implements MatchQueryRepository {
