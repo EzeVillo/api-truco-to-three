@@ -73,6 +73,12 @@ class AbandonMatchCommandHandlerTest {
       }
 
       @Override
+      public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+        return false;
+      }
+
+      @Override
       public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
         return List.of();

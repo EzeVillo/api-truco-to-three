@@ -12,17 +12,22 @@ public final class JoinMatchCommandHandler implements JoinMatchUseCase {
   private final MatchResolver matchResolver;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
+  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
   public JoinMatchCommandHandler(final MatchResolver matchResolver,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final PlayerAvailabilityChecker playerAvailabilityChecker) {
 
     this.matchResolver = Objects.requireNonNull(matchResolver);
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
+    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public JoinMatchDTO handle(final JoinMatchCommand command) {
+
+    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var match = this.matchResolver.resolve(command.inviteCode());
 

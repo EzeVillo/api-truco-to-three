@@ -4,6 +4,7 @@ import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
 
 public interface CupQueryRepository {
@@ -13,5 +14,7 @@ public interface CupQueryRepository {
   Optional<Cup> findByInviteCode(InviteCode inviteCode);
 
   Optional<Cup> findByMatchId(MatchId matchId);
+
+  Optional<Cup> findInProgressByPlayer(PlayerId playerId);
 
 }

@@ -5,9 +5,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.CreateMatchCommand;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
+import com.villo.truco.domain.model.match.valueobjects.MatchId;
+import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.DomainException;
+import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,13 +24,110 @@ import org.junit.jupiter.api.Test;
 @DisplayName("CreateMatchCommandHandler")
 class CreateMatchCommandHandlerTest {
 
+  private static final MatchQueryRepository NO_ACTIVE_MATCH_REPO = new MatchQueryRepository() {
+
+    @Override
+    public Optional<Match> findById(final MatchId matchId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public boolean hasActiveMatch(final PlayerId playerId) {
+
+      return false;
+    }
+
+    @Override
+    public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+      return false;
+    }
+
+    @Override
+    public List<MatchId> findIdleMatchIds(final Instant idleSince) {
+
+      return List.of();
+    }
+  };
+
+  private static final LeagueQueryRepository NO_LEAGUE_REPO = new LeagueQueryRepository() {
+
+    @Override
+    public Optional<com.villo.truco.domain.model.league.League> findById(
+        final com.villo.truco.domain.model.league.valueobjects.LeagueId leagueId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.league.League> findByInviteCode(
+        final com.villo.truco.domain.shared.valueobjects.InviteCode inviteCode) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.league.League> findByMatchId(
+        final MatchId matchId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.league.League> findInProgressByPlayer(
+        final PlayerId playerId) {
+
+      return Optional.empty();
+    }
+  };
+
+  private static final CupQueryRepository NO_CUP_REPO = new CupQueryRepository() {
+
+    @Override
+    public Optional<com.villo.truco.domain.model.cup.Cup> findById(
+        final com.villo.truco.domain.model.cup.valueobjects.CupId cupId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.cup.Cup> findByInviteCode(
+        final com.villo.truco.domain.shared.valueobjects.InviteCode inviteCode) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.cup.Cup> findByMatchId(final MatchId matchId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<com.villo.truco.domain.model.cup.Cup> findInProgressByPlayer(
+        final PlayerId playerId) {
+
+      return Optional.empty();
+    }
+  };
+
+  private static final PlayerAvailabilityChecker FREE_CHECKER = new PlayerAvailabilityChecker(
+      NO_ACTIVE_MATCH_REPO, NO_LEAGUE_REPO, NO_CUP_REPO);
+
   @Test
   @DisplayName("crea partida con gamesToPlay valido")
   void createsMatch() {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final var handler = new CreateMatchCommandHandler(repository);
+    final var handler = new CreateMatchCommandHandler(repository, FREE_CHECKER);
 
     handler.handle(new CreateMatchCommand(PlayerId.generate().value().toString(), 3));
 
@@ -36,7 +142,7 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final var handler = new CreateMatchCommandHandler(repository);
+    final var handler = new CreateMatchCommandHandler(repository, FREE_CHECKER);
 
     assertThatThrownBy(() -> handler.handle(
         new CreateMatchCommand(PlayerId.generate().value().toString(), 7))).isInstanceOf(
@@ -51,13 +157,64 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final var handler = new CreateMatchCommandHandler(repository);
+    final var handler = new CreateMatchCommandHandler(repository, FREE_CHECKER);
     final var playerId = PlayerId.generate();
 
     handler.handle(new CreateMatchCommand(playerId.value().toString(), 5));
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getPlayerOne()).isEqualTo(playerId);
+  }
+
+  @Test
+  @DisplayName("falla si el jugador ya tiene un match sin finalizar")
+  void failsWhenPlayerHasUnfinishedMatch() {
+
+    final var savedMatch = new AtomicReference<Match>();
+    final MatchRepository repository = savedMatch::set;
+
+    final MatchQueryRepository busyMatchRepo = new MatchQueryRepository() {
+
+      @Override
+      public Optional<Match> findById(final MatchId matchId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public boolean hasActiveMatch(final PlayerId playerId) {
+
+        return false;
+      }
+
+      @Override
+      public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+        return true;
+      }
+
+      @Override
+      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
+
+        return List.of();
+      }
+    };
+
+    final var busyChecker = new PlayerAvailabilityChecker(busyMatchRepo, NO_LEAGUE_REPO,
+        NO_CUP_REPO);
+    final var handler = new CreateMatchCommandHandler(repository, busyChecker);
+
+    assertThatThrownBy(() -> handler.handle(
+        new CreateMatchCommand(PlayerId.generate().value().toString(), 3))).isInstanceOf(
+        PlayerAlreadyInActiveMatchException.class);
+
+    assertThat(savedMatch.get()).isNull();
   }
 
 }

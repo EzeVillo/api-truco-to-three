@@ -17,6 +17,10 @@ public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity,
       + "WHERE m.status = 'IN_PROGRESS' AND (m.playerOne = :playerId OR m.playerTwo = :playerId)")
   boolean hasActiveMatch(@Param("playerId") UUID playerId);
 
+  @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MatchJpaEntity m "
+      + "WHERE m.status <> 'FINISHED' AND (m.playerOne = :playerId OR m.playerTwo = :playerId)")
+  boolean hasUnfinishedMatch(@Param("playerId") UUID playerId);
+
   @Query("SELECT m.id FROM MatchJpaEntity m "
       + "WHERE m.status <> 'FINISHED' AND m.lastActivityAt < :idleSince")
   List<UUID> findIdleMatchIds(@Param("idleSince") Instant idleSince);

@@ -272,6 +272,12 @@ public final class League extends AggregateBase<LeagueId> {
     return this.participants.contains(playerId);
   }
 
+  public boolean hasPlayerPendingFixtures(final PlayerId playerId) {
+
+    return this.fixtures.stream()
+        .anyMatch(f -> f.status() == FixtureStatus.PENDING && f.containsPlayer(playerId));
+  }
+
   public LeagueStatus getStatus() {
 
     return this.status;

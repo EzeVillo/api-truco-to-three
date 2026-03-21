@@ -64,6 +64,12 @@ class LeagueMatchForfeitedEventHandlerTest {
 
         return Optional.ofNullable(league);
       }
+
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
     };
 
     final LeagueRepository repo = saved::set;

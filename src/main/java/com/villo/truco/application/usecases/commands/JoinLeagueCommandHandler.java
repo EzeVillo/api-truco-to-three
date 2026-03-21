@@ -10,16 +10,21 @@ public final class JoinLeagueCommandHandler implements JoinLeagueUseCase {
 
   private final LeagueResolver leagueResolver;
   private final LeagueRepository leagueRepository;
+  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
   public JoinLeagueCommandHandler(final LeagueResolver leagueResolver,
-      final LeagueRepository leagueRepository) {
+      final LeagueRepository leagueRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker) {
 
     this.leagueResolver = Objects.requireNonNull(leagueResolver);
     this.leagueRepository = Objects.requireNonNull(leagueRepository);
+    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public JoinLeagueDTO handle(final JoinLeagueCommand command) {
+
+    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var league = this.leagueResolver.resolve(command.inviteCode());
 

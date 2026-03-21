@@ -10,15 +10,20 @@ public final class JoinCupCommandHandler implements JoinCupUseCase {
 
   private final CupResolver cupResolver;
   private final CupRepository cupRepository;
+  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
-  public JoinCupCommandHandler(final CupResolver cupResolver, final CupRepository cupRepository) {
+  public JoinCupCommandHandler(final CupResolver cupResolver, final CupRepository cupRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker) {
 
     this.cupResolver = Objects.requireNonNull(cupResolver);
     this.cupRepository = Objects.requireNonNull(cupRepository);
+    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public JoinCupDTO handle(final JoinCupCommand command) {
+
+    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var cup = this.cupResolver.resolve(command.inviteCode());
 

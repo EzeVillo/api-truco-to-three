@@ -14,4 +14,8 @@ public interface SpringDataCupRepository extends JpaRepository<CupJpaEntity, UUI
   @Query("SELECT c FROM CupJpaEntity c JOIN c.bouts b WHERE b.matchId = :matchId")
   Optional<CupJpaEntity> findByMatchId(@Param("matchId") UUID matchId);
 
+  @Query("SELECT c FROM CupJpaEntity c JOIN c.participants p "
+      + "WHERE c.status = 'IN_PROGRESS' AND p.playerId = :playerId")
+  Optional<CupJpaEntity> findInProgressByPlayer(@Param("playerId") UUID playerId);
+
 }

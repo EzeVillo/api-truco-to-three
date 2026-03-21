@@ -62,6 +62,12 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   }
 
   @Override
+  public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+    return this.springDataRepo.hasUnfinishedMatch(playerId.value());
+  }
+
+  @Override
   public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
     return this.springDataRepo.findIdleMatchIds(idleSince).stream().map(MatchId::new).toList();

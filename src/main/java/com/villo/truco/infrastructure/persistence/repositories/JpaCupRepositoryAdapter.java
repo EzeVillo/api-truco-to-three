@@ -7,6 +7,7 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.CupMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataCupRepository;
 import java.util.Optional;
@@ -57,6 +58,12 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
   public Optional<Cup> findByMatchId(final MatchId matchId) {
 
     return this.springDataRepo.findByMatchId(matchId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+
+    return this.springDataRepo.findInProgressByPlayer(playerId.value()).map(this.mapper::toDomain);
   }
 
 }

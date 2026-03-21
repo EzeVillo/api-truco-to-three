@@ -16,15 +16,18 @@ public final class StartMatchCommandHandler implements StartMatchUseCase {
   private final MatchRepository matchRepository;
   private final MatchQueryRepository matchQueryRepository;
   private final MatchEventNotifier matchEventNotifier;
+  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
   public StartMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchQueryRepository matchQueryRepository,
-      final MatchEventNotifier matchEventNotifier) {
+      final MatchEventNotifier matchEventNotifier,
+      final PlayerAvailabilityChecker playerAvailabilityChecker) {
 
     this.matchResolver = Objects.requireNonNull(matchResolver);
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
+    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
@@ -39,6 +42,10 @@ public final class StartMatchCommandHandler implements StartMatchUseCase {
       if (match.getPlayerTwo() != null && this.matchQueryRepository.hasActiveMatch(
           match.getPlayerTwo())) {
         throw new PlayerAlreadyInActiveMatchException();
+      }
+      this.playerAvailabilityChecker.ensureNoActiveTournaments(match.getPlayerOne());
+      if (match.getPlayerTwo() != null) {
+        this.playerAvailabilityChecker.ensureNoActiveTournaments(match.getPlayerTwo());
       }
     }
 

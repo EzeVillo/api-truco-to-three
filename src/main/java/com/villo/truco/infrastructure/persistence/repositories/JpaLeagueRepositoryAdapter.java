@@ -7,6 +7,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.LeagueMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataLeagueRepository;
 import java.util.Optional;
@@ -58,6 +59,12 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   public Optional<League> findByMatchId(final MatchId matchId) {
 
     return this.springDataRepo.findByMatchId(matchId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+
+    return this.springDataRepo.findInProgressByPlayer(playerId.value()).map(this.mapper::toDomain);
   }
 
 }

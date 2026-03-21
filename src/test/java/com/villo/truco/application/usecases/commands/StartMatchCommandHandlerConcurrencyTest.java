@@ -4,12 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.application.commands.StartMatchCommand;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
+import com.villo.truco.domain.model.cup.Cup;
+import com.villo.truco.domain.model.cup.valueobjects.CupId;
+import com.villo.truco.domain.model.league.League;
+import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchRehydrator;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
+import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -97,10 +103,18 @@ class StartMatchCommandHandlerConcurrencyTest {
     }
 
     @Override
-    public java.util.List<com.villo.truco.domain.model.match.valueobjects.MatchId> findIdleMatchIds(
+    public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+      return store.values().stream().anyMatch(
+          m -> m.getStatus() != MatchStatus.FINISHED && (playerId.equals(m.getPlayerOne())
+              || playerId.equals(m.getPlayerTwo())));
+    }
+
+    @Override
+    public List<MatchId> findIdleMatchIds(
         final java.time.Instant idleSince) {
 
-      return java.util.List.of();
+      return List.of();
     }
   };
 
@@ -121,8 +135,62 @@ class StartMatchCommandHandlerConcurrencyTest {
     publishedEvents.clear();
 
     final MatchResolver matchResolver = new MatchResolver(matchQueryRepository);
+    final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(LeagueId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findByInviteCode(
+          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findByMatchId(MatchId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findInProgressByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
+    };
+    final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(CupId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findByInviteCode(
+          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findByMatchId(MatchId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findInProgressByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
+    };
+    final var checker = new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
+        cupQueryRepository);
     final var rawHandler = new StartMatchCommandHandler(matchResolver, matchRepository,
-        matchQueryRepository, matchEventNotifier);
+        matchQueryRepository, matchEventNotifier, checker);
     handler = pipeline.wrap(rawHandler)::handle;
 
     playerOne = PlayerId.generate();

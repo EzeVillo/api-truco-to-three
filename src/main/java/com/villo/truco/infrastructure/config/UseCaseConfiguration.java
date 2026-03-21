@@ -53,6 +53,7 @@ import com.villo.truco.application.usecases.commands.LeaveLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.LoginCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchResolver;
 import com.villo.truco.application.usecases.commands.PlayCardCommandHandler;
+import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.commands.RegisterUserCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
@@ -154,20 +155,32 @@ public class UseCaseConfiguration {
   }
 
   @Bean
+  PlayerAvailabilityChecker playerAvailabilityChecker(
+      final MatchQueryRepository matchQueryRepository,
+      final LeagueQueryRepository leagueQueryRepository,
+      final CupQueryRepository cupQueryRepository) {
+
+    return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
+        cupQueryRepository);
+  }
+
+  @Bean
   CreateMatchUseCase createMatchCommandHandler(final MatchRepository matchRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline transactionalPipeline) {
 
-    final var handler = new CreateMatchCommandHandler(matchRepository);
+    final var handler = new CreateMatchCommandHandler(matchRepository, playerAvailabilityChecker);
     return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   JoinMatchUseCase joinMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new JoinMatchCommandHandler(matchResolver, matchRepository,
-        matchEventNotifier);
+        matchEventNotifier, playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -175,10 +188,11 @@ public class UseCaseConfiguration {
   StartMatchUseCase startMatchCommandHandler(final MatchResolver matchResolver,
       final MatchRepository matchRepository, final MatchQueryRepository matchQueryRepository,
       final MatchEventNotifier matchEventNotifier,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new StartMatchCommandHandler(matchResolver, matchRepository,
-        matchQueryRepository, matchEventNotifier);
+        matchQueryRepository, matchEventNotifier, playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -266,28 +280,32 @@ public class UseCaseConfiguration {
   @Bean
   CreateLeagueUseCase createLeagueCommandHandler(
       final LeagueRepository leagueRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline transactionalPipeline) {
 
-    final var handler = new CreateLeagueCommandHandler(leagueRepository);
+    final var handler = new CreateLeagueCommandHandler(leagueRepository, playerAvailabilityChecker);
     return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   JoinLeagueUseCase joinLeagueCommandHandler(final LeagueResolver leagueResolver,
       final LeagueRepository leagueRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline retryTransactionalPipeline) {
 
-    final var handler = new JoinLeagueCommandHandler(leagueResolver, leagueRepository);
+    final var handler = new JoinLeagueCommandHandler(leagueResolver, leagueRepository,
+        playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   StartLeagueUseCase startLeagueCommandHandler(final LeagueResolver leagueResolver,
       final LeagueRepository leagueRepository, final MatchRepository matchRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline retryTransactionalPipeline) {
 
     final var handler = new StartLeagueCommandHandler(leagueResolver, leagueRepository,
-        matchRepository);
+        matchRepository, playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -337,17 +355,20 @@ public class UseCaseConfiguration {
 
   @Bean
   CreateCupUseCase createCupCommandHandler(final CupRepository cupRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline transactionalPipeline) {
 
-    final var handler = new CreateCupCommandHandler(cupRepository);
+    final var handler = new CreateCupCommandHandler(cupRepository, playerAvailabilityChecker);
     return transactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   JoinCupUseCase joinCupCommandHandler(final CupResolver cupResolver,
-      final CupRepository cupRepository, final UseCasePipeline retryTransactionalPipeline) {
+      final CupRepository cupRepository, final PlayerAvailabilityChecker playerAvailabilityChecker,
+      final UseCasePipeline retryTransactionalPipeline) {
 
-    final var handler = new JoinCupCommandHandler(cupResolver, cupRepository);
+    final var handler = new JoinCupCommandHandler(cupResolver, cupRepository,
+        playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -362,9 +383,11 @@ public class UseCaseConfiguration {
   @Bean
   StartCupUseCase startCupCommandHandler(final CupResolver cupResolver,
       final CupRepository cupRepository, final MatchRepository matchRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
       final UseCasePipeline retryTransactionalPipeline) {
 
-    final var handler = new StartCupCommandHandler(cupResolver, cupRepository, matchRepository);
+    final var handler = new StartCupCommandHandler(cupResolver, cupRepository, matchRepository,
+        playerAvailabilityChecker);
     return retryTransactionalPipeline.wrap(handler)::handle;
   }
 

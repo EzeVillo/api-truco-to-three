@@ -10,14 +10,19 @@ import java.util.Objects;
 public final class CreateCupCommandHandler implements CreateCupUseCase {
 
   private final CupRepository cupRepository;
+  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
-  public CreateCupCommandHandler(final CupRepository cupRepository) {
+  public CreateCupCommandHandler(final CupRepository cupRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker) {
 
     this.cupRepository = Objects.requireNonNull(cupRepository);
+    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public CreateCupDTO handle(final CreateCupCommand command) {
+
+    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var cup = Cup.create(command.playerId(), command.numberOfPlayers(),
         command.gamesToPlay());

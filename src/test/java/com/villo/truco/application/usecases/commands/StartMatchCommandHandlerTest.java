@@ -3,10 +3,16 @@ package com.villo.truco.application.usecases.commands;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.StartMatchCommand;
+import com.villo.truco.domain.model.cup.Cup;
+import com.villo.truco.domain.model.cup.valueobjects.CupId;
+import com.villo.truco.domain.model.league.League;
+import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
+import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -58,6 +64,12 @@ class StartMatchCommandHandlerTest {
       }
 
       @Override
+      public boolean hasUnfinishedMatch(final PlayerId playerId) {
+
+        return false;
+      }
+
+      @Override
       public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
         return List.of();
@@ -67,7 +79,60 @@ class StartMatchCommandHandlerTest {
     final MatchRepository matchRepository = savedMatch::set;
     final MatchEventNotifier notifier = (matchId, p1, p2, events) -> publishedEvents.addAll(events);
     final var resolver = new MatchResolver(queryRepo);
-    return new StartMatchCommandHandler(resolver, matchRepository, queryRepo, notifier);
+    final LeagueQueryRepository leagueQueryRepo = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(LeagueId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findByInviteCode(
+          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findByMatchId(MatchId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findInProgressByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
+    };
+    final CupQueryRepository cupQueryRepo = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(CupId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findByInviteCode(
+          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findByMatchId(MatchId id) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findInProgressByPlayer(PlayerId p) {
+
+        return Optional.empty();
+      }
+    };
+    final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo);
+    return new StartMatchCommandHandler(resolver, matchRepository, queryRepo, notifier, checker);
   }
 
   @Test

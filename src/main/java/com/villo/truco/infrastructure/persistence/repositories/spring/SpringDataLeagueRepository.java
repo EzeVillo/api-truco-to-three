@@ -14,4 +14,8 @@ public interface SpringDataLeagueRepository extends JpaRepository<LeagueJpaEntit
   @Query("SELECT t FROM LeagueJpaEntity t JOIN t.fixtures f WHERE f.matchId = :matchId")
   Optional<LeagueJpaEntity> findByMatchId(@Param("matchId") UUID matchId);
 
+  @Query("SELECT l FROM LeagueJpaEntity l JOIN l.participants p "
+      + "WHERE l.status = 'IN_PROGRESS' AND p.playerId = :playerId")
+  Optional<LeagueJpaEntity> findInProgressByPlayer(@Param("playerId") UUID playerId);
+
 }

@@ -10,14 +10,19 @@ import java.util.Objects;
 public final class CreateLeagueCommandHandler implements CreateLeagueUseCase {
 
   private final LeagueRepository leagueRepository;
+  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
-  public CreateLeagueCommandHandler(final LeagueRepository leagueRepository) {
+  public CreateLeagueCommandHandler(final LeagueRepository leagueRepository,
+      final PlayerAvailabilityChecker playerAvailabilityChecker) {
 
     this.leagueRepository = Objects.requireNonNull(leagueRepository);
+    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public CreateLeagueDTO handle(final CreateLeagueCommand command) {
+
+    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var league = League.create(command.playerId(), command.numberOfPlayers(),
         command.gamesToPlay());

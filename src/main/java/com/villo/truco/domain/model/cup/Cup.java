@@ -375,6 +375,17 @@ public final class Cup extends AggregateBase<CupId> {
     return this.participants.contains(playerId);
   }
 
+  public boolean isPlayerStillCompeting(final PlayerId playerId) {
+
+    if (this.forfeitedPlayers.contains(playerId)) {
+      return false;
+    }
+    final var eliminated = this.bouts.stream().anyMatch(
+        b -> b.status() == BoutStatus.FINISHED && b.containsPlayer(playerId) && !playerId.equals(
+            b.winner()));
+    return !eliminated;
+  }
+
   public CupStatus getStatus() {
 
     return this.status;

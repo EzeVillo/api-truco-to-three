@@ -16,6 +16,8 @@ public interface MatchQueryRepository {
 
   boolean hasActiveMatch(PlayerId playerId);
 
+  boolean hasUnfinishedMatch(PlayerId playerId);
+
   List<MatchId> findIdleMatchIds(Instant idleSince);
 
 }
