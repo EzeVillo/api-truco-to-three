@@ -1,0 +1,82 @@
+package com.villo.truco.infrastructure.config;
+
+import com.villo.truco.application.eventhandlers.CupMatchFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
+import com.villo.truco.application.eventhandlers.LeagueMatchFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedEventHandler;
+import com.villo.truco.application.ports.in.AdvanceCupUseCase;
+import com.villo.truco.application.ports.in.ForfeitCupUseCase;
+import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.ports.MatchEventNotifier;
+import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
+import com.villo.truco.infrastructure.websocket.StompMatchEventNotifier;
+import java.util.List;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
+@Configuration
+public class EventNotifierConfiguration {
+
+  private final SimpMessagingTemplate messagingTemplate;
+  private final LeagueQueryRepository leagueQueryRepository;
+  private final LeagueRepository leagueRepository;
+  private final CupQueryRepository cupQueryRepository;
+  private final AdvanceCupUseCase advanceCupUseCase;
+  private final ForfeitCupUseCase forfeitCupUseCase;
+
+  public EventNotifierConfiguration(final SimpMessagingTemplate messagingTemplate,
+      final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository,
+      final CupQueryRepository cupQueryRepository, final AdvanceCupUseCase advanceCupUseCase,
+      final ForfeitCupUseCase forfeitCupUseCase) {
+
+    this.messagingTemplate = messagingTemplate;
+    this.leagueQueryRepository = leagueQueryRepository;
+    this.leagueRepository = leagueRepository;
+    this.cupQueryRepository = cupQueryRepository;
+    this.advanceCupUseCase = advanceCupUseCase;
+    this.forfeitCupUseCase = forfeitCupUseCase;
+  }
+
+  @Bean
+  StompMatchEventNotifier stompMatchEventNotifier() {
+
+    return new StompMatchEventNotifier(this.messagingTemplate);
+  }
+
+  @Bean
+  LeagueMatchFinishedEventHandler leagueMatchFinishedHandler() {
+
+    return new LeagueMatchFinishedEventHandler(this.leagueQueryRepository, this.leagueRepository);
+  }
+
+  @Bean
+  LeagueMatchForfeitedEventHandler leagueMatchForfeitedHandler() {
+
+    return new LeagueMatchForfeitedEventHandler(this.leagueQueryRepository, this.leagueRepository);
+  }
+
+  @Bean
+  CupMatchFinishedEventHandler cupMatchFinishedHandler() {
+
+    return new CupMatchFinishedEventHandler(this.cupQueryRepository, this.advanceCupUseCase);
+  }
+
+  @Bean
+  CupMatchForfeitedEventHandler cupMatchForfeitedHandler() {
+
+    return new CupMatchForfeitedEventHandler(this.cupQueryRepository, this.forfeitCupUseCase);
+  }
+
+  @Bean
+  MatchEventNotifier matchEventNotifier() {
+
+    return new CompositeMatchEventNotifier(
+        List.of(this.stompMatchEventNotifier(), this.leagueMatchFinishedHandler(),
+            this.leagueMatchForfeitedHandler(), this.cupMatchFinishedHandler(),
+            this.cupMatchForfeitedHandler()));
+  }
+
+}
