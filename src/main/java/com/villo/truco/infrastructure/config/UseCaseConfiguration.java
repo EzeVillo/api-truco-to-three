@@ -1,9 +1,9 @@
 package com.villo.truco.infrastructure.config;
 
-import com.villo.truco.application.eventhandlers.CupMatchFinishedHandler;
-import com.villo.truco.application.eventhandlers.CupMatchForfeitedHandler;
-import com.villo.truco.application.eventhandlers.LeagueMatchFinishedHandler;
-import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedHandler;
+import com.villo.truco.application.eventhandlers.CupMatchFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
+import com.villo.truco.application.eventhandlers.LeagueMatchFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedEventHandler;
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
@@ -314,19 +314,19 @@ public class UseCaseConfiguration {
   }
 
   @Bean
-  LeagueMatchFinishedHandler leagueMatchFinishedHandler(
+  LeagueMatchFinishedEventHandler leagueMatchFinishedHandler(
       final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository) {
 
-    return new LeagueMatchFinishedHandler(leagueQueryRepository, leagueRepository);
+    return new LeagueMatchFinishedEventHandler(leagueQueryRepository, leagueRepository);
   }
 
   @Bean
-  LeagueMatchForfeitedHandler leagueMatchForfeitedHandler(
+  LeagueMatchForfeitedEventHandler leagueMatchForfeitedHandler(
       final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository) {
 
-    return new LeagueMatchForfeitedHandler(leagueQueryRepository, leagueRepository);
+    return new LeagueMatchForfeitedEventHandler(leagueQueryRepository, leagueRepository);
   }
 
   @Bean
@@ -393,25 +393,26 @@ public class UseCaseConfiguration {
   }
 
   @Bean
-  CupMatchFinishedHandler cupMatchFinishedHandler(final CupQueryRepository cupQueryRepository,
+  CupMatchFinishedEventHandler cupMatchFinishedHandler(final CupQueryRepository cupQueryRepository,
       final AdvanceCupUseCase advanceCupUseCase) {
 
-    return new CupMatchFinishedHandler(cupQueryRepository, advanceCupUseCase);
+    return new CupMatchFinishedEventHandler(cupQueryRepository, advanceCupUseCase);
   }
 
   @Bean
-  CupMatchForfeitedHandler cupMatchForfeitedHandler(final CupQueryRepository cupQueryRepository,
+  CupMatchForfeitedEventHandler cupMatchForfeitedHandler(
+      final CupQueryRepository cupQueryRepository,
       final ForfeitCupUseCase forfeitCupUseCase) {
 
-    return new CupMatchForfeitedHandler(cupQueryRepository, forfeitCupUseCase);
+    return new CupMatchForfeitedEventHandler(cupQueryRepository, forfeitCupUseCase);
   }
 
   @Bean
   MatchEventNotifier matchEventNotifier(final StompMatchEventNotifier wsHandler,
-      final LeagueMatchFinishedHandler leagueFinishedHandler,
-      final LeagueMatchForfeitedHandler leagueForfeitedHandler,
-      final CupMatchFinishedHandler cupFinishedHandler,
-      final CupMatchForfeitedHandler cupForfeitedHandler) {
+      final LeagueMatchFinishedEventHandler leagueFinishedHandler,
+      final LeagueMatchForfeitedEventHandler leagueForfeitedHandler,
+      final CupMatchFinishedEventHandler cupFinishedHandler,
+      final CupMatchForfeitedEventHandler cupForfeitedHandler) {
 
     return new CompositeMatchEventNotifier(
         List.of(wsHandler, leagueFinishedHandler, leagueForfeitedHandler, cupFinishedHandler,

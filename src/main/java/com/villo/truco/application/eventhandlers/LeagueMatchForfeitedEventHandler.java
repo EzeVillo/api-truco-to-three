@@ -8,13 +8,13 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
 import java.util.Objects;
 
-public final class LeagueMatchForfeitedHandler implements
+public final class LeagueMatchForfeitedEventHandler implements
     MatchDomainEventHandler<MatchForfeitedEvent> {
 
   private final LeagueQueryRepository leagueQueryRepository;
   private final LeagueRepository leagueRepository;
 
-  public LeagueMatchForfeitedHandler(final LeagueQueryRepository leagueQueryRepository,
+  public LeagueMatchForfeitedEventHandler(final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository) {
 
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);

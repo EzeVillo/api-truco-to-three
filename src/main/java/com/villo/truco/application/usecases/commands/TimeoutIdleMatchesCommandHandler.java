@@ -45,14 +45,14 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
     final List<MatchId> idleMatchIds = this.matchQueryRepository.findIdleMatchIds(cutoff);
 
     if (!idleMatchIds.isEmpty()) {
-      LOGGER.info("Found {} idle matches to forfeit", idleMatchIds.size());
+      LOGGER.info("Found {} idle matches to process", idleMatchIds.size());
     }
 
     for (final var matchId : idleMatchIds) {
       try {
         this.transactionalRunner.run(() -> this.processIdleMatch(matchId));
       } catch (final Exception e) {
-        LOGGER.error("Failed to forfeit idle match: matchId={}", matchId, e);
+        LOGGER.error("Failed to process idle match: matchId={}", matchId, e);
       }
     }
   }
@@ -66,6 +66,16 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
 
     final var match = matchOpt.get();
     if (match.isFinished()) {
+      return;
+    }
+
+    if (match.getStatus() == MatchStatus.WAITING_FOR_PLAYERS) {
+      match.cancel();
+      this.matchRepository.save(match);
+      this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
+          match.getPlayerTwo(), match.getDomainEvents());
+      match.clearDomainEvents();
+      LOGGER.info("Match cancelled by timeout: matchId={}", matchId);
       return;
     }
 

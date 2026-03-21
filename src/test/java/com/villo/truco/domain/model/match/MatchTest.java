@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
+import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
@@ -653,6 +654,68 @@ class MatchTest {
 
       assertThatThrownBy(() -> match.forfeit(stranger)).isInstanceOf(
           PlayerNotInMatchException.class);
+    }
+
+  }
+
+  @Nested
+  @DisplayName("cancel")
+  class Cancel {
+
+    @Test
+    @DisplayName("cancela un match en WAITING_FOR_PLAYERS")
+    void cancelsMatchInWaitingForPlayers() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+
+      match.cancel();
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("emite MatchCancelledEvent al cancelar")
+    void emitsMatchCancelledEvent() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      match.clearDomainEvents();
+
+      match.cancel();
+
+      assertThat(match.getDomainEvents()).anyMatch(e -> e instanceof MatchCancelledEvent);
+    }
+
+    @Test
+    @DisplayName("cancel cuando ya está FINISHED es idempotente")
+    void cancelWhenAlreadyFinishedIsIdempotent() {
+
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      match.cancel();
+      match.clearDomainEvents();
+
+      match.cancel();
+
+      assertThat(match.getDomainEvents()).isEmpty();
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("cancel en READY lanza InvalidMatchStateException")
+    void cancelInReadyThrows() {
+
+      final var match = Match.createReady(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+
+      assertThatThrownBy(match::cancel).isInstanceOf(InvalidMatchStateException.class);
+    }
+
+    @Test
+    @DisplayName("cancel en IN_PROGRESS lanza InvalidMatchStateException")
+    void cancelInProgressThrows() {
+
+      final var match = matchInProgress();
+
+      assertThatThrownBy(match::cancel).isInstanceOf(InvalidMatchStateException.class);
     }
 
   }

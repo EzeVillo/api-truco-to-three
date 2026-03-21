@@ -20,7 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("LeagueMatchFinishedHandler")
-class LeagueMatchFinishedHandlerTest {
+class LeagueMatchFinishedEventHandlerTest {
 
   private PlayerId playerOne;
   private PlayerId playerTwo;
@@ -47,7 +47,7 @@ class LeagueMatchFinishedHandlerTest {
     return league;
   }
 
-  private LeagueMatchFinishedHandler handler(final League league,
+  private LeagueMatchFinishedEventHandler handler(final League league,
       final AtomicReference<League> saved) {
 
     final LeagueQueryRepository queryRepo = new LeagueQueryRepository() {
@@ -72,7 +72,7 @@ class LeagueMatchFinishedHandlerTest {
     };
 
     final LeagueRepository repo = saved::set;
-    return new LeagueMatchFinishedHandler(queryRepo, repo);
+    return new LeagueMatchFinishedEventHandler(queryRepo, repo);
   }
 
   @Test

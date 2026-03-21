@@ -43,7 +43,9 @@ public final class StompMatchEventNotifier implements MatchDomainEventHandler<Do
       this.sendEvent(recipient, wsEvent);
     } else {
       this.sendEvent(context.playerOne(), wsEvent);
-      this.sendEvent(context.playerTwo(), wsEvent);
+      if (context.playerTwo() != null) {
+        this.sendEvent(context.playerTwo(), wsEvent);
+      }
     }
   }
 

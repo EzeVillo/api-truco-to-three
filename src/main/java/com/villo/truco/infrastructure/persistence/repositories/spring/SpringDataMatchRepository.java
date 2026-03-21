@@ -18,7 +18,7 @@ public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity,
   boolean hasActiveMatch(@Param("playerId") UUID playerId);
 
   @Query("SELECT m.id FROM MatchJpaEntity m "
-      + "WHERE m.status IN ('IN_PROGRESS', 'READY') AND m.lastActivityAt < :idleSince")
+      + "WHERE m.status <> 'FINISHED' AND m.lastActivityAt < :idleSince")
   List<UUID> findIdleMatchIds(@Param("idleSince") Instant idleSince);
 
 }

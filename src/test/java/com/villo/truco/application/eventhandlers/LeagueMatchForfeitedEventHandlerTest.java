@@ -21,7 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("LeagueMatchForfeitedHandler")
-class LeagueMatchForfeitedHandlerTest {
+class LeagueMatchForfeitedEventHandlerTest {
 
   private PlayerId playerOne;
   private PlayerId playerTwo;
@@ -42,7 +42,7 @@ class LeagueMatchForfeitedHandlerTest {
     return league;
   }
 
-  private LeagueMatchForfeitedHandler handler(final League league,
+  private LeagueMatchForfeitedEventHandler handler(final League league,
       final AtomicReference<League> saved) {
 
     final LeagueQueryRepository queryRepo = new LeagueQueryRepository() {
@@ -67,7 +67,7 @@ class LeagueMatchForfeitedHandlerTest {
     };
 
     final LeagueRepository repo = saved::set;
-    return new LeagueMatchForfeitedHandler(queryRepo, repo);
+    return new LeagueMatchForfeitedEventHandler(queryRepo, repo);
   }
 
   @Test

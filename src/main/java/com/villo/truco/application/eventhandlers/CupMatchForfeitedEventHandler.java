@@ -9,13 +9,13 @@ import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import java.util.Objects;
 
-public final class CupMatchForfeitedHandler implements
+public final class CupMatchForfeitedEventHandler implements
     MatchDomainEventHandler<MatchForfeitedEvent> {
 
   private final CupQueryRepository cupQueryRepository;
   private final ForfeitCupUseCase forfeitCupUseCase;
 
-  public CupMatchForfeitedHandler(final CupQueryRepository cupQueryRepository,
+  public CupMatchForfeitedEventHandler(final CupQueryRepository cupQueryRepository,
       final ForfeitCupUseCase forfeitCupUseCase) {
 
     this.cupQueryRepository = Objects.requireNonNull(cupQueryRepository);

@@ -2,6 +2,7 @@ package com.villo.truco.domain.model.match;
 
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
+import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -269,6 +270,21 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.points());
+  }
+
+  public void cancel() {
+
+    if (this.status == MatchStatus.FINISHED) {
+      return;
+    }
+
+    if (this.status != MatchStatus.WAITING_FOR_PLAYERS) {
+      throw new InvalidMatchStateException(this.status, MatchStatus.WAITING_FOR_PLAYERS);
+    }
+
+    this.status = MatchStatus.FINISHED;
+    LOGGER.info("Match cancelled: matchId={}", this.id);
+    this.addDomainEvent(new MatchCancelledEvent());
   }
 
   public void forfeit(final PlayerId winner) {
