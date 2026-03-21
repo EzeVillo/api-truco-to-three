@@ -20,7 +20,7 @@ final class AvailableActionsPolicy {
   static List<AvailableAction> resolve(final RoundStatus status, final PlayerId playerId,
       final PlayerId currentTurn, final TrucoStateMachine trucoStateMachine,
       final EnvidoStateMachine envidoStateMachine, final boolean isFirstHand,
-      final boolean hasPlayerPlayedInCurrentHand, final boolean isMano) {
+      final boolean hasPlayerPlayedInCurrentHand, final boolean isMano, final boolean hasCards) {
 
     if (status == RoundStatus.FINISHED) {
       return List.of();
@@ -45,8 +45,10 @@ final class AvailableActionsPolicy {
     if (status == RoundStatus.TRUCO_IN_PROGRESS) {
       actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO, TrucoResponse.QUIERO.name()));
       actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO, TrucoResponse.NO_QUIERO.name()));
-      actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO,
-          TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO.name()));
+      if (hasCards) {
+        actions.add(AvailableAction.of(ActionType.RESPOND_TRUCO,
+            TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO.name()));
+      }
 
       addEnvidoActions(status, hasPlayerPlayedInCurrentHand, trucoStateMachine, envidoStateMachine,
           isFirstHand, actions);

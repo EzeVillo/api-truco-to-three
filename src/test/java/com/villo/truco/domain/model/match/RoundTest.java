@@ -5,14 +5,19 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
+import com.villo.truco.domain.model.match.exceptions.CannotFoldWithoutCardsException;
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
 import com.villo.truco.domain.model.match.exceptions.FoldNotAllowedException;
 import com.villo.truco.domain.model.match.exceptions.InvalidTrucoCallException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
+import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
+import com.villo.truco.domain.model.match.valueobjects.HandId;
+import com.villo.truco.domain.model.match.valueobjects.RoundId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
+import com.villo.truco.domain.model.match.valueobjects.Suit;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
@@ -689,6 +694,54 @@ class RoundTest {
   void getManoPlayerReturnsMano() {
 
     assertThat(this.round.getManoPlayer()).isEqualTo(this.mano);
+  }
+
+  @Test
+  @DisplayName("acceptTrucoAndFold lanza excepción si el jugador no tiene cartas")
+  void shouldThrowWhenAcceptingTrucoAndFoldWithNoCards() {
+
+    final var roundNoCards = createRoundWithTrucoInProgressAndResponderHasNoCards();
+
+    assertThatThrownBy(() -> roundNoCards.acceptTrucoAndFold(this.pie)).isInstanceOf(
+        CannotFoldWithoutCardsException.class);
+  }
+
+  @Test
+  @DisplayName("sin cartas → QUIERO_Y_ME_VOY_AL_MAZO no aparece en acciones disponibles")
+  void shouldNotOfferFoldWhenRespondingTrucoWithNoCards() {
+
+    final var roundNoCards = createRoundWithTrucoInProgressAndResponderHasNoCards();
+
+    final var actions = roundNoCards.getAvailableActions(this.pie);
+
+    assertThat(actionsOfType(actions, "RESPOND_TRUCO")).containsExactlyInAnyOrder("QUIERO",
+        "NO_QUIERO");
+  }
+
+  @Test
+  @DisplayName("con cartas → QUIERO_Y_ME_VOY_AL_MAZO sí aparece en acciones disponibles")
+  void shouldOfferFoldWhenRespondingTrucoWithCards() {
+
+    this.round.callTruco(this.mano);
+
+    final var actions = this.round.getAvailableActions(this.pie);
+
+    assertThat(actionsOfType(actions, "RESPOND_TRUCO")).contains("QUIERO_Y_ME_VOY_AL_MAZO");
+  }
+
+  private Round createRoundWithTrucoInProgressAndResponderHasNoCards() {
+
+    final var callerCard = Card.of(Suit.ESPADA, 1);
+    final var callerHand = Hand.reconstruct(HandId.generate(), List.of(callerCard));
+    final var responderHand = Hand.reconstruct(HandId.generate(), List.of());
+
+    final var roundNoCards = Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano,
+        this.pie, callerHand, responderHand, List.of(), List.of(), RoundStatus.TRUCO_IN_PROGRESS,
+        this.pie, this.mano, null);
+
+    roundNoCards.getTrucoStateMachine().initializeState(TrucoCall.TRUCO, this.mano, 1);
+
+    return roundNoCards;
   }
 
   private List<String> actionsOfType(final List<AvailableAction> actions, final String type) {

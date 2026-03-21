@@ -13,6 +13,7 @@ import com.villo.truco.domain.model.match.events.TrucoCalledEvent;
 import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
 import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
+import com.villo.truco.domain.model.match.exceptions.CannotFoldWithoutCardsException;
 import com.villo.truco.domain.model.match.exceptions.InvalidRoundStateException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
@@ -225,6 +226,7 @@ final class Round extends EntityBase<RoundId> {
       throw new InvalidRoundStateException(this.status, RoundStatus.TRUCO_IN_PROGRESS);
     }
     this.validateTurn(playerId);
+    this.validateHasCards(playerId);
 
     final var currentCall = this.trucoStateMachine.getCurrentCall();
     final var points = this.trucoStateMachine.pointsIfAccepted();
@@ -267,6 +269,13 @@ final class Round extends EntityBase<RoundId> {
     // }
 
     return new ScoringResult(winner, 1);
+  }
+
+  private void validateHasCards(final PlayerId playerId) {
+
+    if (this.getHandOf(playerId).getCards().isEmpty()) {
+      throw new CannotFoldWithoutCardsException();
+    }
   }
 
   private void validateFoldAllowed(final PlayerId playerId) {
@@ -374,7 +383,8 @@ final class Round extends EntityBase<RoundId> {
 
     return AvailableActionsPolicy.resolve(this.status, playerId, this.currentTurn,
         this.trucoStateMachine, this.envidoStateMachine, this.isFirstHand(),
-        this.hasPlayerPlayedInCurrentHand(playerId), this.mano.equals(playerId));
+        this.hasPlayerPlayedInCurrentHand(playerId), this.mano.equals(playerId),
+        !this.getHandOf(playerId).getCards().isEmpty());
   }
 
   List<PlayedHandInfo> getPlayedHands() {
