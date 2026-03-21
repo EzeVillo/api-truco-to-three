@@ -7,6 +7,8 @@ y modelado de dominio en un contexto de reglas complejas.
 
 - Backend funcional.
 - API REST + eventos en tiempo real por WebSocket/STOMP.
+- CI/CD activa con GitHub Actions (build/test en PR y ramas, release por tags `v*`).
+- Analisis estatico externo con SonarQube Community en PR.
 - Frontend conectado y funcionando (link publico pendiente).
 - Demo publica: pendiente de publicacion.
 
@@ -111,6 +113,28 @@ Cobertura de calidad aplicada:
 - Tests de seguridad HTTP (JWT, endpoints protegidos, CORS preflight).
 - Tests de arquitectura (ArchUnit) para garantizar dependencia correcta entre capas.
 
+## CI/CD y calidad automatizada
+
+Workflows disponibles:
+
+- `CI - Build and Test` (`.github/workflows/ci.yml`):
+  - Corre en cualquier `pull_request`.
+  - Corre en `push` a cualquier branch.
+  - Ejecuta `test` en PR y ramas.
+  - Ejecuta `build` en push (no en PR) para evitar build duplicado con Sonar.
+- `SonarQube Analysis` (`.github/workflows/sonar.yml`):
+  - Corre en cualquier `pull_request`.
+  - Ejecuta `clean build sonar` (incluye tests) con quality gate bloqueante.
+  - Valida cobertura minima via JaCoCo (`coverageMinimum` o `COVERAGE_MINIMUM`, default `0.70`).
+- `Release` (`.github/workflows/release.yml`):
+  - Corre al hacer push de tags semanticos `v*`.
+  - Publica GitHub Release con el JAR generado.
+
+Secrets requeridos para Sonar:
+
+- `SONAR_HOST_URL`
+- `SONAR_TOKEN`
+
 ## Capturas
 
 Pendiente de carga de imagenes.
@@ -143,7 +167,6 @@ Decisiones conscientes de alcance:
 
 Proximos pasos priorizados:
 
-- CI/CD con GitHub Actions (build, test, arquitectura, quality gates).
 - Observabilidad: metricas y trazas distribuidas.
 - Publicar demo y agregar walkthrough.
 - Versionar y enlazar frontend publico.
