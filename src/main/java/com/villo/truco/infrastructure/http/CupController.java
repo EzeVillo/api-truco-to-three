@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,9 +67,10 @@ public class CupController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Copa creada", content = @Content(schema = @Schema(implementation = CreateCupResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "Datos inválidos para crear la copa", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<CreateCupResponse> createCup(@RequestBody final CreateCupRequest request,
-      @AuthenticationPrincipal final Jwt jwt) {
+  public ResponseEntity<CreateCupResponse> createCup(
+      @Valid @RequestBody final CreateCupRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP createCup requested: numberOfPlayers={}, gamesToPlay={}",
         request.numberOfPlayers(), request.gamesToPlay());
@@ -85,8 +87,9 @@ public class CupController {
       @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinCupResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Copa no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "Código inválido o estado inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinCupResponse> joinCup(@RequestBody final JoinCupRequest request,
+  public ResponseEntity<JoinCupResponse> joinCup(@Valid @RequestBody final JoinCupRequest request,
       @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP joinCup requested: inviteCode={}", request.inviteCode());

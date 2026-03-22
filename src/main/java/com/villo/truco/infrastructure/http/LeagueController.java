@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,9 +67,11 @@ public class LeagueController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Liga creado", content = @Content(schema = @Schema(implementation = CreateLeagueResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "Datos inválidos para crear el liga", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<CreateLeagueResponse> createLeague(
-      @RequestBody final CreateLeagueRequest request, @AuthenticationPrincipal final Jwt jwt) {
+      @Valid @RequestBody final CreateLeagueRequest request,
+      @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP createLeague requested: numberOfPlayers={}, gamesToPlay={}",
         request.numberOfPlayers(), request.gamesToPlay());
@@ -86,9 +89,10 @@ public class LeagueController {
       @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinLeagueResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Liga no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "Código inválido o estado inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinLeagueResponse> joinLeague(@RequestBody final JoinLeagueRequest request,
-      @AuthenticationPrincipal final Jwt jwt) {
+  public ResponseEntity<JoinLeagueResponse> joinLeague(
+      @Valid @RequestBody final JoinLeagueRequest request, @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP joinLeague requested: inviteCode={}", request.inviteCode());
 

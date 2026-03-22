@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,9 +51,10 @@ public class AuthController {
   @Operation(summary = "Registrar usuario", description = "Crea una cuenta con username y contraseña. Devuelve un JWT.")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Usuario registrado", content = @Content(schema = @Schema(implementation = RegisterUserResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "Username ya en uso", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<RegisterUserResponse> register(
-      @RequestBody final RegisterUserRequest request) {
+      @Valid @RequestBody final RegisterUserRequest request) {
 
     LOGGER.info("HTTP register requested: username={}", request.username());
     final var dto = this.registerUser.handle(
@@ -64,8 +66,9 @@ public class AuthController {
   @Operation(summary = "Login", description = "Autentica con username y contraseña. Devuelve un JWT.")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Login exitoso", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "401", description = "Credenciales inválidas", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<LoginResponse> login(@RequestBody final LoginRequest request) {
+  public ResponseEntity<LoginResponse> login(@Valid @RequestBody final LoginRequest request) {
 
     LOGGER.info("HTTP login requested: username={}", request.username());
     final var dto = this.login.handle(new LoginCommand(request.username(), request.password()));

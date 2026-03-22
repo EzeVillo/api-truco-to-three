@@ -1,15 +1,21 @@
 package com.villo.truco.infrastructure.http;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.villo.truco.application.exceptions.ApplicationException;
 import com.villo.truco.application.exceptions.ApplicationStatus;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import java.time.Instant;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,6 +23,39 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidationException(
+      final MethodArgumentNotValidException ex) {
+
+    final var message = ex.getBindingResult().getFieldErrors().stream()
+        .map(fe -> fe.getField() + ": " + fe.getDefaultMessage()).collect(Collectors.joining("; "));
+
+    LOGGER.warn("Validation failed: {}", message);
+
+    return ResponseEntity.badRequest()
+        .body(new ErrorResponse("VALIDATION_ERROR", message, Instant.now(), MDC.get("requestId")));
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleMessageNotReadable(
+      final HttpMessageNotReadableException ex) {
+
+    final String message;
+    if (ex.getCause() instanceof MismatchedInputException mie && mie.getPath() != null
+        && !mie.getPath().isEmpty()) {
+      final var field = mie.getPath().stream().map(JsonMappingException.Reference::getFieldName)
+          .filter(Objects::nonNull).collect(Collectors.joining("."));
+      message = "Invalid value for field '" + field + "'";
+    } else {
+      message = "Malformed or missing request body";
+    }
+
+    LOGGER.warn("Message not readable: {}", message);
+
+    return ResponseEntity.badRequest()
+        .body(new ErrorResponse("BAD_REQUEST", message, Instant.now(), MDC.get("requestId")));
+  }
 
   @ExceptionHandler(ApplicationException.class)
   public ResponseEntity<ErrorResponse> handleApplicationException(final ApplicationException ex) {
