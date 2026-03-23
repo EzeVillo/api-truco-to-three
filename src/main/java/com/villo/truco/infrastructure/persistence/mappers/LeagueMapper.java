@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.persistence.mappers;
 
+import com.villo.truco.domain.model.league.FixtureSnapshot;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.LeagueRehydrator;
 import com.villo.truco.domain.model.league.LeagueSnapshot;
@@ -74,7 +75,7 @@ public class LeagueMapper {
         .map(p -> new PlayerId(p.getPlayerId())).toList();
 
     final var fixtures = entity.getFixtures().stream().map(
-        f -> new LeagueSnapshot.FixtureData(new FixtureId(f.getId()), f.getMatchdayNumber(),
+        f -> new FixtureSnapshot(new FixtureId(f.getId()), f.getMatchdayNumber(),
             f.getPlayerOne() != null ? new PlayerId(f.getPlayerOne()) : null,
             f.getPlayerTwo() != null ? new PlayerId(f.getPlayerTwo()) : null,
             f.getMatchId() != null ? new MatchId(f.getMatchId()) : null,
@@ -86,7 +87,7 @@ public class LeagueMapper {
       winsByPlayer.put(new PlayerId(w.getPlayerId()), w.getWins());
     }
 
-    final var snapshot = new LeagueSnapshot.LeagueData(new LeagueId(entity.getId()),
+    final var snapshot = new LeagueSnapshot(new LeagueId(entity.getId()),
         new ArrayList<>(participants), fixtures, winsByPlayer, entity.getNumberOfPlayers(),
         GamesToPlay.of(entity.getGamesToPlay()), InviteCode.of(entity.getInviteCode()),
         LeagueStatus.valueOf(entity.getStatus()));

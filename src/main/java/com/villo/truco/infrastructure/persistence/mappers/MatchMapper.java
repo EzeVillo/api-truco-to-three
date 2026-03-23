@@ -1,9 +1,15 @@
 package com.villo.truco.infrastructure.persistence.mappers;
 
+import com.villo.truco.domain.model.match.CardPlaySnapshot;
+import com.villo.truco.domain.model.match.EnvidoSnapshot;
+import com.villo.truco.domain.model.match.HandSnapshot;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchRehydrator;
 import com.villo.truco.domain.model.match.MatchSnapshot;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
+import com.villo.truco.domain.model.match.PlayedHandSnapshot;
+import com.villo.truco.domain.model.match.RoundSnapshot;
+import com.villo.truco.domain.model.match.TrucoSnapshot;
 import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.HandId;
@@ -53,10 +59,10 @@ public class MatchMapper {
 
   public Match toDomain(final MatchJpaEntity entity) {
 
-    final MatchSnapshot.RoundData roundSnapshot =
+    final var roundSnapshot =
         entity.getCurrentRound() != null ? toRoundSnapshot(entity.getCurrentRound()) : null;
 
-    final var snapshot = new MatchSnapshot.MatchData(new MatchId(entity.getId()),
+    final var snapshot = new MatchSnapshot(new MatchId(entity.getId()),
         new PlayerId(entity.getPlayerOne()),
         entity.getPlayerTwo() != null ? new PlayerId(entity.getPlayerTwo()) : null,
         entity.getInviteCode() != null ? InviteCode.of(entity.getInviteCode()) : null,
@@ -72,7 +78,7 @@ public class MatchMapper {
     return match;
   }
 
-  private RoundData toRoundData(final MatchSnapshot.RoundData round) {
+  private RoundData toRoundData(final RoundSnapshot round) {
 
     return new RoundData(round.id().value(), round.roundNumber(), round.mano().value(),
         round.playerOne().value(), round.playerTwo().value(), toHandData(round.handPlayerOne()),
@@ -85,7 +91,7 @@ public class MatchMapper {
         round.turnBeforeEnvidoCall() != null ? round.turnBeforeEnvidoCall().value() : null);
   }
 
-  private RoundData.HandData toHandData(final MatchSnapshot.HandData hand) {
+  private RoundData.HandData toHandData(final HandSnapshot hand) {
 
     return new RoundData.HandData(hand.id().value(),
         hand.cards().stream().map(this::toCardData).toList());
@@ -96,33 +102,33 @@ public class MatchMapper {
     return new RoundData.CardData(card.suit().name(), card.number());
   }
 
-  private RoundData.PlayedHandData toPlayedHandData(final MatchSnapshot.PlayedHandData ph) {
+  private RoundData.PlayedHandData toPlayedHandData(final PlayedHandSnapshot ph) {
 
     return new RoundData.PlayedHandData(toCardData(ph.cardMano()), toCardData(ph.cardPie()),
         ph.winner() != null ? ph.winner().value() : null);
   }
 
-  private RoundData.CardPlayData toCardPlayData(final MatchSnapshot.CardPlayData cp) {
+  private RoundData.CardPlayData toCardPlayData(final CardPlaySnapshot cp) {
 
     return new RoundData.CardPlayData(cp.playerId().value(), toCardData(cp.card()));
   }
 
-  private RoundData.TrucoData toTrucoData(final MatchSnapshot.TrucoData truco) {
+  private RoundData.TrucoData toTrucoData(final TrucoSnapshot truco) {
 
     return new RoundData.TrucoData(truco.currentCall() != null ? truco.currentCall().name() : null,
         truco.caller() != null ? truco.caller().value() : null, truco.pointsAtStake());
   }
 
-  private RoundData.EnvidoData toEnvidoData(final MatchSnapshot.EnvidoData envido) {
+  private RoundData.EnvidoData toEnvidoData(final EnvidoSnapshot envido) {
 
     return new RoundData.EnvidoData(envido.chain().stream().map(EnvidoCall::name).toList(),
         envido.resolved());
   }
 
-  private MatchSnapshot.RoundData toRoundSnapshot(final RoundData data) {
+  private RoundSnapshot toRoundSnapshot(final RoundData data) {
 
-    return new MatchSnapshot.RoundData(new RoundId(data.id()), data.roundNumber(),
-        new PlayerId(data.mano()), new PlayerId(data.playerOne()), new PlayerId(data.playerTwo()),
+    return new RoundSnapshot(new RoundId(data.id()), data.roundNumber(), new PlayerId(data.mano()),
+        new PlayerId(data.playerOne()), new PlayerId(data.playerTwo()),
         toHandSnapshot(data.handPlayerOne()), toHandSnapshot(data.handPlayerTwo()),
         data.playedHands().stream().map(this::toPlayedHandSnapshot).toList(),
         data.currentHandCards().stream().map(this::toCardPlaySnapshot).toList(),
@@ -132,9 +138,9 @@ public class MatchMapper {
         data.turnBeforeEnvidoCall() != null ? new PlayerId(data.turnBeforeEnvidoCall()) : null);
   }
 
-  private MatchSnapshot.HandData toHandSnapshot(final RoundData.HandData data) {
+  private HandSnapshot toHandSnapshot(final RoundData.HandData data) {
 
-    return new MatchSnapshot.HandData(new HandId(data.id()),
+    return new HandSnapshot(new HandId(data.id()),
         data.cards().stream().map(this::toCard).toList());
   }
 
@@ -143,27 +149,27 @@ public class MatchMapper {
     return Card.of(Suit.valueOf(data.suit()), data.number());
   }
 
-  private MatchSnapshot.PlayedHandData toPlayedHandSnapshot(final RoundData.PlayedHandData data) {
+  private PlayedHandSnapshot toPlayedHandSnapshot(final RoundData.PlayedHandData data) {
 
-    return new MatchSnapshot.PlayedHandData(toCard(data.cardMano()), toCard(data.cardPie()),
+    return new PlayedHandSnapshot(toCard(data.cardMano()), toCard(data.cardPie()),
         data.winner() != null ? new PlayerId(data.winner()) : null);
   }
 
-  private MatchSnapshot.CardPlayData toCardPlaySnapshot(final RoundData.CardPlayData data) {
+  private CardPlaySnapshot toCardPlaySnapshot(final RoundData.CardPlayData data) {
 
-    return new MatchSnapshot.CardPlayData(new PlayerId(data.playerId()), toCard(data.card()));
+    return new CardPlaySnapshot(new PlayerId(data.playerId()), toCard(data.card()));
   }
 
-  private MatchSnapshot.TrucoData toTrucoSnapshot(final RoundData.TrucoData data) {
+  private TrucoSnapshot toTrucoSnapshot(final RoundData.TrucoData data) {
 
-    return new MatchSnapshot.TrucoData(
+    return new TrucoSnapshot(
         data.currentCall() != null ? TrucoCall.valueOf(data.currentCall()) : null,
         data.caller() != null ? new PlayerId(data.caller()) : null, data.pointsAtStake());
   }
 
-  private MatchSnapshot.EnvidoData toEnvidoSnapshot(final RoundData.EnvidoData data) {
+  private EnvidoSnapshot toEnvidoSnapshot(final RoundData.EnvidoData data) {
 
-    return new MatchSnapshot.EnvidoData(data.chain().stream().map(EnvidoCall::valueOf).toList(),
+    return new EnvidoSnapshot(data.chain().stream().map(EnvidoCall::valueOf).toList(),
         data.resolved());
   }
 

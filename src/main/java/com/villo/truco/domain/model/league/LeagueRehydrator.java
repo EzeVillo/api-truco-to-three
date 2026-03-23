@@ -9,13 +9,12 @@ public final class LeagueRehydrator {
 
   }
 
-  public static League rehydrate(final LeagueSnapshot.LeagueData snapshot) {
+  public static League rehydrate(final LeagueSnapshot snapshot) {
 
-    final var fixtures = new ArrayList<League.Fixture>();
+    final var fixtures = new ArrayList<Fixture>();
     for (final var fixture : snapshot.fixtures()) {
-      fixtures.add(
-          League.Fixture.reconstruct(fixture.id(), fixture.matchdayNumber(), fixture.playerOne(),
-              fixture.playerTwo(), fixture.matchId(), fixture.winner(), fixture.status()));
+      fixtures.add(Fixture.reconstruct(fixture.id(), fixture.matchdayNumber(), fixture.playerOne(),
+          fixture.playerTwo(), fixture.matchId(), fixture.winner(), fixture.status()));
     }
 
     return League.reconstruct(snapshot.id(), new ArrayList<>(snapshot.participants()), fixtures,

@@ -42,7 +42,7 @@ class CupTest {
     return players;
   }
 
-  private static List<Cup.BoutView> boutsInRound(final Cup cup, final int round) {
+  private static List<BoutView> boutsInRound(final Cup cup, final int round) {
 
     return cup.getBouts().stream().filter(b -> b.roundNumber() == round).toList();
   }

@@ -2,7 +2,6 @@ package com.villo.truco.domain.model.league;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.villo.truco.domain.model.league.League.FixtureView;
 import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.model.match.valueobjects.MatchId;

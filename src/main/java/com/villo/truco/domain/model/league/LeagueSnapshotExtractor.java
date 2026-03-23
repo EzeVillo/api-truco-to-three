@@ -9,21 +9,20 @@ public final class LeagueSnapshotExtractor {
 
   }
 
-  public static LeagueSnapshot.LeagueData extract(final League league) {
+  public static LeagueSnapshot extract(final League league) {
 
     final var fixtures = league.getFixturesInternal().stream()
         .map(LeagueSnapshotExtractor::extractFixture).toList();
 
-    return new LeagueSnapshot.LeagueData(league.getId(), List.copyOf(league.getParticipants()),
-        fixtures, new LinkedHashMap<>(league.getWinsByPlayer()), league.getNumberOfPlayers(),
+    return new LeagueSnapshot(league.getId(), List.copyOf(league.getParticipants()), fixtures,
+        new LinkedHashMap<>(league.getWinsByPlayer()), league.getNumberOfPlayers(),
         league.getGamesToPlay(), league.getInviteCode(), league.getStatus());
   }
 
-  private static LeagueSnapshot.FixtureData extractFixture(final League.Fixture fixture) {
+  private static FixtureSnapshot extractFixture(final Fixture fixture) {
 
-    return new LeagueSnapshot.FixtureData(fixture.id(), fixture.matchdayNumber(),
-        fixture.playerOne(), fixture.playerTwo(), fixture.matchId(), fixture.winner(),
-        fixture.status());
+    return new FixtureSnapshot(fixture.id(), fixture.matchdayNumber(), fixture.playerOne(),
+        fixture.playerTwo(), fixture.matchId(), fixture.winner(), fixture.status());
   }
 
 }

@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.persistence.mappers;
 
+import com.villo.truco.domain.model.cup.BoutSnapshot;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.CupRehydrator;
 import com.villo.truco.domain.model.cup.CupSnapshot;
@@ -75,8 +76,7 @@ public class CupMapper {
         .map(p -> new PlayerId(p.getPlayerId())).toList();
 
     final var bouts = entity.getBouts().stream().map(
-        b -> new CupSnapshot.BoutData(new BoutId(b.getId()), b.getRoundNumber(),
-            b.getBracketPosition(),
+        b -> new BoutSnapshot(new BoutId(b.getId()), b.getRoundNumber(), b.getBracketPosition(),
             b.getPlayerOne() != null ? new PlayerId(b.getPlayerOne()) : null,
             b.getPlayerTwo() != null ? new PlayerId(b.getPlayerTwo()) : null,
             b.getMatchId() != null ? new MatchId(b.getMatchId()) : null,
@@ -90,8 +90,8 @@ public class CupMapper {
 
     final var champion = entity.getChampion() != null ? new PlayerId(entity.getChampion()) : null;
 
-    final var snapshot = new CupSnapshot.CupData(new CupId(entity.getId()),
-        new ArrayList<>(participants), bouts, forfeitedPlayers, entity.getNumberOfPlayers(),
+    final var snapshot = new CupSnapshot(new CupId(entity.getId()), new ArrayList<>(participants),
+        bouts, forfeitedPlayers, entity.getNumberOfPlayers(),
         GamesToPlay.of(entity.getGamesToPlay()), InviteCode.of(entity.getInviteCode()),
         CupStatus.valueOf(entity.getStatus()), champion);
 

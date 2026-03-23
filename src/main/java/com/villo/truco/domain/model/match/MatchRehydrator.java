@@ -8,7 +8,7 @@ public final class MatchRehydrator {
 
   }
 
-  public static Match rehydrate(final MatchSnapshot.MatchData snapshot) {
+  public static Match rehydrate(final MatchSnapshot snapshot) {
 
     final Round currentRound =
         snapshot.currentRound() != null ? rehydrateRound(snapshot.currentRound()) : null;
@@ -20,31 +20,33 @@ public final class MatchRehydrator {
         snapshot.readyPlayerTwo(), snapshot.firstManoOfGame(), currentRound);
   }
 
-  private static Round rehydrateRound(final MatchSnapshot.RoundData roundData) {
+  private static Round rehydrateRound(final RoundSnapshot roundSnapshot) {
 
-    final var handPlayerOne = Hand.reconstruct(roundData.handPlayerOne().id(),
-        new ArrayList<>(roundData.handPlayerOne().cards()));
+    final var handPlayerOne = Hand.reconstruct(roundSnapshot.handPlayerOne().id(),
+        new ArrayList<>(roundSnapshot.handPlayerOne().cards()));
 
-    final var handPlayerTwo = Hand.reconstruct(roundData.handPlayerTwo().id(),
-        new ArrayList<>(roundData.handPlayerTwo().cards()));
+    final var handPlayerTwo = Hand.reconstruct(roundSnapshot.handPlayerTwo().id(),
+        new ArrayList<>(roundSnapshot.handPlayerTwo().cards()));
 
-    final var playedHands = roundData.playedHands().stream()
+    final var playedHands = roundSnapshot.playedHands().stream()
         .map(ph -> new Round.PlayedHand(ph.cardMano(), ph.cardPie(), ph.winner())).toList();
 
-    final var currentHandCards = roundData.currentHandCards().stream()
+    final var currentHandCards = roundSnapshot.currentHandCards().stream()
         .map(cp -> new Round.CardPlay(cp.playerId(), cp.card())).toList();
 
-    final var round = Round.reconstruct(roundData.id(), roundData.roundNumber(), roundData.mano(),
-        roundData.playerOne(), roundData.playerTwo(), handPlayerOne, handPlayerTwo, playedHands,
-        currentHandCards, roundData.status(), roundData.currentTurn(),
-        roundData.turnBeforeTrucoCall(), roundData.turnBeforeEnvidoCall());
+    final var round = Round.reconstruct(roundSnapshot.id(), roundSnapshot.roundNumber(),
+        roundSnapshot.mano(), roundSnapshot.playerOne(), roundSnapshot.playerTwo(), handPlayerOne,
+        handPlayerTwo, playedHands, currentHandCards, roundSnapshot.status(),
+        roundSnapshot.currentTurn(), roundSnapshot.turnBeforeTrucoCall(),
+        roundSnapshot.turnBeforeEnvidoCall());
 
-    round.getTrucoStateMachine().initializeState(roundData.trucoStateMachine().currentCall(),
-        roundData.trucoStateMachine().caller(), roundData.trucoStateMachine().pointsAtStake());
+    round.getTrucoStateMachine().initializeState(roundSnapshot.trucoStateMachine().currentCall(),
+        roundSnapshot.trucoStateMachine().caller(),
+        roundSnapshot.trucoStateMachine().pointsAtStake());
 
     round.getEnvidoStateMachine()
-        .initializeState(new ArrayList<>(roundData.envidoStateMachine().chain()),
-            roundData.envidoStateMachine().resolved());
+        .initializeState(new ArrayList<>(roundSnapshot.envidoStateMachine().chain()),
+            roundSnapshot.envidoStateMachine().resolved());
 
     return round;
   }

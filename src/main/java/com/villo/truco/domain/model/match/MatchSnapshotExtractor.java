@@ -8,52 +8,49 @@ public final class MatchSnapshotExtractor {
 
   }
 
-  public static MatchSnapshot.MatchData extract(final Match match) {
+  public static MatchSnapshot extract(final Match match) {
 
     final var currentRound = match.getCurrentRound();
-    final MatchSnapshot.RoundData roundData =
-        currentRound != null ? extractRound(currentRound) : null;
+    final RoundSnapshot roundSnapshot = currentRound != null ? extractRound(currentRound) : null;
 
-    return new MatchSnapshot.MatchData(match.getId(), match.getPlayerOne(), match.getPlayerTwo(),
+    return new MatchSnapshot(match.getId(), match.getPlayerOne(), match.getPlayerTwo(),
         match.getInviteCode(), match.getRules(), match.getStatus(), match.getGamesWonPlayerOne(),
         match.getGamesWonPlayerTwo(), match.getGameNumber(), match.getScorePlayerOne(),
         match.getScorePlayerTwo(), match.getRoundNumber(), match.isReadyPlayerOne(),
-        match.isReadyPlayerTwo(), match.getFirstManoOfGame(), roundData);
+        match.isReadyPlayerTwo(), match.getFirstManoOfGame(), roundSnapshot);
   }
 
-  private static MatchSnapshot.RoundData extractRound(final Round round) {
+  private static RoundSnapshot extractRound(final Round round) {
 
     final var playedHands = round.getPlayedHandsInternal().stream()
-        .map(ph -> new MatchSnapshot.PlayedHandData(ph.cardMano(), ph.cardPie(), ph.winner()))
-        .toList();
+        .map(ph -> new PlayedHandSnapshot(ph.cardMano(), ph.cardPie(), ph.winner())).toList();
 
     final var currentHandCards = round.getCurrentHandCards().stream()
-        .map(cp -> new MatchSnapshot.CardPlayData(cp.playerId(), cp.card())).toList();
+        .map(cp -> new CardPlaySnapshot(cp.playerId(), cp.card())).toList();
 
     final var truco = extractTruco(round.getTrucoStateMachine());
     final var envido = extractEnvido(round.getEnvidoStateMachine());
 
-    return new MatchSnapshot.RoundData(round.getId(), round.getRoundNumber(), round.getMano(),
+    return new RoundSnapshot(round.getId(), round.getRoundNumber(), round.getMano(),
         round.getPlayerOne(), round.getPlayerTwo(), extractHand(round.getHandPlayerOne()),
         extractHand(round.getHandPlayerTwo()), playedHands, currentHandCards, truco, envido,
         round.getStatus(), round.getCurrentTurn(), round.getTurnBeforeTrucoCall(),
         round.getTurnBeforeEnvidoCall());
   }
 
-  private static MatchSnapshot.HandData extractHand(final Hand hand) {
+  private static HandSnapshot extractHand(final Hand hand) {
 
-    return new MatchSnapshot.HandData(hand.getId(), List.copyOf(hand.getCards()));
+    return new HandSnapshot(hand.getId(), List.copyOf(hand.getCards()));
   }
 
-  private static MatchSnapshot.TrucoData extractTruco(final TrucoStateMachine truco) {
+  private static TrucoSnapshot extractTruco(final TrucoStateMachine truco) {
 
-    return new MatchSnapshot.TrucoData(truco.getCurrentCall(), truco.getCaller(),
-        truco.getPointsAtStake());
+    return new TrucoSnapshot(truco.getCurrentCall(), truco.getCaller(), truco.getPointsAtStake());
   }
 
-  private static MatchSnapshot.EnvidoData extractEnvido(final EnvidoStateMachine envido) {
+  private static EnvidoSnapshot extractEnvido(final EnvidoStateMachine envido) {
 
-    return new MatchSnapshot.EnvidoData(List.copyOf(envido.getChain()), envido.isResolved());
+    return new EnvidoSnapshot(List.copyOf(envido.getChain()), envido.isResolved());
   }
 
 }
