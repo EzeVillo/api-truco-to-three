@@ -28,9 +28,8 @@ public class CupMapper {
 
     final var snapshot = CupSnapshotExtractor.extract(cup);
     final var entity = new CupJpaEntity();
-    final var cupId = snapshot.id().value();
 
-    entity.setId(cupId);
+    entity.setId(snapshot.id().value());
     entity.setNumberOfPlayers(snapshot.numberOfPlayers());
     entity.setGamesToPlay(snapshot.gamesToPlay().value());
     entity.setInviteCode(snapshot.inviteCode().value());
@@ -38,18 +37,14 @@ public class CupMapper {
     entity.setChampion(snapshot.champion() != null ? snapshot.champion().value() : null);
     entity.setVersion((int) cup.getVersion());
 
-    final var participants = new ArrayList<CupParticipantJpaEntity>();
     for (int i = 0; i < snapshot.participants().size(); i++) {
-      participants.add(
-          new CupParticipantJpaEntity(cupId, snapshot.participants().get(i).value(), i));
+      entity.addParticipant(
+          new CupParticipantJpaEntity(entity, snapshot.participants().get(i).value(), i));
     }
-    entity.setParticipants(participants);
 
-    final var bouts = new ArrayList<CupBoutJpaEntity>();
     for (final var b : snapshot.bouts()) {
       final var be = new CupBoutJpaEntity();
       be.setId(b.id().value());
-      be.setCupId(cupId);
       be.setRoundNumber(b.roundNumber());
       be.setBracketPosition(b.bracketPosition());
       be.setPlayerOne(b.playerOne() != null ? b.playerOne().value() : null);
@@ -57,15 +52,12 @@ public class CupMapper {
       be.setMatchId(b.matchId() != null ? b.matchId().value() : null);
       be.setWinner(b.winner() != null ? b.winner().value() : null);
       be.setStatus(b.status().name());
-      bouts.add(be);
+      entity.addBout(be);
     }
-    entity.setBouts(bouts);
 
-    final var forfeitedPlayers = new ArrayList<CupForfeitedPlayerJpaEntity>();
     for (final var fp : snapshot.forfeitedPlayers()) {
-      forfeitedPlayers.add(new CupForfeitedPlayerJpaEntity(cupId, fp.value()));
+      entity.addForfeitedPlayer(new CupForfeitedPlayerJpaEntity(entity, fp.value()));
     }
-    entity.setForfeitedPlayers(forfeitedPlayers);
 
     return entity;
   }

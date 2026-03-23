@@ -29,42 +29,34 @@ public class LeagueMapper {
 
     final var snapshot = LeagueSnapshotExtractor.extract(league);
     final var entity = new LeagueJpaEntity();
-    final var leagueId = snapshot.id().value();
 
-    entity.setId(leagueId);
+    entity.setId(snapshot.id().value());
     entity.setNumberOfPlayers(snapshot.numberOfPlayers());
     entity.setGamesToPlay(snapshot.gamesToPlay().value());
     entity.setInviteCode(snapshot.inviteCode().value());
     entity.setStatus(snapshot.status().name());
     entity.setVersion((int) league.getVersion());
 
-    final var participants = new ArrayList<LeagueParticipantJpaEntity>();
     for (int i = 0; i < snapshot.participants().size(); i++) {
-      participants.add(
-          new LeagueParticipantJpaEntity(leagueId, snapshot.participants().get(i).value(), i));
+      entity.addParticipant(
+          new LeagueParticipantJpaEntity(entity, snapshot.participants().get(i).value(), i));
     }
-    entity.setParticipants(participants);
 
-    final var fixtures = new ArrayList<LeagueFixtureJpaEntity>();
     for (final var f : snapshot.fixtures()) {
       final var fe = new LeagueFixtureJpaEntity();
       fe.setId(f.id().value());
-      fe.setLeagueId(leagueId);
       fe.setMatchdayNumber(f.matchdayNumber());
       fe.setPlayerOne(f.playerOne() != null ? f.playerOne().value() : null);
       fe.setPlayerTwo(f.playerTwo() != null ? f.playerTwo().value() : null);
       fe.setMatchId(f.matchId() != null ? f.matchId().value() : null);
       fe.setWinner(f.winner() != null ? f.winner().value() : null);
       fe.setStatus(f.status().name());
-      fixtures.add(fe);
+      entity.addFixture(fe);
     }
-    entity.setFixtures(fixtures);
 
-    final var wins = new ArrayList<LeagueWinJpaEntity>();
     for (final var entry : snapshot.winsByPlayer().entrySet()) {
-      wins.add(new LeagueWinJpaEntity(leagueId, entry.getKey().value(), entry.getValue()));
+      entity.addWin(new LeagueWinJpaEntity(entity, entry.getKey().value(), entry.getValue()));
     }
-    entity.setWins(wins);
 
     return entity;
   }

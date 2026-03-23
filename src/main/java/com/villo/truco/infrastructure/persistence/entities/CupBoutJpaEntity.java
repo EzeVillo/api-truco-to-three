@@ -2,7 +2,10 @@ package com.villo.truco.infrastructure.persistence.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
@@ -13,8 +16,9 @@ public class CupBoutJpaEntity {
   @Id
   private UUID id;
 
-  @Column(name = "cup_id", nullable = false)
-  private UUID cupId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "cup_id", nullable = false)
+  private CupJpaEntity cup;
 
   @Column(name = "round_number", nullable = false)
   private int roundNumber;
@@ -51,14 +55,19 @@ public class CupBoutJpaEntity {
     this.id = id;
   }
 
-  public UUID getCupId() {
+  public CupJpaEntity getCup() {
 
-    return cupId;
+    return cup;
   }
 
-  public void setCupId(UUID cupId) {
+  public void setCup(CupJpaEntity cup) {
 
-    this.cupId = cupId;
+    this.cup = cup;
+  }
+
+  public UUID getCupId() {
+
+    return cup != null ? cup.getId() : null;
   }
 
   public int getRoundNumber() {

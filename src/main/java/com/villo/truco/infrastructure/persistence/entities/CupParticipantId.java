@@ -6,16 +6,16 @@ import java.util.UUID;
 
 public class CupParticipantId implements Serializable {
 
-  private UUID cupId;
+  private UUID cup;
   private UUID playerId;
 
   public CupParticipantId() {
 
   }
 
-  public CupParticipantId(UUID cupId, UUID playerId) {
+  public CupParticipantId(UUID cup, UUID playerId) {
 
-    this.cupId = cupId;
+    this.cup = cup;
     this.playerId = playerId;
   }
 
@@ -29,13 +29,13 @@ public class CupParticipantId implements Serializable {
       return false;
     }
     CupParticipantId that = (CupParticipantId) o;
-    return Objects.equals(cupId, that.cupId) && Objects.equals(playerId, that.playerId);
+    return Objects.equals(cup, that.cup) && Objects.equals(playerId, that.playerId);
   }
 
   @Override
   public int hashCode() {
 
-    return Objects.hash(cupId, playerId);
+    return Objects.hash(cup, playerId);
   }
 
 }

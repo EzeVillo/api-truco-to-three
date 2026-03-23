@@ -6,16 +6,16 @@ import java.util.UUID;
 
 public class LeagueParticipantId implements Serializable {
 
-  private UUID leagueId;
+  private UUID league;
   private UUID playerId;
 
   public LeagueParticipantId() {
 
   }
 
-  public LeagueParticipantId(UUID leagueId, UUID playerId) {
+  public LeagueParticipantId(UUID league, UUID playerId) {
 
-    this.leagueId = leagueId;
+    this.league = league;
     this.playerId = playerId;
   }
 
@@ -29,13 +29,13 @@ public class LeagueParticipantId implements Serializable {
       return false;
     }
     LeagueParticipantId that = (LeagueParticipantId) o;
-    return Objects.equals(leagueId, that.leagueId) && Objects.equals(playerId, that.playerId);
+    return Objects.equals(league, that.league) && Objects.equals(playerId, that.playerId);
   }
 
   @Override
   public int hashCode() {
 
-    return Objects.hash(leagueId, playerId);
+    return Objects.hash(league, playerId);
   }
 
 }

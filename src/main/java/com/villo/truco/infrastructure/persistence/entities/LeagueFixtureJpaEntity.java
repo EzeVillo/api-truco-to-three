@@ -2,7 +2,10 @@ package com.villo.truco.infrastructure.persistence.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
@@ -13,8 +16,9 @@ public class LeagueFixtureJpaEntity {
   @Id
   private UUID id;
 
-  @Column(name = "league_id", nullable = false)
-  private UUID leagueId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "league_id", nullable = false)
+  private LeagueJpaEntity league;
 
   @Column(name = "matchday_number", nullable = false)
   private int matchdayNumber;
@@ -48,14 +52,19 @@ public class LeagueFixtureJpaEntity {
     this.id = id;
   }
 
-  public UUID getLeagueId() {
+  public LeagueJpaEntity getLeague() {
 
-    return leagueId;
+    return league;
   }
 
-  public void setLeagueId(UUID leagueId) {
+  public void setLeague(LeagueJpaEntity league) {
 
-    this.leagueId = leagueId;
+    this.league = league;
+  }
+
+  public UUID getLeagueId() {
+
+    return league != null ? league.getId() : null;
   }
 
   public int getMatchdayNumber() {

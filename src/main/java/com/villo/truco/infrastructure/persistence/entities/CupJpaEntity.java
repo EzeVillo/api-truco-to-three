@@ -4,7 +4,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
@@ -44,17 +43,14 @@ public class CupJpaEntity {
   @Version
   private int version;
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "cup_id")
+  @OneToMany(mappedBy = "cup", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("ordinal ASC")
   private List<CupParticipantJpaEntity> participants = new ArrayList<>();
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "cup_id")
+  @OneToMany(mappedBy = "cup", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<CupBoutJpaEntity> bouts = new ArrayList<>();
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "cup_id")
+  @OneToMany(mappedBy = "cup", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<CupForfeitedPlayerJpaEntity> forfeitedPlayers = new ArrayList<>();
 
   public CupJpaEntity() {
@@ -158,9 +154,10 @@ public class CupJpaEntity {
     return participants;
   }
 
-  public void setParticipants(List<CupParticipantJpaEntity> participants) {
+  public void addParticipant(CupParticipantJpaEntity p) {
 
-    this.participants = participants;
+    participants.add(p);
+    p.setCup(this);
   }
 
   public List<CupBoutJpaEntity> getBouts() {
@@ -168,9 +165,10 @@ public class CupJpaEntity {
     return bouts;
   }
 
-  public void setBouts(List<CupBoutJpaEntity> bouts) {
+  public void addBout(CupBoutJpaEntity b) {
 
-    this.bouts = bouts;
+    bouts.add(b);
+    b.setCup(this);
   }
 
   public List<CupForfeitedPlayerJpaEntity> getForfeitedPlayers() {
@@ -178,9 +176,10 @@ public class CupJpaEntity {
     return forfeitedPlayers;
   }
 
-  public void setForfeitedPlayers(List<CupForfeitedPlayerJpaEntity> forfeitedPlayers) {
+  public void addForfeitedPlayer(CupForfeitedPlayerJpaEntity fp) {
 
-    this.forfeitedPlayers = forfeitedPlayers;
+    forfeitedPlayers.add(fp);
+    fp.setCup(this);
   }
 
 }

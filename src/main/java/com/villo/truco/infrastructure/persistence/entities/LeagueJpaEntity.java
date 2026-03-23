@@ -4,7 +4,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
@@ -41,17 +40,14 @@ public class LeagueJpaEntity {
   @Version
   private int version;
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "league_id")
+  @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("ordinal ASC")
   private List<LeagueParticipantJpaEntity> participants = new ArrayList<>();
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "league_id")
+  @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<LeagueFixtureJpaEntity> fixtures = new ArrayList<>();
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "league_id")
+  @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<LeagueWinJpaEntity> wins = new ArrayList<>();
 
   public LeagueJpaEntity() {
@@ -145,9 +141,10 @@ public class LeagueJpaEntity {
     return participants;
   }
 
-  public void setParticipants(List<LeagueParticipantJpaEntity> participants) {
+  public void addParticipant(LeagueParticipantJpaEntity p) {
 
-    this.participants = participants;
+    participants.add(p);
+    p.setLeague(this);
   }
 
   public List<LeagueFixtureJpaEntity> getFixtures() {
@@ -155,9 +152,10 @@ public class LeagueJpaEntity {
     return fixtures;
   }
 
-  public void setFixtures(List<LeagueFixtureJpaEntity> fixtures) {
+  public void addFixture(LeagueFixtureJpaEntity f) {
 
-    this.fixtures = fixtures;
+    fixtures.add(f);
+    f.setLeague(this);
   }
 
   public List<LeagueWinJpaEntity> getWins() {
@@ -165,9 +163,10 @@ public class LeagueJpaEntity {
     return wins;
   }
 
-  public void setWins(List<LeagueWinJpaEntity> wins) {
+  public void addWin(LeagueWinJpaEntity w) {
 
-    this.wins = wins;
+    wins.add(w);
+    w.setLeague(this);
   }
 
 }
