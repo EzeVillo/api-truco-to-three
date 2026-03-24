@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \"gamesToPlay\": 5\r\n}"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"matchId\", response.matchId);\r
+
+      pm.environment.set(\"inviteCode\", response.inviteCode);"
+    language: text/javascript
+order: 1000

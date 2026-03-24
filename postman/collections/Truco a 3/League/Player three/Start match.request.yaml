@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/start"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessTokenPlayerThree}}"
+order: 3000

@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/envido"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"call\": \"FALTA_ENVIDO\"\r
+
+    }"
+order: 9000

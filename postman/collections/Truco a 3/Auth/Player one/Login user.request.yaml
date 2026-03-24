@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/auth/login"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"username\": \"EzeVillo\",\r
+
+    \  \"password\": \"secret123\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"accessTokenPlayerOne\", response.accessToken);"
+    language: text/javascript
+order: 2000

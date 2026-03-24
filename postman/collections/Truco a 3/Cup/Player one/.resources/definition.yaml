@@ -1,0 +1,8 @@
+$kind: collection
+auth:
+  - id: 8cd3ac78-4e10-4628-9529-ae6359b471a7
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{accessTokenPlayerOne}}"
+order: 1000

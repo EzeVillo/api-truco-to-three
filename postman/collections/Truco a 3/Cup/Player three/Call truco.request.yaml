@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/truco"
+method: POST
+order: 4000

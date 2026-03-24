@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/bot"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"gamesToPlay\": 3,\r
+
+    \    \"botId\": \"00000000-0000-0000-0000-000000000001\"\r
+
+    }"
+scripts:
+  - type: beforeRequest
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"matchId\", response.matchId);"
+    language: text/javascript
+order: 1000

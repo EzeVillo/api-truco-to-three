@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/cups"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"numberOfPlayers\": 4,\r
+
+    \  \"gamesToPlay\": 3\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"cupId\", response.cupId);\r
+
+      pm.environment.set(\"cupInviteCode\", response.inviteCode);"
+    language: text/javascript
+order: 1000

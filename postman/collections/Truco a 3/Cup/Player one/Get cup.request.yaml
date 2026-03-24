@@ -1,0 +1,46 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/cups/{{cupId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      let matchId = null;\r
+
+      \r
+
+      for (const round of response.rounds) {\r
+
+      \    for (const match of round.bouts) {\r
+
+      \        if (match.status === \"PENDING\" && match.matchId) {\r
+
+      \            matchId = match.matchId;\r
+
+      \            break;\r
+
+      \        }\r
+
+      \    }\r
+
+      \    if (matchId) break;\r
+
+      }\r
+
+      \r
+
+      if (matchId) {\r
+
+      \    pm.environment.set(\"matchId\", matchId);\r
+
+      \    console.log(\"matchId guardado:\", matchId);\r
+
+      } else {\r
+
+      \    console.log(\"No se encontró ningún fixture PENDING\");\r
+
+      }"
+    language: text/javascript
+order: 4000

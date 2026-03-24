@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/cups/{{cupId}}/start"
+method: POST
+body:
+  type: json
+  content: ""
+order: 2000

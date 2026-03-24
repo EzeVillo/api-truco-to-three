@@ -1,0 +1,35 @@
+name: 01 - Local
+values:
+  - key: URL_BASE_TRUCO_HTTP
+    value: ''
+    enabled: true
+  - key: matchId
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerOne
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerTwo
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerThree
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerFour
+    value: ''
+    enabled: true
+  - key: inviteCode
+    value: ''
+    enabled: true
+  - key: leagueId
+    value: ''
+    enabled: true
+  - key: leagueInviteCode
+    value: ''
+    enabled: true
+  - key: cupId
+    value: ''
+    enabled: true
+  - key: cupInviteCode
+    value: ''
+    enabled: true

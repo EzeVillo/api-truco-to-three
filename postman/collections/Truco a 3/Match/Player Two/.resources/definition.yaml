@@ -1,0 +1,8 @@
+$kind: collection
+auth:
+  - id: 61c2d03c-7100-42ce-914b-1963181fff88
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{accessTokenPlayerTwo}}"
+order: 2000

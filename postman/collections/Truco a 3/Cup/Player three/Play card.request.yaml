@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/play-card"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"suit\": \"COPA\",\r
+
+    \    \"number\": 1\r
+
+    }"
+order: 3000

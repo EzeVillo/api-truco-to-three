@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/auth/guest"
+method: POST
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"accessTokenPlayerThree\", response.accessToken);"
+    language: text/javascript
+order: 1000
