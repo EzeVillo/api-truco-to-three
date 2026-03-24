@@ -15,14 +15,17 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+  private static final String REQUEST_ID_KEY = "requestId";
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationException(
@@ -34,7 +37,7 @@ public class GlobalExceptionHandler {
     LOGGER.warn("Validation failed: {}", message);
 
     return ResponseEntity.badRequest()
-        .body(new ErrorResponse("VALIDATION_ERROR", message, Instant.now(), MDC.get("requestId")));
+        .body(new ErrorResponse("VALIDATION_ERROR", message, Instant.now(), MDC.get(REQUEST_ID_KEY)));
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -54,7 +57,7 @@ public class GlobalExceptionHandler {
     LOGGER.warn("Message not readable: {}", message);
 
     return ResponseEntity.badRequest()
-        .body(new ErrorResponse("BAD_REQUEST", message, Instant.now(), MDC.get("requestId")));
+        .body(new ErrorResponse("BAD_REQUEST", message, Instant.now(), MDC.get(REQUEST_ID_KEY)));
   }
 
   @ExceptionHandler(ApplicationException.class)
@@ -65,7 +68,7 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity.status(status).body(
         new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now(),
-            MDC.get("requestId")));
+            MDC.get(REQUEST_ID_KEY)));
   }
 
   private HttpStatus resolveStatus(final ApplicationStatus status) {
@@ -85,7 +88,32 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(
         new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now(),
-            MDC.get("requestId")));
+            MDC.get(REQUEST_ID_KEY)));
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ErrorResponse> handleNoResourceFound(final NoResourceFoundException ex) {
+
+    final var message = "No endpoint found for " + ex.getHttpMethod() + " " + ex.getResourcePath();
+    LOGGER.warn("Resource not found: {}", message);
+
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(new ErrorResponse("RESOURCE_NOT_FOUND", message, Instant.now(),
+            MDC.get(REQUEST_ID_KEY)));
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+      final HttpRequestMethodNotSupportedException ex) {
+
+    final var supported = ex.getSupportedHttpMethods();
+    final var message = "Method " + ex.getMethod() + " is not supported for this endpoint"
+        + (supported != null && !supported.isEmpty() ? ". Supported methods: " + supported : "");
+    LOGGER.warn("Method not supported: {}", message);
+
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+        .body(new ErrorResponse(HttpStatus.METHOD_NOT_ALLOWED.name(), message, Instant.now(),
+            MDC.get(REQUEST_ID_KEY)));
   }
 
   @ExceptionHandler(Exception.class)
@@ -94,8 +122,8 @@ public class GlobalExceptionHandler {
     LOGGER.error("Unexpected exception mapped to {}", HttpStatus.INTERNAL_SERVER_ERROR, ex);
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-            "An unexpected error occurred", Instant.now(), MDC.get("requestId")));
+        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.name(),
+            "An unexpected error occurred", Instant.now(), MDC.get(REQUEST_ID_KEY)));
   }
 
 }

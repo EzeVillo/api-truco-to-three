@@ -176,7 +176,23 @@ class HttpSecurityIntegrationTest {
     assertEquals(401, response.statusCode());
   }
 
-  private String baseUrl() {
+    @Test
+    void shouldReturn404WithErrorResponseForNonexistentEndpoint() throws Exception {
+
+        final var playerId = PlayerId.generate();
+        final var token = this.tokenProvider.generateAccessToken(playerId);
+        final var request = HttpRequest.newBuilder(
+                URI.create(this.baseUrl() + "/api/this-does-not-exist"))
+            .header("Authorization", "Bearer " + token).GET().build();
+
+        final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(404, response.statusCode());
+        assertTrue(response.body().contains("RESOURCE_NOT_FOUND"));
+        assertTrue(response.body().contains("No endpoint found for"));
+    }
+
+    private String baseUrl() {
 
     return "http://localhost:" + this.port;
   }

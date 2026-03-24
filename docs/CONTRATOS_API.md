@@ -65,6 +65,7 @@ HTTP status usados:
 
 - `401` Unauthorized
 - `404` Not Found
+- `405` Method Not Allowed
 - `422` Unprocessable Content
 - `500` Internal Server Error
 

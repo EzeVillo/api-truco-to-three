@@ -7,14 +7,18 @@ import static org.mockito.Mockito.when;
 import com.villo.truco.application.exceptions.ApplicationException;
 import com.villo.truco.application.exceptions.ApplicationStatus;
 import com.villo.truco.domain.shared.DomainException;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @DisplayName("GlobalExceptionHandler")
 class GlobalExceptionHandlerTest {
@@ -91,6 +95,38 @@ class GlobalExceptionHandlerTest {
     assertThat(response.getBody()).isNotNull();
     assertThat(response.getBody().message()).isEqualTo("An unexpected error occurred");
     assertThat(response.getBody().message()).doesNotContain("db connection failed");
+  }
+
+  @Test
+  @DisplayName("NoResourceFoundException → 404 con método y path en message")
+  void resourceNotFound() {
+
+    final var ex = mock(NoResourceFoundException.class);
+    when(ex.getHttpMethod()).thenReturn(HttpMethod.GET);
+    when(ex.getResourcePath()).thenReturn("/api/nonexistent");
+
+    final var response = handler.handleNoResourceFound(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().errorCode()).isEqualTo("RESOURCE_NOT_FOUND");
+    assertThat(response.getBody().message()).contains("GET");
+    assertThat(response.getBody().message()).contains("/api/nonexistent");
+  }
+
+  @Test
+  @DisplayName("HttpRequestMethodNotSupportedException → 405 con métodos soportados")
+  void methodNotAllowed() {
+
+    final var ex = new HttpRequestMethodNotSupportedException("DELETE", List.of("GET", "POST"));
+
+    final var response = handler.handleMethodNotSupported(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().errorCode()).isEqualTo("METHOD_NOT_ALLOWED");
+    assertThat(response.getBody().message()).contains("DELETE");
+    assertThat(response.getBody().message()).contains("Supported methods");
   }
 
 }
