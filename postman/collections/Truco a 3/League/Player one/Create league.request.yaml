@@ -1,11 +1,12 @@
 $kind: http-request
+name: Create league
 url: "{{URL_BASE_TRUCO_HTTP}}/leagues"
 method: POST
 body:
   type: json
   content: "{\r
 
-    \    \"numberOfPlayers\": 3,\r
+    \    \"numberOfPlayers\": 4,\r
 
     \    \"gamesToPlay\": 3\r
 
