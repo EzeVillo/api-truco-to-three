@@ -81,7 +81,7 @@ public class CupUseCaseConfiguration {
   StartCupUseCase startCupCommandHandler() {
 
     final var handler = new StartCupCommandHandler(this.cupResolver(), this.cupRepository,
-        this.matchRepository, this.playerAvailabilityChecker);
+        this.matchRepository);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

@@ -400,7 +400,7 @@ class TournamentCommandHandlersTest {
     final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
 
     final var handler = new StartLeagueCommandHandler(new LeagueResolver(queryRepository),
-        leagueSaved::set, matchRepository, availableChecker());
+        leagueSaved::set, matchRepository);
 
     handler.handle(new StartLeagueCommand(league.getId(), p1));
 
@@ -470,7 +470,7 @@ class TournamentCommandHandlersTest {
     final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
 
     final var handler = new StartCupCommandHandler(new CupResolver(queryRepository), cupSaved::set,
-        matchRepository, availableChecker());
+        matchRepository);
 
     handler.handle(new StartCupCommand(cup.getId(), p1));
 

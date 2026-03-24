@@ -32,8 +32,8 @@ public final class PlayerAvailabilityChecker {
       throw new PlayerAlreadyInActiveMatchException();
     }
 
-    ensureNoActiveTournaments(playerId);
-    ensureNotInWaitingTournament(playerId);
+    this.ensureNoActiveTournaments(playerId);
+    this.ensureNotInWaitingTournament(playerId);
   }
 
   public void ensureCanStartMatch(final PlayerId playerId) {
@@ -41,7 +41,7 @@ public final class PlayerAvailabilityChecker {
     if (this.matchQueryRepository.hasActiveMatch(playerId)) {
       throw new PlayerAlreadyInActiveMatchException();
     }
-    ensureNoActiveTournaments(playerId);
+    this.ensureNotInWaitingTournament(playerId);
   }
 
   private void ensureNotInWaitingTournament(final PlayerId playerId) {

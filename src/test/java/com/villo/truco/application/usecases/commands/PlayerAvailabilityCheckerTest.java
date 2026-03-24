@@ -291,8 +291,8 @@ class PlayerAvailabilityCheckerTest {
   }
 
   @Test
-  @DisplayName("ensureCanStartMatch: jugador en torneo activo lanza excepción")
-  void cannotStartMatchWhenInActiveTournament() {
+  @DisplayName("ensureCanStartMatch: jugador en torneo activo (IN_PROGRESS) puede iniciar su partida de torneo")
+  void canStartTournamentMatchWhenInActiveTournament() {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
@@ -302,11 +302,26 @@ class PlayerAvailabilityCheckerTest {
     league.join(p3, league.getInviteCode());
     league.start(p1);
 
+      // Torneo IN_PROGRESS → findWaitingByPlayer devuelve vacío → no debe bloquear
     final var checker = checker(false, false, Optional.of(league), Optional.empty(),
         Optional.empty(), Optional.empty());
 
-    assertThatThrownBy(() -> checker.ensureCanStartMatch(p1)).isInstanceOf(
-        PlayerBusyInLeagueException.class);
+      assertThatCode(() -> checker.ensureCanStartMatch(p1)).doesNotThrowAnyException();
+  }
+
+    @Test
+    @DisplayName("ensureCanStartMatch: jugador en torneo en espera no puede iniciar un match")
+    void cannotStartMatchWhenInWaitingTournament() {
+
+        final var creator = PlayerId.generate();
+        final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3));
+
+        // Torneo WAITING_FOR_PLAYERS → findWaitingByPlayer lo encuentra → debe bloquear
+        final var checker = checker(false, false, Optional.empty(), Optional.of(waitingLeague),
+            Optional.empty(), Optional.empty());
+
+        assertThatThrownBy(() -> checker.ensureCanStartMatch(creator)).isInstanceOf(
+            PlayerAlreadyInWaitingLeagueException.class);
   }
 
   private record StubMatchQueryRepository(boolean unfinished, boolean activeMatch) implements

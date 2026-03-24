@@ -70,7 +70,7 @@ public class LeagueUseCaseConfiguration {
   StartLeagueUseCase startLeagueCommandHandler() {
 
     final var handler = new StartLeagueCommandHandler(this.leagueResolver(), this.leagueRepository,
-        this.matchRepository, this.playerAvailabilityChecker);
+        this.matchRepository);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

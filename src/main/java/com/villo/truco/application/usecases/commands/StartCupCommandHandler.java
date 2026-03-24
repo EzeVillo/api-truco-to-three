@@ -14,22 +14,17 @@ public final class StartCupCommandHandler implements StartCupUseCase {
   private final CupResolver cupResolver;
   private final CupRepository cupRepository;
   private final MatchRepository matchRepository;
-  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
   public StartCupCommandHandler(final CupResolver cupResolver, final CupRepository cupRepository,
-      final MatchRepository matchRepository,
-      final PlayerAvailabilityChecker playerAvailabilityChecker) {
+      final MatchRepository matchRepository) {
 
     this.cupResolver = Objects.requireNonNull(cupResolver);
     this.cupRepository = Objects.requireNonNull(cupRepository);
     this.matchRepository = Objects.requireNonNull(matchRepository);
-    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public Void handle(final StartCupCommand command) {
-
-    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var cup = this.cupResolver.resolve(command.cupId());
 

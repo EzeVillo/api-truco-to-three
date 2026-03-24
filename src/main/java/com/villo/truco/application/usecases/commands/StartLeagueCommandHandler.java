@@ -14,22 +14,17 @@ public final class StartLeagueCommandHandler implements StartLeagueUseCase {
   private final LeagueResolver leagueResolver;
   private final LeagueRepository leagueRepository;
   private final MatchRepository matchRepository;
-  private final PlayerAvailabilityChecker playerAvailabilityChecker;
 
   public StartLeagueCommandHandler(final LeagueResolver leagueResolver,
-      final LeagueRepository leagueRepository, final MatchRepository matchRepository,
-      final PlayerAvailabilityChecker playerAvailabilityChecker) {
+      final LeagueRepository leagueRepository, final MatchRepository matchRepository) {
 
     this.leagueResolver = Objects.requireNonNull(leagueResolver);
     this.leagueRepository = Objects.requireNonNull(leagueRepository);
     this.matchRepository = Objects.requireNonNull(matchRepository);
-    this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
   }
 
   @Override
   public Void handle(final StartLeagueCommand command) {
-
-    this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
     final var league = this.leagueResolver.resolve(command.leagueId());
 
