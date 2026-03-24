@@ -11,6 +11,7 @@ import com.villo.truco.domain.model.league.exceptions.OnlyCreatorCanStartExcepti
 import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerNotInLeagueException;
 import com.villo.truco.domain.model.league.exceptions.WinnerNotInFixtureException;
+import com.villo.truco.domain.model.league.valueobjects.FixtureActivation;
 import com.villo.truco.domain.model.league.valueobjects.FixtureId;
 import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
@@ -111,7 +112,7 @@ public final class League extends AggregateBase<LeagueId> {
           final var shouldSwap = matchday % 2 == 0;
           final var playerOne = shouldSwap ? away : home;
           final var playerTwo = shouldSwap ? home : away;
-          fixtures.add(Fixture.pending(FixtureId.generate(), matchday, playerOne, playerTwo));
+          fixtures.add(Fixture.scheduled(FixtureId.generate(), matchday, playerOne, playerTwo));
         }
       }
 
@@ -205,6 +206,44 @@ public final class League extends AggregateBase<LeagueId> {
         matchId);
   }
 
+  public List<FixtureActivation> activateNextFixtures() {
+
+    final var activations = new ArrayList<FixtureActivation>();
+
+    for (final var fixture : this.fixtures) {
+      if (fixture.status() != FixtureStatus.SCHEDULED) {
+        continue;
+      }
+      if (canActivate(fixture)) {
+        fixture.activate();
+        activations.add(
+            new FixtureActivation(fixture.id(), fixture.playerOne(), fixture.playerTwo()));
+        LOGGER.info("Fixture activated: leagueId={}, fixtureId={}, matchday={}", this.id,
+            fixture.id(), fixture.matchdayNumber());
+      }
+    }
+
+    return activations;
+  }
+
+  private boolean canActivate(final Fixture fixture) {
+
+    return isPlayerReadyForMatchday(fixture.playerOne(), fixture.matchdayNumber())
+        && isPlayerReadyForMatchday(fixture.playerTwo(), fixture.matchdayNumber());
+  }
+
+  private boolean isPlayerReadyForMatchday(final PlayerId player, final int matchdayNumber) {
+
+    final var allEarlierResolved = this.fixtures.stream()
+        .filter(f -> f.containsPlayer(player) && f.matchdayNumber() < matchdayNumber)
+        .allMatch(f -> f.status() == FixtureStatus.FINISHED || f.status() == FixtureStatus.LIBRE);
+
+    final var noPendingFixture = this.fixtures.stream()
+        .noneMatch(f -> f.containsPlayer(player) && f.status() == FixtureStatus.PENDING);
+
+    return allEarlierResolved && noPendingFixture;
+  }
+
   public void forfeitPlayer(final PlayerId forfeiter) {
 
     Objects.requireNonNull(forfeiter, "Forfeiter cannot be null");
@@ -213,20 +252,22 @@ public final class League extends AggregateBase<LeagueId> {
       throw new PlayerNotInLeagueException();
     }
 
-    final var pendingFixtures = this.fixtures.stream()
-        .filter(f -> f.status() == FixtureStatus.PENDING && f.containsPlayer(forfeiter)).toList();
+    final var unresolvedFixtures = this.fixtures.stream()
+        .filter(f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
+            && f.containsPlayer(forfeiter))
+        .toList();
 
-    for (final var fixture : pendingFixtures) {
+    for (final var fixture : unresolvedFixtures) {
       final var rival =
           fixture.playerOne().equals(forfeiter) ? fixture.playerTwo() : fixture.playerOne();
       fixture.resolve(rival);
       this.winsByPlayer.merge(rival, 1, Integer::sum);
-      LOGGER.info("Fixture auto-resolved by forfeit: leagueId={}, fixtureId={}, winner={}", this.id,
-          fixture.id(), rival);
+      LOGGER.info("Fixture auto-resolved by forfeit: leagueId={}, fixtureId={}, winner={}",
+          this.id, fixture.id(), rival);
     }
 
     final var allResolved = this.fixtures.stream()
-        .allMatch(f -> f.status() != FixtureStatus.PENDING);
+        .allMatch(f -> f.status() == FixtureStatus.FINISHED || f.status() == FixtureStatus.LIBRE);
 
     if (allResolved) {
       this.status = LeagueStatus.FINISHED;
@@ -258,7 +299,8 @@ public final class League extends AggregateBase<LeagueId> {
         winner);
 
     final var allResolved = this.fixtures.stream()
-        .allMatch(it -> it.status() != FixtureStatus.PENDING);
+        .allMatch(
+            it -> it.status() == FixtureStatus.FINISHED || it.status() == FixtureStatus.LIBRE);
 
     if (allResolved) {
       this.status = LeagueStatus.FINISHED;
@@ -274,7 +316,9 @@ public final class League extends AggregateBase<LeagueId> {
   public boolean hasPlayerPendingFixtures(final PlayerId playerId) {
 
     return this.fixtures.stream()
-        .anyMatch(f -> f.status() == FixtureStatus.PENDING && f.containsPlayer(playerId));
+        .anyMatch(
+            f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
+                && f.containsPlayer(playerId));
   }
 
   public LeagueStatus getStatus() {

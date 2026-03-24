@@ -677,6 +677,7 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 - `PLAYER_READY`
 - `HAND_RESOLVED`
 - `HAND_CHANGED`
+- `MATCH_ACTIVATED`
 
 ### 8.6 Payload por evento (resumen)
 
@@ -721,6 +722,10 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 - `HAND_CHANGED`:
     - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
       `payload: {}`.
+- `MATCH_ACTIVATED`:
+  - `{ matchId }` — se emite a ambos jugadores cuando un partido de liga es activado
+    automáticamente (el fixture pasa de `SCHEDULED` a `PENDING`). El FE debe navegar o
+    actualizar al nuevo partido usando el `matchId` recibido.
 
 ## 9. Flujo de autenticacion recomendado
 
@@ -736,3 +741,7 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 - Manejar `204 No Content` en acciones de juego (sin body).
 - En copas, el bracket avanza automáticamente: el FE solo necesita consultar `GET /api/cups/{cupId}`
   para ver el estado actualizado (no hay eventos WebSocket propios de copa).
+- En ligas, los partidos se crean **on-demand**: al iniciar la liga solo se crea el partido de la
+  fecha 1. Cuando ese partido termina (o es forfeiteado), la liga activa automáticamente el
+  siguiente partido elegible y envía un evento `MATCH_ACTIVATED` a los dos jugadores involucrados.
+  Los fixtures con estado `SCHEDULED` son partidos futuros aún no creados.

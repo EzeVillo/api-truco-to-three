@@ -30,6 +30,7 @@ class LeagueTest {
       league.join(players[i], league.getInviteCode());
     }
     league.start(players[0]);
+    league.activateNextFixtures();
     return league;
   }
 
@@ -81,7 +82,7 @@ class LeagueTest {
       assertThat(matchday.fixtures().stream()
           .filter(fixture -> fixture.status() == FixtureStatus.LIBRE)).hasSize(1);
       assertThat(matchday.fixtures().stream()
-          .filter(fixture -> fixture.status() == FixtureStatus.PENDING)).hasSize(1);
+          .filter(fixture -> fixture.status() != FixtureStatus.LIBRE)).hasSize(1);
     }
   }
 
@@ -96,7 +97,7 @@ class LeagueTest {
     final var league = createStartedLeague(p1, p2, p3);
 
     final var playableFixtures = league.getFixtures().stream()
-        .filter(fixture -> fixture.status() == FixtureStatus.PENDING).toList();
+        .filter(fixture -> fixture.status() != FixtureStatus.LIBRE).toList();
 
     final var fixture12 = findFixture(playableFixtures, p1, p2);
     final var fixture23 = findFixture(playableFixtures, p2, p3);
@@ -130,7 +131,7 @@ class LeagueTest {
     final var league = createStartedLeague(p1, p2, p3);
 
     final var pendingFixtures = league.getFixtures().stream()
-        .filter(it -> it.status() == FixtureStatus.PENDING).toList();
+        .filter(it -> it.status() != FixtureStatus.LIBRE).toList();
 
     final var fixture12 = findFixture(pendingFixtures, p1, p2);
     final var fixture23 = findFixture(pendingFixtures, p2, p3);
@@ -170,7 +171,7 @@ class LeagueTest {
     final var league = createStartedLeague(players);
 
     final var pendingFixtures = league.getFixtures().stream()
-        .filter(f -> f.status() == FixtureStatus.PENDING).toList();
+        .filter(f -> f.status() != FixtureStatus.LIBRE).toList();
 
     for (final var player : players) {
       final var fixturesAsPlayerOne = pendingFixtures.stream()

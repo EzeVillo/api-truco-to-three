@@ -410,7 +410,7 @@ class TournamentCommandHandlersTest {
 
     assertThat(leagueSaved.get()).isSameAs(league);
     assertThat(matchSaves.get()).isEqualTo((int) pendingCount);
-    assertThat(league.getFixtures().stream().filter(f -> f.status() != FixtureStatus.LIBRE)
+    assertThat(league.getFixtures().stream().filter(f -> f.status() == FixtureStatus.PENDING)
         .allMatch(f -> f.matchId() != null)).isTrue();
   }
 

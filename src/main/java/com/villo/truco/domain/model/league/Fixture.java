@@ -25,10 +25,10 @@ final class Fixture extends EntityBase<FixtureId> {
     this.status = status;
   }
 
-  static Fixture pending(final FixtureId id, final int matchdayNumber, final PlayerId playerOne,
+  static Fixture scheduled(final FixtureId id, final int matchdayNumber, final PlayerId playerOne,
       final PlayerId playerTwo) {
 
-    return new Fixture(id, matchdayNumber, playerOne, playerTwo, FixtureStatus.PENDING);
+    return new Fixture(id, matchdayNumber, playerOne, playerTwo, FixtureStatus.SCHEDULED);
   }
 
   static Fixture free(final FixtureId id, final int matchdayNumber, final PlayerId freePlayer) {
@@ -80,6 +80,11 @@ final class Fixture extends EntityBase<FixtureId> {
 
     final var playerTwoMatches = this.playerTwo != null && this.playerTwo.equals(playerId);
     return this.playerOne.equals(playerId) || playerTwoMatches;
+  }
+
+  void activate() {
+
+    this.status = FixtureStatus.PENDING;
   }
 
   void linkMatch(final MatchId matchId) {

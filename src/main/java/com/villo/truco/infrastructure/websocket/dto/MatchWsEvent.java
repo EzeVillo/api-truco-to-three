@@ -8,6 +8,7 @@ import com.villo.truco.domain.model.match.events.FoldedEvent;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
+import com.villo.truco.domain.model.match.events.MatchActivatedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -49,6 +50,8 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
       case AvailableActionsUpdatedEvent e -> mapAvailableActionsUpdated(e);
       case PlayerJoinedEvent e -> Map.<String, Object>of();
       case PlayerReadyEvent e -> mapPlayerReady(e);
+      case MatchActivatedEvent e ->
+          Map.<String, Object>of("matchId", e.getMatchId().value().toString());
       default -> Map.<String, Object>of();
     };
 

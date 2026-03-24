@@ -1,11 +1,15 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.CreateLeagueUseCase;
+import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
 import com.villo.truco.application.ports.in.JoinLeagueUseCase;
 import com.villo.truco.application.ports.in.LeaveLeagueUseCase;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
+import com.villo.truco.application.usecases.commands.AdvanceLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateLeagueCommandHandler;
+import com.villo.truco.application.usecases.commands.ForfeitLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.LeagueResolver;
 import com.villo.truco.application.usecases.commands.LeaveLeagueCommandHandler;
@@ -14,11 +18,13 @@ import com.villo.truco.application.usecases.commands.StartLeagueCommandHandler;
 import com.villo.truco.application.usecases.queries.GetLeagueStateQueryHandler;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class LeagueUseCaseConfiguration {
@@ -26,12 +32,14 @@ public class LeagueUseCaseConfiguration {
   private final LeagueQueryRepository leagueQueryRepository;
   private final LeagueRepository leagueRepository;
   private final MatchRepository matchRepository;
+  private final MatchEventNotifier matchEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
 
   public LeagueUseCaseConfiguration(final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository, final MatchRepository matchRepository,
+      @Lazy final MatchEventNotifier matchEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
@@ -39,6 +47,7 @@ public class LeagueUseCaseConfiguration {
     this.leagueQueryRepository = leagueQueryRepository;
     this.leagueRepository = leagueRepository;
     this.matchRepository = matchRepository;
+    this.matchEventNotifier = matchEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
@@ -78,6 +87,22 @@ public class LeagueUseCaseConfiguration {
   LeaveLeagueUseCase leaveLeagueCommandHandler() {
 
     final var handler = new LeaveLeagueCommandHandler(this.leagueResolver(), this.leagueRepository);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  AdvanceLeagueUseCase advanceLeagueCommandHandler() {
+
+    final var handler = new AdvanceLeagueCommandHandler(this.leagueResolver(),
+        this.leagueRepository, this.matchRepository, this.matchEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  ForfeitLeagueUseCase forfeitLeagueCommandHandler() {
+
+    final var handler = new ForfeitLeagueCommandHandler(this.leagueResolver(),
+        this.leagueRepository, this.matchRepository, this.matchEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

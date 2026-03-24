@@ -5,17 +5,18 @@ import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchFinishedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedEventHandler;
 import com.villo.truco.application.ports.in.AdvanceCupUseCase;
+import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
+import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.actuator.metrics.MatchDomainEventMetricsHandler;
 import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
 import com.villo.truco.infrastructure.websocket.StompMatchEventNotifier;
-import java.util.List;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -25,7 +26,8 @@ public class EventNotifierConfiguration {
 
   private final SimpMessagingTemplate messagingTemplate;
   private final LeagueQueryRepository leagueQueryRepository;
-  private final LeagueRepository leagueRepository;
+  private final AdvanceLeagueUseCase advanceLeagueUseCase;
+  private final ForfeitLeagueUseCase forfeitLeagueUseCase;
   private final CupQueryRepository cupQueryRepository;
   private final AdvanceCupUseCase advanceCupUseCase;
   private final ForfeitCupUseCase forfeitCupUseCase;
@@ -33,7 +35,9 @@ public class EventNotifierConfiguration {
   private final MeterRegistry meterRegistry;
 
   public EventNotifierConfiguration(final SimpMessagingTemplate messagingTemplate,
-      final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository,
+      final LeagueQueryRepository leagueQueryRepository,
+      final AdvanceLeagueUseCase advanceLeagueUseCase,
+      final ForfeitLeagueUseCase forfeitLeagueUseCase,
       final CupQueryRepository cupQueryRepository, final AdvanceCupUseCase advanceCupUseCase,
       final ForfeitCupUseCase forfeitCupUseCase,
       final EventNotifierHealthRegistry eventNotifierHealthRegistry,
@@ -41,7 +45,8 @@ public class EventNotifierConfiguration {
 
     this.messagingTemplate = messagingTemplate;
     this.leagueQueryRepository = leagueQueryRepository;
-    this.leagueRepository = leagueRepository;
+    this.advanceLeagueUseCase = advanceLeagueUseCase;
+    this.forfeitLeagueUseCase = forfeitLeagueUseCase;
     this.cupQueryRepository = cupQueryRepository;
     this.advanceCupUseCase = advanceCupUseCase;
     this.forfeitCupUseCase = forfeitCupUseCase;
@@ -64,13 +69,15 @@ public class EventNotifierConfiguration {
   @Bean
   LeagueMatchFinishedEventHandler leagueMatchFinishedHandler() {
 
-    return new LeagueMatchFinishedEventHandler(this.leagueQueryRepository, this.leagueRepository);
+    return new LeagueMatchFinishedEventHandler(this.leagueQueryRepository,
+        this.advanceLeagueUseCase);
   }
 
   @Bean
   LeagueMatchForfeitedEventHandler leagueMatchForfeitedHandler() {
 
-    return new LeagueMatchForfeitedEventHandler(this.leagueQueryRepository, this.leagueRepository);
+    return new LeagueMatchForfeitedEventHandler(this.leagueQueryRepository,
+        this.forfeitLeagueUseCase);
   }
 
   @Bean

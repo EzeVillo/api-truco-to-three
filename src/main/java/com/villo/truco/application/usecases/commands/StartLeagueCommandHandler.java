@@ -2,7 +2,6 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.StartLeagueCommand;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
-import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.ports.LeagueRepository;
@@ -32,14 +31,11 @@ public final class StartLeagueCommandHandler implements StartLeagueUseCase {
 
     final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
 
-    for (final var fixture : league.getFixtures()) {
-      if (fixture.status() == FixtureStatus.LIBRE) {
-        continue;
-      }
-
-      final var match = Match.createReady(fixture.playerOne(), fixture.playerTwo(), matchRules);
+    for (final var activation : league.activateNextFixtures()) {
+      final var match =
+          Match.createReady(activation.playerOne(), activation.playerTwo(), matchRules);
       this.matchRepository.save(match);
-      league.linkFixtureMatch(fixture.fixtureId(), match.getId());
+      league.linkFixtureMatch(activation.fixtureId(), match.getId());
     }
 
     this.leagueRepository.save(league);

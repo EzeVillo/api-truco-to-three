@@ -7,7 +7,7 @@ import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.UserRepository;
@@ -26,9 +26,9 @@ class LeagueUseCaseConfigurationTest {
         mock(CupQueryRepository.class), new UseCasePipeline(List.of()));
 
     final var configuration = new LeagueUseCaseConfiguration(mock(LeagueQueryRepository.class),
-        mock(LeagueRepository.class), mock(MatchRepository.class),
-        authConfiguration.playerAvailabilityChecker(), new UseCasePipeline(List.of()),
-        new UseCasePipeline(List.of()));
+        mock(com.villo.truco.domain.ports.LeagueRepository.class), mock(MatchRepository.class),
+        mock(MatchEventNotifier.class), authConfiguration.playerAvailabilityChecker(),
+        new UseCasePipeline(List.of()), new UseCasePipeline(List.of()));
 
     assertThat(configuration.leagueResolver()).isNotNull();
     assertThat(configuration.getLeagueStateQueryHandler()).isNotNull();
