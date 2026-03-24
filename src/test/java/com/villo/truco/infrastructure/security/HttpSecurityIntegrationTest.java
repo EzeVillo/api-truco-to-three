@@ -192,7 +192,21 @@ class HttpSecurityIntegrationTest {
         assertTrue(response.body().contains("No endpoint found for"));
     }
 
-    private String baseUrl() {
+  @Test
+  void shouldReturn404ForTypoInAuthEndpoint() throws Exception {
+
+    final var body = "{\"username\":\"testuser\",\"password\":\"testpassword\"}";
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/registe"))
+        .header("Content-Type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(404, response.statusCode());
+    assertTrue(response.body().contains("RESOURCE_NOT_FOUND"));
+  }
+
+  private String baseUrl() {
 
     return "http://localhost:" + this.port;
   }

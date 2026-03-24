@@ -71,9 +71,7 @@ public class SecurityConfiguration {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/auth/guest").permitAll()
+            .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/actuator/health/**").permitAll()
             .requestMatchers("/actuator/**").authenticated()
             .requestMatchers("/api/**").authenticated().anyRequest().permitAll())
