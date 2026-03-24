@@ -4,4 +4,4 @@ auth:
   type: bearer
   credentials:
     token: "{{accessTokenPlayerThree}}"
-order: 4000
+order: 2692
