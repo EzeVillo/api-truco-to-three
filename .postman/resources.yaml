@@ -7,7 +7,7 @@ cloudResources:
   collections:
     ..\postman\collections\Truco a 3: 16005769-6925ff19-ee2f-4a9f-87ce-99a9a2f973b8
   environments:
-    ..\postman\environments\01 - Local.environment.yaml: 7f312c7f-26c0-479a-9873-ecd0be04e511
+    ..\postman\environments\01 - Local.environment.yaml: 16005769-7f312c7f-26c0-479a-9873-ecd0be04e511
 
 # All resources in the `postman/` folder are automatically registered in Local View.
 # Point to additional files outside the `postman/` folder to register them individually. Example:

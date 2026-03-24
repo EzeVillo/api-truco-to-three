@@ -10,4 +10,5 @@ body:
     \    \"number\": 1\r
 
     }"
+examples: .resources/Play card.resources/examples
 order: 4000
