@@ -8,12 +8,20 @@ import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
+import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.infrastructure.actuator.metrics.CupDomainEventMetricsHandler;
+import com.villo.truco.infrastructure.actuator.metrics.LeagueDomainEventMetricsHandler;
 import com.villo.truco.infrastructure.actuator.metrics.MatchDomainEventMetricsHandler;
+import com.villo.truco.infrastructure.events.CompositeCupEventNotifier;
+import com.villo.truco.infrastructure.events.CompositeLeagueEventNotifier;
 import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
+import com.villo.truco.infrastructure.websocket.StompCupEventNotifier;
+import com.villo.truco.infrastructure.websocket.StompLeagueEventNotifier;
 import com.villo.truco.infrastructure.websocket.StompMatchEventNotifier;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
@@ -58,6 +66,44 @@ public class EventNotifierConfiguration {
   StompMatchEventNotifier stompMatchEventNotifier() {
 
     return new StompMatchEventNotifier(this.messagingTemplate, this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  StompLeagueEventNotifier stompLeagueEventNotifier() {
+
+    return new StompLeagueEventNotifier(this.messagingTemplate, this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  LeagueDomainEventMetricsHandler leagueDomainEventMetricsHandler() {
+
+    return new LeagueDomainEventMetricsHandler(this.meterRegistry);
+  }
+
+  @Bean
+  LeagueEventNotifier leagueEventNotifier() {
+
+    return new CompositeLeagueEventNotifier(
+        List.of(this.stompLeagueEventNotifier(), this.leagueDomainEventMetricsHandler()));
+  }
+
+  @Bean
+  StompCupEventNotifier stompCupEventNotifier() {
+
+    return new StompCupEventNotifier(this.messagingTemplate, this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  CupDomainEventMetricsHandler cupDomainEventMetricsHandler() {
+
+    return new CupDomainEventMetricsHandler(this.meterRegistry);
+  }
+
+  @Bean
+  CupEventNotifier cupEventNotifier() {
+
+    return new CompositeCupEventNotifier(
+        List.of(this.stompCupEventNotifier(), this.cupDomainEventMetricsHandler()));
   }
 
   @Bean

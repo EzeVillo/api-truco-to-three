@@ -3,6 +3,9 @@ package com.villo.truco.domain.model.cup;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.domain.model.cup.events.CupAdvancedEvent;
+import com.villo.truco.domain.model.cup.events.CupFinishedEvent;
+import com.villo.truco.domain.model.cup.events.CupPlayerForfeitedEvent;
 import com.villo.truco.domain.model.cup.exceptions.BoutAlreadyResolvedException;
 import com.villo.truco.domain.model.cup.exceptions.CupNotReadyException;
 import com.villo.truco.domain.model.cup.exceptions.CupNotWaitingException;
@@ -57,6 +60,7 @@ class CupTest {
     assertThat(cup.getStatus()).isEqualTo(CupStatus.WAITING_FOR_PLAYERS);
     assertThat(cup.getInviteCode()).isNotNull();
     assertThat(cup.getId()).isNotNull();
+    assertThat(cup.getParticipants()).containsExactly(creator);
   }
 
   @Test
@@ -219,6 +223,12 @@ class CupTest {
     final var r1Bouts = boutsInRound(cup, 1);
     assertThat(r1Bouts.stream().filter(b -> b.status() == BoutStatus.PENDING).count()).isEqualTo(2);
     assertThat(r1Bouts.stream().filter(b -> b.status() == BoutStatus.BYE).count()).isEqualTo(2);
+
+    final var r2Bouts = boutsInRound(cup, 2);
+    final var preAssignedPlayers = r2Bouts.stream()
+        .mapToLong(b -> (b.playerOne() != null ? 1 : 0) + (b.playerTwo() != null ? 1 : 0))
+        .sum();
+    assertThat(preAssignedPlayers).isEqualTo(2);
   }
 
   @Test
@@ -374,7 +384,7 @@ class CupTest {
 
   @Test
   @DisplayName("forfeitPlayer: forfeit en R1 auto-resuelve el bout y avanza al oponente a la final")
-  void forfeitCascadeResolvesTransitively() {
+  void forfeitInR1AdvancesOpponentToFinal() {
 
     final var players = generatePlayers(4);
     final var cup = createStartedCup(players);
@@ -395,6 +405,190 @@ class CupTest {
     assertThat(r2Bout.status()).isEqualTo(BoutStatus.PENDING);
     assertThat(List.of(r2Bout.playerOne(), r2Bout.playerTwo())).contains(w1);
     assertThat(List.of(r2Bout.playerOne(), r2Bout.playerTwo())).contains(bout1.playerTwo());
+  }
+
+  @Test
+  @DisplayName("recordMatchWinner: dispara CupAdvancedEvent con matchId correcto en ronda no-final")
+  void recordMatchWinnerEmitsCupAdvancedEvent() {
+
+    final var players = generatePlayers(4);
+    final var cup = createStartedCup(players);
+    cup.clearDomainEvents();
+
+    final var firstBout = boutsInRound(cup, 1).getFirst();
+    final var matchId = MatchId.generate();
+    cup.linkBoutMatch(firstBout.boutId(), matchId);
+    cup.clearDomainEvents();
+
+    cup.recordMatchWinner(matchId, firstBout.playerOne());
+
+    final var events = cup.getDomainEvents();
+    assertThat(events).hasSize(1);
+    assertThat(events.getFirst()).isInstanceOf(CupAdvancedEvent.class);
+    final var advanced = (CupAdvancedEvent) events.getFirst();
+    assertThat(advanced.getMatchId()).isEqualTo(matchId);
+    assertThat(advanced.getWinner()).isEqualTo(firstBout.playerOne());
+  }
+
+  @Test
+  @DisplayName("recordMatchWinner: dispara solo CupFinishedEvent en la final (sin CupAdvancedEvent)")
+  void recordMatchWinnerFinalEmitsCupFinishedEventOnly() {
+
+    final var players = generatePlayers(4);
+    final var cup = createStartedCup(players);
+
+    final var r1Bouts = boutsInRound(cup, 1);
+    final var m1 = MatchId.generate();
+    final var m2 = MatchId.generate();
+    cup.linkBoutMatch(r1Bouts.get(0).boutId(), m1);
+    cup.linkBoutMatch(r1Bouts.get(1).boutId(), m2);
+    cup.recordMatchWinner(m1, r1Bouts.get(0).playerOne());
+    cup.recordMatchWinner(m2, r1Bouts.get(1).playerOne());
+
+    final var r2Bout = boutsInRound(cup, 2).getFirst();
+    final var finalMatchId = MatchId.generate();
+    cup.linkBoutMatch(r2Bout.boutId(), finalMatchId);
+    cup.clearDomainEvents();
+
+    final var champion = r2Bout.playerOne();
+    cup.recordMatchWinner(finalMatchId, champion);
+
+    final var events = cup.getDomainEvents();
+    assertThat(events).hasSize(1);
+    assertThat(events.getFirst()).isInstanceOf(CupFinishedEvent.class);
+    final var finished = (CupFinishedEvent) events.getFirst();
+    assertThat(finished.getChampion()).isEqualTo(champion);
+  }
+
+  @Test
+  @DisplayName("forfeitPlayer: dispara CupAdvancedEvent (matchId del bout) + CupPlayerForfeitedEvent, sin duplicados")
+  void forfeitPlayerWithPendingBoutEmitsAdvancedAndForfeited() {
+
+    final var players = generatePlayers(4);
+    final var cup = createStartedCup(players);
+
+    final var firstBout = boutsInRound(cup, 1).getFirst();
+    final var matchId = MatchId.generate();
+    cup.linkBoutMatch(firstBout.boutId(), matchId);
+    cup.clearDomainEvents();
+
+    final var forfeiter = firstBout.playerOne();
+    cup.forfeitPlayer(forfeiter);
+
+    final var events = cup.getDomainEvents();
+    assertThat(events).hasSize(2);
+    assertThat(events.stream().filter(e -> e instanceof CupAdvancedEvent).count()).isEqualTo(1);
+    assertThat(events.stream().filter(e -> e instanceof CupPlayerForfeitedEvent).count()).isEqualTo(
+        1);
+
+    final var advanced = (CupAdvancedEvent) events.stream()
+        .filter(e -> e instanceof CupAdvancedEvent).findFirst().orElseThrow();
+    assertThat(advanced.getMatchId()).isEqualTo(matchId);
+    assertThat(advanced.getWinner()).isEqualTo(firstBout.playerTwo());
+  }
+
+  @Test
+  @DisplayName("forfeitPlayer: forfeit en R1 avanza oponente a la final PENDING (sin CupFinishedEvent)")
+  void forfeitPlayerInSemiFinalAdvancesOpponentToFinal() {
+
+    final var players = generatePlayers(4);
+    final var cup = createStartedCup(players);
+
+    final var r1Bouts = boutsInRound(cup, 1);
+    final var m1 = MatchId.generate();
+    cup.linkBoutMatch(r1Bouts.getFirst().boutId(), m1);
+    cup.recordMatchWinner(m1, r1Bouts.get(0).playerOne());
+    cup.clearDomainEvents();
+
+    cup.forfeitPlayer(r1Bouts.get(1).playerOne());
+
+    final var events = cup.getDomainEvents();
+
+    assertThat(events.stream().filter(e -> e instanceof CupAdvancedEvent).count()).isEqualTo(1);
+    assertThat(events.stream().filter(e -> e instanceof CupPlayerForfeitedEvent).count()).isEqualTo(
+        1);
+    assertThat(events.stream().filter(e -> e instanceof CupFinishedEvent).count()).isZero();
+
+    final var advanced = (CupAdvancedEvent) events.stream()
+        .filter(e -> e instanceof CupAdvancedEvent).findFirst().orElseThrow();
+    assertThat(advanced.getMatchId()).isNull();
+
+    final var r2Bout = boutsInRound(cup, 2).getFirst();
+    assertThat(r2Bout.status()).isEqualTo(BoutStatus.PENDING);
+    assertThat(List.of(r2Bout.playerOne(), r2Bout.playerTwo()))
+        .contains(r1Bouts.get(1).playerTwo());
+  }
+
+  @Test
+  @DisplayName("forfeitPlayer en final directa: dispara CupFinishedEvent + CupPlayerForfeitedEvent")
+  void forfeitPlayerDirectFinalEmitsFinishedEvent() {
+
+    final var players = generatePlayers(4);
+    final var cup = createStartedCup(players);
+
+    final var r1Bouts = boutsInRound(cup, 1);
+    final var m1 = MatchId.generate();
+    final var m2 = MatchId.generate();
+    cup.linkBoutMatch(r1Bouts.get(0).boutId(), m1);
+    cup.linkBoutMatch(r1Bouts.get(1).boutId(), m2);
+    final var w1 = r1Bouts.get(0).playerOne();
+    final var w2 = r1Bouts.get(1).playerOne();
+    cup.recordMatchWinner(m1, w1);
+    cup.recordMatchWinner(m2, w2);
+
+    final var finalBout = boutsInRound(cup, 2).getFirst();
+    assertThat(finalBout.status()).isEqualTo(BoutStatus.PENDING);
+    cup.clearDomainEvents();
+
+    cup.forfeitPlayer(w2);
+
+    final var events = cup.getDomainEvents();
+    assertThat(events.stream().filter(e -> e instanceof CupFinishedEvent).count()).isEqualTo(1);
+    assertThat(events.stream().filter(e -> e instanceof CupPlayerForfeitedEvent).count()).isEqualTo(
+        1);
+    assertThat(events.stream().filter(e -> e instanceof CupAdvancedEvent).count()).isZero();
+
+    final var finished = (CupFinishedEvent) events.stream()
+        .filter(e -> e instanceof CupFinishedEvent).findFirst().orElseThrow();
+    assertThat(finished.getChampion()).isEqualTo(w1);
+    assertThat(cup.getStatus()).isEqualTo(CupStatus.FINISHED);
+    assertThat(cup.getChampion()).isEqualTo(w1);
+  }
+
+  @Test
+  @DisplayName("forfeitPlayer con oponente forfeitado en siguiente ronda: dispara CupAdvancedEvent(null) + CupFinishedEvent")
+  void forfeitPlayerCascadesToFinalEmitsFinishedEvent() {
+
+    final var players = generatePlayers(4);
+    final var cup = createStartedCup(players);
+
+    final var r1Bouts = boutsInRound(cup, 1);
+    final var m1 = MatchId.generate();
+    cup.linkBoutMatch(r1Bouts.getFirst().boutId(), m1);
+    final var w1 = r1Bouts.getFirst().playerOne();
+    cup.recordMatchWinner(m1, w1);
+
+    cup.forfeitPlayer(w1);
+    cup.clearDomainEvents();
+
+    final var forfeiter2 = r1Bouts.get(1).playerOne();
+    final var expectedChampion = r1Bouts.get(1).playerTwo();
+    cup.forfeitPlayer(forfeiter2);
+
+    final var events = cup.getDomainEvents();
+    assertThat(events.stream().filter(e -> e instanceof CupAdvancedEvent).count()).isEqualTo(1);
+    assertThat(events.stream().filter(e -> e instanceof CupFinishedEvent).count()).isEqualTo(1);
+    assertThat(events.stream().filter(e -> e instanceof CupPlayerForfeitedEvent).count()).isEqualTo(
+        1);
+
+    final var advanced = (CupAdvancedEvent) events.stream()
+        .filter(e -> e instanceof CupAdvancedEvent).findFirst().orElseThrow();
+    assertThat(advanced.getMatchId()).isNull();
+
+    final var finished = (CupFinishedEvent) events.stream()
+        .filter(e -> e instanceof CupFinishedEvent).findFirst().orElseThrow();
+    assertThat(finished.getChampion()).isEqualTo(expectedChampion);
+    assertThat(cup.getStatus()).isEqualTo(CupStatus.FINISHED);
   }
 
   @Test

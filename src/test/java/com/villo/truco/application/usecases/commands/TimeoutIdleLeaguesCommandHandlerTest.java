@@ -100,7 +100,8 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final TransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleLeaguesCommandHandler(queryRepo, leagueRepository, transactionalRunner,
-        Duration.ofMinutes(10));
+        Duration.ofMinutes(10), (id, participants, events) -> {
+    });
   }
 
   @Test
@@ -207,7 +208,8 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     };
 
     final var handler = new TimeoutIdleLeaguesCommandHandler(queryRepo, savedLeague::set,
-        Runnable::run, Duration.ofMinutes(10));
+        Runnable::run, Duration.ofMinutes(10), (id, participants, events) -> {
+    });
 
     handler.handle();
 

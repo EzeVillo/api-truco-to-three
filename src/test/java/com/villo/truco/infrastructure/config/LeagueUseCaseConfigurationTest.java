@@ -6,8 +6,8 @@ import static org.mockito.Mockito.mock;
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.UserRepository;
@@ -27,7 +27,7 @@ class LeagueUseCaseConfigurationTest {
 
     final var configuration = new LeagueUseCaseConfiguration(mock(LeagueQueryRepository.class),
         mock(com.villo.truco.domain.ports.LeagueRepository.class), mock(MatchRepository.class),
-        mock(MatchEventNotifier.class), authConfiguration.playerAvailabilityChecker(),
+        mock(LeagueEventNotifier.class), authConfiguration.playerAvailabilityChecker(),
         new UseCasePipeline(List.of()), new UseCasePipeline(List.of()));
 
     assertThat(configuration.leagueResolver()).isNotNull();

@@ -206,7 +206,8 @@ class CupCommandHandlersTest {
 
         final var saved = new AtomicReference<Cup>();
         final var handler = new JoinCupCommandHandler(new CupResolver(queryRepository), saved::set,
-            availableChecker());
+            availableChecker(), (id, participants, events) -> {
+        });
 
         final var result = handler.handle(new JoinCupCommand(joiner, cup.getInviteCode()));
 
@@ -271,7 +272,8 @@ class CupCommandHandlersTest {
 
         final var handler = new StartCupCommandHandler(new CupResolver(queryRepository),
             cupSaved::set,
-            matchRepository);
+            matchRepository, (id, participants, events) -> {
+        });
 
         handler.handle(new StartCupCommand(cup.getId(), p1));
 
@@ -346,7 +348,8 @@ class CupCommandHandlersTest {
         final var createdMatches = new AtomicInteger();
         final var handler = new AdvanceCupCommandHandler(new CupResolver(queryRepository),
             saved::set,
-            match -> createdMatches.incrementAndGet());
+            match -> createdMatches.incrementAndGet(), (id, participants, events) -> {
+        });
 
         handler.handle(new AdvanceCupCommand(cup.getId(), matchId, firstPending.playerOne()));
 
@@ -414,7 +417,8 @@ class CupCommandHandlersTest {
         final var createdMatches = new AtomicInteger();
         final var handler = new ForfeitCupCommandHandler(new CupResolver(queryRepository),
             saved::set,
-            match -> createdMatches.incrementAndGet());
+            match -> createdMatches.incrementAndGet(), (id, participants, events) -> {
+        });
 
         handler.handle(new ForfeitCupCommand(cup.getId(), p2));
 

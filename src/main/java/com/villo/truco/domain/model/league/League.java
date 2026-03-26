@@ -1,5 +1,14 @@
 package com.villo.truco.domain.model.league;
 
+import com.villo.truco.domain.model.league.events.LeagueAdvancedEvent;
+import com.villo.truco.domain.model.league.events.LeagueCancelledEvent;
+import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
+import com.villo.truco.domain.model.league.events.LeagueFixtureActivatedEvent;
+import com.villo.truco.domain.model.league.events.LeagueMatchActivatedEvent;
+import com.villo.truco.domain.model.league.events.LeaguePlayerForfeitedEvent;
+import com.villo.truco.domain.model.league.events.LeaguePlayerJoinedEvent;
+import com.villo.truco.domain.model.league.events.LeaguePlayerLeftEvent;
+import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
 import com.villo.truco.domain.model.league.exceptions.FixtureAlreadyResolvedException;
 import com.villo.truco.domain.model.league.exceptions.InvalidLeagueInviteCodeException;
 import com.villo.truco.domain.model.league.exceptions.InvalidLeaguePlayersException;
@@ -167,6 +176,7 @@ public final class League extends AggregateBase<LeagueId> {
     this.participants.add(playerId);
     LOGGER.info("Player joined league: leagueId={}, playerId={}, participants={}/{}", this.id,
         playerId, this.participants.size(), this.numberOfPlayers);
+    this.addDomainEvent(new LeaguePlayerJoinedEvent(this.id, playerId));
 
     if (this.participants.size() == this.numberOfPlayers) {
       this.status = LeagueStatus.WAITING_FOR_START;
@@ -185,6 +195,7 @@ public final class League extends AggregateBase<LeagueId> {
     this.status = LeagueStatus.IN_PROGRESS;
     LOGGER.info("League started: leagueId={}, participants={}, fixtures={}", this.id,
         this.participants.size(), this.fixtures.size());
+    this.addDomainEvent(new LeagueStartedEvent(this.id));
   }
 
   public void linkFixtureMatch(final FixtureId fixtureId, final MatchId matchId) {
@@ -202,6 +213,7 @@ public final class League extends AggregateBase<LeagueId> {
     }
 
     fixture.linkMatch(matchId);
+    this.addDomainEvent(new LeagueMatchActivatedEvent(this.id, matchId));
     LOGGER.info("Fixture linked: leagueId={}, fixtureId={}, matchId={}", this.id, fixtureId,
         matchId);
   }
@@ -220,6 +232,7 @@ public final class League extends AggregateBase<LeagueId> {
             new FixtureActivation(fixture.id(), fixture.playerOne(), fixture.playerTwo()));
         LOGGER.info("Fixture activated: leagueId={}, fixtureId={}, matchday={}", this.id,
             fixture.id(), fixture.matchdayNumber());
+        this.addDomainEvent(new LeagueFixtureActivatedEvent(this.id, fixture.id()));
       }
     }
 
@@ -264,7 +277,10 @@ public final class League extends AggregateBase<LeagueId> {
       this.winsByPlayer.merge(rival, 1, Integer::sum);
       LOGGER.info("Fixture auto-resolved by forfeit: leagueId={}, fixtureId={}, winner={}",
           this.id, fixture.id(), rival);
+      this.addDomainEvent(new LeagueAdvancedEvent(this.id, fixture.matchId(), rival));
     }
+
+    this.addDomainEvent(new LeaguePlayerForfeitedEvent(this.id, forfeiter));
 
     final var allResolved = this.fixtures.stream()
         .allMatch(f -> f.status() == FixtureStatus.FINISHED || f.status() == FixtureStatus.LIBRE);
@@ -273,6 +289,7 @@ public final class League extends AggregateBase<LeagueId> {
       this.status = LeagueStatus.FINISHED;
       LOGGER.info("League finished by forfeit: leagueId={}, leaders={}", this.id,
           this.getLeaders());
+      this.addDomainEvent(new LeagueFinishedEvent(this.id, this.getLeaders()));
     }
   }
 
@@ -297,6 +314,7 @@ public final class League extends AggregateBase<LeagueId> {
     this.winsByPlayer.merge(winner, 1, Integer::sum);
     LOGGER.info("League result registered: leagueId={}, matchId={}, winner={}", this.id, matchId,
         winner);
+    this.addDomainEvent(new LeagueAdvancedEvent(this.id, matchId, winner));
 
     final var allResolved = this.fixtures.stream()
         .allMatch(
@@ -305,6 +323,7 @@ public final class League extends AggregateBase<LeagueId> {
     if (allResolved) {
       this.status = LeagueStatus.FINISHED;
       LOGGER.info("League finished: leagueId={}, leaders={}", this.id, this.getLeaders());
+      this.addDomainEvent(new LeagueFinishedEvent(this.id, this.getLeaders()));
     }
   }
 
@@ -379,6 +398,7 @@ public final class League extends AggregateBase<LeagueId> {
       this.participants.clear();
       this.status = LeagueStatus.CANCELLED;
       LOGGER.info("League cancelled by timeout: leagueId={}", this.id);
+      this.addDomainEvent(new LeagueCancelledEvent(this.id));
     }
   }
 
@@ -399,6 +419,7 @@ public final class League extends AggregateBase<LeagueId> {
       this.participants.clear();
       this.status = LeagueStatus.CANCELLED;
       LOGGER.info("League cancelled by creator: leagueId={}, creatorId={}", this.id, playerId);
+      this.addDomainEvent(new LeagueCancelledEvent(this.id));
       return;
     }
 
@@ -406,9 +427,10 @@ public final class League extends AggregateBase<LeagueId> {
     this.status = LeagueStatus.WAITING_FOR_PLAYERS;
     LOGGER.info("Player left league: leagueId={}, playerId={}, participants={}/{}", this.id,
         playerId, this.participants.size(), this.numberOfPlayers);
+    this.addDomainEvent(new LeaguePlayerLeftEvent(this.id, playerId));
   }
 
-  List<PlayerId> getParticipants() {
+  public List<PlayerId> getParticipants() {
 
     return this.participants;
   }

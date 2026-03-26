@@ -639,7 +639,8 @@ Cualquier otro destino se rechaza.
 
 ### 8.4 Forma del evento WS
 
-Todos los eventos salen con este formato (`MatchWsEvent`):
+Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `LeagueWsEvent`,
+`CupWsEvent`):
 
 ```json
 {
@@ -655,7 +656,7 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 }
 ```
 
-### 8.5 eventType posibles
+### 8.5 eventType posibles — Match (2 jugadores del partido)
 
 - `AVAILABLE_ACTIONS_UPDATED`
 - `CARD_PLAYED`
@@ -677,7 +678,30 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 - `PLAYER_READY`
 - `HAND_RESOLVED`
 - `HAND_CHANGED`
-- `MATCH_ACTIVATED`
+
+### 8.5b eventType posibles — Liga (todos los participantes de la liga)
+
+- `LEAGUE_PLAYER_JOINED` — un jugador se unió a la liga
+- `LEAGUE_PLAYER_LEFT` — un jugador no-creador abandonó la liga
+- `LEAGUE_CANCELLED` — la liga fue cancelada (creador abandona o timeout)
+- `LEAGUE_STARTED` — la liga inició y se generaron los fixtures
+- `LEAGUE_FIXTURE_ACTIVATED` — un fixture cambió de estado a PENDING
+- `LEAGUE_MATCH_ACTIVATED` — un partido de liga fue creado y está listo
+- `LEAGUE_ADVANCED` — un resultado fue registrado en la liga
+- `LEAGUE_PLAYER_FORFEITED` — un jugador ha sido declarado forfeit
+- `LEAGUE_FINISHED` — la liga terminó
+
+### 8.5c eventType posibles — Copa (todos los participantes de la copa)
+
+- `CUP_PLAYER_JOINED` — un jugador se unió a la copa
+- `CUP_PLAYER_LEFT` — un jugador no-creador abandonó la copa
+- `CUP_CANCELLED` — la copa fue cancelada
+- `CUP_STARTED` — la copa inició y se generó el bracket
+- `CUP_BOUT_ACTIVATED` — un bout del bracket pasó a estado PENDING
+- `CUP_MATCH_ACTIVATED` — un partido de copa fue creado y está listo
+- `CUP_ADVANCED` — un resultado fue registrado y el bracket avanzó
+- `CUP_PLAYER_FORFEITED` — un jugador fue declarado forfeit
+- `CUP_FINISHED` — la copa terminó con un campeón
 
 ### 8.6 Payload por evento (resumen)
 
@@ -722,10 +746,38 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 - `HAND_CHANGED`:
     - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
       `payload: {}`.
-- `MATCH_ACTIVATED`:
-  - `{ matchId }` — se emite a ambos jugadores cuando un partido de liga es activado
-    automáticamente (el fixture pasa de `SCHEDULED` a `PENDING`). El FE debe navegar o
-    actualizar al nuevo partido usando el `matchId` recibido.
+- `LEAGUE_MATCH_ACTIVATED`:
+  - `{ leagueId, matchId }` — se emite a todos los participantes de la liga cuando un partido
+    es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
+- `CUP_MATCH_ACTIVATED`:
+  - `{ cupId, matchId }` — se emite a todos los participantes de la copa cuando un partido de
+    bracket es activado.
+- `LEAGUE_PLAYER_JOINED` / `CUP_PLAYER_JOINED`:
+  - `{ leagueId/cupId, playerId }`
+- `LEAGUE_PLAYER_LEFT` / `CUP_PLAYER_LEFT`:
+  - `{ leagueId/cupId, playerId }`
+- `LEAGUE_CANCELLED` / `CUP_CANCELLED`:
+  - `{ leagueId/cupId }`
+- `LEAGUE_STARTED` / `CUP_STARTED`:
+  - `{ leagueId/cupId }`
+- `LEAGUE_FIXTURE_ACTIVATED`:
+  - `{ leagueId, fixtureId }`
+- `CUP_BOUT_ACTIVATED`:
+  - `{ cupId, boutId }`
+- `LEAGUE_ADVANCED`:
+  - `{ leagueId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+    (por ejemplo, forfeit del oponente)
+- `CUP_ADVANCED`:
+  - `{ cupId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+    (por ejemplo, bye o forfeit del oponente)
+- `LEAGUE_PLAYER_FORFEITED`:
+  - `{ leagueId, playerId }`
+- `CUP_PLAYER_FORFEITED`:
+  - `{ cupId, playerId }`
+- `LEAGUE_FINISHED`:
+  - `{ leagueId, leaders: [playerId, ...] }`
+- `CUP_FINISHED`:
+  - `{ cupId, champion: playerId }`
 
 ## 9. Flujo de autenticacion recomendado
 
@@ -739,9 +791,13 @@ Todos los eventos salen con este formato (`MatchWsEvent`):
 
 - Tratar enums como case-sensitive.
 - Manejar `204 No Content` en acciones de juego (sin body).
-- En copas, el bracket avanza automáticamente: el FE solo necesita consultar `GET /api/cups/{cupId}`
-  para ver el estado actualizado (no hay eventos WebSocket propios de copa).
+- Los eventos de liga (`LEAGUE_*`) llegan a **todos los participantes** de la liga, no solo a los
+  dos jugadores de cada partido.
+- Los eventos de copa (`CUP_*`) llegan a **todos los participantes** de la copa.
 - En ligas, los partidos se crean **on-demand**: al iniciar la liga solo se crea el partido de la
   fecha 1. Cuando ese partido termina (o es forfeiteado), la liga activa automáticamente el
-  siguiente partido elegible y envía un evento `MATCH_ACTIVATED` a los dos jugadores involucrados.
+  siguiente partido elegible y envía un evento `LEAGUE_MATCH_ACTIVATED` a todos los participantes.
   Los fixtures con estado `SCHEDULED` son partidos futuros aún no creados.
+- En copas, el bracket avanza automáticamente: cuando un partido termina se emite
+  `CUP_MATCH_ACTIVATED` a todos los participantes con el siguiente partido a jugar.
+  El FE puede consultar `GET /api/cups/{cupId}` para ver el estado completo del bracket.

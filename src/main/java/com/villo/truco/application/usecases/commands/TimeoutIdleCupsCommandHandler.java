@@ -3,6 +3,7 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleCupsUseCase;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
+import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
 import java.time.Duration;
@@ -20,15 +21,17 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
   private final CupRepository cupRepository;
   private final TransactionalRunner transactionalRunner;
   private final Duration idleTimeout;
+  private final CupEventNotifier cupEventNotifier;
 
   public TimeoutIdleCupsCommandHandler(final CupQueryRepository cupQueryRepository,
       final CupRepository cupRepository, final TransactionalRunner transactionalRunner,
-      final Duration idleTimeout) {
+      final Duration idleTimeout, final CupEventNotifier cupEventNotifier) {
 
     this.cupQueryRepository = Objects.requireNonNull(cupQueryRepository);
     this.cupRepository = Objects.requireNonNull(cupRepository);
     this.transactionalRunner = Objects.requireNonNull(transactionalRunner);
     this.idleTimeout = Objects.requireNonNull(idleTimeout);
+    this.cupEventNotifier = Objects.requireNonNull(cupEventNotifier);
   }
 
   @Override
@@ -59,12 +62,19 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
 
     final var cup = cupOpt.get();
     final var statusBefore = cup.getStatus();
+
+    final var participants = List.copyOf(cup.getParticipants());
+
     cup.cancel();
     if (cup.getStatus() == statusBefore) {
       return;
     }
+
     this.cupRepository.save(cup);
     LOGGER.info("Cup cancelled by timeout: cupId={}", cupId);
+
+    this.cupEventNotifier.publishDomainEvents(cupId, participants, cup.getDomainEvents());
+    cup.clearDomainEvents();
   }
 
 }
