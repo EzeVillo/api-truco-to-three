@@ -16,9 +16,9 @@ import com.villo.truco.application.usecases.commands.LeaveLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.commands.StartLeagueCommandHandler;
 import com.villo.truco.application.usecases.queries.GetLeagueStateQueryHandler;
+import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
-import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,14 +32,14 @@ public class LeagueUseCaseConfiguration {
   private final LeagueQueryRepository leagueQueryRepository;
   private final LeagueRepository leagueRepository;
   private final MatchRepository matchRepository;
-  private final MatchEventNotifier matchEventNotifier;
+  private final LeagueEventNotifier leagueEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
 
   public LeagueUseCaseConfiguration(final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository, final MatchRepository matchRepository,
-      @Lazy final MatchEventNotifier matchEventNotifier,
+      @Lazy final LeagueEventNotifier leagueEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
@@ -47,7 +47,7 @@ public class LeagueUseCaseConfiguration {
     this.leagueQueryRepository = leagueQueryRepository;
     this.leagueRepository = leagueRepository;
     this.matchRepository = matchRepository;
-    this.matchEventNotifier = matchEventNotifier;
+    this.leagueEventNotifier = leagueEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
@@ -71,7 +71,7 @@ public class LeagueUseCaseConfiguration {
   JoinLeagueUseCase joinLeagueCommandHandler() {
 
     final var handler = new JoinLeagueCommandHandler(this.leagueResolver(), this.leagueRepository,
-        this.playerAvailabilityChecker);
+        this.playerAvailabilityChecker, this.leagueEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -79,14 +79,15 @@ public class LeagueUseCaseConfiguration {
   StartLeagueUseCase startLeagueCommandHandler() {
 
     final var handler = new StartLeagueCommandHandler(this.leagueResolver(), this.leagueRepository,
-        this.matchRepository);
+        this.matchRepository, this.leagueEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   LeaveLeagueUseCase leaveLeagueCommandHandler() {
 
-    final var handler = new LeaveLeagueCommandHandler(this.leagueResolver(), this.leagueRepository);
+    final var handler = new LeaveLeagueCommandHandler(this.leagueResolver(), this.leagueRepository,
+        this.leagueEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -94,7 +95,7 @@ public class LeagueUseCaseConfiguration {
   AdvanceLeagueUseCase advanceLeagueCommandHandler() {
 
     final var handler = new AdvanceLeagueCommandHandler(this.leagueResolver(),
-        this.leagueRepository, this.matchRepository, this.matchEventNotifier);
+        this.leagueRepository, this.matchRepository, this.leagueEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -102,7 +103,7 @@ public class LeagueUseCaseConfiguration {
   ForfeitLeagueUseCase forfeitLeagueCommandHandler() {
 
     final var handler = new ForfeitLeagueCommandHandler(this.leagueResolver(),
-        this.leagueRepository, this.matchRepository, this.matchEventNotifier);
+        this.leagueRepository, this.matchRepository, this.leagueEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

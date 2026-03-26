@@ -27,6 +27,10 @@ class EventNotifierConfigurationTest {
 
     assertThat(configuration.stompMatchEventNotifier()).isNotNull();
     assertThat(configuration.matchEventNotifier()).isNotNull();
+    assertThat(configuration.stompLeagueEventNotifier()).isNotNull();
+    assertThat(configuration.leagueEventNotifier()).isNotNull();
+    assertThat(configuration.stompCupEventNotifier()).isNotNull();
+    assertThat(configuration.cupEventNotifier()).isNotNull();
   }
 
 }

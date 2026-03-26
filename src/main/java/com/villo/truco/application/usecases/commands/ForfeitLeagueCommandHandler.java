@@ -3,12 +3,10 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.commands.ForfeitLeagueCommand;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
 import com.villo.truco.domain.model.match.Match;
-import com.villo.truco.domain.model.match.events.MatchActivatedEvent;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
+import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueRepository;
-import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
-import java.util.List;
 import java.util.Objects;
 
 public final class ForfeitLeagueCommandHandler implements ForfeitLeagueUseCase {
@@ -16,16 +14,16 @@ public final class ForfeitLeagueCommandHandler implements ForfeitLeagueUseCase {
     private final LeagueResolver leagueResolver;
     private final LeagueRepository leagueRepository;
     private final MatchRepository matchRepository;
-    private final MatchEventNotifier matchEventNotifier;
+    private final LeagueEventNotifier leagueEventNotifier;
 
     public ForfeitLeagueCommandHandler(final LeagueResolver leagueResolver,
         final LeagueRepository leagueRepository, final MatchRepository matchRepository,
-        final MatchEventNotifier matchEventNotifier) {
+        final LeagueEventNotifier leagueEventNotifier) {
 
         this.leagueResolver = Objects.requireNonNull(leagueResolver);
         this.leagueRepository = Objects.requireNonNull(leagueRepository);
         this.matchRepository = Objects.requireNonNull(matchRepository);
-        this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
+        this.leagueEventNotifier = Objects.requireNonNull(leagueEventNotifier);
     }
 
     @Override
@@ -42,11 +40,14 @@ public final class ForfeitLeagueCommandHandler implements ForfeitLeagueUseCase {
                 Match.createReady(activation.playerOne(), activation.playerTwo(), matchRules);
             this.matchRepository.save(match);
             league.linkFixtureMatch(activation.fixtureId(), match.getId());
-            this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
-                match.getPlayerTwo(), List.of(new MatchActivatedEvent(match.getId())));
         }
 
         this.leagueRepository.save(league);
+
+        this.leagueEventNotifier.publishDomainEvents(league.getId(), league.getParticipants(),
+            league.getDomainEvents());
+
+        league.clearDomainEvents();
 
         return null;
     }

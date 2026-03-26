@@ -4,6 +4,7 @@ import com.villo.truco.application.commands.StartLeagueCommand;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
+import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import java.util.Objects;
@@ -13,13 +14,16 @@ public final class StartLeagueCommandHandler implements StartLeagueUseCase {
   private final LeagueResolver leagueResolver;
   private final LeagueRepository leagueRepository;
   private final MatchRepository matchRepository;
+  private final LeagueEventNotifier leagueEventNotifier;
 
   public StartLeagueCommandHandler(final LeagueResolver leagueResolver,
-      final LeagueRepository leagueRepository, final MatchRepository matchRepository) {
+      final LeagueRepository leagueRepository, final MatchRepository matchRepository,
+      final LeagueEventNotifier leagueEventNotifier) {
 
     this.leagueResolver = Objects.requireNonNull(leagueResolver);
     this.leagueRepository = Objects.requireNonNull(leagueRepository);
     this.matchRepository = Objects.requireNonNull(matchRepository);
+    this.leagueEventNotifier = Objects.requireNonNull(leagueEventNotifier);
   }
 
   @Override
@@ -39,6 +43,11 @@ public final class StartLeagueCommandHandler implements StartLeagueUseCase {
     }
 
     this.leagueRepository.save(league);
+
+    this.leagueEventNotifier.publishDomainEvents(league.getId(),
+        league.getParticipants(), league.getDomainEvents());
+
+    league.clearDomainEvents();
 
     return null;
   }

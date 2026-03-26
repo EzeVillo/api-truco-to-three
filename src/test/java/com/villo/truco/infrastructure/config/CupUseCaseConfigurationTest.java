@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.ports.PasswordHasher;
 import com.villo.truco.application.ports.PlayerTokenProvider;
+import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
@@ -27,8 +28,8 @@ class CupUseCaseConfigurationTest {
 
     final var configuration = new CupUseCaseConfiguration(mock(CupQueryRepository.class),
         mock(CupRepository.class), mock(MatchRepository.class),
-        authConfiguration.playerAvailabilityChecker(), new UseCasePipeline(List.of()),
-        new UseCasePipeline(List.of()));
+        mock(CupEventNotifier.class), authConfiguration.playerAvailabilityChecker(),
+        new UseCasePipeline(List.of()), new UseCasePipeline(List.of()));
 
     assertThat(configuration.cupResolver()).isNotNull();
     assertThat(configuration.getCupStateQueryHandler()).isNotNull();

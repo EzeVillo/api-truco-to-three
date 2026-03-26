@@ -88,7 +88,8 @@ class TimeoutIdleCupsCommandHandlerTest {
     final TransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleCupsCommandHandler(queryRepo, cupRepository, transactionalRunner,
-        Duration.ofMinutes(10));
+        Duration.ofMinutes(10), (id, participants, events) -> {
+    });
   }
 
   @Test
@@ -196,7 +197,8 @@ class TimeoutIdleCupsCommandHandlerTest {
     };
 
     final var handler = new TimeoutIdleCupsCommandHandler(queryRepo, savedCup::set, Runnable::run,
-        Duration.ofMinutes(10));
+        Duration.ofMinutes(10), (id, participants, events) -> {
+    });
 
     handler.handle();
 

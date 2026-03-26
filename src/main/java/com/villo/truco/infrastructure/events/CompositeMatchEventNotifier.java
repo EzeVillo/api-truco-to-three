@@ -7,38 +7,21 @@ import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
-import java.util.Objects;
 
-public final class CompositeMatchEventNotifier implements MatchEventNotifier {
-
-  private final List<MatchDomainEventHandler<?>> handlers;
+public final class CompositeMatchEventNotifier
+    extends CompositeEventDispatcher<MatchEventContext>
+    implements MatchEventNotifier {
 
   public CompositeMatchEventNotifier(final List<MatchDomainEventHandler<?>> handlers) {
 
-    this.handlers = List.copyOf(Objects.requireNonNull(handlers));
+    super(handlers);
   }
 
   @Override
   public void publishDomainEvents(final MatchId matchId, final PlayerId playerOne,
       final PlayerId playerTwo, final List<DomainEventBase> events) {
 
-    final var context = new MatchEventContext(matchId, playerOne, playerTwo);
-
-    for (final var event : events) {
-      for (final var handler : this.handlers) {
-        if (handler.eventType().isAssignableFrom(event.getClass()) || event.getClass()
-            .isAssignableFrom(handler.eventType())) {
-          this.invokeHandler(handler, event, context);
-        }
-      }
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private <E extends DomainEventBase> void invokeHandler(final MatchDomainEventHandler<E> handler,
-      final DomainEventBase event, final MatchEventContext context) {
-
-    handler.handle((E) event, context);
+    this.dispatchEvents(new MatchEventContext(matchId, playerOne, playerTwo), events);
   }
 
 }

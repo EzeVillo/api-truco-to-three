@@ -205,7 +205,8 @@ class LeagueCommandHandlersTest {
 
         final var saved = new AtomicReference<League>();
         final var handler = new JoinLeagueCommandHandler(new LeagueResolver(queryRepository),
-            saved::set, availableChecker());
+            saved::set, availableChecker(), (id, participants, events) -> {
+        });
 
         final var result = handler.handle(new JoinLeagueCommand(joiner, league.getInviteCode()));
 
@@ -262,7 +263,8 @@ class LeagueCommandHandlersTest {
 
         final var saved = new AtomicReference<League>();
         final var handler = new LeaveLeagueCommandHandler(new LeagueResolver(queryRepository),
-            saved::set);
+            saved::set, (id, participants, events) -> {
+        });
 
         handler.handle(new LeaveLeagueCommand(league.getId(), leaver));
 
@@ -323,7 +325,8 @@ class LeagueCommandHandlersTest {
         final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
 
         final var handler = new StartLeagueCommandHandler(new LeagueResolver(queryRepository),
-            leagueSaved::set, matchRepository);
+            leagueSaved::set, matchRepository, (id, participants, events) -> {
+        });
 
         handler.handle(new StartLeagueCommand(league.getId(), p1));
 

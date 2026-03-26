@@ -16,6 +16,7 @@ import com.villo.truco.application.usecases.commands.LeaveCupCommandHandler;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.commands.StartCupCommandHandler;
 import com.villo.truco.application.usecases.queries.GetCupStateQueryHandler;
+import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -23,6 +24,7 @@ import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class CupUseCaseConfiguration {
@@ -30,12 +32,14 @@ public class CupUseCaseConfiguration {
   private final CupQueryRepository cupQueryRepository;
   private final CupRepository cupRepository;
   private final MatchRepository matchRepository;
+  private final CupEventNotifier cupEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
 
   public CupUseCaseConfiguration(final CupQueryRepository cupQueryRepository,
       final CupRepository cupRepository, final MatchRepository matchRepository,
+      @Lazy final CupEventNotifier cupEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
@@ -43,6 +47,7 @@ public class CupUseCaseConfiguration {
     this.cupQueryRepository = cupQueryRepository;
     this.cupRepository = cupRepository;
     this.matchRepository = matchRepository;
+    this.cupEventNotifier = cupEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
@@ -66,14 +71,15 @@ public class CupUseCaseConfiguration {
   JoinCupUseCase joinCupCommandHandler() {
 
     final var handler = new JoinCupCommandHandler(this.cupResolver(), this.cupRepository,
-        this.playerAvailabilityChecker);
+        this.playerAvailabilityChecker, this.cupEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean
   LeaveCupUseCase leaveCupCommandHandler() {
 
-    final var handler = new LeaveCupCommandHandler(this.cupResolver(), this.cupRepository);
+    final var handler = new LeaveCupCommandHandler(this.cupResolver(), this.cupRepository,
+        this.cupEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -81,7 +87,7 @@ public class CupUseCaseConfiguration {
   StartCupUseCase startCupCommandHandler() {
 
     final var handler = new StartCupCommandHandler(this.cupResolver(), this.cupRepository,
-        this.matchRepository);
+        this.matchRepository, this.cupEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -95,7 +101,7 @@ public class CupUseCaseConfiguration {
   AdvanceCupUseCase advanceCupCommandHandler() {
 
     final var handler = new AdvanceCupCommandHandler(this.cupResolver(), this.cupRepository,
-        this.matchRepository);
+        this.matchRepository, this.cupEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -103,7 +109,7 @@ public class CupUseCaseConfiguration {
   ForfeitCupUseCase forfeitCupCommandHandler() {
 
     final var handler = new ForfeitCupCommandHandler(this.cupResolver(), this.cupRepository,
-        this.matchRepository);
+        this.matchRepository, this.cupEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
