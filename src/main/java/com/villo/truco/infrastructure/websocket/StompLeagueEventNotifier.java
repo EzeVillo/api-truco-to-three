@@ -36,7 +36,7 @@ public final class StompLeagueEventNotifier implements LeagueDomainEventHandler<
 
         LOGGER.debug("Publishing league event leagueId={} type={}", context.leagueId(),
             event.getEventType());
-        final var wsEvent = LeagueWsEvent.from(event);
+        final var wsEvent = LeagueWsEvent.from(event, context.leagueId());
         for (final var participant : context.participants()) {
             sendEvent(participant, wsEvent);
         }
@@ -48,7 +48,7 @@ public final class StompLeagueEventNotifier implements LeagueDomainEventHandler<
         LOGGER.debug("Sending league WS event to user={} type={}", userName,
             message.getClass().getSimpleName());
         try {
-            this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+            this.messagingTemplate.convertAndSendToUser(userName, "/queue/league", message);
             this.healthRegistry.recordSuccess();
         } catch (final RuntimeException ex) {
             this.healthRegistry.recordFailure(ex);

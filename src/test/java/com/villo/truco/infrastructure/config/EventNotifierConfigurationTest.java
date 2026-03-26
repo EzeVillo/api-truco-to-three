@@ -7,6 +7,8 @@ import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
+import com.villo.truco.domain.ports.ChatQueryRepository;
+import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
@@ -23,7 +25,8 @@ class EventNotifierConfigurationTest {
         mock(LeagueQueryRepository.class), mock(AdvanceLeagueUseCase.class),
         mock(ForfeitLeagueUseCase.class), mock(CupQueryRepository.class),
         mock(AdvanceCupUseCase.class), mock(ForfeitCupUseCase.class),
-        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class));
+        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class),
+        mock(ChatRepository.class), mock(ChatQueryRepository.class));
 
     assertThat(configuration.stompMatchEventNotifier()).isNotNull();
     assertThat(configuration.matchEventNotifier()).isNotNull();
@@ -31,6 +34,8 @@ class EventNotifierConfigurationTest {
     assertThat(configuration.leagueEventNotifier()).isNotNull();
     assertThat(configuration.stompCupEventNotifier()).isNotNull();
     assertThat(configuration.cupEventNotifier()).isNotNull();
+      assertThat(configuration.stompChatEventNotifier()).isNotNull();
+      assertThat(configuration.chatEventNotifier()).isNotNull();
   }
 
 }

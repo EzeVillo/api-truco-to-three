@@ -34,6 +34,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -233,8 +234,8 @@ public final class Cup extends AggregateBase<CupId> {
   private void advancePlayerToNextRound(final int currentRound, final int currentPos,
       final PlayerId player) {
 
-    final int nextRound = currentRound + 1;
-    final int nextPos = currentPos / 2;
+      final var nextRound = currentRound + 1;
+      final var nextPos = currentPos / 2;
     final var nextBout = this.findBout(nextRound, nextPos);
 
     if (currentPos % 2 == 0) {
@@ -246,10 +247,10 @@ public final class Cup extends AggregateBase<CupId> {
     if (nextBout.hasBothPlayers()) {
       if (this.forfeitedPlayers.contains(nextBout.playerOne())) {
         nextBout.resolve(nextBout.playerTwo());
-        advancePlayerToNextRound(nextRound, nextPos, nextBout.playerTwo());
+          this.advancePlayerToNextRound(nextRound, nextPos, nextBout.playerTwo());
       } else if (this.forfeitedPlayers.contains(nextBout.playerTwo())) {
         nextBout.resolve(nextBout.playerOne());
-        advancePlayerToNextRound(nextRound, nextPos, nextBout.playerOne());
+          this.advancePlayerToNextRound(nextRound, nextPos, nextBout.playerOne());
       } else {
         nextBout.transitionToPending();
       }
@@ -357,8 +358,8 @@ public final class Cup extends AggregateBase<CupId> {
 
     this.addDomainEvent(new CupAdvancedEvent(this.id, matchId, winner));
 
-    final int nextRound = currentRound + 1;
-    final int nextPos = currentPos / 2;
+      final var nextRound = currentRound + 1;
+      final var nextPos = currentPos / 2;
     final var nextBout = this.findBout(nextRound, nextPos);
 
     if (currentPos % 2 == 0) {
@@ -396,7 +397,8 @@ public final class Cup extends AggregateBase<CupId> {
 
   private boolean isFinalRound(final Bout bout) {
 
-    final int totalRounds = Integer.numberOfTrailingZeros(nextPowerOfTwo(this.participants.size()));
+      final var totalRounds = Integer.numberOfTrailingZeros(
+          nextPowerOfTwo(this.participants.size()));
     return bout.roundNumber() == totalRounds;
   }
 
@@ -450,7 +452,7 @@ public final class Cup extends AggregateBase<CupId> {
 
   public List<RoundView> getRounds() {
 
-    final var rounds = new java.util.LinkedHashMap<Integer, List<BoutView>>();
+      final var rounds = new LinkedHashMap<Integer, List<BoutView>>();
     for (final var bout : this.bouts) {
       rounds.computeIfAbsent(bout.roundNumber(), ignored -> new ArrayList<>()).add(bout.toView());
     }

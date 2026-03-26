@@ -35,7 +35,7 @@ class StompMatchEventNotifierTest {
 
     notifier.handle(new PlayerJoinedEvent(), context);
 
-    verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/events"), any());
+      verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/match"), any());
   }
 
   @Test
@@ -52,7 +52,7 @@ class StompMatchEventNotifierTest {
 
     notifier.handle(event, context);
 
-    verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/events"), any());
+      verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/match"), any());
   }
 
 }

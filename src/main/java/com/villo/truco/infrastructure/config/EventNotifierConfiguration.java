@@ -1,5 +1,14 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.ChatCupCancelledEventHandler;
+import com.villo.truco.application.eventhandlers.ChatCupFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatCupStartedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatLeagueCancelledEventHandler;
+import com.villo.truco.application.eventhandlers.ChatLeagueFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatLeagueStartedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatMatchFinishedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatMatchForfeitedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatMatchGameStartedEventHandler;
 import com.villo.truco.application.eventhandlers.CupMatchFinishedEventHandler;
 import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchFinishedEventHandler;
@@ -8,18 +17,24 @@ import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
+import com.villo.truco.domain.ports.ChatEventNotifier;
+import com.villo.truco.domain.ports.ChatQueryRepository;
+import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.infrastructure.actuator.metrics.ChatDomainEventMetricsHandler;
 import com.villo.truco.infrastructure.actuator.metrics.CupDomainEventMetricsHandler;
 import com.villo.truco.infrastructure.actuator.metrics.LeagueDomainEventMetricsHandler;
 import com.villo.truco.infrastructure.actuator.metrics.MatchDomainEventMetricsHandler;
+import com.villo.truco.infrastructure.events.CompositeChatEventNotifier;
 import com.villo.truco.infrastructure.events.CompositeCupEventNotifier;
 import com.villo.truco.infrastructure.events.CompositeLeagueEventNotifier;
 import com.villo.truco.infrastructure.events.CompositeMatchEventNotifier;
+import com.villo.truco.infrastructure.websocket.StompChatEventNotifier;
 import com.villo.truco.infrastructure.websocket.StompCupEventNotifier;
 import com.villo.truco.infrastructure.websocket.StompLeagueEventNotifier;
 import com.villo.truco.infrastructure.websocket.StompMatchEventNotifier;
@@ -41,6 +56,8 @@ public class EventNotifierConfiguration {
   private final ForfeitCupUseCase forfeitCupUseCase;
   private final EventNotifierHealthRegistry eventNotifierHealthRegistry;
   private final MeterRegistry meterRegistry;
+    private final ChatRepository chatRepository;
+    private final ChatQueryRepository chatQueryRepository;
 
   public EventNotifierConfiguration(final SimpMessagingTemplate messagingTemplate,
       final LeagueQueryRepository leagueQueryRepository,
@@ -49,7 +66,8 @@ public class EventNotifierConfiguration {
       final CupQueryRepository cupQueryRepository, final AdvanceCupUseCase advanceCupUseCase,
       final ForfeitCupUseCase forfeitCupUseCase,
       final EventNotifierHealthRegistry eventNotifierHealthRegistry,
-      final MeterRegistry meterRegistry) {
+      final MeterRegistry meterRegistry, final ChatRepository chatRepository,
+      final ChatQueryRepository chatQueryRepository) {
 
     this.messagingTemplate = messagingTemplate;
     this.leagueQueryRepository = leagueQueryRepository;
@@ -60,6 +78,8 @@ public class EventNotifierConfiguration {
     this.forfeitCupUseCase = forfeitCupUseCase;
     this.eventNotifierHealthRegistry = eventNotifierHealthRegistry;
     this.meterRegistry = meterRegistry;
+      this.chatRepository = chatRepository;
+      this.chatQueryRepository = chatQueryRepository;
   }
 
   @Bean
@@ -80,11 +100,31 @@ public class EventNotifierConfiguration {
     return new LeagueDomainEventMetricsHandler(this.meterRegistry);
   }
 
-  @Bean
+    @Bean
+    ChatLeagueStartedEventHandler chatLeagueStartedHandler() {
+
+        return new ChatLeagueStartedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    ChatLeagueFinishedEventHandler chatLeagueFinishedHandler() {
+
+        return new ChatLeagueFinishedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    ChatLeagueCancelledEventHandler chatLeagueCancelledHandler() {
+
+        return new ChatLeagueCancelledEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
   LeagueEventNotifier leagueEventNotifier() {
 
     return new CompositeLeagueEventNotifier(
-        List.of(this.stompLeagueEventNotifier(), this.leagueDomainEventMetricsHandler()));
+        List.of(this.stompLeagueEventNotifier(), this.leagueDomainEventMetricsHandler(),
+            this.chatLeagueStartedHandler(), this.chatLeagueFinishedHandler(),
+            this.chatLeagueCancelledHandler()));
   }
 
   @Bean
@@ -99,11 +139,31 @@ public class EventNotifierConfiguration {
     return new CupDomainEventMetricsHandler(this.meterRegistry);
   }
 
-  @Bean
+    @Bean
+    ChatCupStartedEventHandler chatCupStartedHandler() {
+
+        return new ChatCupStartedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    ChatCupFinishedEventHandler chatCupFinishedHandler() {
+
+        return new ChatCupFinishedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    ChatCupCancelledEventHandler chatCupCancelledHandler() {
+
+        return new ChatCupCancelledEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
   CupEventNotifier cupEventNotifier() {
 
     return new CompositeCupEventNotifier(
-        List.of(this.stompCupEventNotifier(), this.cupDomainEventMetricsHandler()));
+        List.of(this.stompCupEventNotifier(), this.cupDomainEventMetricsHandler(),
+            this.chatCupStartedHandler(), this.chatCupFinishedHandler(),
+            this.chatCupCancelledHandler()));
   }
 
   @Bean
@@ -138,13 +198,52 @@ public class EventNotifierConfiguration {
     return new CupMatchForfeitedEventHandler(this.cupQueryRepository, this.forfeitCupUseCase);
   }
 
-  @Bean
+    @Bean
+    ChatMatchGameStartedEventHandler chatMatchGameStartedHandler() {
+
+        return new ChatMatchGameStartedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    ChatMatchFinishedEventHandler chatMatchFinishedHandler() {
+
+        return new ChatMatchFinishedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    ChatMatchForfeitedEventHandler chatMatchForfeitedHandler() {
+
+        return new ChatMatchForfeitedEventHandler(this.chatRepository, this.chatQueryRepository);
+    }
+
+    @Bean
+    StompChatEventNotifier stompChatEventNotifier() {
+
+        return new StompChatEventNotifier(this.messagingTemplate, this.eventNotifierHealthRegistry);
+    }
+
+    @Bean
+    ChatDomainEventMetricsHandler chatDomainEventMetricsHandler() {
+
+        return new ChatDomainEventMetricsHandler(this.meterRegistry);
+    }
+
+    @Bean
+    ChatEventNotifier chatEventNotifier() {
+
+        return new CompositeChatEventNotifier(
+            List.of(this.stompChatEventNotifier(), this.chatDomainEventMetricsHandler()));
+    }
+
+    @Bean
   MatchEventNotifier matchEventNotifier() {
 
     return new CompositeMatchEventNotifier(
         List.of(this.stompMatchEventNotifier(), this.leagueMatchFinishedHandler(),
             this.leagueMatchForfeitedHandler(), this.cupMatchFinishedHandler(),
-        this.cupMatchForfeitedHandler(), this.matchDomainEventMetricsHandler()));
+            this.cupMatchForfeitedHandler(), this.matchDomainEventMetricsHandler(),
+            this.chatMatchGameStartedHandler(), this.chatMatchFinishedHandler(),
+            this.chatMatchForfeitedHandler()));
   }
 
 }

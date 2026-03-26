@@ -36,7 +36,7 @@ public final class StompCupEventNotifier implements CupDomainEventHandler<Domain
 
         LOGGER.debug("Publishing cup event cupId={} type={}", context.cupId(),
             event.getEventType());
-        final var wsEvent = CupWsEvent.from(event);
+        final var wsEvent = CupWsEvent.from(event, context.cupId());
         for (final var participant : context.participants()) {
             sendEvent(participant, wsEvent);
         }
@@ -48,7 +48,7 @@ public final class StompCupEventNotifier implements CupDomainEventHandler<Domain
         LOGGER.debug("Sending cup WS event to user={} type={}", userName,
             message.getClass().getSimpleName());
         try {
-            this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+            this.messagingTemplate.convertAndSendToUser(userName, "/queue/cup", message);
             this.healthRegistry.recordSuccess();
         } catch (final RuntimeException ex) {
             this.healthRegistry.recordFailure(ex);

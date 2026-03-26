@@ -39,7 +39,7 @@ public final class StompMatchEventNotifier implements MatchDomainEventHandler<Do
     LOGGER.debug("Publishing domain event for matchId={} type={}", context.matchId(),
         event.getEventType());
 
-    final var wsEvent = MatchWsEvent.from(event);
+      final var wsEvent = MatchWsEvent.from(event, context.matchId());
 
     if (event instanceof SeatTargetedEvent targeted) {
       final var recipient = targeted.getTargetSeat() == PlayerSeat.PLAYER_ONE ? context.playerOne()
@@ -59,7 +59,7 @@ public final class StompMatchEventNotifier implements MatchDomainEventHandler<Do
     LOGGER.debug("Sending WS event to user={} type={}", userName,
         message.getClass().getSimpleName());
     try {
-      this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+        this.messagingTemplate.convertAndSendToUser(userName, "/queue/match", message);
       this.healthRegistry.recordSuccess();
     } catch (final RuntimeException ex) {
       this.healthRegistry.recordFailure(ex);

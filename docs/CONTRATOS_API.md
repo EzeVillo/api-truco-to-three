@@ -304,6 +304,78 @@ Nota: el abandono voluntario sincroniza automáticamente el resultado al liga si
 pertenece
 a uno (igual que el timeout automático y el fin normal de partida).
 
+### 4.11 Obtener estado de partida
+
+`GET /api/matches/{matchId}`
+
+Auth: Bearer requerido.
+
+Response `200`:
+
+```json
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+  "status": "IN_PROGRESS",
+  "gamesWonPlayerOne": 1,
+  "gamesWonPlayerTwo": 0,
+  "matchWinner": null,
+  "roundGame": {
+    "status": "IN_PROGRESS",
+    "currentTurn": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "scorePlayerOne": 2,
+    "scorePlayerTwo": 1,
+    "myCards": [
+      {
+        "suit": "ESPADA",
+        "number": 1
+      },
+      {
+        "suit": "BASTO",
+        "number": 7
+      }
+    ],
+    "roundStatus": "PLAYING",
+    "currentTrucoCall": null,
+    "winner": null,
+    "availableActions": [
+      {
+        "type": "PLAY_CARD"
+      },
+      {
+        "type": "CALL_TRUCO"
+      }
+    ],
+    "playedHands": [
+      {
+        "cardPlayerOne": {
+          "suit": "ORO",
+          "number": 3
+        },
+        "cardPlayerTwo": {
+          "suit": "COPA",
+          "number": 5
+        },
+        "winner": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      }
+    ],
+    "currentHand": {
+      "cardPlayerOne": null,
+      "cardPlayerTwo": null,
+      "mano": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+    }
+  }
+}
+```
+
+- `roundGame` es `null` si la partida no está `IN_PROGRESS`
+- `myCards` contiene solo las cartas del jugador autenticado
+- `availableActions` refleja las acciones disponibles para el jugador autenticado
+
+Errores:
+
+- `404` si la partida no existe
+- `422` si el jugador no pertenece a la partida
+
 ## 5. API REST - Leagues
 
 ### 5.1 Crear liga
@@ -579,12 +651,100 @@ El FE no necesita llamar ningún endpoint adicional para el avance: solo suscrib
 WebSocket del match activo y consultar `GET /api/cups/{cupId}` para ver el estado actualizado del
 bracket.
 
-## 7. Enums y valores permitidos
+## 7. API REST - Chat
+
+Chat en tiempo real asociado a un match, liga o copa. Se crea automáticamente al iniciar el recurso
+padre y se elimina al finalizar o cancelarse.
+
+- **Match**: chat creado en `GameStartedEvent` (primer game), eliminado en `MatchFinishedEvent` o
+  `MatchForfeitedEvent`
+- **Liga**: chat creado en `LeagueStartedEvent`, eliminado en `LeagueFinishedEvent` o
+  `LeagueCancelledEvent`
+- **Copa**: chat creado en `CupStartedEvent`, eliminado en `CupFinishedEvent` o
+  `CupCancelledEvent`
+
+Reglas de negocio:
+
+- Máximo **50 mensajes** por chat (buffer circular: al llegar al límite se descarta el más antiguo)
+- Máximo **500 caracteres** por mensaje
+- **Rate limit**: 2 segundos mínimo entre mensajes del mismo jugador
+- Solo **participantes** del recurso padre pueden enviar y leer mensajes
+
+### 7.1 Enviar mensaje
+
+`POST /api/chats/{chatId}/messages`
+
+Auth: Bearer requerido.
+
+Request:
+
+```json
+{
+  "content": "Buena mano!"
+}
+```
+
+Response `204` sin body.
+
+Errores:
+
+- `404` si el chat no existe
+- `422` si el jugador no pertenece al chat, el mensaje está vacío, excede 500 caracteres, o
+  viola el rate limit (2 segundos)
+
+### 7.2 Obtener mensajes por chatId
+
+`GET /api/chats/{chatId}/messages`
+
+Auth: Bearer requerido.
+
+Response `200`:
+
+```json
+{
+  "chatId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "parentType": "MATCH",
+  "parentId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "messages": [
+    {
+      "messageId": "d4e5f6a7-b8c9-0123-4567-89abcdef0123",
+      "senderId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "content": "Buena mano!",
+      "sentAt": 1772768158123
+    }
+  ]
+}
+```
+
+Errores:
+
+- `404` si el chat no existe
+- `422` si el jugador no pertenece al chat
+
+### 7.3 Buscar chat por recurso padre
+
+`GET /api/chats/by-parent/{parentType}/{parentId}`
+
+Auth: Bearer requerido.
+
+Path params:
+
+- `parentType`: `MATCH`, `LEAGUE` o `CUP`
+- `parentId`: UUID del match, liga o copa
+
+Response `200`: misma estructura que 7.2.
+
+Errores:
+
+- `404` si no existe chat para ese recurso
+- `422` si el jugador no pertenece al chat
+
+## 8. Enums y valores permitidos
 
 Estos valores se parsean con `Enum.valueOf(...)`, por lo que deben enviarse exactamente igual (
 mayusculas y guiones bajos).
 
-### 7.1 Requests
+### 8.1 Requests
 
 - `PlayCardRequest.suit`:
     - `ESPADA`, `BASTO`, `COPA`, `ORO`
@@ -595,7 +755,7 @@ mayusculas y guiones bajos).
 - `RespondTrucoRequest.response`:
     - `QUIERO`, `NO_QUIERO`, `QUIERO_Y_ME_VOY_AL_MAZO`
 
-### 7.2 Estados en respuestas
+### 8.2 Estados en respuestas
 
 - `MatchStateResponse.status`:
     - `WAITING_FOR_PLAYERS`, `IN_PROGRESS`, `FINISHED`
@@ -606,9 +766,9 @@ mayusculas y guiones bajos).
 - `AvailableActionResponse.type`:
     - `PLAY_CARD`, `CALL_TRUCO`, `CALL_ENVIDO`, `RESPOND_TRUCO`, `RESPOND_ENVIDO`, `FOLD`
 
-## 8. WebSocket / STOMP
+## 9. WebSocket / STOMP
 
-### 8.1 Endpoints de conexion
+### 9.1 Endpoints de conexion
 
 - WebSocket nativo: `/ws`
 - SockJS: `/ws-sockjs`
@@ -621,29 +781,34 @@ Broker/prefijos:
 
 Nota: no hay `@MessageMapping` para mensajes cliente->server.
 
-### 8.2 Autenticacion WS
+### 9.2 Autenticacion WS
 
 En frame STOMP `CONNECT` enviar header:
 
 - `Authorization: Bearer <jwt>`
 
-El token debe contener `matchId` y `sub` (playerId).
+El token debe contener `sub` (playerId).
 
-### 8.3 Suscripcion permitida
+### 9.3 Suscripciones permitidas
 
-Unica suscripcion permitida por interceptor:
+Suscripciones permitidas por interceptor:
 
-- `/user/queue/events`
+- `/user/queue/match` — eventos de match
+- `/user/queue/league` — eventos de liga
+- `/user/queue/cup` — eventos de copa
+- `/user/queue/chat` — eventos de chat en tiempo real
 
-Cualquier otro destino se rechaza.
+Cualquier otro destino se rechaza
 
-### 8.4 Forma del evento WS
+### 9.4 Forma del evento WS
 
-Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `LeagueWsEvent`,
-`CupWsEvent`):
+Cada tipo de recurso tiene su propia estructura de evento:
+
+**Match** (`/user/queue/match`):
 
 ```json
 {
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "eventType": "CARD_PLAYED",
   "timestamp": 1772768158123,
   "payload": {
@@ -656,7 +821,47 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
 }
 ```
 
-### 8.5 eventType posibles — Match (2 jugadores del partido)
+**Liga** (`/user/queue/league`):
+
+```json
+{
+  "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "eventType": "LEAGUE_STARTED",
+  "timestamp": 1772768158123,
+  "payload": {}
+}
+```
+
+**Copa** (`/user/queue/cup`):
+
+```json
+{
+  "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "eventType": "CUP_STARTED",
+  "timestamp": 1772768158123,
+  "payload": {}
+}
+```
+
+**Chat** (`/user/queue/chat`):
+
+```json
+{
+  "chatId": "d4e5f6a7-b8c9-0123-4567-89abcdef0123",
+  "eventType": "MESSAGE_SENT",
+  "timestamp": 1772768158123,
+  "payload": {
+    "senderId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "content": "Buena mano!",
+    "sentAt": 1772768158123
+  }
+}
+```
+
+Nota: los IDs de recurso (`matchId`, `leagueId`, `cupId`, `chatId`) son campos top-level del
+evento, no dentro del `payload`.
+
+### 9.5 eventType posibles — Match (`/user/queue/match`, 2 jugadores del partido)
 
 - `AVAILABLE_ACTIONS_UPDATED`
 - `CARD_PLAYED`
@@ -679,7 +884,7 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
 - `HAND_RESOLVED`
 - `HAND_CHANGED`
 
-### 8.5b eventType posibles — Liga (todos los participantes de la liga)
+### 9.5b eventType posibles — Liga (`/user/queue/league`, todos los participantes de la liga)
 
 - `LEAGUE_PLAYER_JOINED` — un jugador se unió a la liga
 - `LEAGUE_PLAYER_LEFT` — un jugador no-creador abandonó la liga
@@ -691,7 +896,7 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
 - `LEAGUE_PLAYER_FORFEITED` — un jugador ha sido declarado forfeit
 - `LEAGUE_FINISHED` — la liga terminó
 
-### 8.5c eventType posibles — Copa (todos los participantes de la copa)
+### 9.5c eventType posibles — Copa (`/user/queue/cup`, todos los participantes de la copa)
 
 - `CUP_PLAYER_JOINED` — un jugador se unió a la copa
 - `CUP_PLAYER_LEFT` — un jugador no-creador abandonó la copa
@@ -703,7 +908,12 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
 - `CUP_PLAYER_FORFEITED` — un jugador fue declarado forfeit
 - `CUP_FINISHED` — la copa terminó con un campeón
 
-### 8.6 Payload por evento (resumen)
+### 9.5d eventType posibles — Chat (`/user/queue/chat`, participantes del chat)
+
+- `CHAT_CREATED` — chat creado automáticamente al iniciar match/liga/copa
+- `MESSAGE_SENT` — un participante envió un mensaje
+
+### 9.6 Payload por evento (resumen)
 
 - `CARD_PLAYED`:
     - `{ seat, card: { suit, number } }`
@@ -747,39 +957,46 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
     - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
       `payload: {}`.
 - `LEAGUE_MATCH_ACTIVATED`:
-  - `{ leagueId, matchId }` — se emite a todos los participantes de la liga cuando un partido
+  - `{ matchId }` — se emite a todos los participantes de la liga cuando un partido
     es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
 - `CUP_MATCH_ACTIVATED`:
-  - `{ cupId, matchId }` — se emite a todos los participantes de la copa cuando un partido de
+  - `{ matchId }` — se emite a todos los participantes de la copa cuando un partido de
     bracket es activado.
 - `LEAGUE_PLAYER_JOINED` / `CUP_PLAYER_JOINED`:
-  - `{ leagueId/cupId, playerId }`
+  - `{ playerId }`
 - `LEAGUE_PLAYER_LEFT` / `CUP_PLAYER_LEFT`:
-  - `{ leagueId/cupId, playerId }`
+  - `{ playerId }`
 - `LEAGUE_CANCELLED` / `CUP_CANCELLED`:
-  - `{ leagueId/cupId }`
+  - `{}`
 - `LEAGUE_STARTED` / `CUP_STARTED`:
-  - `{ leagueId/cupId }`
+  - `{}`
 - `LEAGUE_FIXTURE_ACTIVATED`:
-  - `{ leagueId, fixtureId }`
+  - `{ fixtureId }`
 - `CUP_BOUT_ACTIVATED`:
-  - `{ cupId, boutId }`
+  - `{ boutId }`
 - `LEAGUE_ADVANCED`:
-  - `{ leagueId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+  - `{ matchId?, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
     (por ejemplo, forfeit del oponente)
 - `CUP_ADVANCED`:
-  - `{ cupId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+  - `{ matchId?, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
     (por ejemplo, bye o forfeit del oponente)
 - `LEAGUE_PLAYER_FORFEITED`:
-  - `{ leagueId, playerId }`
+  - `{ forfeiter }`
 - `CUP_PLAYER_FORFEITED`:
-  - `{ cupId, playerId }`
+  - `{ forfeiter }`
 - `LEAGUE_FINISHED`:
-  - `{ leagueId, leaders: [playerId, ...] }`
+  - `{ leaders: [playerId, ...] }`
 - `CUP_FINISHED`:
-  - `{ cupId, champion: playerId }`
+  - `{ champion: playerId }`
+- Nota: el `leagueId`/`cupId` se incluye como campo top-level del evento, no en el payload
+- `CHAT_CREATED`:
+  - `{}` — el FE puede consultar `GET /api/chats/by-parent/{parentType}/{parentId}` para obtener
+    el chat
+- `MESSAGE_SENT`:
+  - `{ senderId, content, sentAt }` — `sentAt` en milisegundos epoch
+  - Nota: el `chatId` se incluye como campo top-level del evento, no en el payload
 
-## 9. Flujo de autenticacion recomendado
+## 10. Flujo de autenticacion recomendado
 
 1. El FE llama a `/api/auth/register`, `/api/auth/login` o `/api/auth/guest` para obtener un JWT con
    el `playerId`.
@@ -787,7 +1004,7 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
    `/api/leagues/**`, `/api/cups/**`).
 3. Para WebSocket, envia el JWT en el header `Authorization` del frame STOMP `CONNECT`.
 
-## 10. Notas para FE
+## 11. Notas para FE
 
 - Tratar enums como case-sensitive.
 - Manejar `204 No Content` en acciones de juego (sin body).
@@ -801,3 +1018,25 @@ Todos los eventos comparten la misma estructura base (ver `MatchWsEvent`, `Leagu
 - En copas, el bracket avanza automáticamente: cuando un partido termina se emite
   `CUP_MATCH_ACTIVATED` a todos los participantes con el siguiente partido a jugar.
   El FE puede consultar `GET /api/cups/{cupId}` para ver el estado completo del bracket.
+- El **chat** se crea automáticamente al iniciar un match, liga o copa. Se elimina al finalizar
+  o cancelarse el recurso padre. Para obtener el chat, usar
+  `GET /api/chats/by-parent/{MATCH|LEAGUE|CUP}/{parentId}`. Los eventos de chat llegan por
+  `/user/queue/chat`. El chat tiene un buffer circular de 50 mensajes y rate limit de 2 segundos
+  entre mensajes del mismo jugador.
+
+### 11.1 Reconexión WebSocket
+
+Flujo recomendado para reconectar tras una desconexión:
+
+1. Reconectar al WebSocket (`/ws` o `/ws-sockjs`) con el JWT en el frame STOMP `CONNECT`
+2. Re-suscribirse a los canales relevantes (`/user/queue/match`, `/user/queue/league`, etc.)
+3. **Bufferar** los eventos entrantes sin procesarlos todavía
+4. Hacer `GET` del estado actual:
+
+- Match: `GET /api/matches/{matchId}`
+- Liga: `GET /api/leagues/{leagueId}`
+- Copa: `GET /api/cups/{cupId}`
+- Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
+
+5. Aplicar el estado del GET como base autoritativa
+6. Descartar eventos bufferados con `timestamp` anterior al GET; aplicar los posteriores

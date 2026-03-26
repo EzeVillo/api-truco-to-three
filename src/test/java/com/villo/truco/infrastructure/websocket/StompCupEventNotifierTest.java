@@ -33,7 +33,7 @@ class StompCupEventNotifierTest {
 
         notifier.handle(new CupStartedEvent(cupId), context);
 
-        verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/events"), any());
+        verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/cup"), any());
     }
 
 }

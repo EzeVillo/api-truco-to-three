@@ -21,13 +21,15 @@ import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.Card;
+import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.DomainEventBase;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public record MatchWsEvent(String eventType, long timestamp, Map<String, Object> payload) {
+public record MatchWsEvent(String matchId, String eventType, long timestamp,
+                           Map<String, Object> payload) {
 
-  public static MatchWsEvent from(final DomainEventBase event) {
+    public static MatchWsEvent from(final DomainEventBase event, final MatchId matchId) {
 
     final var payload = switch (event) {
       case CardPlayedEvent e -> mapCardPlayed(e);
@@ -52,7 +54,9 @@ public record MatchWsEvent(String eventType, long timestamp, Map<String, Object>
       default -> Map.<String, Object>of();
     };
 
-    return new MatchWsEvent(event.getEventType(), event.getTimestamp(), payload);
+        return new MatchWsEvent(matchId.value().toString(), event.getEventType(),
+            event.getTimestamp(),
+            payload);
   }
 
   private static Map<String, Object> mapCardPlayed(final CardPlayedEvent event) {

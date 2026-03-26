@@ -9,15 +9,15 @@ import com.villo.truco.domain.model.league.events.LeaguePlayerForfeitedEvent;
 import com.villo.truco.domain.model.league.events.LeaguePlayerJoinedEvent;
 import com.villo.truco.domain.model.league.events.LeaguePlayerLeftEvent;
 import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
+import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.shared.DomainEventBase;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public record LeagueWsEvent(String eventType, long timestamp, Map<String, Object> payload) {
+public record LeagueWsEvent(String leagueId, String eventType, long timestamp,
+                            Map<String, Object> payload) {
 
-    private static final String LEAGUE_ID = "leagueId";
-
-    public static LeagueWsEvent from(final DomainEventBase event) {
+    public static LeagueWsEvent from(final DomainEventBase event, final LeagueId leagueId) {
 
         final var payload = switch (event) {
             case LeaguePlayerJoinedEvent e -> mapPlayerJoined(e);
@@ -32,13 +32,13 @@ public record LeagueWsEvent(String eventType, long timestamp, Map<String, Object
             default -> Map.<String, Object>of();
         };
 
-        return new LeagueWsEvent(event.getEventType(), event.getTimestamp(), payload);
+        return new LeagueWsEvent(leagueId.value().toString(), event.getEventType(),
+            event.getTimestamp(), payload);
     }
 
     private static Map<String, Object> mapPlayerJoined(final LeaguePlayerJoinedEvent event) {
 
         final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
         map.put("playerId", event.getPlayerId().value().toString());
         return map;
     }
@@ -46,42 +46,34 @@ public record LeagueWsEvent(String eventType, long timestamp, Map<String, Object
     private static Map<String, Object> mapPlayerLeft(final LeaguePlayerLeftEvent event) {
 
         final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
         map.put("playerId", event.getPlayerId().value().toString());
         return map;
     }
 
     private static Map<String, Object> mapCancelled(final LeagueCancelledEvent event) {
 
-        return Map.of(LEAGUE_ID, event.getLeagueId().value().toString());
+        return Map.of();
     }
 
     private static Map<String, Object> mapStarted(final LeagueStartedEvent event) {
 
-        return Map.of(LEAGUE_ID, event.getLeagueId().value().toString());
+        return Map.of();
     }
 
     private static Map<String, Object> mapFixtureActivated(
         final LeagueFixtureActivatedEvent event) {
 
-        final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
-        map.put("fixtureId", event.getFixtureId().value().toString());
-        return map;
+        return Map.of("fixtureId", event.getFixtureId().value().toString());
     }
 
     private static Map<String, Object> mapMatchActivated(final LeagueMatchActivatedEvent event) {
 
-        final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
-        map.put("matchId", event.getMatchId().value().toString());
-        return map;
+        return Map.of("matchId", event.getMatchId().value().toString());
     }
 
     private static Map<String, Object> mapAdvanced(final LeagueAdvancedEvent event) {
 
         final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
         if (event.getMatchId() != null) {
             map.put("matchId", event.getMatchId().value().toString());
         }
@@ -91,19 +83,13 @@ public record LeagueWsEvent(String eventType, long timestamp, Map<String, Object
 
     private static Map<String, Object> mapPlayerForfeited(final LeaguePlayerForfeitedEvent event) {
 
-        final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
-        map.put("forfeiter", event.getForfeiter().value().toString());
-        return map;
+        return Map.of("forfeiter", event.getForfeiter().value().toString());
     }
 
     private static Map<String, Object> mapFinished(final LeagueFinishedEvent event) {
 
-        final var map = new LinkedHashMap<String, Object>();
-        map.put(LEAGUE_ID, event.getLeagueId().value().toString());
-        map.put("leaders",
+        return Map.of("leaders",
             event.getLeaders().stream().map(p -> p.value().toString()).toList());
-        return map;
     }
 
 }

@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.websocket;
 
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
   private static final String IDENTITY_ATTR = "authenticatedPlayer";
   private static final String TOKEN_HEADER = "Authorization";
+  private static final Set<String> ALLOWED_DESTINATIONS = Set.of(
+      "/user/queue/match", "/user/queue/league", "/user/queue/cup", "/user/queue/chat");
   private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
 
   private final JwtDecoder jwtDecoder;
@@ -93,7 +96,7 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
   private void validateTopicAccess(final String destination) {
 
-    if ("/user/queue/events".equals(destination)) {
+    if (ALLOWED_DESTINATIONS.contains(destination)) {
       return;
     }
 

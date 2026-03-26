@@ -33,7 +33,7 @@ class StompLeagueEventNotifierTest {
 
         notifier.handle(new LeagueStartedEvent(leagueId), context);
 
-        verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/events"), any());
+        verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/league"), any());
     }
 
 }
