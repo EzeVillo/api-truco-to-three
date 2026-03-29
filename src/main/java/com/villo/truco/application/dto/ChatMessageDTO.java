@@ -1,14 +1,13 @@
 package com.villo.truco.application.dto;
 
-import com.villo.truco.domain.model.chat.ChatMessage;
+import com.villo.truco.domain.model.chat.ChatMessageView;
 
 public record ChatMessageDTO(String messageId, String senderId, String content, long sentAt) {
 
-    public static ChatMessageDTO from(final ChatMessage message) {
+  public static ChatMessageDTO from(final ChatMessageView message) {
 
-        return new ChatMessageDTO(message.getId().value().toString(),
-            message.getSenderId().value().toString(), message.getContent(),
-            message.getSentAt().toEpochMilli());
-    }
+    return new ChatMessageDTO(message.id().value().toString(),
+        message.senderId().value().toString(), message.content(), message.sentAt().toEpochMilli());
+  }
 
 }

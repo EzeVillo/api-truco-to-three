@@ -4,7 +4,6 @@ import com.villo.truco.domain.model.chat.Chat;
 import com.villo.truco.domain.model.chat.ChatMessageSnapshot;
 import com.villo.truco.domain.model.chat.ChatRehydrator;
 import com.villo.truco.domain.model.chat.ChatSnapshot;
-import com.villo.truco.domain.model.chat.ChatSnapshotExtractor;
 import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatMessageId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
@@ -22,65 +21,59 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChatMapper {
 
-    public ChatJpaEntity toEntity(final Chat chat) {
+  public ChatJpaEntity toEntity(final Chat chat) {
 
-        final var snapshot = ChatSnapshotExtractor.extract(chat);
-        final var entity = new ChatJpaEntity();
+    final var snapshot = chat.snapshot();
+    final var entity = new ChatJpaEntity();
 
-        entity.setId(snapshot.id().value());
-        entity.setParentType(snapshot.parentType().name());
-        entity.setParentId(snapshot.parentId());
-        entity.setParticipants(
-            snapshot.participants().stream().map(PlayerId::value).toList());
-        entity.setMessages(
-            snapshot.messages().stream().map(this::toMessageData).toList());
+    entity.setId(snapshot.id().value());
+    entity.setParentType(snapshot.parentType().name());
+    entity.setParentId(snapshot.parentId());
+    entity.setParticipants(snapshot.participants().stream().map(PlayerId::value).toList());
+    entity.setMessages(snapshot.messages().stream().map(this::toMessageData).toList());
 
-        final var timestamps = new HashMap<String, Long>();
-        snapshot.lastMessageTimestamps()
-            .forEach((playerId, instant) -> timestamps.put(playerId.value().toString(),
-                instant.toEpochMilli()));
-        entity.setLastMessageTimestamps(timestamps);
+    final var timestamps = new HashMap<String, Long>();
+    snapshot.lastMessageTimestamps().forEach(
+        (playerId, instant) -> timestamps.put(playerId.value().toString(), instant.toEpochMilli()));
+    entity.setLastMessageTimestamps(timestamps);
 
-        entity.setRateLimitMs(snapshot.rateLimitCooldown().toMillis());
-        entity.setVersion((int) chat.getVersion());
+    entity.setRateLimitMs(snapshot.rateLimitCooldown().toMillis());
+    entity.setVersion((int) chat.getVersion());
 
-        return entity;
-    }
+    return entity;
+  }
 
-    public Chat toDomain(final ChatJpaEntity entity) {
+  public Chat toDomain(final ChatJpaEntity entity) {
 
-        final var participants = entity.getParticipants().stream()
-            .map(PlayerId::new)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+    final var participants = entity.getParticipants().stream().map(PlayerId::new)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        final var messages = entity.getMessages().stream()
-            .map(this::toMessageSnapshot)
-            .toList();
+    final var messages = entity.getMessages().stream().map(this::toMessageSnapshot).toList();
 
-        final var timestamps = new HashMap<PlayerId, Instant>();
-        entity.getLastMessageTimestamps()
-            .forEach((uuidStr, millis) -> timestamps.put(new PlayerId(UUID.fromString(uuidStr)),
-                Instant.ofEpochMilli(millis)));
+    final var timestamps = new HashMap<PlayerId, Instant>();
+    entity.getLastMessageTimestamps().forEach(
+        (uuidStr, millis) -> timestamps.put(new PlayerId(UUID.fromString(uuidStr)),
+            Instant.ofEpochMilli(millis)));
 
-        final var snapshot = new ChatSnapshot(new ChatId(entity.getId()),
-            ChatParentType.valueOf(entity.getParentType()), entity.getParentId(), participants,
-            messages, timestamps, Duration.ofMillis(entity.getRateLimitMs()));
+    final var snapshot = new ChatSnapshot(new ChatId(entity.getId()),
+        ChatParentType.valueOf(entity.getParentType()), entity.getParentId(), participants,
+        messages, timestamps, Duration.ofMillis(entity.getRateLimitMs()));
 
-        final var chat = ChatRehydrator.rehydrate(snapshot);
-        chat.setVersion(entity.getVersion());
-        return chat;
-    }
+    final var chat = ChatRehydrator.rehydrate(snapshot);
+    chat.setVersion(entity.getVersion());
+    return chat;
+  }
 
-    private ChatMessageData toMessageData(final ChatMessageSnapshot message) {
+  private ChatMessageData toMessageData(final ChatMessageSnapshot message) {
 
-        return new ChatMessageData(message.id().value(), message.senderId().value(),
-            message.content(), message.sentAt().toEpochMilli());
-    }
+    return new ChatMessageData(message.id().value(), message.senderId().value(), message.content(),
+        message.sentAt().toEpochMilli());
+  }
 
-    private ChatMessageSnapshot toMessageSnapshot(final ChatMessageData data) {
+  private ChatMessageSnapshot toMessageSnapshot(final ChatMessageData data) {
 
-        return new ChatMessageSnapshot(new ChatMessageId(data.id()), new PlayerId(data.senderId()),
-            data.content(), Instant.ofEpochMilli(data.sentAt()));
-    }
+    return new ChatMessageSnapshot(new ChatMessageId(data.id()), new PlayerId(data.senderId()),
+        data.content(), Instant.ofEpochMilli(data.sentAt()));
+  }
 
 }

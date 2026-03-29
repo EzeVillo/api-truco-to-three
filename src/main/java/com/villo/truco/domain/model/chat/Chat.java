@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -77,21 +78,21 @@ public final class Chat extends AggregateBase<ChatId> {
     return chat;
   }
 
-  public ChatMessage sendMessage(final PlayerId sender, final String content) {
+  public void sendMessage(final PlayerId sender, final String content) {
 
     this.validateParticipant(sender);
     this.validateRateLimit(sender);
 
-    final var message = ChatMessage.create(sender, content, Instant.now());
+    final var sentAt = Instant.now();
+    final var message = ChatMessage.create(sender, content, sentAt);
 
     if (this.messages.size() >= MAX_MESSAGES) {
       this.messages.removeFirst();
     }
     this.messages.add(message);
-    this.lastMessageTimestamps.put(sender, message.getSentAt());
+    this.lastMessageTimestamps.put(sender, sentAt);
 
     this.collectMessageEvents(message);
-    return message;
   }
 
   public void validateParticipant(final PlayerId playerId) {
@@ -104,11 +105,6 @@ public final class Chat extends AggregateBase<ChatId> {
   boolean hasPlayer(final PlayerId playerId) {
 
     return this.participants.contains(playerId);
-  }
-
-  public List<ChatMessage> getMessages() {
-
-    return Collections.unmodifiableList(this.messages);
   }
 
   public Set<PlayerId> getParticipants() {
@@ -134,6 +130,22 @@ public final class Chat extends AggregateBase<ChatId> {
   Map<PlayerId, Instant> getLastMessageTimestamps() {
 
     return Collections.unmodifiableMap(this.lastMessageTimestamps);
+  }
+
+  public ChatReadView toReadView() {
+
+    return new ChatReadView(this.id, this.parentType, this.parentId,
+        Collections.unmodifiableSet(new LinkedHashSet<>(this.participants)),
+        this.messages.stream().map(ChatMessage::toReadView).toList());
+  }
+
+  public ChatSnapshot snapshot() {
+
+    return new ChatSnapshot(this.id, this.parentType, this.parentId,
+        Collections.unmodifiableSet(new LinkedHashSet<>(this.participants)),
+        this.messages.stream().map(ChatMessage::toSnapshot).toList(),
+        Collections.unmodifiableMap(new LinkedHashMap<>(this.lastMessageTimestamps)),
+        this.rateLimitCooldown);
   }
 
   private void collectMessageEvents(final ChatMessage message) {

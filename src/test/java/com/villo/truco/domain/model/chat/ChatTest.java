@@ -53,10 +53,11 @@ class ChatTest {
     void createChat_emitsChatCreatedEvent() {
 
       final var chat = createChat();
+      final var readView = chat.toReadView();
 
-      assertThat(chat.getParticipants()).containsExactlyInAnyOrder(playerOne, playerTwo);
-      assertThat(chat.getParentType()).isEqualTo(ChatParentType.MATCH);
-      assertThat(chat.getMessages()).isEmpty();
+      assertThat(readView.participants()).containsExactlyInAnyOrder(playerOne, playerTwo);
+      assertThat(readView.parentType()).isEqualTo(ChatParentType.MATCH);
+      assertThat(readView.messages()).isEmpty();
       assertThat(chat.getDomainEvents()).hasSize(1);
       assertThat(chat.getDomainEvents().getFirst()).isInstanceOf(ChatCreatedEvent.class);
     }
@@ -84,10 +85,11 @@ class ChatTest {
       chat.clearDomainEvents();
 
       chat.sendMessage(playerOne, "Hello");
+      final var messages = chat.toReadView().messages();
 
-      assertThat(chat.getMessages()).hasSize(1);
-      assertThat(chat.getMessages().getFirst().getContent()).isEqualTo("Hello");
-      assertThat(chat.getMessages().getFirst().getSenderId()).isEqualTo(playerOne);
+      assertThat(messages).hasSize(1);
+      assertThat(messages.getFirst().content()).isEqualTo("Hello");
+      assertThat(messages.getFirst().senderId()).isEqualTo(playerOne);
       assertThat(chat.getDomainEvents()).hasSize(1);
       assertThat(chat.getDomainEvents().getFirst()).isInstanceOf(ChatEventEnvelope.class);
       assertThat(((ChatEventEnvelope) chat.getDomainEvents().getFirst()).getInner()).isInstanceOf(
@@ -156,7 +158,7 @@ class ChatTest {
 
       chat.sendMessage(playerOne, content);
 
-      assertThat(chat.getMessages()).hasSize(1);
+      assertThat(chat.toReadView().messages()).hasSize(1);
     }
 
   }
@@ -185,7 +187,7 @@ class ChatTest {
       chat.sendMessage(playerOne, "from player one");
       chat.sendMessage(playerTwo, "from player two");
 
-      assertThat(chat.getMessages()).hasSize(2);
+      assertThat(chat.toReadView().messages()).hasSize(2);
     }
 
     @Test
@@ -198,7 +200,7 @@ class ChatTest {
       chat.sendMessage(playerOne, "second");
       chat.sendMessage(playerOne, "third");
 
-      assertThat(chat.getMessages()).hasSize(3);
+      assertThat(chat.toReadView().messages()).hasSize(3);
     }
 
   }
@@ -217,14 +219,15 @@ class ChatTest {
         chat.sendMessage(playerOne, "msg-" + i);
       }
 
-      assertThat(chat.getMessages()).hasSize(Chat.MAX_MESSAGES);
-      assertThat(chat.getMessages().getFirst().getContent()).isEqualTo("msg-0");
+      assertThat(chat.toReadView().messages()).hasSize(Chat.MAX_MESSAGES);
+      assertThat(chat.toReadView().messages().getFirst().content()).isEqualTo("msg-0");
 
       chat.sendMessage(playerOne, "overflow");
 
-      assertThat(chat.getMessages()).hasSize(Chat.MAX_MESSAGES);
-      assertThat(chat.getMessages().getFirst().getContent()).isEqualTo("msg-1");
-      assertThat(chat.getMessages().get(Chat.MAX_MESSAGES - 1).getContent()).isEqualTo("overflow");
+      assertThat(chat.toReadView().messages()).hasSize(Chat.MAX_MESSAGES);
+      assertThat(chat.toReadView().messages().getFirst().content()).isEqualTo("msg-1");
+      assertThat(chat.toReadView().messages().get(Chat.MAX_MESSAGES - 1).content()).isEqualTo(
+          "overflow");
     }
 
     @Test
@@ -237,9 +240,9 @@ class ChatTest {
         chat.sendMessage(playerOne, "msg-" + i);
       }
 
-      assertThat(chat.getMessages()).hasSize(Chat.MAX_MESSAGES);
-      assertThat(chat.getMessages().getFirst().getContent()).isEqualTo("msg-10");
-      assertThat(chat.getMessages().get(Chat.MAX_MESSAGES - 1).getContent()).isEqualTo(
+      assertThat(chat.toReadView().messages()).hasSize(Chat.MAX_MESSAGES);
+      assertThat(chat.toReadView().messages().getFirst().content()).isEqualTo("msg-10");
+      assertThat(chat.toReadView().messages().get(Chat.MAX_MESSAGES - 1).content()).isEqualTo(
           "msg-" + (Chat.MAX_MESSAGES + 9));
     }
 

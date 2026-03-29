@@ -30,6 +30,19 @@ class CleanArchitectureTest {
       .resideInAnyPackage("org.springframework..");
 
   @ArchTest
+  static final ArchRule application_and_infrastructure_must_not_depend_on_chat_message_entity = ArchRuleDefinition.noClasses()
+      .that().resideInAnyPackage("..application..", "..infrastructure..").should()
+      .dependOnClassesThat()
+      .haveFullyQualifiedName("com.villo.truco.domain.model.chat.ChatMessage");
+
+  @ArchTest
+  static final ArchRule application_must_not_depend_on_chat_persistence_snapshots = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("..application..").should().dependOnClassesThat()
+      .haveFullyQualifiedName("com.villo.truco.domain.model.chat.ChatSnapshot").orShould()
+      .dependOnClassesThat()
+      .haveFullyQualifiedName("com.villo.truco.domain.model.chat.ChatMessageSnapshot");
+
+  @ArchTest
   static final ArchRule http_layer_must_use_input_ports_not_usecase_implementations = ArchRuleDefinition.noClasses()
       .that().resideInAPackage("..infrastructure.http..").should().dependOnClassesThat()
       .resideInAPackage("..application.usecases..");

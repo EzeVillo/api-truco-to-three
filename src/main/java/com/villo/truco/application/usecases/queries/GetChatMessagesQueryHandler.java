@@ -8,21 +8,21 @@ import java.util.Objects;
 
 public final class GetChatMessagesQueryHandler implements GetChatMessagesUseCase {
 
-    private final ChatResolver chatResolver;
+  private final ChatResolver chatResolver;
 
-    public GetChatMessagesQueryHandler(final ChatResolver chatResolver) {
+  public GetChatMessagesQueryHandler(final ChatResolver chatResolver) {
 
-        this.chatResolver = Objects.requireNonNull(chatResolver);
-    }
+    this.chatResolver = Objects.requireNonNull(chatResolver);
+  }
 
-    @Override
-    public ChatMessagesDTO handle(final GetChatMessagesQuery query) {
+  @Override
+  public ChatMessagesDTO handle(final GetChatMessagesQuery query) {
 
-        final var chat = this.chatResolver.resolve(query.chatId());
+    final var chat = this.chatResolver.resolve(query.chatId());
 
-        chat.validateParticipant(query.requestingPlayer());
+    chat.validateParticipant(query.requestingPlayer());
 
-        return ChatMessagesDTO.of(chat);
-    }
+    return ChatMessagesDTO.of(chat.toReadView());
+  }
 
 }

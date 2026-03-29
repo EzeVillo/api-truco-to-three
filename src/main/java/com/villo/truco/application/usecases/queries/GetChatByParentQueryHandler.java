@@ -9,23 +9,23 @@ import java.util.Objects;
 
 public final class GetChatByParentQueryHandler implements GetChatByParentUseCase {
 
-    private final ChatQueryRepository chatQueryRepository;
+  private final ChatQueryRepository chatQueryRepository;
 
-    public GetChatByParentQueryHandler(final ChatQueryRepository chatQueryRepository) {
+  public GetChatByParentQueryHandler(final ChatQueryRepository chatQueryRepository) {
 
-        this.chatQueryRepository = Objects.requireNonNull(chatQueryRepository);
-    }
+    this.chatQueryRepository = Objects.requireNonNull(chatQueryRepository);
+  }
 
-    @Override
-    public ChatMessagesDTO handle(final GetChatByParentQuery query) {
+  @Override
+  public ChatMessagesDTO handle(final GetChatByParentQuery query) {
 
-        final var chat = this.chatQueryRepository
-            .findByParentTypeAndParentId(query.parentType(), query.parentId())
-            .orElseThrow(() -> new ChatNotFoundException(query.parentType(), query.parentId()));
+    final var chat = this.chatQueryRepository.findByParentTypeAndParentId(query.parentType(),
+            query.parentId())
+        .orElseThrow(() -> new ChatNotFoundException(query.parentType(), query.parentId()));
 
-        chat.validateParticipant(query.requestingPlayer());
+    chat.validateParticipant(query.requestingPlayer());
 
-        return ChatMessagesDTO.of(chat);
-    }
+    return ChatMessagesDTO.of(chat.toReadView());
+  }
 
 }

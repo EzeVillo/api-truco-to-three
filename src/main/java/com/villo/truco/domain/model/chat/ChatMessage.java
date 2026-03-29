@@ -9,60 +9,57 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.Objects;
 
-public class ChatMessage extends EntityBase<ChatMessageId> {
+final class ChatMessage extends EntityBase<ChatMessageId> {
 
-    static final int MAX_CONTENT_LENGTH = 500;
+  static final int MAX_CONTENT_LENGTH = 500;
 
-    private final PlayerId senderId;
-    private final String content;
-    private final Instant sentAt;
+  private final PlayerId senderId;
+  private final String content;
+  private final Instant sentAt;
 
-    private ChatMessage(final ChatMessageId id, final PlayerId senderId, final String content,
-        final Instant sentAt) {
-        super(id);
+  private ChatMessage(final ChatMessageId id, final PlayerId senderId, final String content,
+      final Instant sentAt) {
 
-        this.senderId = Objects.requireNonNull(senderId, "Sender id cannot be null");
-        this.content = Objects.requireNonNull(content, "Content cannot be null");
-        this.sentAt = Objects.requireNonNull(sentAt, "SentAt cannot be null");
+    super(id);
+
+    this.senderId = Objects.requireNonNull(senderId, "Sender id cannot be null");
+    this.content = Objects.requireNonNull(content, "Content cannot be null");
+    this.sentAt = Objects.requireNonNull(sentAt, "SentAt cannot be null");
+  }
+
+  static ChatMessage create(final PlayerId senderId, final String content, final Instant sentAt) {
+
+    validateContent(content);
+
+    final var message = new ChatMessage(ChatMessageId.generate(), senderId, content, sentAt);
+    message.addDomainEvent(new MessageSentEvent(senderId, content, sentAt));
+    return message;
+  }
+
+  static ChatMessage reconstruct(final ChatMessageId id, final PlayerId senderId,
+      final String content, final Instant sentAt) {
+
+    return new ChatMessage(id, senderId, content, sentAt);
+  }
+
+  private static void validateContent(final String content) {
+
+    if (content == null || content.isBlank()) {
+      throw new ChatMessageEmptyException();
     }
-
-    static ChatMessage create(final PlayerId senderId, final String content,
-        final Instant sentAt) {
-
-        validateContent(content);
-
-        final var message = new ChatMessage(ChatMessageId.generate(), senderId, content, sentAt);
-        message.addDomainEvent(
-            new MessageSentEvent(senderId, content, sentAt));
-        return message;
+    if (content.length() > MAX_CONTENT_LENGTH) {
+      throw new ChatMessageTooLongException(content.length(), MAX_CONTENT_LENGTH);
     }
+  }
 
-    static ChatMessage reconstruct(final ChatMessageId id, final PlayerId senderId,
-        final String content, final Instant sentAt) {
+  ChatMessageView toReadView() {
 
-        return new ChatMessage(id, senderId, content, sentAt);
-    }
+    return new ChatMessageView(this.id, this.senderId, this.content, this.sentAt);
+  }
 
-    private static void validateContent(final String content) {
+  ChatMessageSnapshot toSnapshot() {
 
-        if (content == null || content.isBlank()) {
-            throw new ChatMessageEmptyException();
-        }
-        if (content.length() > MAX_CONTENT_LENGTH) {
-            throw new ChatMessageTooLongException(content.length(), MAX_CONTENT_LENGTH);
-        }
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public PlayerId getSenderId() {
-        return senderId;
-    }
-
-    public Instant getSentAt() {
-        return sentAt;
-    }
+    return new ChatMessageSnapshot(this.id, this.senderId, this.content, this.sentAt);
+  }
 
 }
