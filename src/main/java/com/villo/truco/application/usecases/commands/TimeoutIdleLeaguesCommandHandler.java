@@ -64,8 +64,6 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
     final var league = leagueOpt.get();
     final var statusBefore = league.getStatus();
 
-    final var participants = List.copyOf(league.getParticipants());
-
     league.cancel();
     if (league.getStatus() == statusBefore) {
       return;
@@ -74,7 +72,7 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
     this.leagueRepository.save(league);
     LOGGER.info("League cancelled by timeout: leagueId={}", leagueId);
 
-    this.leagueEventNotifier.publishDomainEvents(leagueId, participants, league.getDomainEvents());
+    this.leagueEventNotifier.publishDomainEvents(league.getLeagueDomainEvents());
     league.clearDomainEvents();
   }
 

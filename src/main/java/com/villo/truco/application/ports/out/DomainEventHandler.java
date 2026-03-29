@@ -2,10 +2,10 @@ package com.villo.truco.application.ports.out;
 
 import com.villo.truco.domain.shared.DomainEventBase;
 
-public interface DomainEventHandler<E extends DomainEventBase, C> {
+public interface DomainEventHandler<E extends DomainEventBase> {
 
-    Class<E> eventType();
+  Class<E> eventType();
 
-    void handle(E event, C context);
+  void handle(E event);
 
 }

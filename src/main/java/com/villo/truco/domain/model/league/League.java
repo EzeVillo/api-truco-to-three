@@ -2,6 +2,7 @@ package com.villo.truco.domain.model.league;
 
 import com.villo.truco.domain.model.league.events.LeagueAdvancedEvent;
 import com.villo.truco.domain.model.league.events.LeagueCancelledEvent;
+import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
 import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
 import com.villo.truco.domain.model.league.events.LeagueFixtureActivatedEvent;
 import com.villo.truco.domain.model.league.events.LeagueMatchActivatedEvent;
@@ -25,10 +26,10 @@ import com.villo.truco.domain.model.league.valueobjects.FixtureId;
 import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.AggregateBase;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -176,7 +177,8 @@ public final class League extends AggregateBase<LeagueId> {
     this.participants.add(playerId);
     LOGGER.info("Player joined league: leagueId={}, playerId={}, participants={}/{}", this.id,
         playerId, this.participants.size(), this.numberOfPlayers);
-    this.addDomainEvent(new LeaguePlayerJoinedEvent(this.id, playerId));
+    this.addDomainEvent(
+        new LeaguePlayerJoinedEvent(this.id, List.copyOf(this.participants), playerId));
 
     if (this.participants.size() == this.numberOfPlayers) {
       this.status = LeagueStatus.WAITING_FOR_START;
@@ -195,7 +197,7 @@ public final class League extends AggregateBase<LeagueId> {
     this.status = LeagueStatus.IN_PROGRESS;
     LOGGER.info("League started: leagueId={}, participants={}, fixtures={}", this.id,
         this.participants.size(), this.fixtures.size());
-    this.addDomainEvent(new LeagueStartedEvent(this.id));
+    this.addDomainEvent(new LeagueStartedEvent(this.id, List.copyOf(this.participants)));
   }
 
   public void linkFixtureMatch(final FixtureId fixtureId, final MatchId matchId) {
@@ -213,7 +215,8 @@ public final class League extends AggregateBase<LeagueId> {
     }
 
     fixture.linkMatch(matchId);
-    this.addDomainEvent(new LeagueMatchActivatedEvent(this.id, matchId));
+    this.addDomainEvent(
+        new LeagueMatchActivatedEvent(this.id, List.copyOf(this.participants), matchId));
     LOGGER.info("Fixture linked: leagueId={}, fixtureId={}, matchId={}", this.id, fixtureId,
         matchId);
   }
@@ -232,7 +235,8 @@ public final class League extends AggregateBase<LeagueId> {
             new FixtureActivation(fixture.id(), fixture.playerOne(), fixture.playerTwo()));
         LOGGER.info("Fixture activated: leagueId={}, fixtureId={}, matchday={}", this.id,
             fixture.id(), fixture.matchdayNumber());
-        this.addDomainEvent(new LeagueFixtureActivatedEvent(this.id, fixture.id()));
+        this.addDomainEvent(
+            new LeagueFixtureActivatedEvent(this.id, List.copyOf(this.participants), fixture.id()));
       }
     }
 
@@ -265,22 +269,24 @@ public final class League extends AggregateBase<LeagueId> {
       throw new PlayerNotInLeagueException();
     }
 
-    final var unresolvedFixtures = this.fixtures.stream()
-        .filter(f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
-            && f.containsPlayer(forfeiter))
-        .toList();
+    final var unresolvedFixtures = this.fixtures.stream().filter(
+        f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
+            && f.containsPlayer(forfeiter)).toList();
 
     for (final var fixture : unresolvedFixtures) {
       final var rival =
           fixture.playerOne().equals(forfeiter) ? fixture.playerTwo() : fixture.playerOne();
       fixture.resolve(rival);
       this.winsByPlayer.merge(rival, 1, Integer::sum);
-      LOGGER.info("Fixture auto-resolved by forfeit: leagueId={}, fixtureId={}, winner={}",
-          this.id, fixture.id(), rival);
-      this.addDomainEvent(new LeagueAdvancedEvent(this.id, fixture.matchId(), rival));
+      LOGGER.info("Fixture auto-resolved by forfeit: leagueId={}, fixtureId={}, winner={}", this.id,
+          fixture.id(), rival);
+      this.addDomainEvent(
+          new LeagueAdvancedEvent(this.id, List.copyOf(this.participants), fixture.matchId(),
+              rival));
     }
 
-    this.addDomainEvent(new LeaguePlayerForfeitedEvent(this.id, forfeiter));
+    this.addDomainEvent(
+        new LeaguePlayerForfeitedEvent(this.id, List.copyOf(this.participants), forfeiter));
 
     final var allResolved = this.fixtures.stream()
         .allMatch(f -> f.status() == FixtureStatus.FINISHED || f.status() == FixtureStatus.LIBRE);
@@ -289,7 +295,8 @@ public final class League extends AggregateBase<LeagueId> {
       this.status = LeagueStatus.FINISHED;
       LOGGER.info("League finished by forfeit: leagueId={}, leaders={}", this.id,
           this.getLeaders());
-      this.addDomainEvent(new LeagueFinishedEvent(this.id, this.getLeaders()));
+      this.addDomainEvent(
+          new LeagueFinishedEvent(this.id, List.copyOf(this.participants), this.getLeaders()));
     }
   }
 
@@ -314,16 +321,17 @@ public final class League extends AggregateBase<LeagueId> {
     this.winsByPlayer.merge(winner, 1, Integer::sum);
     LOGGER.info("League result registered: leagueId={}, matchId={}, winner={}", this.id, matchId,
         winner);
-    this.addDomainEvent(new LeagueAdvancedEvent(this.id, matchId, winner));
+    this.addDomainEvent(
+        new LeagueAdvancedEvent(this.id, List.copyOf(this.participants), matchId, winner));
 
-    final var allResolved = this.fixtures.stream()
-        .allMatch(
-            it -> it.status() == FixtureStatus.FINISHED || it.status() == FixtureStatus.LIBRE);
+    final var allResolved = this.fixtures.stream().allMatch(
+        it -> it.status() == FixtureStatus.FINISHED || it.status() == FixtureStatus.LIBRE);
 
     if (allResolved) {
       this.status = LeagueStatus.FINISHED;
       LOGGER.info("League finished: leagueId={}, leaders={}", this.id, this.getLeaders());
-      this.addDomainEvent(new LeagueFinishedEvent(this.id, this.getLeaders()));
+      this.addDomainEvent(
+          new LeagueFinishedEvent(this.id, List.copyOf(this.participants), this.getLeaders()));
     }
   }
 
@@ -334,10 +342,9 @@ public final class League extends AggregateBase<LeagueId> {
 
   public boolean hasPlayerPendingFixtures(final PlayerId playerId) {
 
-    return this.fixtures.stream()
-        .anyMatch(
-            f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
-                && f.containsPlayer(playerId));
+    return this.fixtures.stream().anyMatch(
+        f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
+            && f.containsPlayer(playerId));
   }
 
   public LeagueStatus getStatus() {
@@ -395,10 +402,11 @@ public final class League extends AggregateBase<LeagueId> {
 
     if (this.status == LeagueStatus.WAITING_FOR_PLAYERS
         || this.status == LeagueStatus.WAITING_FOR_START) {
+      final var participantsCopy = List.copyOf(this.participants);
       this.participants.clear();
       this.status = LeagueStatus.CANCELLED;
       LOGGER.info("League cancelled by timeout: leagueId={}", this.id);
-      this.addDomainEvent(new LeagueCancelledEvent(this.id));
+      this.addDomainEvent(new LeagueCancelledEvent(this.id, participantsCopy));
     }
   }
 
@@ -416,10 +424,11 @@ public final class League extends AggregateBase<LeagueId> {
     }
 
     if (this.participants.getFirst().equals(playerId)) {
+      final var participantsCopy = List.copyOf(this.participants);
       this.participants.clear();
       this.status = LeagueStatus.CANCELLED;
       LOGGER.info("League cancelled by creator: leagueId={}, creatorId={}", this.id, playerId);
-      this.addDomainEvent(new LeagueCancelledEvent(this.id));
+      this.addDomainEvent(new LeagueCancelledEvent(this.id, participantsCopy));
       return;
     }
 
@@ -427,7 +436,8 @@ public final class League extends AggregateBase<LeagueId> {
     this.status = LeagueStatus.WAITING_FOR_PLAYERS;
     LOGGER.info("Player left league: leagueId={}, playerId={}, participants={}/{}", this.id,
         playerId, this.participants.size(), this.numberOfPlayers);
-    this.addDomainEvent(new LeaguePlayerLeftEvent(this.id, playerId));
+    this.addDomainEvent(
+        new LeaguePlayerLeftEvent(this.id, List.copyOf(this.participants), playerId));
   }
 
   public List<PlayerId> getParticipants() {
@@ -443,6 +453,11 @@ public final class League extends AggregateBase<LeagueId> {
   List<Fixture> getFixturesInternal() {
 
     return this.fixtures;
+  }
+
+  public List<LeagueDomainEvent> getLeagueDomainEvents() {
+
+    return getDomainEvents().stream().map(LeagueDomainEvent.class::cast).toList();
   }
 
 }

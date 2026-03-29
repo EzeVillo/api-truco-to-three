@@ -1,30 +1,24 @@
 package com.villo.truco.domain.model.league.events;
 
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.List;
 import java.util.Objects;
 
-public final class LeaguePlayerForfeitedEvent extends DomainEventBase {
+public final class LeaguePlayerForfeitedEvent extends LeagueDomainEvent {
 
-    private final LeagueId leagueId;
-    private final PlayerId forfeiter;
+  private final PlayerId forfeiter;
 
-    public LeaguePlayerForfeitedEvent(final LeagueId leagueId, final PlayerId forfeiter) {
+  public LeaguePlayerForfeitedEvent(final LeagueId leagueId, final List<PlayerId> participants,
+      final PlayerId forfeiter) {
 
-        super("LEAGUE_PLAYER_FORFEITED");
-        this.leagueId = Objects.requireNonNull(leagueId);
-        this.forfeiter = Objects.requireNonNull(forfeiter);
-    }
+    super("LEAGUE_PLAYER_FORFEITED", leagueId, participants);
+    this.forfeiter = Objects.requireNonNull(forfeiter);
+  }
 
-    public LeagueId getLeagueId() {
+  public PlayerId getForfeiter() {
 
-        return this.leagueId;
-    }
-
-    public PlayerId getForfeiter() {
-
-        return this.forfeiter;
-    }
+    return this.forfeiter;
+  }
 
 }

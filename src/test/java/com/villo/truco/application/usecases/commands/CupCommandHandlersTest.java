@@ -7,19 +7,21 @@ import com.villo.truco.application.commands.CreateCupCommand;
 import com.villo.truco.application.commands.ForfeitCupCommand;
 import com.villo.truco.application.commands.JoinCupCommand;
 import com.villo.truco.application.commands.StartCupCommand;
+import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
@@ -32,399 +34,417 @@ import org.junit.jupiter.api.Test;
 @DisplayName("Cup command handlers")
 class CupCommandHandlersTest {
 
-    private PlayerAvailabilityChecker availableChecker() {
+  private PlayerAvailabilityChecker availableChecker() {
 
-        final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
-            @Override
-            public Optional<Match> findById(final MatchId matchId) {
+    final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
+      @Override
+      public Optional<Match> findById(final MatchId matchId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      @Override
+      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public boolean hasActiveMatch(final PlayerId playerId) {
+      @Override
+      public boolean hasActiveMatch(final PlayerId playerId) {
 
-                return false;
-            }
+        return false;
+      }
 
-            @Override
-            public boolean hasUnfinishedMatch(final PlayerId playerId) {
+      @Override
+      public boolean hasUnfinishedMatch(final PlayerId playerId) {
 
-                return false;
-            }
+        return false;
+      }
 
-            @Override
-            public List<MatchId> findIdleMatchIds(final Instant idleSince) {
+      @Override
+      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
-                return List.of();
-            }
-        };
-        final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
-            @Override
-            public Optional<League> findById(final LeagueId leagueId) {
+        return List.of();
+      }
+    };
+    final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(final LeagueId leagueId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      @Override
+      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findByMatchId(final MatchId matchId) {
+      @Override
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
-                return List.of();
-            }
-        };
-        final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
-            @Override
-            public Optional<Cup> findById(final CupId cupId) {
+        return List.of();
+      }
+    };
+    final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findByMatchId(final MatchId matchId) {
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public List<CupId> findIdleCupIds(final Instant idleSince) {
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
 
-                return List.of();
-            }
-        };
-        return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-            cupQueryRepository);
-    }
+        return List.of();
+      }
+    };
+    final BotRegistry noBotRegistry = new BotRegistry() {
+      @Override
+      public boolean isBot(final PlayerId p) {
 
-    @Test
-    @DisplayName("CreateCupCommandHandler crea y persiste cup")
-    void createCupHandlerCreatesAndSaves() {
+        return false;
+      }
 
-        final var saved = new AtomicReference<Cup>();
-        final var handler = new CreateCupCommandHandler(saved::set, availableChecker());
-        final var creator = PlayerId.generate();
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId p) {
 
-        final var result = handler.handle(new CreateCupCommand(creator, 4, GamesToPlay.of(3)));
+        return Optional.empty();
+      }
 
-        assertThat(saved.get()).isNotNull();
-        assertThat(result.cupId()).isEqualTo(saved.get().getId().value().toString());
-        assertThat(result.inviteCode()).isEqualTo(saved.get().getInviteCode().value());
-    }
+      @Override
+      public List<BotProfile> getAll() {
 
-    @Test
-    @DisplayName("JoinCupCommandHandler une jugador y persiste")
-    void joinCupHandlerJoinsAndSaves() {
+        return List.of();
+      }
 
-        final var creator = PlayerId.generate();
-        final var joiner = PlayerId.generate();
-        final var cup = Cup.create(creator, 4, GamesToPlay.of(3));
+      @Override
+      public void register(final BotProfile profile) {
 
-        final CupQueryRepository queryRepository = new CupQueryRepository() {
-            @Override
-            public Optional<Cup> findById(final CupId cupId) {
+      }
+    };
+    return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
+        cupQueryRepository, noBotRegistry);
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("CreateCupCommandHandler crea y persiste cup")
+  void createCupHandlerCreatesAndSaves() {
 
-            @Override
-            public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+    final var saved = new AtomicReference<Cup>();
+    final var handler = new CreateCupCommandHandler(saved::set, availableChecker());
+    final var creator = PlayerId.generate();
 
-                return Optional.of(cup);
-            }
+    final var result = handler.handle(new CreateCupCommand(creator, 4, GamesToPlay.of(3)));
 
-            @Override
-            public Optional<Cup> findByMatchId(final MatchId matchId) {
+    assertThat(saved.get()).isNotNull();
+    assertThat(result.cupId()).isEqualTo(saved.get().getId().value().toString());
+    assertThat(result.inviteCode()).isEqualTo(saved.get().getInviteCode().value());
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("JoinCupCommandHandler une jugador y persiste")
+  void joinCupHandlerJoinsAndSaves() {
 
-            @Override
-            public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+    final var creator = PlayerId.generate();
+    final var joiner = PlayerId.generate();
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(3));
 
-                return Optional.empty();
-            }
+    final CupQueryRepository queryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
 
-            @Override
-            public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.empty();
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<CupId> findIdleCupIds(final Instant idleSince) {
+        return Optional.of(cup);
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
 
-        final var saved = new AtomicReference<Cup>();
-        final var handler = new JoinCupCommandHandler(new CupResolver(queryRepository), saved::set,
-            availableChecker(), (id, participants, events) -> {
-        });
+        return Optional.empty();
+      }
 
-        final var result = handler.handle(new JoinCupCommand(joiner, cup.getInviteCode()));
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-        assertThat(result.cupId()).isEqualTo(cup.getId().value().toString());
-        assertThat(saved.get()).isSameAs(cup);
-    }
+        return Optional.empty();
+      }
 
-    @Test
-    @DisplayName("StartCupCommandHandler crea matches para bouts pendientes y persiste")
-    void startCupHandlerCreatesMatchesAndSaves() {
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
-        final var p4 = PlayerId.generate();
-        final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
-        cup.join(p2, cup.getInviteCode());
-        cup.join(p3, cup.getInviteCode());
-        cup.join(p4, cup.getInviteCode());
+        return Optional.empty();
+      }
 
-        final CupQueryRepository queryRepository = new CupQueryRepository() {
-            @Override
-            public Optional<Cup> findById(final CupId cupId) {
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
 
-                return Optional.of(cup);
-            }
+        return List.of();
+      }
+    };
 
-            @Override
-            public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+    final var saved = new AtomicReference<Cup>();
+    final var handler = new JoinCupCommandHandler(new CupResolver(queryRepository), saved::set,
+        availableChecker(), events -> {
+    });
 
-                return Optional.empty();
-            }
+    final var result = handler.handle(new JoinCupCommand(joiner, cup.getInviteCode()));
 
-            @Override
-            public Optional<Cup> findByMatchId(final MatchId matchId) {
+    assertThat(result.cupId()).isEqualTo(cup.getId().value().toString());
+    assertThat(saved.get()).isSameAs(cup);
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("StartCupCommandHandler crea matches para bouts pendientes y persiste")
+  void startCupHandlerCreatesMatchesAndSaves() {
 
-            @Override
-            public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var p4 = PlayerId.generate();
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    cup.join(p2, cup.getInviteCode());
+    cup.join(p3, cup.getInviteCode());
+    cup.join(p4, cup.getInviteCode());
 
-                return Optional.empty();
-            }
+    final CupQueryRepository queryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
 
-            @Override
-            public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.of(cup);
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<CupId> findIdleCupIds(final Instant idleSince) {
+        return Optional.empty();
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
 
-        final var cupSaved = new AtomicReference<Cup>();
-        final var matchSaves = new AtomicInteger();
-        final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
+        return Optional.empty();
+      }
 
-        final var handler = new StartCupCommandHandler(new CupResolver(queryRepository),
-            cupSaved::set,
-            matchRepository, (id, participants, events) -> {
-        });
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-        handler.handle(new StartCupCommand(cup.getId(), p1));
+        return Optional.empty();
+      }
 
-        final var pendingBouts = cup.getBouts().stream()
-            .filter(b -> b.status() == BoutStatus.PENDING)
-            .count();
-        assertThat(cupSaved.get()).isSameAs(cup);
-        assertThat(matchSaves.get()).isEqualTo((int) pendingBouts);
-        assertThat(cup.getBouts().stream().filter(b -> b.status() == BoutStatus.PENDING)
-            .allMatch(b -> b.matchId() != null)).isTrue();
-    }
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
-    @Test
-    @DisplayName("AdvanceCupCommandHandler registra ganador y persiste")
-    void advanceCupHandlerRecordsWinnerAndSaves() {
+        return Optional.empty();
+      }
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
-        final var p4 = PlayerId.generate();
-        final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
-        cup.join(p2, cup.getInviteCode());
-        cup.join(p3, cup.getInviteCode());
-        cup.join(p4, cup.getInviteCode());
-        cup.start(p1);
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
 
-        final var firstPending = cup.getBouts().stream()
-            .filter(b -> b.status() == BoutStatus.PENDING)
-            .findFirst().orElseThrow();
-        final var matchId = MatchId.generate();
-        cup.linkBoutMatch(firstPending.boutId(), matchId);
+        return List.of();
+      }
+    };
 
-        final CupQueryRepository queryRepository = new CupQueryRepository() {
-            @Override
-            public Optional<Cup> findById(final CupId cupId) {
+    final var cupSaved = new AtomicReference<Cup>();
+    final var matchSaves = new AtomicInteger();
+    final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
 
-                return Optional.of(cup);
-            }
+    final var handler = new StartCupCommandHandler(new CupResolver(queryRepository), cupSaved::set,
+        matchRepository, events -> {
+    });
 
-            @Override
-            public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+    handler.handle(new StartCupCommand(cup.getId(), p1));
 
-                return Optional.empty();
-            }
+    final var pendingBouts = cup.getBouts().stream().filter(b -> b.status() == BoutStatus.PENDING)
+        .count();
+    assertThat(cupSaved.get()).isSameAs(cup);
+    assertThat(matchSaves.get()).isEqualTo((int) pendingBouts);
+    assertThat(cup.getBouts().stream().filter(b -> b.status() == BoutStatus.PENDING)
+        .allMatch(b -> b.matchId() != null)).isTrue();
+  }
 
-            @Override
-            public Optional<Cup> findByMatchId(final MatchId id) {
+  @Test
+  @DisplayName("AdvanceCupCommandHandler registra ganador y persiste")
+  void advanceCupHandlerRecordsWinnerAndSaves() {
 
-                return Optional.empty();
-            }
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var p4 = PlayerId.generate();
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    cup.join(p2, cup.getInviteCode());
+    cup.join(p3, cup.getInviteCode());
+    cup.join(p4, cup.getInviteCode());
+    cup.start(p1);
 
-            @Override
-            public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+    final var firstPending = cup.getBouts().stream().filter(b -> b.status() == BoutStatus.PENDING)
+        .findFirst().orElseThrow();
+    final var matchId = MatchId.generate();
+    cup.linkBoutMatch(firstPending.boutId(), matchId);
 
-                return Optional.empty();
-            }
+    final CupQueryRepository queryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
 
-            @Override
-            public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.of(cup);
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<CupId> findIdleCupIds(final Instant idleSince) {
+        return Optional.empty();
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId id) {
 
-        final var saved = new AtomicReference<Cup>();
-        final var createdMatches = new AtomicInteger();
-        final var handler = new AdvanceCupCommandHandler(new CupResolver(queryRepository),
-            saved::set,
-            match -> createdMatches.incrementAndGet(), (id, participants, events) -> {
-        });
+        return Optional.empty();
+      }
 
-        handler.handle(new AdvanceCupCommand(cup.getId(), matchId, firstPending.playerOne()));
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-        assertThat(saved.get()).isSameAs(cup);
-        assertThat(
-            cup.getBouts().stream().filter(b -> matchId.equals(b.matchId())).findFirst()
-                .orElseThrow()
-                .winner()).isEqualTo(firstPending.playerOne());
-        assertThat(createdMatches.get()).isGreaterThanOrEqualTo(0);
-    }
+        return Optional.empty();
+      }
 
-    @Test
-    @DisplayName("ForfeitCupCommandHandler registra abandono y persiste")
-    void forfeitCupHandlerForfeitsAndSaves() {
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
-        final var p4 = PlayerId.generate();
-        final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
-        cup.join(p2, cup.getInviteCode());
-        cup.join(p3, cup.getInviteCode());
-        cup.join(p4, cup.getInviteCode());
-        cup.start(p1);
+        return Optional.empty();
+      }
 
-        final CupQueryRepository queryRepository = new CupQueryRepository() {
-            @Override
-            public Optional<Cup> findById(final CupId cupId) {
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
 
-                return Optional.of(cup);
-            }
+        return List.of();
+      }
+    };
 
-            @Override
-            public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+    final var saved = new AtomicReference<Cup>();
+    final var createdMatches = new AtomicInteger();
+    final var handler = new AdvanceCupCommandHandler(new CupResolver(queryRepository), saved::set,
+        match -> createdMatches.incrementAndGet(), events -> {
+    });
 
-                return Optional.empty();
-            }
+    handler.handle(new AdvanceCupCommand(cup.getId(), matchId, firstPending.playerOne()));
 
-            @Override
-            public Optional<Cup> findByMatchId(final MatchId id) {
+    assertThat(saved.get()).isSameAs(cup);
+    assertThat(
+        cup.getBouts().stream().filter(b -> matchId.equals(b.matchId())).findFirst().orElseThrow()
+            .winner()).isEqualTo(firstPending.playerOne());
+    assertThat(createdMatches.get()).isGreaterThanOrEqualTo(0);
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("ForfeitCupCommandHandler registra abandono y persiste")
+  void forfeitCupHandlerForfeitsAndSaves() {
 
-            @Override
-            public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var p4 = PlayerId.generate();
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    cup.join(p2, cup.getInviteCode());
+    cup.join(p3, cup.getInviteCode());
+    cup.join(p4, cup.getInviteCode());
+    cup.start(p1);
 
-                return Optional.empty();
-            }
+    final CupQueryRepository queryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
 
-            @Override
-            public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.of(cup);
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<CupId> findIdleCupIds(final Instant idleSince) {
+        return Optional.empty();
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId id) {
 
-        final var saved = new AtomicReference<Cup>();
-        final var createdMatches = new AtomicInteger();
-        final var handler = new ForfeitCupCommandHandler(new CupResolver(queryRepository),
-            saved::set,
-            match -> createdMatches.incrementAndGet(), (id, participants, events) -> {
-        });
+        return Optional.empty();
+      }
 
-        handler.handle(new ForfeitCupCommand(cup.getId(), p2));
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-        assertThat(saved.get()).isSameAs(cup);
-        assertThat(cup.getBouts().stream().anyMatch(b -> b.winner() != null)).isTrue();
-        assertThat(createdMatches.get()).isGreaterThanOrEqualTo(0);
-    }
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+        return List.of();
+      }
+    };
+
+    final var saved = new AtomicReference<Cup>();
+    final var createdMatches = new AtomicInteger();
+    final var handler = new ForfeitCupCommandHandler(new CupResolver(queryRepository), saved::set,
+        match -> createdMatches.incrementAndGet(), events -> {
+    });
+
+    handler.handle(new ForfeitCupCommand(cup.getId(), p2));
+
+    assertThat(saved.get()).isSameAs(cup);
+    assertThat(cup.getBouts().stream().anyMatch(b -> b.winner() != null)).isTrue();
+    assertThat(createdMatches.get()).isGreaterThanOrEqualTo(0);
+  }
 
 }

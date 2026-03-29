@@ -36,8 +36,8 @@ public class GlobalExceptionHandler {
 
     LOGGER.warn("Validation failed: {}", message);
 
-    return ResponseEntity.badRequest()
-        .body(new ErrorResponse("VALIDATION_ERROR", message, Instant.now(), MDC.get(REQUEST_ID_KEY)));
+    return ResponseEntity.badRequest().body(
+        new ErrorResponse("VALIDATION_ERROR", message, Instant.now(), MDC.get(REQUEST_ID_KEY)));
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -97,9 +97,8 @@ public class GlobalExceptionHandler {
     final var message = "No endpoint found for " + ex.getHttpMethod() + " " + ex.getResourcePath();
     LOGGER.warn("Resource not found: {}", message);
 
-    return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(new ErrorResponse("RESOURCE_NOT_FOUND", message, Instant.now(),
-            MDC.get(REQUEST_ID_KEY)));
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+        new ErrorResponse("RESOURCE_NOT_FOUND", message, Instant.now(), MDC.get(REQUEST_ID_KEY)));
   }
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -107,12 +106,12 @@ public class GlobalExceptionHandler {
       final HttpRequestMethodNotSupportedException ex) {
 
     final var supported = ex.getSupportedHttpMethods();
-    final var message = "Method " + ex.getMethod() + " is not supported for this endpoint"
-        + (supported != null && !supported.isEmpty() ? ". Supported methods: " + supported : "");
+    final var message = "Method " + ex.getMethod() + " is not supported for this endpoint" + (
+        supported != null && !supported.isEmpty() ? ". Supported methods: " + supported : "");
     LOGGER.warn("Method not supported: {}", message);
 
-    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-        .body(new ErrorResponse(HttpStatus.METHOD_NOT_ALLOWED.name(), message, Instant.now(),
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(
+        new ErrorResponse(HttpStatus.METHOD_NOT_ALLOWED.name(), message, Instant.now(),
             MDC.get(REQUEST_ID_KEY)));
   }
 
@@ -122,8 +121,8 @@ public class GlobalExceptionHandler {
     LOGGER.error("Unexpected exception mapped to {}", HttpStatus.INTERNAL_SERVER_ERROR, ex);
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.name(),
-            "An unexpected error occurred", Instant.now(), MDC.get(REQUEST_ID_KEY)));
+        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.name(), "An unexpected error occurred",
+            Instant.now(), MDC.get(REQUEST_ID_KEY)));
   }
 
 }

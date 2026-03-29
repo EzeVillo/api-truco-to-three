@@ -6,10 +6,10 @@ import java.util.Objects;
 
 public record ForfeitLeagueCommand(LeagueId leagueId, PlayerId forfeiter) {
 
-    public ForfeitLeagueCommand {
+  public ForfeitLeagueCommand {
 
-        Objects.requireNonNull(leagueId);
-        Objects.requireNonNull(forfeiter);
-    }
+    Objects.requireNonNull(leagueId);
+    Objects.requireNonNull(forfeiter);
+  }
 
 }

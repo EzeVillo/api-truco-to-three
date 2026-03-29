@@ -34,8 +34,7 @@ public final class JoinMatchCommandHandler implements JoinMatchUseCase {
     match.join(command.playerId(), command.inviteCode());
 
     this.matchRepository.save(match);
-    this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
-        match.getPlayerTwo(), match.getDomainEvents());
+    this.matchEventNotifier.publishDomainEvents(match.getMatchDomainEvents());
     match.clearDomainEvents();
 
     return new JoinMatchDTO(match.getId().value().toString());

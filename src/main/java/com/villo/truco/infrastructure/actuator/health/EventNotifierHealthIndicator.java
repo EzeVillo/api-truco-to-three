@@ -33,8 +33,8 @@ public class EventNotifierHealthIndicator implements HealthIndicator {
         Duration.between(instant, Instant.now()).toMillis()));
     this.healthRegistry.lastFailureMessage().ifPresent(msg -> details.put("lastFailure", msg));
 
-    if (lastFailure.isPresent() && (lastSuccess.isEmpty() ||
-        lastFailure.get().isAfter(lastSuccess.get()))) {
+    if (lastFailure.isPresent() && (lastSuccess.isEmpty() || lastFailure.get()
+        .isAfter(lastSuccess.get()))) {
       return Health.status(Status.OUT_OF_SERVICE).withDetails(details).build();
     }
 

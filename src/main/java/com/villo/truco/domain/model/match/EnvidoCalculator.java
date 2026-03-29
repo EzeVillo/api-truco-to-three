@@ -1,6 +1,6 @@
 package com.villo.truco.domain.model.match;
 
-import com.villo.truco.domain.model.match.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.List;
 import java.util.stream.Collectors;
 

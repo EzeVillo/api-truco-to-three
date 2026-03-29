@@ -2,10 +2,10 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.StartMatchCommand;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import java.util.Objects;
 
 public final class StartMatchCommandHandler implements StartMatchUseCase {
@@ -40,8 +40,7 @@ public final class StartMatchCommandHandler implements StartMatchUseCase {
     match.startMatch(command.playerId());
 
     this.matchRepository.save(match);
-    this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
-        match.getPlayerTwo(), match.getDomainEvents());
+    this.matchEventNotifier.publishDomainEvents(match.getMatchDomainEvents());
     match.clearDomainEvents();
 
     return command.matchId();

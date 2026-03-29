@@ -1,7 +1,7 @@
 package com.villo.truco.domain.model.league.exceptions;
 
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.DomainException;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 
 public final class MatchNotPartOfLeagueException extends DomainException {
 

@@ -11,45 +11,44 @@ import java.util.Objects;
 
 public final class AdvanceLeagueCommandHandler implements AdvanceLeagueUseCase {
 
-    private final LeagueResolver leagueResolver;
-    private final LeagueRepository leagueRepository;
-    private final MatchRepository matchRepository;
-    private final LeagueEventNotifier leagueEventNotifier;
+  private final LeagueResolver leagueResolver;
+  private final LeagueRepository leagueRepository;
+  private final MatchRepository matchRepository;
+  private final LeagueEventNotifier leagueEventNotifier;
 
-    public AdvanceLeagueCommandHandler(final LeagueResolver leagueResolver,
-        final LeagueRepository leagueRepository, final MatchRepository matchRepository,
-        final LeagueEventNotifier leagueEventNotifier) {
+  public AdvanceLeagueCommandHandler(final LeagueResolver leagueResolver,
+      final LeagueRepository leagueRepository, final MatchRepository matchRepository,
+      final LeagueEventNotifier leagueEventNotifier) {
 
-        this.leagueResolver = Objects.requireNonNull(leagueResolver);
-        this.leagueRepository = Objects.requireNonNull(leagueRepository);
-        this.matchRepository = Objects.requireNonNull(matchRepository);
-        this.leagueEventNotifier = Objects.requireNonNull(leagueEventNotifier);
+    this.leagueResolver = Objects.requireNonNull(leagueResolver);
+    this.leagueRepository = Objects.requireNonNull(leagueRepository);
+    this.matchRepository = Objects.requireNonNull(matchRepository);
+    this.leagueEventNotifier = Objects.requireNonNull(leagueEventNotifier);
+  }
+
+  @Override
+  public Void handle(final AdvanceLeagueCommand command) {
+
+    final var league = this.leagueResolver.resolve(command.leagueId());
+
+    league.recordMatchWinner(command.matchId(), command.winner());
+
+    final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
+
+    for (final var activation : league.activateNextFixtures()) {
+      final var match = Match.createReady(activation.playerOne(), activation.playerTwo(),
+          matchRules);
+      this.matchRepository.save(match);
+      league.linkFixtureMatch(activation.fixtureId(), match.getId());
     }
 
-    @Override
-    public Void handle(final AdvanceLeagueCommand command) {
+    this.leagueRepository.save(league);
 
-        final var league = this.leagueResolver.resolve(command.leagueId());
+    this.leagueEventNotifier.publishDomainEvents(league.getLeagueDomainEvents());
 
-        league.recordMatchWinner(command.matchId(), command.winner());
+    league.clearDomainEvents();
 
-        final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
-
-        for (final var activation : league.activateNextFixtures()) {
-            final var match =
-                Match.createReady(activation.playerOne(), activation.playerTwo(), matchRules);
-            this.matchRepository.save(match);
-            league.linkFixtureMatch(activation.fixtureId(), match.getId());
-        }
-
-        this.leagueRepository.save(league);
-
-        this.leagueEventNotifier.publishDomainEvents(league.getId(), league.getParticipants(),
-            league.getDomainEvents());
-
-        league.clearDomainEvents();
-
-        return null;
-    }
+    return null;
+  }
 
 }

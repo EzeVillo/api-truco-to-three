@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
-import com.villo.truco.application.ports.out.LeagueEventContext;
 import com.villo.truco.domain.model.league.events.LeagueCancelledEvent;
 import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
@@ -19,117 +18,115 @@ import org.junit.jupiter.api.Test;
 @DisplayName("CompositeLeagueEventNotifier")
 class CompositeLeagueEventNotifierTest {
 
-    private LeagueId leagueId;
-    private List<PlayerId> participants;
+  private LeagueId leagueId;
+  private List<PlayerId> participants;
 
-    @BeforeEach
-    void setUp() {
+  @BeforeEach
+  void setUp() {
 
-        this.leagueId = LeagueId.generate();
-        this.participants = List.of(PlayerId.generate(), PlayerId.generate());
-    }
+    this.leagueId = LeagueId.generate();
+    this.participants = List.of(PlayerId.generate(), PlayerId.generate());
+  }
 
-    private <E extends DomainEventBase> LeagueDomainEventHandler<E> handlerFor(final Class<E> type,
-        final List<DomainEventBase> received) {
+  private <E extends DomainEventBase> LeagueDomainEventHandler<E> handlerFor(final Class<E> type,
+      final List<DomainEventBase> received) {
 
-        return new LeagueDomainEventHandler<>() {
+    return new LeagueDomainEventHandler<>() {
 
-            @Override
-            public Class<E> eventType() {
+      @Override
+      public Class<E> eventType() {
 
-                return type;
-            }
+        return type;
+      }
 
-            @Override
-            public void handle(final E event, final LeagueEventContext ctx) {
+      @Override
+      public void handle(final E event) {
 
-                received.add(event);
-            }
-        };
-    }
+        received.add(event);
+      }
+    };
+  }
 
-    @Test
-    @DisplayName("rutea LeagueStartedEvent al handler de LeagueStartedEvent")
-    void routesEventToMatchingHandler() {
+  @Test
+  @DisplayName("rutea LeagueStartedEvent al handler de LeagueStartedEvent")
+  void routesEventToMatchingHandler() {
 
-        final var received = new ArrayList<DomainEventBase>();
-        final var notifier = new CompositeLeagueEventNotifier(
-            List.of(handlerFor(LeagueStartedEvent.class, received)));
+    final var received = new ArrayList<DomainEventBase>();
+    final var notifier = new CompositeLeagueEventNotifier(
+        List.of(handlerFor(LeagueStartedEvent.class, received)));
 
-        final var event = new LeagueStartedEvent(this.leagueId);
-        notifier.publishDomainEvents(this.leagueId, this.participants, List.of(event));
+    final var event = new LeagueStartedEvent(this.leagueId, this.participants);
+    notifier.publishDomainEvents(List.of(event));
 
-        assertThat(received).containsExactly(event);
-    }
+    assertThat(received).containsExactly(event);
+  }
 
-    @Test
-    @DisplayName("handler wildcard (DomainEventBase) recibe todos los eventos")
-    void wildcardHandlerReceivesAllEvents() {
+  @Test
+  @DisplayName("handler wildcard (DomainEventBase) recibe todos los eventos")
+  void wildcardHandlerReceivesAllEvents() {
 
-        final var received = new ArrayList<DomainEventBase>();
-        final var notifier = new CompositeLeagueEventNotifier(
-            List.of(handlerFor(DomainEventBase.class, received)));
+    final var received = new ArrayList<DomainEventBase>();
+    final var notifier = new CompositeLeagueEventNotifier(
+        List.of(handlerFor(DomainEventBase.class, received)));
 
-        final var started = new LeagueStartedEvent(this.leagueId);
-        final var cancelled = new LeagueCancelledEvent(this.leagueId);
-        notifier.publishDomainEvents(this.leagueId, this.participants, List.of(started, cancelled));
+    final var started = new LeagueStartedEvent(this.leagueId, this.participants);
+    final var cancelled = new LeagueCancelledEvent(this.leagueId, this.participants);
+    notifier.publishDomainEvents(List.of(started, cancelled));
 
-        assertThat(received).containsExactly(started, cancelled);
-    }
+    assertThat(received).containsExactly(started, cancelled);
+  }
 
-    @Test
-    @DisplayName("evento sin handler registrado no lanza excepción")
-    void noHandlerForEventDoesNotThrow() {
+  @Test
+  @DisplayName("evento sin handler registrado no lanza excepción")
+  void noHandlerForEventDoesNotThrow() {
 
-        final var notifier = new CompositeLeagueEventNotifier(
-            List.of(handlerFor(LeagueCancelledEvent.class, new ArrayList<>())));
+    final var notifier = new CompositeLeagueEventNotifier(
+        List.of(handlerFor(LeagueCancelledEvent.class, new ArrayList<>())));
 
-        assertThatNoException().isThrownBy(
-            () -> notifier.publishDomainEvents(this.leagueId, this.participants,
-                List.of(new LeagueStartedEvent(this.leagueId))));
-    }
+    assertThatNoException().isThrownBy(() -> notifier.publishDomainEvents(
+        List.of(new LeagueStartedEvent(this.leagueId, this.participants))));
+  }
 
-    @Test
-    @DisplayName("handlers se invocan en orden de registro")
-    void handlersInvokedInRegistrationOrder() {
+  @Test
+  @DisplayName("handlers se invocan en orden de registro")
+  void handlersInvokedInRegistrationOrder() {
 
-        final var order = new ArrayList<String>();
+    final var order = new ArrayList<String>();
 
-        final LeagueDomainEventHandler<LeagueStartedEvent> first = new LeagueDomainEventHandler<>() {
+    final LeagueDomainEventHandler<LeagueStartedEvent> first = new LeagueDomainEventHandler<>() {
 
-            @Override
-            public Class<LeagueStartedEvent> eventType() {
+      @Override
+      public Class<LeagueStartedEvent> eventType() {
 
-                return LeagueStartedEvent.class;
-            }
+        return LeagueStartedEvent.class;
+      }
 
-            @Override
-            public void handle(final LeagueStartedEvent event, final LeagueEventContext ctx) {
+      @Override
+      public void handle(final LeagueStartedEvent event) {
 
-                order.add("first");
-            }
-        };
+        order.add("first");
+      }
+    };
 
-        final LeagueDomainEventHandler<LeagueStartedEvent> second = new LeagueDomainEventHandler<>() {
+    final LeagueDomainEventHandler<LeagueStartedEvent> second = new LeagueDomainEventHandler<>() {
 
-            @Override
-            public Class<LeagueStartedEvent> eventType() {
+      @Override
+      public Class<LeagueStartedEvent> eventType() {
 
-                return LeagueStartedEvent.class;
-            }
+        return LeagueStartedEvent.class;
+      }
 
-            @Override
-            public void handle(final LeagueStartedEvent event, final LeagueEventContext ctx) {
+      @Override
+      public void handle(final LeagueStartedEvent event) {
 
-                order.add("second");
-            }
-        };
+        order.add("second");
+      }
+    };
 
-        final var notifier = new CompositeLeagueEventNotifier(List.of(first, second));
-        notifier.publishDomainEvents(this.leagueId, this.participants,
-            List.of(new LeagueStartedEvent(this.leagueId)));
+    final var notifier = new CompositeLeagueEventNotifier(List.of(first, second));
+    notifier.publishDomainEvents(List.of(new LeagueStartedEvent(leagueId, participants)));
 
-        assertThat(order).containsExactly("first", "second");
-    }
+    assertThat(order).containsExactly("first", "second");
+  }
 
 }

@@ -4,7 +4,6 @@ import com.villo.truco.application.commands.LeaveCupCommand;
 import com.villo.truco.application.ports.in.LeaveCupUseCase;
 import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupRepository;
-import java.util.List;
 import java.util.Objects;
 
 public final class LeaveCupCommandHandler implements LeaveCupUseCase {
@@ -26,13 +25,11 @@ public final class LeaveCupCommandHandler implements LeaveCupUseCase {
 
     final var cup = this.cupResolver.resolve(command.cupId());
 
-    final var participants = List.copyOf(cup.getParticipants());
-
     cup.leave(command.playerId());
 
     this.cupRepository.save(cup);
 
-    this.cupEventNotifier.publishDomainEvents(cup.getId(), participants, cup.getDomainEvents());
+    this.cupEventNotifier.publishDomainEvents(cup.getCupDomainEvents());
     cup.clearDomainEvents();
 
     return null;

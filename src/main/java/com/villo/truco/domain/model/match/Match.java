@@ -1,8 +1,11 @@
 package com.villo.truco.domain.model.match;
 
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
+import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -14,10 +17,8 @@ import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
-import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.CurrentHandInfo;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayedHandInfo;
@@ -26,6 +27,7 @@ import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.shared.AggregateBase;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
 import java.util.Objects;
@@ -142,7 +144,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.playerTwo = playerTwo;
     this.status = MatchStatus.READY;
     LOGGER.info("Player joined match: matchId={}, playerTwo={}", this.id, playerTwo);
-    this.addDomainEvent(new PlayerJoinedEvent());
+    this.addDomainEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
   }
 
   public void startMatch(final PlayerId playerId) {
@@ -177,7 +179,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.readyPlayerOne = readyState.readyPlayerOne();
     this.readyPlayerTwo = readyState.readyPlayerTwo();
 
-    this.addDomainEvent(new PlayerReadyEvent(this.seatOf(playerId)));
+    this.addDomainEvent(
+        new PlayerReadyEvent(this.id, this.playerOne, this.playerTwo, this.seatOf(playerId)));
 
     if (readyState.bothReady()) {
       this.status = MatchStatus.IN_PROGRESS;
@@ -305,7 +308,7 @@ public final class Match extends AggregateBase<MatchId> {
 
     this.status = MatchStatus.FINISHED;
     LOGGER.info("Match cancelled: matchId={}", this.id);
-    this.addDomainEvent(new MatchCancelledEvent());
+    this.addDomainEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
   }
 
   public void abandon(final PlayerId abandoner) {
@@ -381,7 +384,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.currentRound = null;
     LOGGER.info("Match forfeited by timeout: matchId={}, winner={}", this.id, winner);
     this.addDomainEvent(
-        new MatchForfeitedEvent(winningSeat, this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
+        new MatchForfeitedEvent(this.id, this.playerOne, this.playerTwo, winningSeat,
+            this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
   }
 
   private void startNewRoundIfNeeded(final boolean newGameStarted) {
@@ -403,7 +407,8 @@ public final class Match extends AggregateBase<MatchId> {
 
     LOGGER.info("Game started: matchId={}, gameNumber={}, firstMano={}", this.id, this.gameNumber,
         this.firstManoOfGame);
-    this.addDomainEvent(new GameStartedEvent(this.gameNumber));
+    this.addDomainEvent(
+        new GameStartedEvent(this.id, this.playerOne, this.playerTwo, this.gameNumber));
     this.startNewRound();
   }
 
@@ -434,14 +439,17 @@ public final class Match extends AggregateBase<MatchId> {
     LOGGER.info("Score changed: matchId={}, winner={}, points={}, score={} - {}", this.id, winner,
         points, this.scorePlayerOne, this.scorePlayerTwo);
 
-    this.addDomainEvent(new ScoreChangedEvent(this.scorePlayerOne, this.scorePlayerTwo));
+    this.addDomainEvent(
+        new ScoreChangedEvent(this.id, this.playerOne, this.playerTwo, this.scorePlayerOne,
+            this.scorePlayerTwo));
 
     if (progression.gameOver()) {
       this.gamesWonPlayerOne = progression.gamesWonPlayerOne();
       this.gamesWonPlayerTwo = progression.gamesWonPlayerTwo();
 
       this.addDomainEvent(
-          new GameScoreChangedEvent(this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
+          new GameScoreChangedEvent(this.id, this.playerOne, this.playerTwo, this.gamesWonPlayerOne,
+              this.gamesWonPlayerTwo));
 
       LOGGER.info("Game resolved: matchId={}, gameWinner={}, gamesWon={} - {}", this.id,
           progression.gameWinner(), this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
@@ -451,9 +459,8 @@ public final class Match extends AggregateBase<MatchId> {
         this.currentRound = null;
         LOGGER.info("Match finished: matchId={}, winner={}, finalGames={} - {}", this.id,
             progression.gameWinner(), this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
-        this.addDomainEvent(
-            new MatchFinishedEvent(this.seatOf(progression.gameWinner()), this.gamesWonPlayerOne,
-                this.gamesWonPlayerTwo));
+        this.addDomainEvent(new MatchFinishedEvent(this.id, this.playerOne, this.playerTwo,
+            this.seatOf(progression.gameWinner()), this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
       } else {
         this.startNewGame();
       }
@@ -470,8 +477,15 @@ public final class Match extends AggregateBase<MatchId> {
   private void collectRoundEvents() {
 
     if (this.currentRound != null) {
-      this.domainEvents.addAll(RoundDomainEventDrain.drainFrom(this.currentRound));
+      RoundDomainEventDrain.drainFrom(this.currentRound).stream()
+          .map(e -> new MatchEventEnvelope(this.id, this.playerOne, this.playerTwo, e))
+          .forEach(this.domainEvents::add);
     }
+  }
+
+  public List<MatchDomainEvent> getMatchDomainEvents() {
+
+    return getDomainEvents().stream().map(MatchDomainEvent.class::cast).toList();
   }
 
   private void validateMatchInProgress() {
@@ -570,6 +584,12 @@ public final class Match extends AggregateBase<MatchId> {
     return this.currentRound != null ? this.currentRound.getCurrentTrucoCall() : null;
   }
 
+  List<EnvidoCall> getEnvidoChain() {
+
+    return this.currentRound != null ? this.currentRound.getEnvidoStateMachine().getChain()
+        : List.of();
+  }
+
   public List<PlayedHandInfo> getPlayedHands() {
 
     if (this.currentRound == null) {
@@ -593,6 +613,13 @@ public final class Match extends AggregateBase<MatchId> {
       return List.of();
     }
     return this.currentRound.getAvailableActions(playerId);
+  }
+
+  public MatchPlayerDecisionView getDecisionViewFor(final PlayerId playerId) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+    this.validatePlayerInMatch(playerId);
+    return MatchPlayerDecisionViewExtractor.extract(this, playerId);
   }
 
   public boolean hasPlayer(final PlayerId playerId) {

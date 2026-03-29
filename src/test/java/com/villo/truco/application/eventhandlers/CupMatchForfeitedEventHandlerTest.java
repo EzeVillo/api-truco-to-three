@@ -1,40 +1,58 @@
 package com.villo.truco.application.eventhandlers;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.villo.truco.application.events.MatchForfeited;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
-import com.villo.truco.application.ports.out.MatchEventContext;
 import com.villo.truco.domain.model.cup.Cup;
-import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("CupMatchForfeitedEventHandler")
+@DisplayName("CupMatchForfeitedHandler")
 class CupMatchForfeitedEventHandlerTest {
 
+  private final CupQueryRepository cupQueryRepository = mock(CupQueryRepository.class);
+  private final ForfeitCupUseCase forfeitCupUseCase = mock(ForfeitCupUseCase.class);
+  private final CupMatchForfeitedEventHandler handler = new CupMatchForfeitedEventHandler(cupQueryRepository,
+      forfeitCupUseCase);
+
   @Test
-  @DisplayName("ejecuta forfeit cuando existe cup")
-  void callsForfeitWhenCupExists() {
+  @DisplayName("delegates to ForfeitCupUseCase with loser when cup exists for match")
+  void delegatesToUseCaseWhenCupExists() {
 
-    final var query = mock(CupQueryRepository.class);
-    final var useCase = mock(ForfeitCupUseCase.class);
+    final var cupId = CupId.generate();
+    final var matchId = MatchId.generate();
+    final var winnerId = PlayerId.generate();
+    final var loserId = PlayerId.generate();
     final var cup = mock(Cup.class);
-    when(query.findByMatchId(any())).thenReturn(Optional.of(cup));
-    when(cup.getId()).thenReturn(com.villo.truco.domain.model.cup.valueobjects.CupId.generate());
-    final var handler = new CupMatchForfeitedEventHandler(query, useCase);
+    when(cup.getId()).thenReturn(cupId);
+    when(cupQueryRepository.findByMatchId(matchId)).thenReturn(Optional.of(cup));
 
-    handler.handle(new MatchForfeitedEvent(PlayerSeat.PLAYER_ONE, 1, 0),
-        new MatchEventContext(MatchId.generate(), PlayerId.generate(), PlayerId.generate()));
+    handler.handle(new MatchForfeited(matchId, winnerId, loserId));
 
-    verify(useCase).handle(any());
+    verify(forfeitCupUseCase).handle(
+        argThat(cmd -> cmd.cupId().equals(cupId) && cmd.forfeiter().equals(loserId)));
+  }
+
+  @Test
+  @DisplayName("does nothing when no cup exists for match")
+  void doesNothingWhenCupNotFound() {
+
+    final var matchId = MatchId.generate();
+    when(cupQueryRepository.findByMatchId(matchId)).thenReturn(Optional.empty());
+
+    handler.handle(new MatchForfeited(matchId, PlayerId.generate(), PlayerId.generate()));
+
+    verifyNoInteractions(forfeitCupUseCase);
   }
 
 }

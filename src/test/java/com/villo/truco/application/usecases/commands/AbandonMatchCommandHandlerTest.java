@@ -5,17 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.AbandonMatchCommand;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ class AbandonMatchCommandHandlerTest {
   }
 
   private AbandonMatchCommandHandler handlerWith(final Match match,
-      final AtomicReference<Match> savedMatch, final List<DomainEventBase> publishedEvents) {
+      final AtomicReference<Match> savedMatch, final List<MatchDomainEvent> publishedEvents) {
 
     final MatchQueryRepository queryRepo = new MatchQueryRepository() {
 
@@ -87,7 +87,7 @@ class AbandonMatchCommandHandlerTest {
 
     final MatchRepository matchRepository = savedMatch::set;
 
-    final MatchEventNotifier notifier = (matchId, p1, p2, events) -> publishedEvents.addAll(events);
+    final MatchEventNotifier notifier = publishedEvents::addAll;
 
     final var resolver = new MatchResolver(queryRepo);
     return new AbandonMatchCommandHandler(resolver, matchRepository, notifier);
@@ -99,7 +99,7 @@ class AbandonMatchCommandHandlerTest {
 
     final var match = matchInProgress();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);
 
     handler.handle(
@@ -116,7 +116,7 @@ class AbandonMatchCommandHandlerTest {
 
     final var match = matchInProgress();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);
 
     handler.handle(
@@ -132,7 +132,7 @@ class AbandonMatchCommandHandlerTest {
 
     final var match = matchInProgress();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);
 
     handler.handle(
@@ -147,7 +147,7 @@ class AbandonMatchCommandHandlerTest {
 
     final var match = matchInProgress();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);
 
     handler.handle(
@@ -162,7 +162,7 @@ class AbandonMatchCommandHandlerTest {
 
     final var match = matchInProgress();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);
     final var stranger = PlayerId.generate();
 

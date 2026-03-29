@@ -3,7 +3,9 @@ package com.villo.truco.application.usecases.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.application.commands.StartMatchCommand;
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
@@ -11,7 +13,7 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchRehydrator;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.CupQueryRepository;
@@ -19,10 +21,10 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
@@ -49,10 +51,9 @@ class StartMatchCommandHandlerConcurrencyTest {
 
   private final Map<MatchId, Match> store = new ConcurrentHashMap<>();
   private final Map<MatchId, AtomicLong> versions = new ConcurrentHashMap<>();
-  private final List<DomainEventBase> publishedEvents = Collections.synchronizedList(
+  private final List<MatchDomainEvent> publishedEvents = Collections.synchronizedList(
       new ArrayList<>());
-  private final MatchEventNotifier matchEventNotifier = (matchId, p1, p2, events) -> publishedEvents.addAll(
-      events);
+  private final MatchEventNotifier matchEventNotifier = publishedEvents::addAll;
   private final UseCasePipeline pipeline = new UseCasePipeline(
       List.of(new OptimisticLockRetryBehavior(3, Duration.ZERO)));
   private final MatchRepository matchRepository = match -> {
@@ -208,8 +209,33 @@ class StartMatchCommandHandlerConcurrencyTest {
         return List.of();
       }
     };
+    final BotRegistry noBotRegistry = new BotRegistry() {
+
+      @Override
+      public boolean isBot(final PlayerId p) {
+
+        return false;
+      }
+
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId p) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<BotProfile> getAll() {
+
+        return List.of();
+      }
+
+      @Override
+      public void register(final BotProfile profile) {
+
+      }
+    };
     final var checker = new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository);
+        cupQueryRepository, noBotRegistry);
     final var rawHandler = new StartMatchCommandHandler(matchResolver, matchRepository,
         matchEventNotifier, checker);
     handler = pipeline.wrap(rawHandler)::handle;

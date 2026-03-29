@@ -1,5 +1,6 @@
 package com.villo.truco.domain.model.match;
 
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
@@ -17,7 +18,6 @@ import com.villo.truco.domain.model.match.exceptions.CannotFoldWithoutCardsExcep
 import com.villo.truco.domain.model.match.exceptions.InvalidRoundStateException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
-import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.CurrentHandInfo;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
@@ -158,8 +158,8 @@ final class Round extends EntityBase<RoundId> {
 
   private Optional<PlayerId> resolveHandWinner(final Card cardMano, final Card cardPie) {
 
-    final var valueMano = TrucoCardValue.of(cardMano);
-    final var valuePie = TrucoCardValue.of(cardPie);
+    final var valueMano = CardEvaluationService.trucoValue(cardMano);
+    final var valuePie = CardEvaluationService.trucoValue(cardPie);
 
     if (valueMano > valuePie) {
       return Optional.of(mano);
@@ -332,8 +332,8 @@ final class Round extends EntityBase<RoundId> {
     }
     this.validateTurn(playerId);
 
-    final var pointsMano = EnvidoCalculator.calculate(this.getHandOf(this.mano).getCards());
-    final var pointsPie = EnvidoCalculator.calculate(
+    final var pointsMano = CardEvaluationService.envidoScore(this.getHandOf(this.mano).getCards());
+    final var pointsPie = CardEvaluationService.envidoScore(
         this.getHandOf(this.getOpponent(this.mano)).getCards());
 
     final var winner = pointsMano >= pointsPie ? this.mano : this.getOpponent(this.mano);

@@ -6,19 +6,20 @@ import com.villo.truco.application.commands.CreateLeagueCommand;
 import com.villo.truco.application.commands.JoinLeagueCommand;
 import com.villo.truco.application.commands.LeaveLeagueCommand;
 import com.villo.truco.application.commands.StartLeagueCommand;
+import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
-import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
@@ -31,314 +32,334 @@ import org.junit.jupiter.api.Test;
 @DisplayName("League command handlers")
 class LeagueCommandHandlersTest {
 
-    private PlayerAvailabilityChecker availableChecker() {
+  private PlayerAvailabilityChecker availableChecker() {
 
-        final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
-            @Override
-            public Optional<Match> findById(final MatchId matchId) {
+    final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
+      @Override
+      public Optional<Match> findById(final MatchId matchId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      @Override
+      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public boolean hasActiveMatch(final PlayerId playerId) {
+      @Override
+      public boolean hasActiveMatch(final PlayerId playerId) {
 
-                return false;
-            }
+        return false;
+      }
 
-            @Override
-            public boolean hasUnfinishedMatch(final PlayerId playerId) {
+      @Override
+      public boolean hasUnfinishedMatch(final PlayerId playerId) {
 
-                return false;
-            }
+        return false;
+      }
 
-            @Override
-            public List<MatchId> findIdleMatchIds(final Instant idleSince) {
+      @Override
+      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
-                return List.of();
-            }
-        };
-        final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
-            @Override
-            public Optional<League> findById(final LeagueId leagueId) {
+        return List.of();
+      }
+    };
+    final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(final LeagueId leagueId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      @Override
+      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findByMatchId(final MatchId matchId) {
+      @Override
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
-                return List.of();
-            }
-        };
-        final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
-            @Override
-            public Optional<Cup> findById(final CupId cupId) {
+        return List.of();
+      }
+    };
+    final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findByMatchId(final MatchId matchId) {
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
-                return Optional.empty();
-            }
+        return Optional.empty();
+      }
 
-            @Override
-            public List<CupId> findIdleCupIds(final Instant idleSince) {
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
 
-                return List.of();
-            }
-        };
-        return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-            cupQueryRepository);
-    }
+        return List.of();
+      }
+    };
+    final BotRegistry noBotRegistry = new BotRegistry() {
+      @Override
+      public boolean isBot(final PlayerId p) {
 
-    @Test
-    @DisplayName("CreateLeagueCommandHandler crea y persiste league")
-    void createLeagueHandlerCreatesAndSaves() {
+        return false;
+      }
 
-        final var saved = new AtomicReference<League>();
-        final var handler = new CreateLeagueCommandHandler(saved::set, availableChecker());
-        final var creator = PlayerId.generate();
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId p) {
 
-        final var result = handler.handle(new CreateLeagueCommand(creator, 3, GamesToPlay.of(3)));
+        return Optional.empty();
+      }
 
-        assertThat(saved.get()).isNotNull();
-        assertThat(result.leagueId()).isEqualTo(saved.get().getId().value().toString());
-        assertThat(result.inviteCode()).isEqualTo(saved.get().getInviteCode().value());
-    }
+      @Override
+      public List<BotProfile> getAll() {
 
-    @Test
-    @DisplayName("JoinLeagueCommandHandler une jugador y persiste")
-    void joinLeagueHandlerJoinsAndSaves() {
+        return List.of();
+      }
 
-        final var creator = PlayerId.generate();
-        final var joiner = PlayerId.generate();
-        final var league = League.create(creator, 3, GamesToPlay.of(3));
+      @Override
+      public void register(final BotProfile profile) {
 
-        final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
-            @Override
-            public Optional<League> findById(final LeagueId leagueId) {
+      }
+    };
+    return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
+        cupQueryRepository, noBotRegistry);
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("CreateLeagueCommandHandler crea y persiste league")
+  void createLeagueHandlerCreatesAndSaves() {
 
-            @Override
-            public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+    final var saved = new AtomicReference<League>();
+    final var handler = new CreateLeagueCommandHandler(saved::set, availableChecker());
+    final var creator = PlayerId.generate();
 
-                return Optional.of(league);
-            }
+    final var result = handler.handle(new CreateLeagueCommand(creator, 3, GamesToPlay.of(3)));
 
-            @Override
-            public Optional<League> findByMatchId(final MatchId matchId) {
+    assertThat(saved.get()).isNotNull();
+    assertThat(result.leagueId()).isEqualTo(saved.get().getId().value().toString());
+    assertThat(result.inviteCode()).isEqualTo(saved.get().getInviteCode().value());
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("JoinLeagueCommandHandler une jugador y persiste")
+  void joinLeagueHandlerJoinsAndSaves() {
 
-            @Override
-            public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+    final var creator = PlayerId.generate();
+    final var joiner = PlayerId.generate();
+    final var league = League.create(creator, 3, GamesToPlay.of(3));
 
-                return Optional.empty();
-            }
+    final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(final LeagueId leagueId) {
 
-            @Override
-            public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.empty();
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+        return Optional.of(league);
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
-        final var saved = new AtomicReference<League>();
-        final var handler = new JoinLeagueCommandHandler(new LeagueResolver(queryRepository),
-            saved::set, availableChecker(), (id, participants, events) -> {
-        });
+        return Optional.empty();
+      }
 
-        final var result = handler.handle(new JoinLeagueCommand(joiner, league.getInviteCode()));
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
-        assertThat(result.leagueId()).isEqualTo(league.getId().value().toString());
-        assertThat(saved.get()).isSameAs(league);
-    }
+        return Optional.empty();
+      }
 
-    @Test
-    @DisplayName("LeaveLeagueCommandHandler saca jugador y persiste")
-    void leaveLeagueHandlerLeavesAndSaves() {
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
-        final var creator = PlayerId.generate();
-        final var leaver = PlayerId.generate();
-        final var league = League.create(creator, 3, GamesToPlay.of(3));
-        league.join(leaver, league.getInviteCode());
+        return Optional.empty();
+      }
 
-        final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
-            @Override
-            public Optional<League> findById(final LeagueId leagueId) {
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
-                return Optional.of(league);
-            }
+        return List.of();
+      }
+    };
 
-            @Override
-            public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+    final var saved = new AtomicReference<League>();
+    final var handler = new JoinLeagueCommandHandler(new LeagueResolver(queryRepository),
+        saved::set, availableChecker(), events -> {
+    });
 
-                return Optional.empty();
-            }
+    final var result = handler.handle(new JoinLeagueCommand(joiner, league.getInviteCode()));
 
-            @Override
-            public Optional<League> findByMatchId(final MatchId matchId) {
+    assertThat(result.leagueId()).isEqualTo(league.getId().value().toString());
+    assertThat(saved.get()).isSameAs(league);
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("LeaveLeagueCommandHandler saca jugador y persiste")
+  void leaveLeagueHandlerLeavesAndSaves() {
 
-            @Override
-            public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+    final var creator = PlayerId.generate();
+    final var leaver = PlayerId.generate();
+    final var league = League.create(creator, 3, GamesToPlay.of(3));
+    league.join(leaver, league.getInviteCode());
 
-                return Optional.empty();
-            }
+    final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(final LeagueId leagueId) {
 
-            @Override
-            public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.of(league);
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+        return Optional.empty();
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
-        final var saved = new AtomicReference<League>();
-        final var handler = new LeaveLeagueCommandHandler(new LeagueResolver(queryRepository),
-            saved::set, (id, participants, events) -> {
-        });
+        return Optional.empty();
+      }
 
-        handler.handle(new LeaveLeagueCommand(league.getId(), leaver));
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
-        assertThat(saved.get()).isSameAs(league);
-    }
+        return Optional.empty();
+      }
 
-    @Test
-    @DisplayName("StartLeagueCommandHandler crea matches para fixtures pendientes y persiste")
-    void startLeagueHandlerCreatesMatchesAndSaves() {
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
-        final var p1 = PlayerId.generate();
-        final var p2 = PlayerId.generate();
-        final var p3 = PlayerId.generate();
-        final var league = League.create(p1, 3, GamesToPlay.of(3));
-        league.join(p2, league.getInviteCode());
-        league.join(p3, league.getInviteCode());
+        return Optional.empty();
+      }
 
-        final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
-            @Override
-            public Optional<League> findById(final LeagueId leagueId) {
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
-                return Optional.of(league);
-            }
+        return List.of();
+      }
+    };
 
-            @Override
-            public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+    final var saved = new AtomicReference<League>();
+    final var handler = new LeaveLeagueCommandHandler(new LeagueResolver(queryRepository),
+        saved::set, events -> {
+    });
 
-                return Optional.empty();
-            }
+    handler.handle(new LeaveLeagueCommand(league.getId(), leaver));
 
-            @Override
-            public Optional<League> findByMatchId(final MatchId matchId) {
+    assertThat(saved.get()).isSameAs(league);
+  }
 
-                return Optional.empty();
-            }
+  @Test
+  @DisplayName("StartLeagueCommandHandler crea matches para fixtures pendientes y persiste")
+  void startLeagueHandlerCreatesMatchesAndSaves() {
 
-            @Override
-            public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    league.join(p2, league.getInviteCode());
+    league.join(p3, league.getInviteCode());
 
-                return Optional.empty();
-            }
+    final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(final LeagueId leagueId) {
 
-            @Override
-            public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+        return Optional.of(league);
+      }
 
-                return Optional.empty();
-            }
+      @Override
+      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
-            @Override
-            public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+        return Optional.empty();
+      }
 
-                return List.of();
-            }
-        };
+      @Override
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
-        final var leagueSaved = new AtomicReference<League>();
-        final var matchSaves = new AtomicInteger();
-        final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
+        return Optional.empty();
+      }
 
-        final var handler = new StartLeagueCommandHandler(new LeagueResolver(queryRepository),
-            leagueSaved::set, matchRepository, (id, participants, events) -> {
-        });
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
 
-        handler.handle(new StartLeagueCommand(league.getId(), p1));
+        return Optional.empty();
+      }
 
-        final var pendingCount = league.getFixtures().stream()
-            .filter(
-                f -> f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.FINISHED)
-            .count();
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
-        assertThat(leagueSaved.get()).isSameAs(league);
-        assertThat(matchSaves.get()).isEqualTo((int) pendingCount);
-        assertThat(league.getFixtures().stream().filter(f -> f.status() == FixtureStatus.PENDING)
-            .allMatch(f -> f.matchId() != null)).isTrue();
-    }
+        return Optional.empty();
+      }
+
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+        return List.of();
+      }
+    };
+
+    final var leagueSaved = new AtomicReference<League>();
+    final var matchSaves = new AtomicInteger();
+    final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
+
+    final var handler = new StartLeagueCommandHandler(new LeagueResolver(queryRepository),
+        leagueSaved::set, matchRepository, events -> {
+    });
+
+    handler.handle(new StartLeagueCommand(league.getId(), p1));
+
+    final var linkedCount = league.getFixtures().stream().filter(f -> f.matchId() != null).count();
+
+    assertThat(leagueSaved.get()).isSameAs(league);
+    assertThat(matchSaves.get()).isEqualTo((int) linkedCount);
+    assertThat(matchSaves.get()).isGreaterThan(0);
+  }
 
 }

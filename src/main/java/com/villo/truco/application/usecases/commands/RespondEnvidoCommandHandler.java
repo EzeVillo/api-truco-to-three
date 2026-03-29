@@ -31,8 +31,7 @@ public final class RespondEnvidoCommandHandler implements RespondEnvidoUseCase {
     }
 
     this.matchRepository.save(match);
-    this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
-        match.getPlayerTwo(), match.getDomainEvents());
+    this.matchEventNotifier.publishDomainEvents(match.getMatchDomainEvents());
     match.clearDomainEvents();
 
     return null;

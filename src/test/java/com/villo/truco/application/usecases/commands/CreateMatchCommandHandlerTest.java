@@ -4,19 +4,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.CreateMatchCommand;
+import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
@@ -139,8 +141,34 @@ class CreateMatchCommandHandlerTest {
     }
   };
 
+  private static final BotRegistry NO_BOT_REGISTRY = new BotRegistry() {
+
+    @Override
+    public boolean isBot(final PlayerId playerId) {
+
+      return false;
+    }
+
+    @Override
+    public Optional<BotProfile> getProfile(final PlayerId playerId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public List<BotProfile> getAll() {
+
+      return List.of();
+    }
+
+    @Override
+    public void register(final BotProfile profile) {
+
+    }
+  };
+
   private static final PlayerAvailabilityChecker FREE_CHECKER = new PlayerAvailabilityChecker(
-      NO_ACTIVE_MATCH_REPO, NO_LEAGUE_REPO, NO_CUP_REPO);
+      NO_ACTIVE_MATCH_REPO, NO_LEAGUE_REPO, NO_CUP_REPO, NO_BOT_REGISTRY);
 
   @Test
   @DisplayName("crea partida con gamesToPlay valido")
@@ -228,7 +256,7 @@ class CreateMatchCommandHandlerTest {
     };
 
     final var busyChecker = new PlayerAvailabilityChecker(busyMatchRepo, NO_LEAGUE_REPO,
-        NO_CUP_REPO);
+        NO_CUP_REPO, NO_BOT_REGISTRY);
     final var handler = new CreateMatchCommandHandler(repository, busyChecker);
 
     assertThatThrownBy(() -> handler.handle(
