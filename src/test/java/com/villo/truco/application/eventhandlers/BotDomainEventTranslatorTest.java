@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.events.BotTurnRequired;
+import com.villo.truco.application.events.PostCommitApplicationEvent;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.domain.model.bot.BotProfile;
@@ -31,6 +32,34 @@ class BotDomainEventTranslatorTest {
   private final List<ApplicationEvent> published = new ArrayList<>();
   private final ApplicationEventPublisher publisher = published::add;
 
+  private static BotRegistry registryWith(final PlayerId botPlayerId) {
+
+    return new BotRegistry() {
+      @Override
+      public boolean isBot(final PlayerId playerId) {
+
+        return botPlayerId.equals(playerId);
+      }
+
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<BotProfile> getAll() {
+
+        return List.of();
+      }
+
+      @Override
+      public void register(final BotProfile profile) {
+
+      }
+    };
+  }
+
   @Test
   @DisplayName("TurnChanged para jugador bot publica BotTurnRequired")
   void turnChangedForBotPublishesBotTurnRequired() {
@@ -48,6 +77,7 @@ class BotDomainEventTranslatorTest {
 
     assertThat(published).hasSize(1);
     final var event = (BotTurnRequired) published.getFirst();
+    assertThat(event).isInstanceOf(PostCommitApplicationEvent.class);
     assertThat(event.matchId()).isEqualTo(matchId);
     assertThat(event.botPlayerId()).isEqualTo(botPlayer);
   }
@@ -157,34 +187,6 @@ class BotDomainEventTranslatorTest {
     translator.handle(new PlayerJoinedEvent(matchId, p1, p2));
 
     assertThat(published).isEmpty();
-  }
-
-  private static BotRegistry registryWith(final PlayerId botPlayerId) {
-
-    return new BotRegistry() {
-      @Override
-      public boolean isBot(final PlayerId playerId) {
-
-        return botPlayerId.equals(playerId);
-      }
-
-      @Override
-      public Optional<BotProfile> getProfile(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<BotProfile> getAll() {
-
-        return List.of();
-      }
-
-      @Override
-      public void register(final BotProfile profile) {
-
-      }
-    };
   }
 
 }

@@ -15,6 +15,7 @@ import com.villo.truco.infrastructure.actuator.metrics.CupEventMetricsEventHandl
 import com.villo.truco.infrastructure.actuator.metrics.LeagueEventMetricsEventHandler;
 import com.villo.truco.infrastructure.actuator.metrics.MatchEventMetricsEventHandler;
 import com.villo.truco.infrastructure.events.InProcessApplicationEventPublisher;
+import com.villo.truco.infrastructure.events.TransactionalApplicationEventPublisher;
 import com.villo.truco.infrastructure.websocket.StompCupNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompLeagueNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompMatchNotificationHandler;
@@ -22,6 +23,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Configuration
@@ -114,11 +116,13 @@ public class ApplicationEventConfiguration {
   MatchNotificationEventTranslator matchNotificationTranslator(
       final ApplicationEventPublisher publisher) {
 
-    return new MatchNotificationEventTranslator(matchEventMapper(), matchRecipientResolver(), publisher);
+    return new MatchNotificationEventTranslator(matchEventMapper(), matchRecipientResolver(),
+        publisher);
   }
 
   @Bean
-  CupNotificationEventTranslator cupNotificationTranslator(final ApplicationEventPublisher publisher) {
+  CupNotificationEventTranslator cupNotificationTranslator(
+      final ApplicationEventPublisher publisher) {
 
     return new CupNotificationEventTranslator(cupEventMapper(), publisher);
   }
@@ -131,10 +135,18 @@ public class ApplicationEventConfiguration {
   }
 
   @Bean
-  ApplicationEventPublisher applicationEventPublisher(
+  InProcessApplicationEventPublisher inProcessApplicationEventPublisher(
       final List<ApplicationEventHandler<?>> handlers) {
 
     return new InProcessApplicationEventPublisher(handlers);
+  }
+
+  @Bean
+  @Primary
+  ApplicationEventPublisher applicationEventPublisher(
+      final InProcessApplicationEventPublisher delegate) {
+
+    return new TransactionalApplicationEventPublisher(delegate);
   }
 
 }

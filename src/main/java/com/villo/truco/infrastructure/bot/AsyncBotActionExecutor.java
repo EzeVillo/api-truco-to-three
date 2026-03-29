@@ -8,8 +8,6 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public final class AsyncBotActionExecutor implements ApplicationEventHandler<BotTurnRequired> {
 
@@ -33,17 +31,6 @@ public final class AsyncBotActionExecutor implements ApplicationEventHandler<Bot
 
   @Override
   public void handle(final BotTurnRequired event) {
-
-    if (TransactionSynchronizationManager.isSynchronizationActive()) {
-      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-        @Override
-        public void afterCommit() {
-
-          AsyncBotActionExecutor.this.submit(event);
-        }
-      });
-      return;
-    }
 
     this.submit(event);
   }
