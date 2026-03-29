@@ -1,7 +1,7 @@
 package com.villo.truco.domain.model.bot.valueobjects;
 
 public sealed interface BotAction permits BotAction.PlayCard, BotAction.CallTruco,
-    BotAction.RespondTruco, BotAction.CallEnvido, BotAction.RespondEnvido {
+    BotAction.RespondTruco, BotAction.CallEnvido, BotAction.RespondEnvido, BotAction.Fold {
 
   record PlayCard(BotCard card) implements BotAction {
 
@@ -20,6 +20,10 @@ public sealed interface BotAction permits BotAction.PlayCard, BotAction.CallTruc
   }
 
   record RespondEnvido(BotEnvidoResponse response) implements BotAction {
+
+  }
+
+  record Fold() implements BotAction {
 
   }
 

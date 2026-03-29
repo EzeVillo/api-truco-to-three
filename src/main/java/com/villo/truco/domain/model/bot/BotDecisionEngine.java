@@ -72,8 +72,8 @@ public final class BotDecisionEngine {
       }
 
       if (truco.canCall()) {
-        final var raise = this.trucoPolicy.decideRaise(truco.availableCall(), handStrength,
-            myScore, rivalScore, pointsToWin);
+        final var raise = this.trucoPolicy.decideRaise(truco.availableCall(), handStrength, myScore,
+            rivalScore, pointsToWin);
         if (raise.isPresent()) {
           return new BotAction.CallTruco(raise.get());
         }
@@ -111,6 +111,10 @@ public final class BotDecisionEngine {
       if (trucoCall.isPresent()) {
         return new BotAction.CallTruco(trucoCall.get());
       }
+    }
+
+    if (game.canFold() && game.foldWouldGiveGameToBot()) {
+      return new BotAction.Fold();
     }
 
     final var card = this.cardPolicy.select(game.myCards(), game.rivalCardPlayed());

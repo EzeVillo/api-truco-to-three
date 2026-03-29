@@ -3,6 +3,7 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.commands.CallEnvidoCommand;
 import com.villo.truco.application.commands.CallTrucoCommand;
 import com.villo.truco.application.commands.ExecuteBotTurnCommand;
+import com.villo.truco.application.commands.FoldCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
@@ -10,6 +11,7 @@ import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.ExecuteBotTurnUseCase;
+import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -31,11 +33,13 @@ public final class ExecuteBotTurnCommandHandler implements ExecuteBotTurnUseCase
   private final RespondTrucoUseCase respondTrucoUseCase;
   private final CallEnvidoUseCase callEnvidoUseCase;
   private final RespondEnvidoUseCase respondEnvidoUseCase;
+  private final FoldUseCase foldUseCase;
 
   public ExecuteBotTurnCommandHandler(final BotRegistry botRegistry,
       final MatchQueryRepository matchQueryRepository, final PlayCardUseCase playCardUseCase,
       final CallTrucoUseCase callTrucoUseCase, final RespondTrucoUseCase respondTrucoUseCase,
-      final CallEnvidoUseCase callEnvidoUseCase, final RespondEnvidoUseCase respondEnvidoUseCase) {
+      final CallEnvidoUseCase callEnvidoUseCase, final RespondEnvidoUseCase respondEnvidoUseCase,
+      final FoldUseCase foldUseCase) {
 
     this.botRegistry = Objects.requireNonNull(botRegistry);
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
@@ -44,6 +48,7 @@ public final class ExecuteBotTurnCommandHandler implements ExecuteBotTurnUseCase
     this.respondTrucoUseCase = Objects.requireNonNull(respondTrucoUseCase);
     this.callEnvidoUseCase = Objects.requireNonNull(callEnvidoUseCase);
     this.respondEnvidoUseCase = Objects.requireNonNull(respondEnvidoUseCase);
+    this.foldUseCase = Objects.requireNonNull(foldUseCase);
   }
 
   @Override
@@ -105,6 +110,8 @@ public final class ExecuteBotTurnCommandHandler implements ExecuteBotTurnUseCase
       case BotAction.RespondEnvido re -> this.respondEnvidoUseCase.handle(
           new RespondEnvidoCommand(command.matchId(), command.botPlayerId(),
               MatchToBotACL.toEnvidoResponse(re.response())));
+      case BotAction.Fold ignored ->
+          this.foldUseCase.handle(new FoldCommand(command.matchId(), command.botPlayerId()));
     }
   }
 

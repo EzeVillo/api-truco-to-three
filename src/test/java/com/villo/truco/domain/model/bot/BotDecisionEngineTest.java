@@ -2,8 +2,6 @@ package com.villo.truco.domain.model.bot;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
-import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.model.bot.valueobjects.BotAction;
 import com.villo.truco.domain.model.bot.valueobjects.BotCard;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoCall;
@@ -15,6 +13,8 @@ import com.villo.truco.domain.model.bot.valueobjects.BotMatchView.TrucoContext;
 import com.villo.truco.domain.model.bot.valueobjects.BotPersonality;
 import com.villo.truco.domain.model.bot.valueobjects.BotTrucoCall;
 import com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import java.util.List;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,18 @@ class BotDecisionEngineTest {
 
   private static BotMatchView playOnly(final List<BotCard> cards) {
 
-    final var game = new GameContext(cards, 0, 0, null, 0, 0, false, true, false, POINTS_TO_WIN);
+    final var game = new GameContext(cards, 0, 0, null, 0, 0, false, true, false, false,
+        POINTS_TO_WIN);
+    final var truco = new TrucoContext(null, List.of(), null);
+    final var envido = new EnvidoContext(List.of(), List.of(), List.of(), null);
+    return new BotMatchView(game, truco, envido);
+  }
+
+  private static BotMatchView withFoldOption(final List<BotCard> cards, final int myScore,
+      final int rivalScore, final boolean foldWouldGiveGameToBot) {
+
+    final var game = new GameContext(cards, myScore, rivalScore, null, 0, 0, false, true, true,
+        foldWouldGiveGameToBot, POINTS_TO_WIN);
     final var truco = new TrucoContext(null, List.of(), null);
     final var envido = new EnvidoContext(List.of(), List.of(), List.of(), null);
     return new BotMatchView(game, truco, envido);
@@ -77,7 +88,7 @@ class BotDecisionEngineTest {
       final int pointsToWin) {
 
     final var game = new GameContext(cards, myScore, rivalScore, null, 0, handsPlayed, false, false,
-        false, pointsToWin);
+        false, false, pointsToWin);
     final var truco = new TrucoContext(availableTrucoCall, availableResponses, currentOffer);
     final var envido = new EnvidoContext(availableEnvidoCalls, List.of(), List.of(), null);
     return new BotMatchView(game, truco, envido);
@@ -154,8 +165,7 @@ class BotDecisionEngineTest {
 
     final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
     final var view = withTrucoResponse(List.of(ANCHO_ESPADA), 0, 0, TRUCO_CALL,
-        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), RETRUCO_CALL,
-        List.of(), 0);
+        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), RETRUCO_CALL, List.of(), 0);
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.CallTruco.class);
     assertThat(((BotAction.CallTruco) action).call()).isEqualTo(RETRUCO_CALL);
@@ -166,6 +176,24 @@ class BotDecisionEngineTest {
 
     final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
     final var view = playOnly(List.of(ANCHO_ESPADA));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.PlayCard.class);
+  }
+
+  @Test
+  void decide_foldsWhenThatMakesBotWinTheGame() {
+
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var view = withFoldOption(List.of(ANCHO_ESPADA), 1, 2, true);
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.Fold.class);
+  }
+
+  @Test
+  void decide_doesNotFoldWhenRivalWouldOnlyWinExact() {
+
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var view = withFoldOption(List.of(ANCHO_ESPADA), 0, 2, false);
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.PlayCard.class);
   }

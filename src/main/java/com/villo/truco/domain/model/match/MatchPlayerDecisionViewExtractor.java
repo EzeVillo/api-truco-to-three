@@ -40,7 +40,9 @@ final class MatchPlayerDecisionViewExtractor {
         rivalScore, rivalCardRaw != null ? toCardView(rivalCardRaw) : null,
         myCardsRaw.isEmpty() ? 0 : CardEvaluationService.envidoScore(myCardsRaw),
         match.getPlayedHands().size(), isMano, hasAction(availableActions, ActionType.PLAY_CARD),
-        hasAction(availableActions, ActionType.FOLD), ScoringPolicy.pointsToWinGame());
+        hasAction(availableActions, ActionType.FOLD),
+        foldWouldGiveGameToBot(match, rivalScore, availableActions),
+        ScoringPolicy.pointsToWinGame());
 
     final var trucoContext = new MatchPlayerDecisionView.TrucoContext(
         toSingleAvailableTrucoCall(availableActions),
@@ -71,14 +73,12 @@ final class MatchPlayerDecisionViewExtractor {
     return new MatchPlayerDecisionView.CardView(CardEvaluationService.trucoValue(card), card);
   }
 
-  private static TrucoCall toSingleAvailableTrucoCall(final List<AvailableAction> availableActions) {
+  private static TrucoCall toSingleAvailableTrucoCall(
+      final List<AvailableAction> availableActions) {
 
     final var availableCalls = availableActions.stream()
-        .filter(a -> a.type() == ActionType.CALL_TRUCO)
-        .flatMap(a -> a.getParameter().stream())
-        .map(value -> tryParse(value, TrucoCall.class))
-        .filter(Objects::nonNull)
-        .distinct()
+        .filter(a -> a.type() == ActionType.CALL_TRUCO).flatMap(a -> a.getParameter().stream())
+        .map(value -> tryParse(value, TrucoCall.class)).filter(Objects::nonNull).distinct()
         .toList();
 
     if (availableCalls.isEmpty()) {
@@ -86,7 +86,8 @@ final class MatchPlayerDecisionViewExtractor {
     }
 
     if (availableCalls.size() > 1) {
-      throw new IllegalStateException("MatchPlayerDecisionView must expose at most one available truco call");
+      throw new IllegalStateException(
+          "MatchPlayerDecisionView must expose at most one available truco call");
     }
 
     return availableCalls.getFirst();
@@ -138,6 +139,17 @@ final class MatchPlayerDecisionViewExtractor {
       final ActionType type) {
 
     return availableActions.stream().anyMatch(action -> action.type() == type);
+  }
+
+  private static boolean foldWouldGiveGameToBot(final Match match, final int rivalScore,
+      final List<AvailableAction> availableActions) {
+
+    if (!hasAction(availableActions, ActionType.FOLD)) {
+      return false;
+    }
+
+    return rivalScore + match.getCurrentRound().getTrucoPointsAtStake()
+        > ScoringPolicy.pointsToWinGame();
   }
 
   @SuppressWarnings("unchecked")

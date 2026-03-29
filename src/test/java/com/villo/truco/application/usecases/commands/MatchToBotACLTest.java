@@ -27,7 +27,7 @@ class MatchToBotACLTest {
     final var rivalCard = Card.of(Suit.BASTO, 7);
     final var view = new MatchPlayerDecisionView(new MatchPlayerDecisionView.GameContext(
         List.of(new MatchPlayerDecisionView.CardView(14, myCard)), 1, 2,
-        new MatchPlayerDecisionView.CardView(4, rivalCard), 27, 1, true, true, false, 5),
+        new MatchPlayerDecisionView.CardView(4, rivalCard), 27, 1, true, true, false, false, 5),
         new MatchPlayerDecisionView.TrucoContext(TrucoCall.RETRUCO,
             List.of(TrucoResponse.QUIERO, TrucoResponse.NO_QUIERO), TrucoCall.TRUCO),
         new MatchPlayerDecisionView.EnvidoContext(
@@ -45,6 +45,7 @@ class MatchToBotACLTest {
     assertThat(botView.game().rivalCardPlayed().trucoRank()).isEqualTo(4);
     assertThat(botView.game().myScore()).isEqualTo(1);
     assertThat(botView.game().rivalScore()).isEqualTo(2);
+    assertThat(botView.game().foldWouldGiveGameToBot()).isFalse();
     assertThat(botView.truco().availableCall()).satisfies(call -> {
       assertThat(call.stakeIfAccepted()).isEqualTo(3);
       assertThat(call.stakeIfRejected()).isEqualTo(2);
@@ -71,7 +72,7 @@ class MatchToBotACLTest {
     final var botCard = MatchToBotACL.translate(new MatchPlayerDecisionView(
             new MatchPlayerDecisionView.GameContext(
                 List.of(new MatchPlayerDecisionView.CardView(6, Card.of(Suit.ORO, 10))), 0, 0, null, 0,
-                0, false, true, false, 5),
+                0, false, true, false, false, 5),
             new MatchPlayerDecisionView.TrucoContext(null, List.of(), null),
             new MatchPlayerDecisionView.EnvidoContext(List.of(), List.of(), List.of(), null))).game()
         .myCards().getFirst();
@@ -79,9 +80,8 @@ class MatchToBotACLTest {
     assertThat(MatchToBotACL.toCard(botCard)).isEqualTo(Card.of(Suit.ORO, 10));
     assertThat(MatchToBotACL.toTrucoResponse(BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO)).isEqualTo(
         TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO);
-    assertThat(
-        MatchToBotACL.toEnvidoCall(new BotEnvidoCall(2, 1, 1, BotEnvidoLevel.REAL_ENVIDO))).isEqualTo(
-        EnvidoCall.REAL_ENVIDO);
+    assertThat(MatchToBotACL.toEnvidoCall(
+        new BotEnvidoCall(2, 1, 1, BotEnvidoLevel.REAL_ENVIDO))).isEqualTo(EnvidoCall.REAL_ENVIDO);
     assertThat(MatchToBotACL.toEnvidoResponse(BotEnvidoResponse.NO_QUIERO)).isEqualTo(
         EnvidoResponse.NO_QUIERO);
   }
@@ -92,8 +92,7 @@ class MatchToBotACLTest {
 
     final var view = new MatchPlayerDecisionView(
         new MatchPlayerDecisionView.GameContext(List.of(), 1, 1, null, 30, 0, false, true, false,
-            3),
-        new MatchPlayerDecisionView.TrucoContext(null, List.of(), null),
+            false, 3), new MatchPlayerDecisionView.TrucoContext(null, List.of(), null),
         new MatchPlayerDecisionView.EnvidoContext(
             List.of(new MatchPlayerDecisionView.EnvidoOption(EnvidoCall.REAL_ENVIDO, 3, 3)),
             List.of(EnvidoResponse.QUIERO, EnvidoResponse.NO_QUIERO),
@@ -109,4 +108,5 @@ class MatchToBotACLTest {
       assertThat(call.rejectedPointsIfRivalDeclines()).isEqualTo(2);
     });
   }
+
 }

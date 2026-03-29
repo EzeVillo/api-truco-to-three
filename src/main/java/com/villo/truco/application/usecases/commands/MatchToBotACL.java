@@ -35,7 +35,7 @@ final class MatchToBotACL {
         game.myScore(), game.rivalScore(),
         game.rivalCardPlayed() != null ? toBot(game.rivalCardPlayed()) : null, game.envidoScore(),
         game.handsPlayedCount(), game.isMano(), game.canPlayCard(), game.canFold(),
-        game.pointsToWin());
+        game.foldWouldGiveGameToBot(), game.pointsToWin());
 
     final var trucoCtx = new TrucoContext(
         truco.availableCall() != null ? toBot(truco.availableCall()) : null,

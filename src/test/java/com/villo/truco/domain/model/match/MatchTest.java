@@ -66,6 +66,22 @@ class MatchTest {
     }
   }
 
+  private void awardPoint(final Match match, final PlayerId scorer, final PlayerId rival) {
+
+    final var scoreBefore =
+        scorer.equals(playerOne) ? match.getScorePlayerOne() : match.getScorePlayerTwo();
+
+    while ((scorer.equals(playerOne) ? match.getScorePlayerOne() : match.getScorePlayerTwo())
+        == scoreBefore) {
+      if (match.getCurrentTurn().equals(scorer)) {
+        match.callTruco(scorer);
+        match.rejectTruco(rival);
+      } else {
+        match.playCard(rival, match.getCurrentRound().getHandOf(rival).getCards().getFirst());
+      }
+    }
+  }
+
   @Nested
   @DisplayName("create")
   class Create {
@@ -454,6 +470,7 @@ class MatchTest {
       assertThat(view.game().isMano()).isTrue();
       assertThat(view.game().canPlayCard()).isTrue();
       assertThat(view.game().canFold()).isFalse();
+      assertThat(view.game().foldWouldGiveGameToBot()).isFalse();
       assertThat(view.game().myCards()).hasSize(3);
       assertThat(view.truco().availableCall()).isEqualTo(TrucoCall.TRUCO);
       assertThat(view.truco().availableResponses()).isEmpty();
@@ -476,6 +493,30 @@ class MatchTest {
       assertThat(view.truco().availableResponses()).containsExactlyInAnyOrder(TrucoResponse.QUIERO,
           TrucoResponse.NO_QUIERO, TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO);
       assertThat(view.truco().availableCall()).isEqualTo(TrucoCall.RETRUCO);
+    }
+
+    @Test
+    @DisplayName("expone cuando fold haría ganar el juego al bot")
+    void exposesWhenFoldWouldGiveGameToBot() {
+
+      final var match = matchInProgress();
+
+      awardPoint(match, playerOne, playerTwo);
+      awardPoint(match, playerTwo, playerOne);
+      awardPoint(match, playerTwo, playerOne);
+
+      if (!match.getCurrentTurn().equals(playerOne)) {
+        match.playCard(playerTwo,
+            match.getCurrentRound().getHandOf(playerTwo).getCards().getFirst());
+      }
+
+      match.callTruco(playerOne);
+      match.acceptTruco(playerTwo);
+
+      final var view = match.getDecisionViewFor(playerOne);
+
+      assertThat(view.game().canFold()).isTrue();
+      assertThat(view.game().foldWouldGiveGameToBot()).isTrue();
     }
 
     @Test

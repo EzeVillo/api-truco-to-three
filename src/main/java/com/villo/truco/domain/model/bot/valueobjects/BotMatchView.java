@@ -6,12 +6,13 @@ public record BotMatchView(GameContext game, TrucoContext truco, EnvidoContext e
 
   public record GameContext(List<BotCard> myCards, int myScore, int rivalScore,
                             BotCard rivalCardPlayed, int envidoScore, int handsPlayedCount,
-                            boolean isMano, boolean canPlayCard, boolean canFold, int pointsToWin) {
+                            boolean isMano, boolean canPlayCard, boolean canFold,
+                            boolean foldWouldGiveGameToBot, int pointsToWin) {
 
   }
 
-  public record TrucoContext(BotTrucoCall availableCall,
-                             List<BotTrucoResponse> availableResponses, BotTrucoCall currentCall) {
+  public record TrucoContext(BotTrucoCall availableCall, List<BotTrucoResponse> availableResponses,
+                             BotTrucoCall currentCall) {
 
     public boolean mustRespond() {
 
@@ -47,8 +48,7 @@ public record BotMatchView(GameContext game, TrucoContext truco, EnvidoContext e
 
   }
 
-  public record PendingEnvidoOutcome(int acceptedPointsIfBotWins,
-                                     int acceptedPointsIfRivalWins,
+  public record PendingEnvidoOutcome(int acceptedPointsIfBotWins, int acceptedPointsIfRivalWins,
                                      int rejectedPoints) {
 
   }

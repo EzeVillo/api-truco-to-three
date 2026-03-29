@@ -6,6 +6,7 @@ import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
 import com.villo.truco.application.ports.in.ExecuteBotTurnUseCase;
+import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
@@ -41,6 +42,7 @@ public class BotConfiguration {
   private final RespondTrucoUseCase respondTrucoUseCase;
   private final CallEnvidoUseCase callEnvidoUseCase;
   private final RespondEnvidoUseCase respondEnvidoUseCase;
+  private final FoldUseCase foldUseCase;
   private final UseCasePipeline retryTransactionalPipeline;
 
   public BotConfiguration(final BotRegistry botRegistry,
@@ -50,7 +52,7 @@ public class BotConfiguration {
       @Lazy final PlayCardUseCase playCardUseCase, @Lazy final CallTrucoUseCase callTrucoUseCase,
       @Lazy final RespondTrucoUseCase respondTrucoUseCase,
       @Lazy final CallEnvidoUseCase callEnvidoUseCase,
-      @Lazy final RespondEnvidoUseCase respondEnvidoUseCase,
+      @Lazy final RespondEnvidoUseCase respondEnvidoUseCase, @Lazy final FoldUseCase foldUseCase,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.botRegistry = botRegistry;
@@ -63,6 +65,7 @@ public class BotConfiguration {
     this.respondTrucoUseCase = respondTrucoUseCase;
     this.callEnvidoUseCase = callEnvidoUseCase;
     this.respondEnvidoUseCase = respondEnvidoUseCase;
+    this.foldUseCase = foldUseCase;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
   }
 
@@ -77,7 +80,7 @@ public class BotConfiguration {
 
     return new ExecuteBotTurnCommandHandler(this.botRegistry, this.matchQueryRepository,
         this.playCardUseCase, this.callTrucoUseCase, this.respondTrucoUseCase,
-        this.callEnvidoUseCase, this.respondEnvidoUseCase);
+        this.callEnvidoUseCase, this.respondEnvidoUseCase, this.foldUseCase);
   }
 
   @Bean
