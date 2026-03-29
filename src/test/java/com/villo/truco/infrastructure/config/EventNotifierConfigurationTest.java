@@ -9,6 +9,7 @@ import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslato
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
@@ -22,8 +23,9 @@ class EventNotifierConfigurationTest {
     final var configuration = new EventNotifierConfiguration(
         mock(ChatNotificationEventTranslator.class), mock(MatchNotificationEventTranslator.class),
         mock(CompetitionDomainEventTranslator.class), mock(BotDomainEventTranslator.class),
-        mock(CupNotificationEventTranslator.class), mock(LeagueNotificationEventTranslator.class),
-        mock(ChatRepository.class), mock(ChatQueryRepository.class));
+        mock(BotRegistry.class), mock(CupNotificationEventTranslator.class),
+        mock(LeagueNotificationEventTranslator.class), mock(ChatRepository.class),
+        mock(ChatQueryRepository.class));
     final var chatEventNotifier = mock(ChatEventNotifier.class);
 
     assertThat(configuration.chatEventNotifier()).isNotNull();

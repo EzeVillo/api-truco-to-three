@@ -36,68 +36,64 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Chat", description = "Endpoints para el chat en tiempo real")
 public class ChatController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
 
-    private final SendMessageUseCase sendMessage;
-    private final GetChatMessagesUseCase getChatMessages;
-    private final GetChatByParentUseCase getChatByParent;
+  private final SendMessageUseCase sendMessage;
+  private final GetChatMessagesUseCase getChatMessages;
+  private final GetChatByParentUseCase getChatByParent;
 
-    public ChatController(final SendMessageUseCase sendMessage,
-        final GetChatMessagesUseCase getChatMessages,
-        final GetChatByParentUseCase getChatByParent) {
+  public ChatController(final SendMessageUseCase sendMessage,
+      final GetChatMessagesUseCase getChatMessages, final GetChatByParentUseCase getChatByParent) {
 
-        this.sendMessage = Objects.requireNonNull(sendMessage);
-        this.getChatMessages = Objects.requireNonNull(getChatMessages);
-        this.getChatByParent = Objects.requireNonNull(getChatByParent);
-    }
+    this.sendMessage = Objects.requireNonNull(sendMessage);
+    this.getChatMessages = Objects.requireNonNull(getChatMessages);
+    this.getChatByParent = Objects.requireNonNull(getChatByParent);
+  }
 
-    @PostMapping("/{chatId}/messages")
-    @Operation(summary = "Enviar mensaje", description = "Envía un mensaje en el chat", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Mensaje enviado"),
-        @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "422", description = "No se pudo enviar el mensaje", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-    public ResponseEntity<Void> sendMessage(
-        @Parameter(description = "ID del chat") @PathVariable final String chatId,
-        @Valid @RequestBody final SendMessageRequest request,
-        @AuthenticationPrincipal final Jwt jwt) {
+  @PostMapping("/{chatId}/messages")
+  @Operation(summary = "Enviar mensaje", description = "Envía un mensaje en el chat", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Mensaje enviado"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se pudo enviar el mensaje", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> sendMessage(
+      @Parameter(description = "ID del chat") @PathVariable final String chatId,
+      @Valid @RequestBody final SendMessageRequest request,
+      @AuthenticationPrincipal final Jwt jwt) {
 
-        LOGGER.info("HTTP sendMessage requested: chatId={}", chatId);
-        this.sendMessage.handle(
-            new SendMessageCommand(chatId, jwt.getSubject(), request.content()));
-        return ResponseEntity.noContent().build();
-    }
+    LOGGER.info("HTTP sendMessage requested: chatId={}", chatId);
+    this.sendMessage.handle(new SendMessageCommand(chatId, jwt.getSubject(), request.content()));
+    return ResponseEntity.noContent().build();
+  }
 
-    @GetMapping("/{chatId}/messages")
-    @Operation(summary = "Obtener mensajes", description = "Devuelve los mensajes del chat (máximo 50)", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Mensajes del chat", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
-        @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-    public ResponseEntity<ChatMessagesResponse> getChatMessages(
-        @Parameter(description = "ID del chat") @PathVariable final String chatId,
-        @AuthenticationPrincipal final Jwt jwt) {
+  @GetMapping("/{chatId}/messages")
+  @Operation(summary = "Obtener mensajes", description = "Devuelve los mensajes del chat (máximo 50)", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Mensajes del chat", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<ChatMessagesResponse> getChatMessages(
+      @Parameter(description = "ID del chat") @PathVariable final String chatId,
+      @AuthenticationPrincipal final Jwt jwt) {
 
-        final var dto = this.getChatMessages.handle(
-            new GetChatMessagesQuery(chatId, jwt.getSubject()));
-        return ResponseEntity.ok(ChatMessagesResponse.from(dto));
-    }
+    final var dto = this.getChatMessages.handle(new GetChatMessagesQuery(chatId, jwt.getSubject()));
+    return ResponseEntity.ok(ChatMessagesResponse.from(dto));
+  }
 
-    @GetMapping("/by-parent/{parentType}/{parentId}")
-    @Operation(summary = "Buscar chat por recurso padre", description = "Busca el chat asociado a un match, league o cup", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Chat encontrado", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
-        @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-    public ResponseEntity<ChatMessagesResponse> getChatByParent(
-        @Parameter(description = "Tipo: MATCH, LEAGUE o CUP") @PathVariable final String parentType,
-        @Parameter(description = "ID del recurso padre") @PathVariable final String parentId,
-        @AuthenticationPrincipal final Jwt jwt) {
+  @GetMapping("/by-parent/{parentType}/{parentId}")
+  @Operation(summary = "Buscar chat por recurso padre", description = "Busca el chat asociado a un match, league o cup. Los matches contra bot no tienen chat asociado y responden 404.", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Chat encontrado", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<ChatMessagesResponse> getChatByParent(
+      @Parameter(description = "Tipo: MATCH, LEAGUE o CUP") @PathVariable final String parentType,
+      @Parameter(description = "ID del recurso padre") @PathVariable final String parentId,
+      @AuthenticationPrincipal final Jwt jwt) {
 
-        final var dto = this.getChatByParent.handle(
-            new GetChatByParentQuery(parentType, parentId, jwt.getSubject()));
-        return ResponseEntity.ok(ChatMessagesResponse.from(dto));
-    }
+    final var dto = this.getChatByParent.handle(
+        new GetChatByParentQuery(parentType, parentId, jwt.getSubject()));
+    return ResponseEntity.ok(ChatMessagesResponse.from(dto));
+  }
 
 }

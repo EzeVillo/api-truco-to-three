@@ -15,6 +15,7 @@ import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslato
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
@@ -40,6 +41,7 @@ public class EventNotifierConfiguration {
   private final MatchNotificationEventTranslator matchNotificationEventTranslator;
   private final CompetitionDomainEventTranslator competitionDomainEventTranslator;
   private final BotDomainEventTranslator botDomainEventTranslator;
+  private final BotRegistry botRegistry;
   private final CupNotificationEventTranslator cupNotificationEventTranslator;
   private final LeagueNotificationEventTranslator leagueNotificationEventTranslator;
   private final ChatRepository chatRepository;
@@ -49,7 +51,7 @@ public class EventNotifierConfiguration {
       final ChatNotificationEventTranslator chatNotificationEventTranslator,
       final MatchNotificationEventTranslator matchNotificationEventTranslator,
       final CompetitionDomainEventTranslator competitionDomainEventTranslator,
-      final BotDomainEventTranslator botDomainEventTranslator,
+      final BotDomainEventTranslator botDomainEventTranslator, final BotRegistry botRegistry,
       final CupNotificationEventTranslator cupNotificationEventTranslator,
       final LeagueNotificationEventTranslator leagueNotificationEventTranslator,
       final ChatRepository chatRepository, final ChatQueryRepository chatQueryRepository) {
@@ -58,6 +60,7 @@ public class EventNotifierConfiguration {
     this.matchNotificationEventTranslator = matchNotificationEventTranslator;
     this.competitionDomainEventTranslator = competitionDomainEventTranslator;
     this.botDomainEventTranslator = botDomainEventTranslator;
+    this.botRegistry = botRegistry;
     this.cupNotificationEventTranslator = cupNotificationEventTranslator;
     this.leagueNotificationEventTranslator = leagueNotificationEventTranslator;
     this.chatRepository = chatRepository;
@@ -108,8 +111,8 @@ public class EventNotifierConfiguration {
   ChatMatchGameStartedEventHandler chatMatchGameStartedHandler(
       @Lazy final ChatEventNotifier chatEventNotifier) {
 
-    return new ChatMatchGameStartedEventHandler(this.chatRepository, this.chatQueryRepository,
-        chatEventNotifier);
+    return new ChatMatchGameStartedEventHandler(this.botRegistry, this.chatRepository,
+        this.chatQueryRepository, chatEventNotifier);
   }
 
   @Bean

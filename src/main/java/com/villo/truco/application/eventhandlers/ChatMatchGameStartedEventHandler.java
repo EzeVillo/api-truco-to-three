@@ -1,5 +1,6 @@
 package com.villo.truco.application.eventhandlers;
 
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
@@ -14,13 +15,16 @@ import java.util.Set;
 public final class ChatMatchGameStartedEventHandler implements
     MatchDomainEventHandler<GameStartedEvent> {
 
+  private final BotRegistry botRegistry;
   private final ChatRepository chatRepository;
   private final ChatQueryRepository chatQueryRepository;
   private final ChatEventNotifier chatEventNotifier;
 
-  public ChatMatchGameStartedEventHandler(final ChatRepository chatRepository,
-      final ChatQueryRepository chatQueryRepository, final ChatEventNotifier chatEventNotifier) {
+  public ChatMatchGameStartedEventHandler(final BotRegistry botRegistry,
+      final ChatRepository chatRepository, final ChatQueryRepository chatQueryRepository,
+      final ChatEventNotifier chatEventNotifier) {
 
+    this.botRegistry = Objects.requireNonNull(botRegistry);
     this.chatRepository = Objects.requireNonNull(chatRepository);
     this.chatQueryRepository = Objects.requireNonNull(chatQueryRepository);
     this.chatEventNotifier = Objects.requireNonNull(chatEventNotifier);
@@ -36,6 +40,10 @@ public final class ChatMatchGameStartedEventHandler implements
   public void handle(final GameStartedEvent event) {
 
     if (event.getGameNumber() != 1) {
+      return;
+    }
+    if (this.botRegistry.isBot(event.getPlayerOne()) || (event.getPlayerTwo() != null
+        && this.botRegistry.isBot(event.getPlayerTwo()))) {
       return;
     }
 
