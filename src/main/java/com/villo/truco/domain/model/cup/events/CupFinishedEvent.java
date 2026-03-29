@@ -1,30 +1,24 @@
 package com.villo.truco.domain.model.cup.events;
 
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
-import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.List;
 import java.util.Objects;
 
-public final class CupFinishedEvent extends DomainEventBase {
+public final class CupFinishedEvent extends CupDomainEvent {
 
-    private final CupId cupId;
-    private final PlayerId champion;
+  private final PlayerId champion;
 
-    public CupFinishedEvent(final CupId cupId, final PlayerId champion) {
+  public CupFinishedEvent(final CupId cupId, final List<PlayerId> participants,
+      final PlayerId champion) {
 
-        super("CUP_FINISHED");
-        this.cupId = Objects.requireNonNull(cupId);
-        this.champion = Objects.requireNonNull(champion);
-    }
+    super("CUP_FINISHED", cupId, participants);
+    this.champion = Objects.requireNonNull(champion);
+  }
 
-    public CupId getCupId() {
+  public PlayerId getChampion() {
 
-        return this.cupId;
-    }
-
-    public PlayerId getChampion() {
-
-        return this.champion;
-    }
+    return this.champion;
+  }
 
 }

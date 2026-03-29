@@ -71,10 +71,9 @@ public class SecurityConfiguration {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/actuator/health/**").permitAll()
-            .requestMatchers("/actuator/**").authenticated()
-            .requestMatchers("/api/**").authenticated().anyRequest().permitAll())
+            .requestMatchers("/api/auth/**").permitAll().requestMatchers("/actuator/health/**")
+            .permitAll().requestMatchers("/actuator/**").authenticated().requestMatchers("/api/**")
+            .authenticated().anyRequest().permitAll())
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults())).build();
   }
 

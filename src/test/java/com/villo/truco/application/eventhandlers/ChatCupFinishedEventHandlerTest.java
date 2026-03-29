@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.villo.truco.application.ports.out.CupEventContext;
 import com.villo.truco.domain.model.chat.Chat;
 import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
@@ -26,56 +25,54 @@ import org.junit.jupiter.api.Test;
 @DisplayName("ChatCupFinishedEventHandler")
 class ChatCupFinishedEventHandlerTest {
 
-    private ChatRepository chatRepository;
-    private ChatQueryRepository chatQueryRepository;
-    private ChatCupFinishedEventHandler handler;
+  private ChatRepository chatRepository;
+  private ChatQueryRepository chatQueryRepository;
+  private ChatCupFinishedEventHandler handler;
 
-    @BeforeEach
-    void setUp() {
+  @BeforeEach
+  void setUp() {
 
-        this.chatRepository = mock(ChatRepository.class);
-        this.chatQueryRepository = mock(ChatQueryRepository.class);
-        this.handler = new ChatCupFinishedEventHandler(this.chatRepository,
-            this.chatQueryRepository);
-    }
+    this.chatRepository = mock(ChatRepository.class);
+    this.chatQueryRepository = mock(ChatQueryRepository.class);
+    this.handler = new ChatCupFinishedEventHandler(this.chatRepository, this.chatQueryRepository);
+  }
 
-    @Test
-    @DisplayName("eventType es CupFinishedEvent")
-    void eventTypeIsCupFinishedEvent() {
+  @Test
+  @DisplayName("eventType es CupFinishedEvent")
+  void eventTypeIsCupFinishedEvent() {
 
-        assertThat(this.handler.eventType()).isEqualTo(CupFinishedEvent.class);
-    }
+    assertThat(this.handler.eventType()).isEqualTo(CupFinishedEvent.class);
+  }
 
-    @Test
-    @DisplayName("elimina chat en CupFinishedEvent")
-    void deletesChat() {
+  @Test
+  @DisplayName("elimina chat en CupFinishedEvent")
+  void deletesChat() {
 
-        final var cupId = CupId.generate();
-        final var chatId = ChatId.generate();
-        final var existingChat = mock(Chat.class);
-        when(existingChat.getId()).thenReturn(chatId);
-        when(this.chatQueryRepository.findByParentTypeAndParentId(
-            eq(ChatParentType.CUP), eq(cupId.value().toString())))
-            .thenReturn(Optional.of(existingChat));
+    final var cupId = CupId.generate();
+    final var chatId = ChatId.generate();
+    final var existingChat = mock(Chat.class);
+    when(existingChat.getId()).thenReturn(chatId);
+    when(this.chatQueryRepository.findByParentTypeAndParentId(eq(ChatParentType.CUP),
+        eq(cupId.value().toString()))).thenReturn(Optional.of(existingChat));
 
-        this.handler.handle(new CupFinishedEvent(cupId, PlayerId.generate()),
-            new CupEventContext(cupId, List.of()));
+    this.handler.handle(
+        new CupFinishedEvent(cupId, List.of(PlayerId.generate()), PlayerId.generate()));
 
-        verify(this.chatRepository).delete(chatId);
-    }
+    verify(this.chatRepository).delete(chatId);
+  }
 
-    @Test
-    @DisplayName("no falla si no existe chat")
-    void doesNothingWhenChatAbsent() {
+  @Test
+  @DisplayName("no falla si no existe chat")
+  void doesNothingWhenChatAbsent() {
 
-        final var cupId = CupId.generate();
-        when(this.chatQueryRepository.findByParentTypeAndParentId(any(), any()))
-            .thenReturn(Optional.empty());
+    final var cupId = CupId.generate();
+    when(this.chatQueryRepository.findByParentTypeAndParentId(any(), any())).thenReturn(
+        Optional.empty());
 
-        this.handler.handle(new CupFinishedEvent(cupId, PlayerId.generate()),
-            new CupEventContext(cupId, List.of()));
+    this.handler.handle(
+        new CupFinishedEvent(cupId, List.of(PlayerId.generate()), PlayerId.generate()));
 
-        verify(this.chatRepository, never()).delete(any());
-    }
+    verify(this.chatRepository, never()).delete(any());
+  }
 
 }

@@ -1,5 +1,7 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.CupMatchCompletedEventHandler;
+import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
 import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.CreateCupUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
@@ -111,6 +113,18 @@ public class CupUseCaseConfiguration {
     final var handler = new ForfeitCupCommandHandler(this.cupResolver(), this.cupRepository,
         this.matchRepository, this.cupEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  CupMatchCompletedEventHandler cupMatchCompletedHandler() {
+
+    return new CupMatchCompletedEventHandler(this.cupQueryRepository, advanceCupCommandHandler());
+  }
+
+  @Bean
+  CupMatchForfeitedEventHandler cupMatchForfeitedHandler() {
+
+    return new CupMatchForfeitedEventHandler(this.cupQueryRepository, forfeitCupCommandHandler());
   }
 
 }

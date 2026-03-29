@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
-import com.villo.truco.domain.model.match.valueobjects.Card;
-import com.villo.truco.domain.model.match.valueobjects.Suit;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import org.junit.jupiter.api.Test;
 
 class HandTest {

@@ -14,16 +14,16 @@ import org.springframework.stereotype.Component;
 @Component("schedulerHeartbeat")
 public class SchedulerHeartbeatHealthIndicator implements HealthIndicator {
 
-  private static final List<String> REQUIRED_SCHEDULERS =
-      List.of("match-timeout", "league-timeout", "cup-timeout");
+  private static final List<String> REQUIRED_SCHEDULERS = List.of("match-timeout", "league-timeout",
+      "cup-timeout");
 
   private final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry;
   private final Duration maxAge;
   private final Instant startedAt;
 
-  public SchedulerHeartbeatHealthIndicator(final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry,
-      @Value("${truco.observability.scheduler-heartbeat-max-age-ms:180000}")
-      final long maxAgeMs) {
+  public SchedulerHeartbeatHealthIndicator(
+      final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry,
+      @Value("${truco.observability.scheduler-heartbeat-max-age-ms:180000}") final long maxAgeMs) {
 
     this.schedulerHeartbeatRegistry = schedulerHeartbeatRegistry;
     this.maxAge = Duration.ofMillis(maxAgeMs);
@@ -36,7 +36,7 @@ public class SchedulerHeartbeatHealthIndicator implements HealthIndicator {
     final Instant now = Instant.now();
     final Map<String, Object> details = new LinkedHashMap<>();
     final boolean withinStartupGrace =
-      Duration.between(this.startedAt, now).compareTo(this.maxAge) <= 0;
+        Duration.between(this.startedAt, now).compareTo(this.maxAge) <= 0;
 
     boolean healthy = true;
     for (final String schedulerName : REQUIRED_SCHEDULERS) {
@@ -66,4 +66,5 @@ public class SchedulerHeartbeatHealthIndicator implements HealthIndicator {
 
     return Health.status(Status.OUT_OF_SERVICE).withDetails(details).build();
   }
+
 }

@@ -9,16 +9,17 @@ import com.villo.truco.application.commands.JoinMatchCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
+import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
-import com.villo.truco.domain.model.match.valueobjects.Card;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.ports.CupQueryRepository;
@@ -26,9 +27,10 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -153,8 +155,33 @@ class MatchCommandHandlersTest {
         return List.of();
       }
     };
+    final BotRegistry noBotRegistry = new BotRegistry() {
+
+      @Override
+      public boolean isBot(final PlayerId playerId) {
+
+        return false;
+      }
+
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<BotProfile> getAll() {
+
+        return List.of();
+      }
+
+      @Override
+      public void register(final BotProfile profile) {
+
+      }
+    };
     return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository);
+        cupQueryRepository, noBotRegistry);
   }
 
   private MatchResolver resolverFor(final Match match) {
@@ -235,9 +262,8 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final MatchRepository repo = saved::set;
-    final var publishedEvents = new ArrayList<DomainEventBase>();
-    final MatchEventNotifier notifier = (id, playerOne, playerTwo, events) -> publishedEvents.addAll(
-        events);
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
+    final MatchEventNotifier notifier = publishedEvents::addAll;
 
     final var handler = new JoinMatchCommandHandler(new MatchResolver(queryRepository), repo,
         notifier, availableChecker());
@@ -261,9 +287,9 @@ class MatchCommandHandlersTest {
     match.startMatch(p2);
 
     final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = new CallTrucoCommandHandler(resolverFor(match), saved::set,
-        (id, playerOne, playerTwo, events) -> publishedEvents.addAll(events));
+        publishedEvents::addAll);
 
     final var currentTurn = match.getCurrentTurn();
     final var returnedId = handler.handle(new CallTrucoCommand(match.getId(), currentTurn));
@@ -285,9 +311,9 @@ class MatchCommandHandlersTest {
     match.startMatch(p2);
 
     final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = new CallEnvidoCommandHandler(resolverFor(match), saved::set,
-        (id, playerOne, playerTwo, events) -> publishedEvents.addAll(events));
+        publishedEvents::addAll);
 
     final var currentTurn = match.getCurrentTurn();
     final var returnedId = handler.handle(
@@ -310,9 +336,9 @@ class MatchCommandHandlersTest {
     match.startMatch(p2);
 
     final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = new PlayCardCommandHandler(resolverFor(match), saved::set,
-        (id, playerOne, playerTwo, events) -> publishedEvents.addAll(events));
+        publishedEvents::addAll);
 
     final var currentTurn = match.getCurrentTurn();
     final var snapshot = MatchSnapshotExtractor.extract(match);
@@ -338,9 +364,9 @@ class MatchCommandHandlersTest {
     match.startMatch(p2);
 
     final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = new FoldCommandHandler(resolverFor(match), saved::set,
-        (id, playerOne, playerTwo, events) -> publishedEvents.addAll(events));
+        publishedEvents::addAll);
 
     final var firstTurn = match.getCurrentTurn();
     final var snapshot = MatchSnapshotExtractor.extract(match);
@@ -372,9 +398,9 @@ class MatchCommandHandlersTest {
     match.callTruco(caller);
 
     final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = new RespondTrucoCommandHandler(resolverFor(match), saved::set,
-        (id, playerOne, playerTwo, events) -> publishedEvents.addAll(events));
+        publishedEvents::addAll);
 
     final var returnedId = handler.handle(
         new RespondTrucoCommand(match.getId(), responder, TrucoResponse.QUIERO));
@@ -402,9 +428,9 @@ class MatchCommandHandlersTest {
     match.callEnvido(caller, EnvidoCall.ENVIDO);
 
     final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = new RespondEnvidoCommandHandler(resolverFor(match), saved::set,
-        (id, playerOne, playerTwo, events) -> publishedEvents.addAll(events));
+        publishedEvents::addAll);
 
     handler.handle(new RespondEnvidoCommand(match.getId(), responder, EnvidoResponse.QUIERO));
 

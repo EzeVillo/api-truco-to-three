@@ -60,7 +60,7 @@ class TimeoutIdleCupsCommandHandlerTest {
 
       @Override
       public Optional<Cup> findByMatchId(
-          final com.villo.truco.domain.model.match.valueobjects.MatchId matchId) {
+          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
 
         return Optional.empty();
       }
@@ -88,7 +88,7 @@ class TimeoutIdleCupsCommandHandlerTest {
     final TransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleCupsCommandHandler(queryRepo, cupRepository, transactionalRunner,
-        Duration.ofMinutes(10), (id, participants, events) -> {
+        Duration.ofMinutes(10), events -> {
     });
   }
 
@@ -172,7 +172,7 @@ class TimeoutIdleCupsCommandHandlerTest {
 
       @Override
       public Optional<Cup> findByMatchId(
-          final com.villo.truco.domain.model.match.valueobjects.MatchId matchId) {
+          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
 
         return Optional.empty();
       }
@@ -197,7 +197,7 @@ class TimeoutIdleCupsCommandHandlerTest {
     };
 
     final var handler = new TimeoutIdleCupsCommandHandler(queryRepo, savedCup::set, Runnable::run,
-        Duration.ofMinutes(10), (id, participants, events) -> {
+        Duration.ofMinutes(10), events -> {
     });
 
     handler.handle();

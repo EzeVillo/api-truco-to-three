@@ -36,8 +36,7 @@ public final class JoinLeagueCommandHandler implements JoinLeagueUseCase {
 
     this.leagueRepository.save(league);
 
-    this.leagueEventNotifier.publishDomainEvents(league.getId(),
-        league.getParticipants(), league.getDomainEvents());
+    this.leagueEventNotifier.publishDomainEvents(league.getLeagueDomainEvents());
 
     league.clearDomainEvents();
 

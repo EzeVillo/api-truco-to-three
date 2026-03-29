@@ -1,18 +1,20 @@
 package com.villo.truco.domain.model.match.events;
 
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
-import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 
-public final class MatchFinishedEvent extends DomainEventBase {
+public final class MatchFinishedEvent extends MatchDomainEvent {
 
   private final PlayerSeat winnerSeat;
   private final int gamesWonPlayerOne;
   private final int gamesWonPlayerTwo;
 
-  public MatchFinishedEvent(final PlayerSeat winnerSeat, final int gamesWonPlayerOne,
+  public MatchFinishedEvent(final MatchId matchId, final PlayerId playerOne,
+      final PlayerId playerTwo, final PlayerSeat winnerSeat, final int gamesWonPlayerOne,
       final int gamesWonPlayerTwo) {
 
-    super("MATCH_FINISHED");
+    super("MATCH_FINISHED", matchId, playerOne, playerTwo);
     this.winnerSeat = winnerSeat;
     this.gamesWonPlayerOne = gamesWonPlayerOne;
     this.gamesWonPlayerTwo = gamesWonPlayerTwo;

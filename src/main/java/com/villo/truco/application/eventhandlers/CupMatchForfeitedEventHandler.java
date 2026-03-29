@@ -1,16 +1,14 @@
 package com.villo.truco.application.eventhandlers;
 
 import com.villo.truco.application.commands.ForfeitCupCommand;
+import com.villo.truco.application.events.MatchForfeited;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
-import com.villo.truco.application.ports.out.MatchDomainEventHandler;
-import com.villo.truco.application.ports.out.MatchEventContext;
-import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import java.util.Objects;
 
 public final class CupMatchForfeitedEventHandler implements
-    MatchDomainEventHandler<MatchForfeitedEvent> {
+    ApplicationEventHandler<MatchForfeited> {
 
   private final CupQueryRepository cupQueryRepository;
   private final ForfeitCupUseCase forfeitCupUseCase;
@@ -23,19 +21,16 @@ public final class CupMatchForfeitedEventHandler implements
   }
 
   @Override
-  public Class<MatchForfeitedEvent> eventType() {
+  public Class<MatchForfeited> eventType() {
 
-    return MatchForfeitedEvent.class;
+    return MatchForfeited.class;
   }
 
   @Override
-  public void handle(final MatchForfeitedEvent event, final MatchEventContext context) {
+  public void handle(final MatchForfeited event) {
 
-    final var loser =
-        event.getWinnerSeat() == PlayerSeat.PLAYER_ONE ? context.playerTwo() : context.playerOne();
-
-    this.cupQueryRepository.findByMatchId(context.matchId())
-        .ifPresent(cup -> this.forfeitCupUseCase.handle(new ForfeitCupCommand(cup.getId(), loser)));
+    this.cupQueryRepository.findByMatchId(event.matchId()).ifPresent(
+        cup -> this.forfeitCupUseCase.handle(new ForfeitCupCommand(cup.getId(), event.loserId())));
   }
 
 }

@@ -20,4 +20,5 @@ public class SchedulerHeartbeatRegistry {
 
     return Optional.ofNullable(this.successfulRuns.get(schedulerName));
   }
+
 }

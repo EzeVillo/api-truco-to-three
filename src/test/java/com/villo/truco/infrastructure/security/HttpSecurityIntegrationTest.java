@@ -157,8 +157,7 @@ class HttpSecurityIntegrationTest {
   void shouldAllowActuatorReadinessWithoutToken() throws Exception {
 
     final var request = HttpRequest.newBuilder(
-            URI.create(this.baseUrl() + "/actuator/health/readiness"))
-        .GET().build();
+        URI.create(this.baseUrl() + "/actuator/health/readiness")).GET().build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -176,29 +175,29 @@ class HttpSecurityIntegrationTest {
     assertEquals(401, response.statusCode());
   }
 
-    @Test
-    void shouldReturn404WithErrorResponseForNonexistentEndpoint() throws Exception {
+  @Test
+  void shouldReturn404WithErrorResponseForNonexistentEndpoint() throws Exception {
 
-        final var playerId = PlayerId.generate();
-        final var token = this.tokenProvider.generateAccessToken(playerId);
-        final var request = HttpRequest.newBuilder(
-                URI.create(this.baseUrl() + "/api/this-does-not-exist"))
-            .header("Authorization", "Bearer " + token).GET().build();
+    final var playerId = PlayerId.generate();
+    final var token = this.tokenProvider.generateAccessToken(playerId);
+    final var request = HttpRequest.newBuilder(
+            URI.create(this.baseUrl() + "/api/this-does-not-exist"))
+        .header("Authorization", "Bearer " + token).GET().build();
 
-        final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(404, response.statusCode());
-        assertTrue(response.body().contains("RESOURCE_NOT_FOUND"));
-        assertTrue(response.body().contains("No endpoint found for"));
-    }
+    assertEquals(404, response.statusCode());
+    assertTrue(response.body().contains("RESOURCE_NOT_FOUND"));
+    assertTrue(response.body().contains("No endpoint found for"));
+  }
 
   @Test
   void shouldReturn404ForTypoInAuthEndpoint() throws Exception {
 
     final var body = "{\"username\":\"testuser\",\"password\":\"testpassword\"}";
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/registe"))
-        .header("Content-Type", "application/json")
-        .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+        .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body))
+        .build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 

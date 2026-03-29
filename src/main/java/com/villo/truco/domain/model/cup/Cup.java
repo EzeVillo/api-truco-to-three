@@ -3,6 +3,7 @@ package com.villo.truco.domain.model.cup;
 import com.villo.truco.domain.model.cup.events.CupAdvancedEvent;
 import com.villo.truco.domain.model.cup.events.CupBoutActivatedEvent;
 import com.villo.truco.domain.model.cup.events.CupCancelledEvent;
+import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.cup.events.CupFinishedEvent;
 import com.villo.truco.domain.model.cup.events.CupMatchActivatedEvent;
 import com.villo.truco.domain.model.cup.events.CupPlayerForfeitedEvent;
@@ -26,10 +27,10 @@ import com.villo.truco.domain.model.cup.valueobjects.BoutPairing;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.AggregateBase;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -131,7 +132,8 @@ public final class Cup extends AggregateBase<CupId> {
     this.participants.add(playerId);
     LOGGER.info("Player joined cup: cupId={}, playerId={}, participants={}/{}", this.id, playerId,
         this.participants.size(), this.numberOfPlayers);
-    this.addDomainEvent(new CupPlayerJoinedEvent(this.id, playerId));
+    this.addDomainEvent(
+        new CupPlayerJoinedEvent(this.id, List.copyOf(this.participants), playerId));
 
     if (this.participants.size() == this.numberOfPlayers) {
       this.status = CupStatus.WAITING_FOR_START;
@@ -143,10 +145,11 @@ public final class Cup extends AggregateBase<CupId> {
 
     if (this.status == CupStatus.WAITING_FOR_PLAYERS
         || this.status == CupStatus.WAITING_FOR_START) {
+      final var participantsCopy = List.copyOf(this.participants);
       this.participants.clear();
       this.status = CupStatus.CANCELLED;
       LOGGER.info("Cup cancelled by timeout: cupId={}", this.id);
-      this.addDomainEvent(new CupCancelledEvent(this.id));
+      this.addDomainEvent(new CupCancelledEvent(this.id, participantsCopy));
     }
   }
 
@@ -164,10 +167,11 @@ public final class Cup extends AggregateBase<CupId> {
     }
 
     if (this.participants.getFirst().equals(playerId)) {
+      final var participantsCopy = List.copyOf(this.participants);
       this.participants.clear();
       this.status = CupStatus.CANCELLED;
       LOGGER.info("Cup cancelled by creator: cupId={}, creatorId={}", this.id, playerId);
-      this.addDomainEvent(new CupCancelledEvent(this.id));
+      this.addDomainEvent(new CupCancelledEvent(this.id, participantsCopy));
       return;
     }
 
@@ -175,7 +179,7 @@ public final class Cup extends AggregateBase<CupId> {
     this.status = CupStatus.WAITING_FOR_PLAYERS;
     LOGGER.info("Player left cup: cupId={}, playerId={}, participants={}/{}", this.id, playerId,
         this.participants.size(), this.numberOfPlayers);
-    this.addDomainEvent(new CupPlayerLeftEvent(this.id, playerId));
+    this.addDomainEvent(new CupPlayerLeftEvent(this.id, List.copyOf(this.participants), playerId));
   }
 
   public void start(final PlayerId playerId) {
@@ -194,7 +198,7 @@ public final class Cup extends AggregateBase<CupId> {
     this.status = CupStatus.IN_PROGRESS;
     LOGGER.info("Cup started: cupId={}, participants={}, bouts={}", this.id,
         this.participants.size(), this.bouts.size());
-    this.addDomainEvent(new CupStartedEvent(this.id));
+    this.addDomainEvent(new CupStartedEvent(this.id, List.copyOf(this.participants)));
   }
 
   private void generateBracket() {
@@ -234,8 +238,8 @@ public final class Cup extends AggregateBase<CupId> {
   private void advancePlayerToNextRound(final int currentRound, final int currentPos,
       final PlayerId player) {
 
-      final var nextRound = currentRound + 1;
-      final var nextPos = currentPos / 2;
+    final var nextRound = currentRound + 1;
+    final var nextPos = currentPos / 2;
     final var nextBout = this.findBout(nextRound, nextPos);
 
     if (currentPos % 2 == 0) {
@@ -247,10 +251,10 @@ public final class Cup extends AggregateBase<CupId> {
     if (nextBout.hasBothPlayers()) {
       if (this.forfeitedPlayers.contains(nextBout.playerOne())) {
         nextBout.resolve(nextBout.playerTwo());
-          this.advancePlayerToNextRound(nextRound, nextPos, nextBout.playerTwo());
+        this.advancePlayerToNextRound(nextRound, nextPos, nextBout.playerTwo());
       } else if (this.forfeitedPlayers.contains(nextBout.playerTwo())) {
         nextBout.resolve(nextBout.playerOne());
-          this.advancePlayerToNextRound(nextRound, nextPos, nextBout.playerOne());
+        this.advancePlayerToNextRound(nextRound, nextPos, nextBout.playerOne());
       } else {
         nextBout.transitionToPending();
       }
@@ -270,7 +274,8 @@ public final class Cup extends AggregateBase<CupId> {
     }
 
     bout.linkMatch(matchId);
-    this.addDomainEvent(new CupMatchActivatedEvent(this.id, matchId));
+    this.addDomainEvent(
+        new CupMatchActivatedEvent(this.id, List.copyOf(this.participants), matchId));
     LOGGER.info("Bout linked: cupId={}, boutId={}, matchId={}", this.id, boutId, matchId);
   }
 
@@ -302,7 +307,7 @@ public final class Cup extends AggregateBase<CupId> {
       this.champion = winner;
       this.status = CupStatus.FINISHED;
       LOGGER.info("Cup finished: cupId={}, champion={}", this.id, winner);
-      this.addDomainEvent(new CupFinishedEvent(this.id, winner));
+      this.addDomainEvent(new CupFinishedEvent(this.id, List.copyOf(this.participants), winner));
     } else {
       this.advanceWinnerToNextRound(bout.roundNumber(), bout.bracketPosition(), winner, matchId,
           pairings);
@@ -339,7 +344,8 @@ public final class Cup extends AggregateBase<CupId> {
           this.champion = opponent;
           this.status = CupStatus.FINISHED;
           LOGGER.info("Cup finished by forfeit: cupId={}, champion={}", this.id, opponent);
-          this.addDomainEvent(new CupFinishedEvent(this.id, opponent));
+          this.addDomainEvent(
+              new CupFinishedEvent(this.id, List.copyOf(this.participants), opponent));
         } else {
           this.advanceWinnerToNextRound(bout.roundNumber(), bout.bracketPosition(), opponent,
               bout.matchId(), pairings);
@@ -347,7 +353,8 @@ public final class Cup extends AggregateBase<CupId> {
       }
     });
 
-    this.addDomainEvent(new CupPlayerForfeitedEvent(this.id, forfeiter));
+    this.addDomainEvent(
+        new CupPlayerForfeitedEvent(this.id, List.copyOf(this.participants), forfeiter));
 
     return new MatchAdvancementResult(List.copyOf(pairings), this.status == CupStatus.FINISHED,
         this.champion);
@@ -356,10 +363,11 @@ public final class Cup extends AggregateBase<CupId> {
   private void advanceWinnerToNextRound(final int currentRound, final int currentPos,
       final PlayerId winner, final MatchId matchId, final List<BoutPairing> pairings) {
 
-    this.addDomainEvent(new CupAdvancedEvent(this.id, matchId, winner));
+    this.addDomainEvent(
+        new CupAdvancedEvent(this.id, List.copyOf(this.participants), matchId, winner));
 
-      final var nextRound = currentRound + 1;
-      final var nextPos = currentPos / 2;
+    final var nextRound = currentRound + 1;
+    final var nextPos = currentPos / 2;
     final var nextBout = this.findBout(nextRound, nextPos);
 
     if (currentPos % 2 == 0) {
@@ -374,7 +382,8 @@ public final class Cup extends AggregateBase<CupId> {
         if (this.isFinalRound(nextBout)) {
           this.champion = nextBout.playerTwo();
           this.status = CupStatus.FINISHED;
-          this.addDomainEvent(new CupFinishedEvent(this.id, nextBout.playerTwo()));
+          this.addDomainEvent(
+              new CupFinishedEvent(this.id, List.copyOf(this.participants), nextBout.playerTwo()));
         } else {
           this.advanceWinnerToNextRound(nextRound, nextPos, nextBout.playerTwo(), null, pairings);
         }
@@ -383,22 +392,23 @@ public final class Cup extends AggregateBase<CupId> {
         if (this.isFinalRound(nextBout)) {
           this.champion = nextBout.playerOne();
           this.status = CupStatus.FINISHED;
-          this.addDomainEvent(new CupFinishedEvent(this.id, nextBout.playerOne()));
+          this.addDomainEvent(
+              new CupFinishedEvent(this.id, List.copyOf(this.participants), nextBout.playerOne()));
         } else {
           this.advanceWinnerToNextRound(nextRound, nextPos, nextBout.playerOne(), null, pairings);
         }
       } else {
         nextBout.transitionToPending();
         pairings.add(new BoutPairing(nextBout.id(), nextBout.playerOne(), nextBout.playerTwo()));
-        this.addDomainEvent(new CupBoutActivatedEvent(this.id, nextBout.id()));
+        this.addDomainEvent(
+            new CupBoutActivatedEvent(this.id, List.copyOf(this.participants), nextBout.id()));
       }
     }
   }
 
   private boolean isFinalRound(final Bout bout) {
 
-      final var totalRounds = Integer.numberOfTrailingZeros(
-          nextPowerOfTwo(this.participants.size()));
+    final var totalRounds = Integer.numberOfTrailingZeros(nextPowerOfTwo(this.participants.size()));
     return bout.roundNumber() == totalRounds;
   }
 
@@ -452,7 +462,7 @@ public final class Cup extends AggregateBase<CupId> {
 
   public List<RoundView> getRounds() {
 
-      final var rounds = new LinkedHashMap<Integer, List<BoutView>>();
+    final var rounds = new LinkedHashMap<Integer, List<BoutView>>();
     for (final var bout : this.bouts) {
       rounds.computeIfAbsent(bout.roundNumber(), ignored -> new ArrayList<>()).add(bout.toView());
     }
@@ -478,6 +488,11 @@ public final class Cup extends AggregateBase<CupId> {
   Set<PlayerId> getForfeitedPlayersInternal() {
 
     return this.forfeitedPlayers;
+  }
+
+  public List<CupDomainEvent> getCupDomainEvents() {
+
+    return getDomainEvents().stream().map(CupDomainEvent.class::cast).toList();
   }
 
 }

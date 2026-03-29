@@ -1,22 +1,14 @@
 package com.villo.truco.domain.model.league.events;
 
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.shared.DomainEventBase;
-import java.util.Objects;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.List;
 
-public final class LeagueStartedEvent extends DomainEventBase {
+public final class LeagueStartedEvent extends LeagueDomainEvent {
 
-    private final LeagueId leagueId;
+  public LeagueStartedEvent(final LeagueId leagueId, final List<PlayerId> participants) {
 
-    public LeagueStartedEvent(final LeagueId leagueId) {
-
-        super("LEAGUE_STARTED");
-        this.leagueId = Objects.requireNonNull(leagueId);
-    }
-
-    public LeagueId getLeagueId() {
-
-        return this.leagueId;
-    }
+    super("LEAGUE_STARTED", leagueId, participants);
+  }
 
 }

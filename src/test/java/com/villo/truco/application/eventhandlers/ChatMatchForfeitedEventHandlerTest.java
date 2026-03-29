@@ -8,15 +8,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.villo.truco.application.ports.out.MatchEventContext;
 import com.villo.truco.domain.model.chat.Chat;
 import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,56 +25,55 @@ import org.junit.jupiter.api.Test;
 @DisplayName("ChatMatchForfeitedEventHandler")
 class ChatMatchForfeitedEventHandlerTest {
 
-    private ChatRepository chatRepository;
-    private ChatQueryRepository chatQueryRepository;
-    private ChatMatchForfeitedEventHandler handler;
+  private ChatRepository chatRepository;
+  private ChatQueryRepository chatQueryRepository;
+  private ChatMatchForfeitedEventHandler handler;
 
-    @BeforeEach
-    void setUp() {
+  @BeforeEach
+  void setUp() {
 
-        this.chatRepository = mock(ChatRepository.class);
-        this.chatQueryRepository = mock(ChatQueryRepository.class);
-        this.handler = new ChatMatchForfeitedEventHandler(this.chatRepository,
-            this.chatQueryRepository);
-    }
+    this.chatRepository = mock(ChatRepository.class);
+    this.chatQueryRepository = mock(ChatQueryRepository.class);
+    this.handler = new ChatMatchForfeitedEventHandler(this.chatRepository,
+        this.chatQueryRepository);
+  }
 
-    @Test
-    @DisplayName("eventType es MatchForfeitedEvent")
-    void eventTypeIsMatchForfeitedEvent() {
+  @Test
+  @DisplayName("eventType es MatchForfeitedEvent")
+  void eventTypeIsMatchForfeitedEvent() {
 
-        assertThat(this.handler.eventType()).isEqualTo(MatchForfeitedEvent.class);
-    }
+    assertThat(this.handler.eventType()).isEqualTo(MatchForfeitedEvent.class);
+  }
 
-    @Test
-    @DisplayName("elimina chat en MatchForfeitedEvent")
-    void deletesChat() {
+  @Test
+  @DisplayName("elimina chat en MatchForfeitedEvent")
+  void deletesChat() {
 
-        final var matchId = MatchId.generate();
-        final var chatId = ChatId.generate();
-        final var existingChat = mock(Chat.class);
-        when(existingChat.getId()).thenReturn(chatId);
-        when(this.chatQueryRepository.findByParentTypeAndParentId(
-            eq(ChatParentType.MATCH), eq(matchId.value().toString())))
-            .thenReturn(Optional.of(existingChat));
+    final var matchId = MatchId.generate();
+    final var chatId = ChatId.generate();
+    final var existingChat = mock(Chat.class);
+    when(existingChat.getId()).thenReturn(chatId);
+    when(this.chatQueryRepository.findByParentTypeAndParentId(eq(ChatParentType.MATCH),
+        eq(matchId.value().toString()))).thenReturn(Optional.of(existingChat));
 
-        this.handler.handle(new MatchForfeitedEvent(PlayerSeat.PLAYER_TWO, 0, 2),
-            new MatchEventContext(matchId, PlayerId.generate(), PlayerId.generate()));
+    this.handler.handle(new MatchForfeitedEvent(matchId, PlayerId.generate(), PlayerId.generate(),
+        PlayerSeat.PLAYER_TWO, 0, 2));
 
-        verify(this.chatRepository).delete(chatId);
-    }
+    verify(this.chatRepository).delete(chatId);
+  }
 
-    @Test
-    @DisplayName("no falla si no existe chat")
-    void doesNothingWhenChatAbsent() {
+  @Test
+  @DisplayName("no falla si no existe chat")
+  void doesNothingWhenChatAbsent() {
 
-        final var matchId = MatchId.generate();
-        when(this.chatQueryRepository.findByParentTypeAndParentId(any(), any()))
-            .thenReturn(Optional.empty());
+    final var matchId = MatchId.generate();
+    when(this.chatQueryRepository.findByParentTypeAndParentId(any(), any())).thenReturn(
+        Optional.empty());
 
-        this.handler.handle(new MatchForfeitedEvent(PlayerSeat.PLAYER_ONE, 1, 0),
-            new MatchEventContext(matchId, PlayerId.generate(), PlayerId.generate()));
+    this.handler.handle(new MatchForfeitedEvent(matchId, PlayerId.generate(), PlayerId.generate(),
+        PlayerSeat.PLAYER_ONE, 1, 0));
 
-        verify(this.chatRepository, never()).delete(any());
-    }
+    verify(this.chatRepository, never()).delete(any());
+  }
 
 }

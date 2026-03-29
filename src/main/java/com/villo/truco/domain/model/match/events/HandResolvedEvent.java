@@ -1,8 +1,8 @@
 package com.villo.truco.domain.model.match.events;
 
-import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 
 public final class HandResolvedEvent extends DomainEventBase {
 

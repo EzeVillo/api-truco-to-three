@@ -9,31 +9,30 @@ import java.util.Objects;
 
 public final class SendMessageCommandHandler implements SendMessageUseCase {
 
-    private final ChatResolver chatResolver;
-    private final ChatRepository chatRepository;
-    private final ChatEventNotifier chatEventNotifier;
+  private final ChatResolver chatResolver;
+  private final ChatRepository chatRepository;
+  private final ChatEventNotifier chatEventNotifier;
 
-    public SendMessageCommandHandler(final ChatResolver chatResolver,
-        final ChatRepository chatRepository, final ChatEventNotifier chatEventNotifier) {
+  public SendMessageCommandHandler(final ChatResolver chatResolver,
+      final ChatRepository chatRepository, final ChatEventNotifier chatEventNotifier) {
 
-        this.chatResolver = Objects.requireNonNull(chatResolver);
-        this.chatRepository = Objects.requireNonNull(chatRepository);
-        this.chatEventNotifier = Objects.requireNonNull(chatEventNotifier);
-    }
+    this.chatResolver = Objects.requireNonNull(chatResolver);
+    this.chatRepository = Objects.requireNonNull(chatRepository);
+    this.chatEventNotifier = Objects.requireNonNull(chatEventNotifier);
+  }
 
-    @Override
-    public ChatId handle(final SendMessageCommand command) {
+  @Override
+  public ChatId handle(final SendMessageCommand command) {
 
-        final var chat = this.chatResolver.resolve(command.chatId());
+    final var chat = this.chatResolver.resolve(command.chatId());
 
-        chat.sendMessage(command.playerId(), command.content());
+    chat.sendMessage(command.playerId(), command.content());
 
-        this.chatRepository.save(chat);
-        this.chatEventNotifier.publishDomainEvents(chat.getId(), chat.getParticipants(),
-            chat.getDomainEvents());
-        chat.clearDomainEvents();
+    this.chatRepository.save(chat);
+    this.chatEventNotifier.publishDomainEvents(chat.getChatDomainEvents());
+    chat.clearDomainEvents();
 
-        return command.chatId();
-    }
+    return command.chatId();
+  }
 
 }

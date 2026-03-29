@@ -3,39 +3,36 @@ package com.villo.truco.infrastructure.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.villo.truco.application.ports.in.AdvanceCupUseCase;
-import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
-import com.villo.truco.application.ports.in.ForfeitCupUseCase;
-import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
+import com.villo.truco.application.eventhandlers.BotDomainEventTranslator;
+import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
+import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
+import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
-import com.villo.truco.domain.ports.CupQueryRepository;
-import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
-import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 class EventNotifierConfigurationTest {
 
   @Test
   void buildsNotifierBeans() {
 
-    final var configuration = new EventNotifierConfiguration(mock(SimpMessagingTemplate.class),
-        mock(LeagueQueryRepository.class), mock(AdvanceLeagueUseCase.class),
-        mock(ForfeitLeagueUseCase.class), mock(CupQueryRepository.class),
-        mock(AdvanceCupUseCase.class), mock(ForfeitCupUseCase.class),
-        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class),
+    final var configuration = new EventNotifierConfiguration(
+        mock(ChatNotificationEventTranslator.class), mock(MatchNotificationEventTranslator.class),
+        mock(CompetitionDomainEventTranslator.class), mock(BotDomainEventTranslator.class),
+        mock(CupNotificationEventTranslator.class), mock(LeagueNotificationEventTranslator.class),
         mock(ChatRepository.class), mock(ChatQueryRepository.class));
+    final var chatEventNotifier = mock(ChatEventNotifier.class);
 
-    assertThat(configuration.stompMatchEventNotifier()).isNotNull();
+    assertThat(configuration.chatEventNotifier()).isNotNull();
+    assertThat(configuration.chatCupStartedHandler(chatEventNotifier)).isNotNull();
+    assertThat(configuration.chatLeagueStartedHandler(chatEventNotifier)).isNotNull();
+    assertThat(configuration.chatMatchGameStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.matchEventNotifier()).isNotNull();
-    assertThat(configuration.stompLeagueEventNotifier()).isNotNull();
-    assertThat(configuration.leagueEventNotifier()).isNotNull();
-    assertThat(configuration.stompCupEventNotifier()).isNotNull();
     assertThat(configuration.cupEventNotifier()).isNotNull();
-      assertThat(configuration.stompChatEventNotifier()).isNotNull();
-      assertThat(configuration.chatEventNotifier()).isNotNull();
+    assertThat(configuration.leagueEventNotifier()).isNotNull();
   }
 
 }

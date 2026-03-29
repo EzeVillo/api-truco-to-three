@@ -3,22 +3,24 @@ package com.villo.truco.application.usecases.commands;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.StartMatchCommand;
+import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,7 +43,7 @@ class StartMatchCommandHandlerTest {
   }
 
   private StartMatchCommandHandler handlerWith(final Match match,
-      final AtomicReference<Match> savedMatch, final List<DomainEventBase> publishedEvents) {
+      final AtomicReference<Match> savedMatch, final List<MatchDomainEvent> publishedEvents) {
 
     final MatchQueryRepository queryRepo = new MatchQueryRepository() {
 
@@ -77,7 +79,7 @@ class StartMatchCommandHandlerTest {
     };
 
     final MatchRepository matchRepository = savedMatch::set;
-    final MatchEventNotifier notifier = (matchId, p1, p2, events) -> publishedEvents.addAll(events);
+    final MatchEventNotifier notifier = publishedEvents::addAll;
     final var resolver = new MatchResolver(queryRepo);
     final LeagueQueryRepository leagueQueryRepo = new LeagueQueryRepository() {
       @Override
@@ -153,7 +155,33 @@ class StartMatchCommandHandlerTest {
         return List.of();
       }
     };
-    final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo);
+    final BotRegistry noBotRegistry = new BotRegistry() {
+
+      @Override
+      public boolean isBot(final PlayerId p) {
+
+        return false;
+      }
+
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId p) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<BotProfile> getAll() {
+
+        return List.of();
+      }
+
+      @Override
+      public void register(final BotProfile profile) {
+
+      }
+    };
+    final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo,
+        noBotRegistry);
     return new StartMatchCommandHandler(resolver, matchRepository, notifier, checker);
   }
 
@@ -163,7 +191,7 @@ class StartMatchCommandHandlerTest {
 
     final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);
 
     assertThatThrownBy(

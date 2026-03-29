@@ -11,6 +11,11 @@ final class ScoringPolicy {
 
   }
 
+  static int pointsToWinGame() {
+
+    return POINTS_TO_WIN_GAME;
+  }
+
   static GameEvaluation evaluate(final int scorePlayerOne, final int scorePlayerTwo,
       final int gamesWonPlayerOne, final int gamesWonPlayerTwo, final PlayerId playerOne,
       final PlayerId playerTwo, final MatchRules rules) {

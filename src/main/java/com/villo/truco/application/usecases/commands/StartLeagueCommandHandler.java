@@ -36,16 +36,15 @@ public final class StartLeagueCommandHandler implements StartLeagueUseCase {
     final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
 
     for (final var activation : league.activateNextFixtures()) {
-      final var match =
-          Match.createReady(activation.playerOne(), activation.playerTwo(), matchRules);
+      final var match = Match.createReady(activation.playerOne(), activation.playerTwo(),
+          matchRules);
       this.matchRepository.save(match);
       league.linkFixtureMatch(activation.fixtureId(), match.getId());
     }
 
     this.leagueRepository.save(league);
 
-    this.leagueEventNotifier.publishDomainEvents(league.getId(),
-        league.getParticipants(), league.getDomainEvents());
+    this.leagueEventNotifier.publishDomainEvents(league.getLeagueDomainEvents());
 
     league.clearDomainEvents();
 

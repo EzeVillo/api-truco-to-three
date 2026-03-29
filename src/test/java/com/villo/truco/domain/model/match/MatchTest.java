@@ -13,9 +13,12 @@ import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
+import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
+import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -59,6 +62,22 @@ class MatchTest {
         match.rejectTruco(loser);
       } else {
         match.playCard(loser, match.getCurrentRound().getHandOf(loser).getCards().getFirst());
+      }
+    }
+  }
+
+  private void awardPoint(final Match match, final PlayerId scorer, final PlayerId rival) {
+
+    final var scoreBefore =
+        scorer.equals(playerOne) ? match.getScorePlayerOne() : match.getScorePlayerTwo();
+
+    while ((scorer.equals(playerOne) ? match.getScorePlayerOne() : match.getScorePlayerTwo())
+        == scoreBefore) {
+      if (match.getCurrentTurn().equals(scorer)) {
+        match.callTruco(scorer);
+        match.rejectTruco(rival);
+      } else {
+        match.playCard(rival, match.getCurrentRound().getHandOf(rival).getCards().getFirst());
       }
     }
   }
@@ -418,7 +437,112 @@ class MatchTest {
 
   }
 
-  // ===== SERIE (AL MEJOR DE 5) =====
+  @Nested
+  @DisplayName("decision view")
+  class DecisionView {
+
+    @Test
+    @DisplayName("expone la perspectiva del jugador aunque no tenga turno")
+    void exposesPerspectiveWithoutTurn() {
+
+      final var match = matchInProgress();
+
+      final var view = match.getDecisionViewFor(playerTwo);
+
+      assertThat(view.game().myScore()).isZero();
+      assertThat(view.game().rivalScore()).isZero();
+      assertThat(view.game().isMano()).isFalse();
+      assertThat(view.game().canPlayCard()).isFalse();
+      assertThat(view.hasAvailableActions()).isFalse();
+      assertThat(view.game().myCards()).hasSize(3);
+      assertThat(view.game().envidoScore()).isEqualTo(
+          CardEvaluationService.envidoScore(match.getCardsOf(playerTwo)));
+    }
+
+    @Test
+    @DisplayName("expone flags y ofertas iniciales para el jugador con turno")
+    void exposesInitialActionsForCurrentPlayer() {
+
+      final var match = matchInProgress();
+
+      final var view = match.getDecisionViewFor(playerOne);
+
+      assertThat(view.game().isMano()).isTrue();
+      assertThat(view.game().canPlayCard()).isTrue();
+      assertThat(view.game().canFold()).isFalse();
+      assertThat(view.game().foldWouldGiveGameToBot()).isFalse();
+      assertThat(view.game().myCards()).hasSize(3);
+      assertThat(view.truco().availableCall()).isEqualTo(TrucoCall.TRUCO);
+      assertThat(view.truco().availableResponses()).isEmpty();
+      assertThat(view.envido().availableResponses()).isEmpty();
+      assertThat(view.envido().availableCalls().stream()
+          .map(MatchPlayerDecisionView.EnvidoOption::call)).containsExactlyInAnyOrder(
+          EnvidoCall.ENVIDO, EnvidoCall.REAL_ENVIDO, EnvidoCall.FALTA_ENVIDO);
+    }
+
+    @Test
+    @DisplayName("expone truco en curso con llamadas y respuestas tipadas")
+    void exposesTrucoContext() {
+
+      final var match = matchInProgress();
+      match.callTruco(playerOne);
+
+      final var view = match.getDecisionViewFor(playerTwo);
+
+      assertThat(view.truco().currentCall()).isEqualTo(TrucoCall.TRUCO);
+      assertThat(view.truco().availableResponses()).containsExactlyInAnyOrder(TrucoResponse.QUIERO,
+          TrucoResponse.NO_QUIERO, TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO);
+      assertThat(view.truco().availableCall()).isEqualTo(TrucoCall.RETRUCO);
+    }
+
+    @Test
+    @DisplayName("expone cuando fold haría ganar el juego al bot")
+    void exposesWhenFoldWouldGiveGameToBot() {
+
+      final var match = matchInProgress();
+
+      awardPoint(match, playerOne, playerTwo);
+      awardPoint(match, playerTwo, playerOne);
+      awardPoint(match, playerTwo, playerOne);
+
+      if (!match.getCurrentTurn().equals(playerOne)) {
+        match.playCard(playerTwo,
+            match.getCurrentRound().getHandOf(playerTwo).getCards().getFirst());
+      }
+
+      match.callTruco(playerOne);
+      match.acceptTruco(playerTwo);
+
+      final var view = match.getDecisionViewFor(playerOne);
+
+      assertThat(view.game().canFold()).isTrue();
+      assertThat(view.game().foldWouldGiveGameToBot()).isTrue();
+    }
+
+    @Test
+    @DisplayName("expone cadena de envido y respuestas tipadas")
+    void exposesEnvidoContext() {
+
+      final var match = matchInProgress();
+      match.callEnvido(playerOne, EnvidoCall.ENVIDO);
+
+      final var view = match.getDecisionViewFor(playerTwo);
+
+      assertThat(view.envido().availableResponses()).containsExactlyInAnyOrder(
+          EnvidoResponse.QUIERO, EnvidoResponse.NO_QUIERO);
+      assertThat(view.envido().currentChain()).singleElement().satisfies(option -> {
+        assertThat(option.call()).isEqualTo(EnvidoCall.ENVIDO);
+        assertThat(option.pointsIfPlayerWins()).isEqualTo(2);
+        assertThat(option.pointsIfRivalWins()).isEqualTo(2);
+      });
+      assertThat(view.envido().pendingOutcome()).satisfies(outcome -> {
+        assertThat(outcome.acceptedPointsIfPlayerWins()).isEqualTo(2);
+        assertThat(outcome.acceptedPointsIfRivalWins()).isEqualTo(2);
+        assertThat(outcome.rejectedPoints()).isEqualTo(1);
+      });
+    }
+
+  }
 
   @Nested
   @DisplayName("alternancia del mano entre rondas")

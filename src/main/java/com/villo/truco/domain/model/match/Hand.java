@@ -2,9 +2,9 @@ package com.villo.truco.domain.model.match;
 
 import com.villo.truco.domain.model.match.events.HandChangedEvent;
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
-import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.HandId;
 import com.villo.truco.domain.shared.EntityBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

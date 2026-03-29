@@ -15,8 +15,8 @@ import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerNotInCupException;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
 import java.util.Set;
@@ -226,8 +226,7 @@ class CupTest {
 
     final var r2Bouts = boutsInRound(cup, 2);
     final var preAssignedPlayers = r2Bouts.stream()
-        .mapToLong(b -> (b.playerOne() != null ? 1 : 0) + (b.playerTwo() != null ? 1 : 0))
-        .sum();
+        .mapToLong(b -> (b.playerOne() != null ? 1 : 0) + (b.playerTwo() != null ? 1 : 0)).sum();
     assertThat(preAssignedPlayers).isEqualTo(2);
   }
 
@@ -515,8 +514,8 @@ class CupTest {
 
     final var r2Bout = boutsInRound(cup, 2).getFirst();
     assertThat(r2Bout.status()).isEqualTo(BoutStatus.PENDING);
-    assertThat(List.of(r2Bout.playerOne(), r2Bout.playerTwo()))
-        .contains(r1Bouts.get(1).playerTwo());
+    assertThat(List.of(r2Bout.playerOne(), r2Bout.playerTwo())).contains(
+        r1Bouts.get(1).playerTwo());
   }
 
   @Test

@@ -957,44 +957,155 @@ evento, no dentro del `payload`.
     - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
       `payload: {}`.
 - `LEAGUE_MATCH_ACTIVATED`:
-  - `{ matchId }` — se emite a todos los participantes de la liga cuando un partido
-    es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
+    - `{ leagueId, matchId }` — se emite a todos los participantes de la liga cuando un partido
+      es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
 - `CUP_MATCH_ACTIVATED`:
-  - `{ matchId }` — se emite a todos los participantes de la copa cuando un partido de
-    bracket es activado.
+    - `{ cupId, matchId }` — se emite a todos los participantes de la copa cuando un partido de
+      bracket es activado.
 - `LEAGUE_PLAYER_JOINED` / `CUP_PLAYER_JOINED`:
-  - `{ playerId }`
+    - `{ leagueId/cupId, playerId }`
 - `LEAGUE_PLAYER_LEFT` / `CUP_PLAYER_LEFT`:
-  - `{ playerId }`
+    - `{ leagueId/cupId, playerId }`
 - `LEAGUE_CANCELLED` / `CUP_CANCELLED`:
-  - `{}`
+    - `{ leagueId/cupId }`
 - `LEAGUE_STARTED` / `CUP_STARTED`:
-  - `{}`
+    - `{ leagueId/cupId }`
 - `LEAGUE_FIXTURE_ACTIVATED`:
-  - `{ fixtureId }`
+    - `{ leagueId, fixtureId }`
 - `CUP_BOUT_ACTIVATED`:
-  - `{ boutId }`
+    - `{ cupId, boutId }`
 - `LEAGUE_ADVANCED`:
-  - `{ matchId?, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
-    (por ejemplo, forfeit del oponente)
+    - `{ leagueId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+      (por ejemplo, forfeit del oponente)
 - `CUP_ADVANCED`:
-  - `{ matchId?, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
-    (por ejemplo, bye o forfeit del oponente)
+    - `{ cupId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+      (por ejemplo, bye o forfeit del oponente)
 - `LEAGUE_PLAYER_FORFEITED`:
-  - `{ forfeiter }`
+    - `{ leagueId, playerId }`
 - `CUP_PLAYER_FORFEITED`:
-  - `{ forfeiter }`
+    - `{ cupId, playerId }`
 - `LEAGUE_FINISHED`:
-  - `{ leaders: [playerId, ...] }`
+    - `{ leagueId, leaders: [playerId, ...] }`
 - `CUP_FINISHED`:
-  - `{ champion: playerId }`
-- Nota: el `leagueId`/`cupId` se incluye como campo top-level del evento, no en el payload
-- `CHAT_CREATED`:
-  - `{}` — el FE puede consultar `GET /api/chats/by-parent/{parentType}/{parentId}` para obtener
-    el chat
-- `MESSAGE_SENT`:
-  - `{ senderId, content, sentAt }` — `sentAt` en milisegundos epoch
-  - Nota: el `chatId` se incluye como campo top-level del evento, no en el payload
+    - `{ cupId, champion: playerId }`
+
+## 9. API REST - Bots
+
+### 9.1 Listar bots disponibles
+
+`GET /api/bots`
+
+No requiere autenticacion.
+
+Response `200`:
+
+```json
+[
+  {
+    "botId": "00000000-0000-0000-0000-000000000001",
+    "name": "El Mentiroso",
+    "personality": {
+      "mentiroso": 90,
+      "pescador": 20,
+      "temerario": 70,
+      "envidoso": 50,
+      "aguantador": 30
+    }
+  },
+  {
+    "botId": "00000000-0000-0000-0000-000000000002",
+    "name": "El Pescador",
+    "personality": {
+      "mentiroso": 30,
+      "pescador": 90,
+      "temerario": 40,
+      "envidoso": 60,
+      "aguantador": 70
+    }
+  },
+  {
+    "botId": "00000000-0000-0000-0000-000000000003",
+    "name": "El Temerario",
+    "personality": {
+      "mentiroso": 60,
+      "pescador": 30,
+      "temerario": 95,
+      "envidoso": 70,
+      "aguantador": 15
+    }
+  },
+  {
+    "botId": "00000000-0000-0000-0000-000000000004",
+    "name": "El Cauteloso",
+    "personality": {
+      "mentiroso": 15,
+      "pescador": 50,
+      "temerario": 20,
+      "envidoso": 40,
+      "aguantador": 85
+    }
+  },
+  {
+    "botId": "00000000-0000-0000-0000-000000000005",
+    "name": "El Equilibrado",
+    "personality": {
+      "mentiroso": 50,
+      "pescador": 50,
+      "temerario": 50,
+      "envidoso": 50,
+      "aguantador": 50
+    }
+  }
+]
+```
+
+Parametros de personalidad (todos en rango 1-100):
+
+| Campo        | Descripcion                                                    |
+|--------------|----------------------------------------------------------------|
+| `mentiroso`  | Tendencia a bluffear (cantar truco/envido con mano debil)      |
+| `pescador`   | Espera que el rival cante envido primero para subir la apuesta |
+| `temerario`  | Velocidad para escalar apuestas (retruco, vale cuatro)         |
+| `envidoso`   | Agresividad al cantar envido                                   |
+| `aguantador` | Reserva las cartas fuertes para manos posteriores              |
+
+### 9.2 Crear partida contra bot
+
+`POST /api/matches/bot`
+
+Requiere Bearer token.
+
+Request:
+
+```json
+{
+  "gamesToPlay": 3,
+  "botId": "00000000-0000-0000-0000-000000000001"
+}
+```
+
+| Campo         | Tipo            | Descripcion                                        |
+|---------------|-----------------|----------------------------------------------------|
+| `gamesToPlay` | `integer`       | Partidas a ganar para terminar el match (minimo 1) |
+| `botId`       | `string (UUID)` | ID del bot elegido (obtenido de `GET /api/bots`)   |
+
+Response `200`:
+
+```json
+{
+  "matchId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+La partida se crea directamente en estado `IN_PROGRESS`. El jugador recibe eventos WebSocket de la
+misma forma que en una partida normal. El bot actua automaticamente cuando es su turno.
+
+Errores:
+
+| Codigo | Descripcion                                                                 |
+|--------|-----------------------------------------------------------------------------|
+| `404`  | El `botId` no existe en el catalogo de bots                                 |
+| `422`  | `gamesToPlay` invalido (menor a 1) o el jugador ya tiene una partida activa |
 
 ## 10. Flujo de autenticacion recomendado
 

@@ -1,4 +1,5 @@
 $kind: http-request
+name: Create match
 url: "{{URL_BASE_TRUCO_HTTP}}/matches/bot"
 method: POST
 body:
@@ -11,11 +12,11 @@ body:
 
     }"
 scripts:
-  - type: beforeRequest
+  - type: afterResponse
     code: "const response = pm.response.json();\r
 
       \r
 
       pm.environment.set(\"matchId\", response.matchId);"
     language: text/javascript
-order: 1000
+order: 2000

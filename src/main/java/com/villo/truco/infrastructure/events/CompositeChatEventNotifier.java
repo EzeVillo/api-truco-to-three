@@ -1,28 +1,22 @@
 package com.villo.truco.infrastructure.events;
 
-import com.villo.truco.application.ports.out.ChatDomainEventHandler;
-import com.villo.truco.application.ports.out.ChatEventContext;
-import com.villo.truco.domain.model.chat.valueobjects.ChatId;
+import com.villo.truco.application.ports.out.DomainEventHandler;
+import com.villo.truco.domain.model.chat.events.ChatDomainEvent;
 import com.villo.truco.domain.ports.ChatEventNotifier;
-import com.villo.truco.domain.shared.DomainEventBase;
-import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
-import java.util.Set;
 
-public final class CompositeChatEventNotifier
-    extends CompositeEventDispatcher<ChatEventContext>
-    implements ChatEventNotifier {
+public final class CompositeChatEventNotifier extends CompositeEventDispatcher implements
+    ChatEventNotifier {
 
-    public CompositeChatEventNotifier(final List<ChatDomainEventHandler<?>> handlers) {
+  public CompositeChatEventNotifier(final List<? extends DomainEventHandler<?>> handlers) {
 
-        super(handlers);
-    }
+    super(handlers);
+  }
 
-    @Override
-    public void publishDomainEvents(final ChatId chatId, final Set<PlayerId> participants,
-        final List<DomainEventBase> events) {
+  @Override
+  public void publishDomainEvents(final List<ChatDomainEvent> events) {
 
-        this.dispatchEvents(new ChatEventContext(chatId, Set.copyOf(participants)), events);
-    }
+    this.dispatchEvents(events);
+  }
 
 }

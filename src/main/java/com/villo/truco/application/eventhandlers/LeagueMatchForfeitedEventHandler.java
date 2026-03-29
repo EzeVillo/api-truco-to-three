@@ -1,16 +1,14 @@
 package com.villo.truco.application.eventhandlers;
 
 import com.villo.truco.application.commands.ForfeitLeagueCommand;
+import com.villo.truco.application.events.MatchForfeited;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
-import com.villo.truco.application.ports.out.MatchDomainEventHandler;
-import com.villo.truco.application.ports.out.MatchEventContext;
-import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import java.util.Objects;
 
 public final class LeagueMatchForfeitedEventHandler implements
-    MatchDomainEventHandler<MatchForfeitedEvent> {
+    ApplicationEventHandler<MatchForfeited> {
 
   private final LeagueQueryRepository leagueQueryRepository;
   private final ForfeitLeagueUseCase forfeitLeagueUseCase;
@@ -23,20 +21,17 @@ public final class LeagueMatchForfeitedEventHandler implements
   }
 
   @Override
-  public Class<MatchForfeitedEvent> eventType() {
+  public Class<MatchForfeited> eventType() {
 
-    return MatchForfeitedEvent.class;
+    return MatchForfeited.class;
   }
 
   @Override
-  public void handle(final MatchForfeitedEvent event, final MatchEventContext context) {
+  public void handle(final MatchForfeited event) {
 
-    final var loser =
-        event.getWinnerSeat() == PlayerSeat.PLAYER_ONE ? context.playerTwo() : context.playerOne();
-
-    this.leagueQueryRepository.findByMatchId(context.matchId()).ifPresent(
+    this.leagueQueryRepository.findByMatchId(event.matchId()).ifPresent(
         league -> this.forfeitLeagueUseCase.handle(
-            new ForfeitLeagueCommand(league.getId(), loser)));
+            new ForfeitLeagueCommand(league.getId(), event.loserId())));
   }
 
 }
