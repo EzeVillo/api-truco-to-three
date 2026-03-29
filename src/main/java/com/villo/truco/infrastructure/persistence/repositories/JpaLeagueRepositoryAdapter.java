@@ -2,11 +2,11 @@ package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.LeagueMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataLeagueRepository;

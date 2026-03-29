@@ -2,8 +2,8 @@ package com.villo.truco.domain.model.match;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import com.villo.truco.domain.model.match.valueobjects.Card;
-import com.villo.truco.domain.model.match.valueobjects.Suit;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.BASTO, 3),
         Card.of(Suit.ORO, 2));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(5);
+    assertThat(CardEvaluationService.envidoScore(cards)).isEqualTo(5);
   }
 
   @Test
@@ -24,7 +24,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.ESPADA, 10), Card.of(Suit.BASTO, 11),
         Card.of(Suit.ORO, 12));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isZero();
+    assertThat(CardEvaluationService.envidoScore(cards)).isZero();
   }
 
   @Test
@@ -33,7 +33,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.ESPADA, 3),
         Card.of(Suit.ORO, 7));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(28);
+    assertThat(CardEvaluationService.envidoScore(cards)).isEqualTo(28);
   }
 
   @Test
@@ -42,7 +42,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.ESPADA, 5), Card.of(Suit.ESPADA, 3),
         Card.of(Suit.ESPADA, 7));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(32);
+    assertThat(CardEvaluationService.envidoScore(cards)).isEqualTo(32);
   }
 
   @Test
@@ -51,7 +51,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.ESPADA, 12), Card.of(Suit.ESPADA, 7),
         Card.of(Suit.ORO, 4));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(27);
+    assertThat(CardEvaluationService.envidoScore(cards)).isEqualTo(27);
   }
 
   @Test
@@ -60,7 +60,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.BASTO, 10), Card.of(Suit.BASTO, 11),
         Card.of(Suit.ORO, 3));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(20);
+    assertThat(CardEvaluationService.envidoScore(cards)).isEqualTo(20);
   }
 
   @Test
@@ -69,7 +69,7 @@ class EnvidoCalculatorTest {
     final var cards = List.of(Card.of(Suit.ESPADA, 7), Card.of(Suit.ESPADA, 6),
         Card.of(Suit.ORO, 1));
 
-    assertThat(EnvidoCalculator.calculate(cards)).isEqualTo(33);
+    assertThat(CardEvaluationService.envidoScore(cards)).isEqualTo(33);
   }
 
 }

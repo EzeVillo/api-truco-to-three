@@ -1,9 +1,9 @@
 package com.villo.truco.domain.model.match;
 
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.model.match.exceptions.DeckEmptyException;
-import com.villo.truco.domain.model.match.valueobjects.Card;
 import com.villo.truco.domain.model.match.valueobjects.DeckId;
-import com.villo.truco.domain.model.match.valueobjects.Suit;
 import com.villo.truco.domain.shared.EntityBase;
 import java.util.ArrayList;
 import java.util.Collections;

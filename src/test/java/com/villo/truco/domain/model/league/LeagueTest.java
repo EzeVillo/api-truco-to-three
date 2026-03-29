@@ -7,8 +7,8 @@ import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
 import com.villo.truco.domain.model.league.events.LeaguePlayerForfeitedEvent;
 import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.HashSet;
 import java.util.List;
@@ -205,11 +205,10 @@ class LeagueTest {
     league.forfeitPlayer(p2);
 
     final var events = league.getDomainEvents();
-    final var advancedEvents = events.stream()
-        .filter(e -> e instanceof LeagueAdvancedEvent)
+    final var advancedEvents = events.stream().filter(e -> e instanceof LeagueAdvancedEvent)
         .map(e -> (LeagueAdvancedEvent) e).toList();
-    final var forfeitedEvents = events.stream()
-        .filter(e -> e instanceof LeaguePlayerForfeitedEvent).toList();
+    final var forfeitedEvents = events.stream().filter(e -> e instanceof LeaguePlayerForfeitedEvent)
+        .toList();
 
     // 2 fixtures de p2 auto-resueltos → 2 LeagueAdvancedEvent
     assertThat(advancedEvents).hasSize(2);
@@ -230,9 +229,9 @@ class LeagueTest {
     final var league = createStartedLeague(p1, p2, p3);
 
     // Resolver todos los fixtures excepto los de p2 (que hará forfeit)
-    final var pendingFixtures = league.getFixtures().stream()
-        .filter(f -> f.status() != FixtureStatus.LIBRE
-            && !p2.equals(f.playerOne()) && !p2.equals(f.playerTwo())).toList();
+    final var pendingFixtures = league.getFixtures().stream().filter(
+        f -> f.status() != FixtureStatus.LIBRE && !p2.equals(f.playerOne()) && !p2.equals(
+            f.playerTwo())).toList();
     // En una liga de 3 no hay fixtures que no involucren a p2 sin también involucrar a p1 o p3
     // → resolvemos el fixture p1 vs p3
     final var fixture13 = findFixture(pendingFixtures, p1, p3);

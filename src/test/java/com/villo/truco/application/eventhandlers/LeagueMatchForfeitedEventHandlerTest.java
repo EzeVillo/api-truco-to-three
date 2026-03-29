@@ -1,19 +1,17 @@
 package com.villo.truco.application.eventhandlers;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.villo.truco.application.events.MatchForfeited;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
-import com.villo.truco.application.ports.out.MatchEventContext;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -22,36 +20,39 @@ import org.junit.jupiter.api.Test;
 @DisplayName("LeagueMatchForfeitedHandler")
 class LeagueMatchForfeitedEventHandlerTest {
 
+  private final LeagueQueryRepository leagueQueryRepository = mock(LeagueQueryRepository.class);
+  private final ForfeitLeagueUseCase forfeitLeagueUseCase = mock(ForfeitLeagueUseCase.class);
+  private final LeagueMatchForfeitedEventHandler handler = new LeagueMatchForfeitedEventHandler(
+      leagueQueryRepository, forfeitLeagueUseCase);
+
   @Test
-  @DisplayName("forfeitea league cuando existe")
-  void forfeitsWhenLeagueExists() {
+  @DisplayName("delegates to ForfeitLeagueUseCase with loser when league exists for match")
+  void delegatesToUseCaseWhenLeagueExists() {
 
-    final var query = mock(LeagueQueryRepository.class);
-    final var useCase = mock(ForfeitLeagueUseCase.class);
+    final var leagueId = LeagueId.generate();
+    final var matchId = MatchId.generate();
+    final var winnerId = PlayerId.generate();
+    final var loserId = PlayerId.generate();
     final var league = mock(League.class);
-    when(query.findByMatchId(any())).thenReturn(Optional.of(league));
-    when(league.getId()).thenReturn(LeagueId.generate());
-    final var handler = new LeagueMatchForfeitedEventHandler(query, useCase);
+    when(league.getId()).thenReturn(leagueId);
+    when(leagueQueryRepository.findByMatchId(matchId)).thenReturn(Optional.of(league));
 
-    handler.handle(new MatchForfeitedEvent(PlayerSeat.PLAYER_ONE, 0, 0),
-        new MatchEventContext(MatchId.generate(), PlayerId.generate(), PlayerId.generate()));
+    handler.handle(new MatchForfeited(matchId, winnerId, loserId));
 
-    verify(useCase).handle(any());
+    verify(forfeitLeagueUseCase).handle(
+        argThat(cmd -> cmd.leagueId().equals(leagueId) && cmd.forfeiter().equals(loserId)));
   }
 
   @Test
-  @DisplayName("no hace nada si no hay league")
-  void doesNothingWhenLeagueMissing() {
+  @DisplayName("does nothing when no league exists for match")
+  void doesNothingWhenLeagueNotFound() {
 
-    final var query = mock(LeagueQueryRepository.class);
-    final var useCase = mock(ForfeitLeagueUseCase.class);
-    when(query.findByMatchId(any())).thenReturn(Optional.empty());
-    final var handler = new LeagueMatchForfeitedEventHandler(query, useCase);
+    final var matchId = MatchId.generate();
+    when(leagueQueryRepository.findByMatchId(matchId)).thenReturn(Optional.empty());
 
-    handler.handle(new MatchForfeitedEvent(PlayerSeat.PLAYER_ONE, 0, 0),
-        new MatchEventContext(MatchId.generate(), PlayerId.generate(), PlayerId.generate()));
+    handler.handle(new MatchForfeited(matchId, PlayerId.generate(), PlayerId.generate()));
 
-    verify(useCase, never()).handle(any());
+    verifyNoInteractions(forfeitLeagueUseCase);
   }
 
 }

@@ -5,33 +5,32 @@ import com.villo.truco.domain.shared.DomainEventBase;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class CompositeEventDispatcher<C> {
+public abstract class CompositeEventDispatcher {
 
-    private final List<DomainEventHandler<?, C>> handlers;
+  private final List<DomainEventHandler<?>> handlers;
 
-    protected CompositeEventDispatcher(
-        final List<? extends DomainEventHandler<?, C>> handlers) {
+  protected CompositeEventDispatcher(final List<? extends DomainEventHandler<?>> handlers) {
 
-        this.handlers = List.copyOf(Objects.requireNonNull(handlers));
-    }
+    this.handlers = List.copyOf(Objects.requireNonNull(handlers));
+  }
 
-    protected final void dispatchEvents(final C context, final List<DomainEventBase> events) {
+  protected final void dispatchEvents(final List<? extends DomainEventBase> events) {
 
-        for (final var event : events) {
-            for (final var handler : this.handlers) {
-                if (handler.eventType().isAssignableFrom(event.getClass()) || event.getClass()
-                    .isAssignableFrom(handler.eventType())) {
-                    this.invokeHandler(handler, event, context);
-                }
-            }
+    for (final var event : events) {
+      for (final var handler : this.handlers) {
+        if (handler.eventType().isAssignableFrom(event.getClass()) || event.getClass()
+            .isAssignableFrom(handler.eventType())) {
+          this.invokeHandler(handler, event);
         }
+      }
     }
+  }
 
-    @SuppressWarnings("unchecked")
-    private <E extends DomainEventBase> void invokeHandler(final DomainEventHandler<E, C> handler,
-        final DomainEventBase event, final C context) {
+  @SuppressWarnings("unchecked")
+  private <E extends DomainEventBase> void invokeHandler(final DomainEventHandler<E> handler,
+      final DomainEventBase event) {
 
-        handler.handle((E) event, context);
-    }
+    handler.handle((E) event);
+  }
 
 }

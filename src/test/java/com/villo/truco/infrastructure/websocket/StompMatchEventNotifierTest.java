@@ -6,21 +6,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.villo.truco.application.ports.out.MatchEventContext;
-import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
-import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
-import com.villo.truco.domain.model.match.valueobjects.Card;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
-import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
-import com.villo.truco.domain.model.match.valueobjects.Suit;
+import com.villo.truco.application.events.MatchEventNotification;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-@DisplayName("StompMatchEventNotifier")
+@DisplayName("StompMatchNotificationHandler")
 class StompMatchEventNotifierTest {
 
   @Test
@@ -28,12 +24,15 @@ class StompMatchEventNotifierTest {
   void broadcastsToBothPlayers() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
-    final var notifier = new StompMatchEventNotifier(messaging,
-      mock(EventNotifierHealthRegistry.class));
-    final var context = new MatchEventContext(MatchId.generate(), PlayerId.generate(),
-        PlayerId.generate());
+    final var handler = new StompMatchNotificationHandler(messaging,
+        mock(EventNotifierHealthRegistry.class));
+    final var matchId = MatchId.generate();
+    final var playerOne = PlayerId.generate();
+    final var playerTwo = PlayerId.generate();
 
-    notifier.handle(new PlayerJoinedEvent(), context);
+    handler.handle(
+        new MatchEventNotification(matchId, List.of(playerOne, playerTwo), "PLAYER_JOINED",
+            System.currentTimeMillis(), Map.of()));
 
     verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/events"), any());
   }
@@ -43,14 +42,14 @@ class StompMatchEventNotifierTest {
   void sendsSeatTargetedOnlyToRecipient() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
-    final var notifier = new StompMatchEventNotifier(messaging,
-      mock(EventNotifierHealthRegistry.class));
-    final var context = new MatchEventContext(MatchId.generate(), PlayerId.generate(),
-        PlayerId.generate());
-    final var event = new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE,
-        List.of(Card.of(Suit.ESPADA, 1)));
+    final var handler = new StompMatchNotificationHandler(messaging,
+        mock(EventNotifierHealthRegistry.class));
+    final var matchId = MatchId.generate();
+    final var playerOne = PlayerId.generate();
 
-    notifier.handle(event, context);
+    handler.handle(
+        new MatchEventNotification(matchId, List.of(playerOne), "AVAILABLE_ACTIONS_UPDATED",
+            System.currentTimeMillis(), Map.of()));
 
     verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/events"), any());
   }

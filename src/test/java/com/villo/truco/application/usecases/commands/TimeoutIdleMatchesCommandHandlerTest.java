@@ -5,16 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Duration;
 import java.time.Instant;
@@ -64,7 +64,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
   }
 
   private TimeoutIdleMatchesCommandHandler handlerFor(final Map<MatchId, Match> matches,
-      final AtomicReference<Match> savedMatch, final List<DomainEventBase> publishedEvents) {
+      final AtomicReference<Match> savedMatch, final List<MatchDomainEvent> publishedEvents) {
 
     final MatchQueryRepository queryRepo = new MatchQueryRepository() {
 
@@ -100,7 +100,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     };
 
     final MatchRepository matchRepository = savedMatch::set;
-    final MatchEventNotifier notifier = (matchId, p1, p2, events) -> publishedEvents.addAll(events);
+    final MatchEventNotifier notifier = publishedEvents::addAll;
     final TransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleMatchesCommandHandler(queryRepo, matchRepository, notifier,
@@ -113,7 +113,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
     final var match = waitingMatch();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
     handler.handle();
@@ -128,7 +128,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
     final var match = waitingMatch();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
     handler.handle();
@@ -142,7 +142,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
     final var match = waitingMatch();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
     handler.handle();
@@ -156,7 +156,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
     final var match = readyMatch();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
     handler.handle();
@@ -172,7 +172,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
     final var match = inProgressMatch();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
     handler.handle();
@@ -190,7 +190,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     match.abandon(playerTwo);
     match.clearDomainEvents();
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
     handler.handle();
@@ -204,7 +204,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
   void emptyIdleListDoesNothing() {
 
     final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<DomainEventBase>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(), savedMatch, publishedEvents);
 
     handler.handle();

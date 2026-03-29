@@ -2,9 +2,9 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.RespondTrucoCommand;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import java.util.Objects;
 
 public final class RespondTrucoCommandHandler implements RespondTrucoUseCase {
@@ -33,8 +33,7 @@ public final class RespondTrucoCommandHandler implements RespondTrucoUseCase {
     }
 
     this.matchRepository.save(match);
-    this.matchEventNotifier.publishDomainEvents(match.getId(), match.getPlayerOne(),
-        match.getPlayerTwo(), match.getDomainEvents());
+    this.matchEventNotifier.publishDomainEvents(match.getMatchDomainEvents());
     match.clearDomainEvents();
 
     return command.matchId();

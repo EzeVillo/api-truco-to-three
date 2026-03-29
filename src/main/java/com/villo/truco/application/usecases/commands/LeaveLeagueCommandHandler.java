@@ -4,7 +4,6 @@ import com.villo.truco.application.commands.LeaveLeagueCommand;
 import com.villo.truco.application.ports.in.LeaveLeagueUseCase;
 import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueRepository;
-import java.util.List;
 import java.util.Objects;
 
 public final class LeaveLeagueCommandHandler implements LeaveLeagueUseCase {
@@ -26,14 +25,11 @@ public final class LeaveLeagueCommandHandler implements LeaveLeagueUseCase {
 
     final var league = this.leagueResolver.resolve(command.leagueId());
 
-    final var participants = List.copyOf(league.getParticipants());
-
     league.leave(command.playerId());
 
     this.leagueRepository.save(league);
 
-    this.leagueEventNotifier.publishDomainEvents(league.getId(), participants,
-        league.getDomainEvents());
+    this.leagueEventNotifier.publishDomainEvents(league.getLeagueDomainEvents());
     league.clearDomainEvents();
 
     return null;

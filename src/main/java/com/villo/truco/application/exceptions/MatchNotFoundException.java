@@ -1,7 +1,7 @@
 package com.villo.truco.application.exceptions;
 
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 
 public final class MatchNotFoundException extends ApplicationException {
 

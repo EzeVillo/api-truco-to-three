@@ -1,5 +1,6 @@
 package com.villo.truco.application.usecases.commands;
 
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInWaitingCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerBusyInCupException;
 import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
@@ -16,17 +17,23 @@ public final class PlayerAvailabilityChecker {
   private final MatchQueryRepository matchQueryRepository;
   private final LeagueQueryRepository leagueQueryRepository;
   private final CupQueryRepository cupQueryRepository;
+  private final BotRegistry botRegistry;
 
   public PlayerAvailabilityChecker(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
-      final CupQueryRepository cupQueryRepository) {
+      final CupQueryRepository cupQueryRepository, final BotRegistry botRegistry) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
     this.cupQueryRepository = Objects.requireNonNull(cupQueryRepository);
+    this.botRegistry = Objects.requireNonNull(botRegistry);
   }
 
   public void ensureAvailable(final PlayerId playerId) {
+
+    if (this.botRegistry.isBot(playerId)) {
+      return;
+    }
 
     if (this.matchQueryRepository.hasUnfinishedMatch(playerId)) {
       throw new PlayerAlreadyInActiveMatchException();
@@ -37,6 +44,10 @@ public final class PlayerAvailabilityChecker {
   }
 
   public void ensureCanStartMatch(final PlayerId playerId) {
+
+    if (this.botRegistry.isBot(playerId)) {
+      return;
+    }
 
     if (this.matchQueryRepository.hasActiveMatch(playerId)) {
       throw new PlayerAlreadyInActiveMatchException();

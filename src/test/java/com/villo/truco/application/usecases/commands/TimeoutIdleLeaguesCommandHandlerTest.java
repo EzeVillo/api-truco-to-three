@@ -72,7 +72,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
 
       @Override
       public Optional<League> findByMatchId(
-          final com.villo.truco.domain.model.match.valueobjects.MatchId matchId) {
+          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
 
         return Optional.empty();
       }
@@ -100,7 +100,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final TransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleLeaguesCommandHandler(queryRepo, leagueRepository, transactionalRunner,
-        Duration.ofMinutes(10), (id, participants, events) -> {
+        Duration.ofMinutes(10), events -> {
     });
   }
 
@@ -183,7 +183,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
 
       @Override
       public Optional<League> findByMatchId(
-          final com.villo.truco.domain.model.match.valueobjects.MatchId matchId) {
+          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
 
         return Optional.empty();
       }
@@ -208,7 +208,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     };
 
     final var handler = new TimeoutIdleLeaguesCommandHandler(queryRepo, savedLeague::set,
-        Runnable::run, Duration.ofMinutes(10), (id, participants, events) -> {
+        Runnable::run, Duration.ofMinutes(10), events -> {
     });
 
     handler.handle();

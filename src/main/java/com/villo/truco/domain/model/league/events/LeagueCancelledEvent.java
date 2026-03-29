@@ -1,22 +1,14 @@
 package com.villo.truco.domain.model.league.events;
 
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.shared.DomainEventBase;
-import java.util.Objects;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.List;
 
-public final class LeagueCancelledEvent extends DomainEventBase {
+public final class LeagueCancelledEvent extends LeagueDomainEvent {
 
-    private final LeagueId leagueId;
+  public LeagueCancelledEvent(final LeagueId leagueId, final List<PlayerId> participants) {
 
-    public LeagueCancelledEvent(final LeagueId leagueId) {
-
-        super("LEAGUE_CANCELLED");
-        this.leagueId = Objects.requireNonNull(leagueId);
-    }
-
-    public LeagueId getLeagueId() {
-
-        return this.leagueId;
-    }
+    super("LEAGUE_CANCELLED", leagueId, participants);
+  }
 
 }

@@ -1,6 +1,6 @@
 package com.villo.truco.domain.model.match.exceptions;
 
-import com.villo.truco.domain.model.match.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.DomainException;
 
 public final class CardNotInHandException extends DomainException {

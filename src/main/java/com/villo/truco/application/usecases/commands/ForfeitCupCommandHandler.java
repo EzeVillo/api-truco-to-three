@@ -42,8 +42,7 @@ public final class ForfeitCupCommandHandler implements ForfeitCupUseCase {
 
     this.cupRepository.save(cup);
 
-    this.cupEventNotifier.publishDomainEvents(cup.getId(),
-        cup.getParticipants(), cup.getDomainEvents());
+    this.cupEventNotifier.publishDomainEvents(cup.getCupDomainEvents());
 
     cup.clearDomainEvents();
 

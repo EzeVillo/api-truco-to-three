@@ -1,11 +1,11 @@
 package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.match.Match;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.MatchMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataMatchRepository;

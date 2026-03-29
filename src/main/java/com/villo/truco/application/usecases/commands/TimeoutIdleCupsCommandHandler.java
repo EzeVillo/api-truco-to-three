@@ -63,8 +63,6 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
     final var cup = cupOpt.get();
     final var statusBefore = cup.getStatus();
 
-    final var participants = List.copyOf(cup.getParticipants());
-
     cup.cancel();
     if (cup.getStatus() == statusBefore) {
       return;
@@ -73,7 +71,7 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
     this.cupRepository.save(cup);
     LOGGER.info("Cup cancelled by timeout: cupId={}", cupId);
 
-    this.cupEventNotifier.publishDomainEvents(cupId, participants, cup.getDomainEvents());
+    this.cupEventNotifier.publishDomainEvents(cup.getCupDomainEvents());
     cup.clearDomainEvents();
   }
 

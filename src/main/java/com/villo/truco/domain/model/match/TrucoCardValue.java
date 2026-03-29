@@ -1,7 +1,7 @@
 package com.villo.truco.domain.model.match;
 
-import com.villo.truco.domain.model.match.valueobjects.Card;
-import com.villo.truco.domain.model.match.valueobjects.Suit;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 
 final class TrucoCardValue {
 

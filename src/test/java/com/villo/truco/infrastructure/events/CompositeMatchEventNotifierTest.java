@@ -4,12 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
-import com.villo.truco.application.ports.out.MatchEventContext;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("CompositeMatchEventNotifier")
+@DisplayName("MatchDomainEventDispatcher")
 class CompositeMatchEventNotifierTest {
 
   private MatchId matchId;
@@ -44,7 +43,7 @@ class CompositeMatchEventNotifierTest {
       }
 
       @Override
-      public void handle(final E event, final MatchEventContext ctx) {
+      public void handle(final E event) {
 
         received.add(event);
       }
@@ -56,11 +55,12 @@ class CompositeMatchEventNotifierTest {
   void routesEventToMatchingHandler() {
 
     final var received = new ArrayList<DomainEventBase>();
-    final var notifier = new CompositeMatchEventNotifier(
+    final var dispatcher = new MatchDomainEventDispatcher(
         List.of(handlerFor(MatchFinishedEvent.class, received)));
 
-    final var event = new MatchFinishedEvent(PlayerSeat.PLAYER_ONE, 2, 0);
-    notifier.publishDomainEvents(this.matchId, this.playerOne, this.playerTwo, List.of(event));
+    final var event = new MatchFinishedEvent(this.matchId, this.playerOne, this.playerTwo,
+        PlayerSeat.PLAYER_ONE, 2, 0);
+    dispatcher.publishDomainEvents(List.of(event));
 
     assertThat(received).containsExactly(event);
   }
@@ -70,13 +70,14 @@ class CompositeMatchEventNotifierTest {
   void wildcardHandlerReceivesAllEvents() {
 
     final var received = new ArrayList<DomainEventBase>();
-    final var notifier = new CompositeMatchEventNotifier(
+    final var dispatcher = new MatchDomainEventDispatcher(
         List.of(handlerFor(DomainEventBase.class, received)));
 
-    final var finished = new MatchFinishedEvent(PlayerSeat.PLAYER_ONE, 2, 0);
-    final var forfeited = new MatchForfeitedEvent(PlayerSeat.PLAYER_TWO, 1, 0);
-    notifier.publishDomainEvents(this.matchId, this.playerOne, this.playerTwo,
-        List.of(finished, forfeited));
+    final var finished = new MatchFinishedEvent(this.matchId, this.playerOne, this.playerTwo,
+        PlayerSeat.PLAYER_ONE, 2, 0);
+    final var forfeited = new MatchForfeitedEvent(this.matchId, this.playerOne, this.playerTwo,
+        PlayerSeat.PLAYER_TWO, 1, 0);
+    dispatcher.publishDomainEvents(List.of(finished, forfeited));
 
     assertThat(received).containsExactly(finished, forfeited);
   }
@@ -85,13 +86,12 @@ class CompositeMatchEventNotifierTest {
   @DisplayName("evento sin handler registrado no lanza excepción")
   void noHandlerForEventDoesNotThrow() {
 
-    final var notifier = new CompositeMatchEventNotifier(
+    final var dispatcher = new MatchDomainEventDispatcher(
         List.of(handlerFor(MatchForfeitedEvent.class, new ArrayList<>())));
 
-    final var event = new MatchFinishedEvent(PlayerSeat.PLAYER_ONE, 2, 0);
-    assertThatNoException().isThrownBy(
-        () -> notifier.publishDomainEvents(this.matchId, this.playerOne, this.playerTwo,
-            List.of(event)));
+    final var event = new MatchFinishedEvent(this.matchId, this.playerOne, this.playerTwo,
+        PlayerSeat.PLAYER_ONE, 2, 0);
+    assertThatNoException().isThrownBy(() -> dispatcher.publishDomainEvents(List.of(event)));
   }
 
   @Test
@@ -109,7 +109,7 @@ class CompositeMatchEventNotifierTest {
       }
 
       @Override
-      public void handle(final MatchFinishedEvent event, final MatchEventContext ctx) {
+      public void handle(final MatchFinishedEvent event) {
 
         order.add("first");
       }
@@ -124,15 +124,16 @@ class CompositeMatchEventNotifierTest {
       }
 
       @Override
-      public void handle(final MatchFinishedEvent event, final MatchEventContext ctx) {
+      public void handle(final MatchFinishedEvent event) {
 
         order.add("second");
       }
     };
 
-    final var notifier = new CompositeMatchEventNotifier(List.of(first, second));
-    notifier.publishDomainEvents(this.matchId, this.playerOne, this.playerTwo,
-        List.of(new MatchFinishedEvent(PlayerSeat.PLAYER_ONE, 2, 0)));
+    final var dispatcher = new MatchDomainEventDispatcher(List.of(first, second));
+    dispatcher.publishDomainEvents(List.of(
+        new MatchFinishedEvent(this.matchId, this.playerOne, this.playerTwo, PlayerSeat.PLAYER_ONE,
+            2, 0)));
 
     assertThat(order).containsExactly("first", "second");
   }
@@ -142,10 +143,10 @@ class CompositeMatchEventNotifierTest {
   void emptyEventListDoesNotInvokeHandlers() {
 
     final var received = new ArrayList<DomainEventBase>();
-    final var notifier = new CompositeMatchEventNotifier(
+    final var dispatcher = new MatchDomainEventDispatcher(
         List.of(handlerFor(DomainEventBase.class, received)));
 
-    notifier.publishDomainEvents(this.matchId, this.playerOne, this.playerTwo, List.of());
+    dispatcher.publishDomainEvents(List.of());
 
     assertThat(received).isEmpty();
   }

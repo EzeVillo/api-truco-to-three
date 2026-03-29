@@ -39,7 +39,29 @@
       "Bash(echo $TMP)",
       "Bash(bash rename_to_league.sh)",
       "Bash(SED_EXPR='s/Tournament/League/g; s/tournament/league/g; s/Torneo/Liga/g; s/torneo/liga/g')",
-      "Bash(sed -i \"$SED_EXPR\" docs/CONTRATOS_API.md README.md CLAUDE.md)"
+      "Bash(sed -i \"$SED_EXPR\" docs/CONTRATOS_API.md README.md CLAUDE.md)",
+      "Bash(BASE=\"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco\")",
+      "Bash(mkdir -p \"$BASE/application/events\")",
+      "Bash(mkdir -p \"$BASE/application/ports/out\")",
+      "Bash(mkdir -p \"$BASE/application/ports\")",
+      "Bash(mkdir -p \"$BASE/application/eventhandlers\")",
+      "Bash(ls:*)",
+      "Bash(sed -n '138,150p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/application/usecases/commands/CreateMatchCommandHandlerTest.java)",
+      "Bash(sed -n '226,234p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/application/usecases/commands/CreateMatchCommandHandlerTest.java)",
+      "Bash(sed -n '153,160p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/application/usecases/commands/MatchCommandHandlersTest.java)",
+      "Bash(sed -n '153,160p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/application/usecases/commands/StartMatchCommandHandlerTest.java)",
+      "Bash(sed -n '208,216p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/application/usecases/commands/StartMatchCommandHandlerConcurrencyTest.java)",
+      "Bash(sed -n '144,152p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/application/usecases/commands/TournamentCommandHandlersTest.java)",
+      "Bash(sed -n '16,30p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/infrastructure/config/AuthUseCaseConfigurationTest.java)",
+      "Bash(sed -n '20,30p' /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/test/java/com/villo/truco/infrastructure/config/MatchUseCaseConfigurationTest.java)",
+      "Bash(head -5 grep \"^public\\\\|^final\\\\|class.*Translator\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/eventhandlers/BotDomainEventTranslator.java)",
+      "Bash(head -5 grep \"MatchEventNotifier\\\\|matchEventNotifier\" /c/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/infrastructure/config/CupUseCaseConfiguration.java)",
+      "Bash(py --version)",
+      "Bash(perl -i -0pe 's/this\\\\.matchEventNotifier\\\\.publishDomainEvents\\\\\\(match\\\\.getId\\\\\\(\\\\\\), match\\\\.getPlayerOne\\\\\\(\\\\\\),\\\\n        match\\\\.getPlayerTwo\\\\\\(\\\\\\), match\\\\.getDomainEvents\\\\\\(\\\\\\)\\\\\\);/this.matchEventNotifier.publishDomainEvents\\(match.getMatchDomainEvents\\(\\)\\);/g' \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/AbandonMatchCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/CallEnvidoCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/CallTrucoCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/FoldCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/JoinMatchCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/PlayCardCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/RespondEnvidoCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/RespondTrucoCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/StartMatchCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/TimeoutIdleMatchesCommandHandler.java\")",
+      "Bash(perl -i -0pe 's/this\\\\.cupEventNotifier\\\\.publishDomainEvents\\\\\\(cup\\\\.getId\\\\\\(\\\\\\), cup\\\\.getParticipants\\\\\\(\\\\\\),\\\\n        cup\\\\.getDomainEvents\\\\\\(\\\\\\)\\\\\\);/this.cupEventNotifier.publishDomainEvents\\(cup.getCupDomainEvents\\(\\)\\);/g' \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/AdvanceCupCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/JoinCupCommandHandler.java\")",
+      "Bash(__NEW_LINE_4463688fc5f6dcfc__ perl:*)",
+      "Bash(git mv:*)",
+      "Bash(xargs sed:*)"
     ]
   }
 }

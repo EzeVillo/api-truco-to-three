@@ -34,4 +34,15 @@ class CleanArchitectureTest {
       .that().resideInAPackage("..infrastructure.http..").should().dependOnClassesThat()
       .resideInAPackage("..application.usecases..");
 
+  @ArchTest
+  static final ArchRule bot_domain_must_not_depend_on_match_domain = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("..domain.model.bot..").should().dependOnClassesThat()
+      .resideInAPackage("..domain.model.match..");
+
+  @ArchTest
+  static final ArchRule bot_domain_may_only_use_cards_shared_kernel = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("..domain.model.bot..").and().doNotHaveSimpleName("BotCard").should()
+      .dependOnClassesThat().resideInAPackage("..domain.cards..")
+      .because("only BotCard may depend on the domain.cards shared kernel");
+
 }

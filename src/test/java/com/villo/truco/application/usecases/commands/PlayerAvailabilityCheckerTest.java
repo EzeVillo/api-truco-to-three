@@ -3,6 +3,8 @@ package com.villo.truco.application.usecases.commands;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInWaitingCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerBusyInCupException;
@@ -13,12 +15,12 @@ import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueExceptio
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
-import com.villo.truco.domain.model.match.valueobjects.MatchId;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
@@ -126,7 +128,32 @@ class PlayerAvailabilityCheckerTest {
         return List.of();
       }
     };
-    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo);
+    final BotRegistry noBotRegistry = new BotRegistry() {
+
+      @Override
+      public boolean isBot(final PlayerId playerId) {
+
+        return false;
+      }
+
+      @Override
+      public Optional<BotProfile> getProfile(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<BotProfile> getAll() {
+
+        return List.of();
+      }
+
+      @Override
+      public void register(final BotProfile profile) {
+
+      }
+    };
+    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, noBotRegistry);
   }
 
   @Test
@@ -302,26 +329,24 @@ class PlayerAvailabilityCheckerTest {
     league.join(p3, league.getInviteCode());
     league.start(p1);
 
-      // Torneo IN_PROGRESS → findWaitingByPlayer devuelve vacío → no debe bloquear
     final var checker = checker(false, false, Optional.of(league), Optional.empty(),
         Optional.empty(), Optional.empty());
 
-      assertThatCode(() -> checker.ensureCanStartMatch(p1)).doesNotThrowAnyException();
+    assertThatCode(() -> checker.ensureCanStartMatch(p1)).doesNotThrowAnyException();
   }
 
-    @Test
-    @DisplayName("ensureCanStartMatch: jugador en torneo en espera no puede iniciar un match")
-    void cannotStartMatchWhenInWaitingTournament() {
+  @Test
+  @DisplayName("ensureCanStartMatch: jugador en torneo en espera no puede iniciar un match")
+  void cannotStartMatchWhenInWaitingTournament() {
 
-        final var creator = PlayerId.generate();
-        final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3));
+    final var creator = PlayerId.generate();
+    final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3));
 
-        // Torneo WAITING_FOR_PLAYERS → findWaitingByPlayer lo encuentra → debe bloquear
-        final var checker = checker(false, false, Optional.empty(), Optional.of(waitingLeague),
-            Optional.empty(), Optional.empty());
+    final var checker = checker(false, false, Optional.empty(), Optional.of(waitingLeague),
+        Optional.empty(), Optional.empty());
 
-        assertThatThrownBy(() -> checker.ensureCanStartMatch(creator)).isInstanceOf(
-            PlayerAlreadyInWaitingLeagueException.class);
+    assertThatThrownBy(() -> checker.ensureCanStartMatch(creator)).isInstanceOf(
+        PlayerAlreadyInWaitingLeagueException.class);
   }
 
   private record StubMatchQueryRepository(boolean unfinished, boolean activeMatch) implements

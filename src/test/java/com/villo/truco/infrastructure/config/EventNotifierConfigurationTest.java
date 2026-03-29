@@ -3,34 +3,26 @@ package com.villo.truco.infrastructure.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.villo.truco.application.ports.in.AdvanceCupUseCase;
-import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
-import com.villo.truco.application.ports.in.ForfeitCupUseCase;
-import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
-import com.villo.truco.domain.ports.CupQueryRepository;
-import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
-import io.micrometer.core.instrument.MeterRegistry;
+import com.villo.truco.application.eventhandlers.BotDomainEventTranslator;
+import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
+import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import org.junit.jupiter.api.Test;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 class EventNotifierConfigurationTest {
 
   @Test
   void buildsNotifierBeans() {
 
-    final var configuration = new EventNotifierConfiguration(mock(SimpMessagingTemplate.class),
-        mock(LeagueQueryRepository.class), mock(AdvanceLeagueUseCase.class),
-        mock(ForfeitLeagueUseCase.class), mock(CupQueryRepository.class),
-        mock(AdvanceCupUseCase.class), mock(ForfeitCupUseCase.class),
-        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class));
+    final var configuration = new EventNotifierConfiguration(
+        mock(MatchNotificationEventTranslator.class), mock(CompetitionDomainEventTranslator.class),
+        mock(BotDomainEventTranslator.class), mock(CupNotificationEventTranslator.class),
+        mock(LeagueNotificationEventTranslator.class));
 
-    assertThat(configuration.stompMatchEventNotifier()).isNotNull();
     assertThat(configuration.matchEventNotifier()).isNotNull();
-    assertThat(configuration.stompLeagueEventNotifier()).isNotNull();
-    assertThat(configuration.leagueEventNotifier()).isNotNull();
-    assertThat(configuration.stompCupEventNotifier()).isNotNull();
     assertThat(configuration.cupEventNotifier()).isNotNull();
+    assertThat(configuration.leagueEventNotifier()).isNotNull();
   }
 
 }
