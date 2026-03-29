@@ -14,6 +14,7 @@ final class EnvidoDecisionPolicy {
 
   private static final int GOOD_ENVIDO_THRESHOLD = 26;
   private static final int FALTA_ENVIDO_THRESHOLD = 29;
+  private static final int SUICIDAL_TRAP_MAX_ENVIDO = 19;
   private static final double CALL_BASE = 0.15;
   private static final double RESPOND_ACCEPT_BASE = 0.40;
 
@@ -34,9 +35,16 @@ final class EnvidoDecisionPolicy {
       return Optional.empty();
     }
 
-    final var viableCalls = availableCalls.stream()
-        .filter(call -> this.isSafeEnoughToCall(call, envidoScore, myScore, rivalScore, pointsToWin))
+    final var safeCalls = availableCalls.stream()
+        .filter(
+            call -> this.callRiskProfile(call, envidoScore, myScore, rivalScore, pointsToWin)
+                == CallRiskProfile.SAFE)
         .toList();
+    final var viableCalls = safeCalls.isEmpty() ? availableCalls.stream()
+        .filter(
+            call -> this.callRiskProfile(call, envidoScore, myScore, rivalScore, pointsToWin)
+                == CallRiskProfile.SUICIDAL_TRAP)
+        .toList() : safeCalls;
 
     if (viableCalls.isEmpty()) {
       return Optional.empty();
@@ -62,7 +70,7 @@ final class EnvidoDecisionPolicy {
       return Optional.empty();
     }
 
-    return Optional.of(this.pickCallLevel(viableCalls, envidoScore));
+    return Optional.of(this.pickCallLevel(viableCalls, envidoScore, safeCalls.isEmpty()));
   }
 
   BotEnvidoResponse decideResponse(final int envidoScore, final int myScore, final int rivalScore,
@@ -107,7 +115,7 @@ final class EnvidoDecisionPolicy {
       return BotEnvidoResponse.QUIERO;
     }
 
-    return probabilisticResponse(envidoScore);
+    return this.probabilisticResponse(envidoScore);
   }
 
   private BotEnvidoResponse probabilisticResponse(final int envidoScore) {
@@ -122,12 +130,12 @@ final class EnvidoDecisionPolicy {
     return BotEnvidoResponse.NO_QUIERO;
   }
 
-  private boolean isSafeEnoughToCall(final BotEnvidoCall call, final int envidoScore,
+  private CallRiskProfile callRiskProfile(final BotEnvidoCall call, final int envidoScore,
       final int myScore, final int rivalScore, final int pointsToWin) {
 
     final var botDiesIfWins = myScore + call.acceptedPointsIfBotWins() > pointsToWin;
     if (!botDiesIfWins) {
-      return true;
+      return CallRiskProfile.SAFE;
     }
 
     final var rivalDiesIfWins = rivalScore + call.acceptedPointsIfRivalWins() > pointsToWin;
@@ -135,14 +143,14 @@ final class EnvidoDecisionPolicy {
         rivalScore + call.rejectedPointsIfRivalDeclines() > pointsToWin;
 
     if (rivalDiesIfRejects) {
-      return true;
+      return CallRiskProfile.SAFE;
     }
 
-    if (rivalDiesIfWins) {
-      return envidoScore < GOOD_ENVIDO_THRESHOLD;
+    if (rivalDiesIfWins && envidoScore <= SUICIDAL_TRAP_MAX_ENVIDO) {
+      return CallRiskProfile.SUICIDAL_TRAP;
     }
 
-    return false;
+    return CallRiskProfile.FORBIDDEN;
   }
 
   private Optional<BotEnvidoCall> decideAtMatchPoint(final List<BotEnvidoCall> availableCalls,
@@ -166,7 +174,11 @@ final class EnvidoDecisionPolicy {
   }
 
   private BotEnvidoCall pickCallLevel(final List<BotEnvidoCall> availableCalls,
-      final int envidoScore) {
+      final int envidoScore, final boolean trapOnlyCalls) {
+
+    if (trapOnlyCalls) {
+      return this.pickLowestLevel(availableCalls);
+    }
 
     if (envidoScore >= FALTA_ENVIDO_THRESHOLD) {
       final var falta = availableCalls.stream()
@@ -184,6 +196,20 @@ final class EnvidoDecisionPolicy {
     }
     return availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.ENVIDO).findFirst()
         .orElse(availableCalls.getFirst());
+  }
+
+  private BotEnvidoCall pickLowestLevel(final List<BotEnvidoCall> availableCalls) {
+
+    return availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.ENVIDO).findFirst()
+        .or(() -> availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.REAL_ENVIDO)
+            .findFirst())
+        .orElse(availableCalls.getFirst());
+  }
+
+  private enum CallRiskProfile {
+    SAFE,
+    SUICIDAL_TRAP,
+    FORBIDDEN
   }
 
 }

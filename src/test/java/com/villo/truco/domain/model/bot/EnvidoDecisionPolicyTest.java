@@ -198,11 +198,63 @@ class EnvidoDecisionPolicyTest {
   }
 
   @Test
-  void decideCall_lowEnvidoAtTwoTwo_keepsTrapCall() {
+  void decideCall_trapAtTwoTwo_allowsCallWithLowEnvido() {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
     final var result = policy.decideCall(List.of(envido()), 15, 2, 2, POINTS_TO_WIN, false, true);
     assertThat(result).contains(envido());
+  }
+
+  @Test
+  void decideCall_trapAtZeroZeroWithHighEnvido_skipsCall() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
+    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 24, 0, 0, POINTS_TO_WIN,
+        false, false);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void decideCall_trapAtZeroZeroWithThresholdEnvido_allowsCall() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
+    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 19, 0, 0, POINTS_TO_WIN,
+        false, false);
+    assertThat(result).contains(doubleEnvidoRaise);
+  }
+
+  @Test
+  void decideCall_trapAtZeroZeroAboveThreshold_skipsCall() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
+    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 20, 0, 0, POINTS_TO_WIN,
+        false, false);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void decideCall_trapOnlyOptions_pickLowestLevel() {
+
+    final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
+    final var projectedRealRaise = call(5, 5, 2, BotEnvidoLevel.REAL_ENVIDO);
+    final var projectedFaltaRaise = call(6, 6, 2, BotEnvidoLevel.FALTA_ENVIDO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var result = policy.decideCall(
+        List.of(projectedRealRaise, projectedFaltaRaise, doubleEnvidoRaise), 19, 0, 0,
+        POINTS_TO_WIN, false, false);
+    assertThat(result).contains(doubleEnvidoRaise);
+  }
+
+  @Test
+  void decideCall_safeOptions_keepAggressiveLevelSelection() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var result = policy.decideCall(List.of(envido(), realEnvido()), 30, 0, 0, POINTS_TO_WIN,
+        false, true);
+    assertThat(result).contains(realEnvido());
   }
 
 }
