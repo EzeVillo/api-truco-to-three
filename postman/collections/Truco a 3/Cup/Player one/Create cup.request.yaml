@@ -1,4 +1,5 @@
 $kind: http-request
+name: Create cup
 url: "{{URL_BASE_TRUCO_HTTP}}/cups"
 method: POST
 body:
@@ -18,6 +19,10 @@ scripts:
 
       pm.environment.set(\"cupId\", response.cupId);\r
 
-      pm.environment.set(\"cupInviteCode\", response.inviteCode);"
+      pm.environment.set(\"cupInviteCode\", response.inviteCode);\r
+
+      pm.environment.set(\"parentType\", \"CUP\");\r
+
+      pm.environment.set(\"parentId\", response.cupId);"
     language: text/javascript
 order: 1000
