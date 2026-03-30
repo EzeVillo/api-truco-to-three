@@ -5,7 +5,8 @@ import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Objects;
 
-public final class CupEventMetricsEventHandler implements ApplicationEventHandler<CupEventNotification> {
+public final class CupEventMetricsEventHandler implements
+    ApplicationEventHandler<CupEventNotification> {
 
   private final MeterRegistry meterRegistry;
 

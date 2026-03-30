@@ -36,8 +36,8 @@ public final class StompMatchNotificationHandler implements
 
     LOGGER.debug("Publishing match event matchId={} type={}", notification.matchId(),
         notification.eventType());
-    final var wsEvent = new MatchWsEvent(notification.eventType(), notification.timestamp(),
-        notification.payload());
+    final var wsEvent = new MatchWsEvent(notification.matchId().value().toString(),
+        notification.eventType(), notification.timestamp(), notification.payload());
     for (final var recipient : notification.recipients()) {
       sendEvent(recipient, wsEvent);
     }
@@ -48,7 +48,7 @@ public final class StompMatchNotificationHandler implements
     final var userName = WebSocketUserNaming.userName(playerId);
     LOGGER.debug("Sending match WS event to user={}", userName);
     try {
-      this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+      this.messagingTemplate.convertAndSendToUser(userName, "/queue/match", message);
       this.healthRegistry.recordSuccess();
     } catch (final RuntimeException ex) {
       this.healthRegistry.recordFailure(ex);

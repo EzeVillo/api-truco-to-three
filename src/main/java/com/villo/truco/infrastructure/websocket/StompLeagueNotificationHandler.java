@@ -37,8 +37,8 @@ public final class StompLeagueNotificationHandler implements
 
     LOGGER.debug("Publishing league event leagueId={} type={}", notification.leagueId(),
         notification.eventType());
-    final var wsEvent = new LeagueWsEvent(notification.eventType(), notification.timestamp(),
-        notification.payload());
+    final var wsEvent = new LeagueWsEvent(notification.leagueId().value().toString(),
+        notification.eventType(), notification.timestamp(), notification.payload());
     for (final var recipient : notification.recipients()) {
       sendEvent(recipient, wsEvent);
     }
@@ -49,7 +49,7 @@ public final class StompLeagueNotificationHandler implements
     final var userName = WebSocketUserNaming.userName(playerId);
     LOGGER.debug("Sending league WS event to user={}", userName);
     try {
-      this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+      this.messagingTemplate.convertAndSendToUser(userName, "/queue/league", message);
       this.healthRegistry.recordSuccess();
     } catch (final RuntimeException ex) {
       this.healthRegistry.recordFailure(ex);

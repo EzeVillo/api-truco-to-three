@@ -34,7 +34,7 @@ class StompMatchEventNotifierTest {
         new MatchEventNotification(matchId, List.of(playerOne, playerTwo), "PLAYER_JOINED",
             System.currentTimeMillis(), Map.of()));
 
-    verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/events"), any());
+    verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/match"), any());
   }
 
   @Test
@@ -51,7 +51,7 @@ class StompMatchEventNotifierTest {
         new MatchEventNotification(matchId, List.of(playerOne), "AVAILABLE_ACTIONS_UPDATED",
             System.currentTimeMillis(), Map.of()));
 
-    verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/events"), any());
+    verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/match"), any());
   }
 
 }

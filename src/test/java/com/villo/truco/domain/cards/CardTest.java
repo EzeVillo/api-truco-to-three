@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
-import com.villo.truco.domain.shared.cards.valueobjects.exceptions.InvalidCardException;
 import com.villo.truco.domain.shared.cards.valueobjects.Suit;
+import com.villo.truco.domain.shared.cards.valueobjects.exceptions.InvalidCardException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

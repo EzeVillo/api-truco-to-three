@@ -2,13 +2,13 @@ package com.villo.truco.application.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
-import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import org.junit.jupiter.api.DisplayName;

@@ -18,6 +18,14 @@ final class CardSelectionPolicy {
     this.random = random;
   }
 
+  private static BotCard selectWhenRivalPlayed(final List<BotCard> sortedAscending,
+      final BotCard rivalCard) {
+
+    final int rivalValue = rivalCard.trucoRank();
+    return sortedAscending.stream().filter(c -> c.trucoRank() > rivalValue).findFirst()
+        .orElse(sortedAscending.getFirst());
+  }
+
   BotCard select(final List<BotCard> myCards, final BotCard rivalCardPlayed) {
 
     if (myCards.isEmpty()) {
@@ -31,14 +39,6 @@ final class CardSelectionPolicy {
       return selectWhenRivalPlayed(sorted, rivalCardPlayed);
     }
     return this.selectWhenLeading(sorted);
-  }
-
-  private static BotCard selectWhenRivalPlayed(final List<BotCard> sortedAscending,
-      final BotCard rivalCard) {
-
-    final int rivalValue = rivalCard.trucoRank();
-    return sortedAscending.stream().filter(c -> c.trucoRank() > rivalValue).findFirst()
-        .orElse(sortedAscending.getFirst());
   }
 
   private BotCard selectWhenLeading(final List<BotCard> sortedAscending) {

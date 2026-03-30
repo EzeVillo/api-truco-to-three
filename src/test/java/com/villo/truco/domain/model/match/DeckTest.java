@@ -3,8 +3,8 @@ package com.villo.truco.domain.model.match;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.model.match.exceptions.DeckEmptyException;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.HashSet;
 import org.junit.jupiter.api.Test;
 

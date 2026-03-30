@@ -1,0 +1,8 @@
+$kind: http-request
+name: Send message
+url: "{{URL_BASE_TRUCO_HTTP}}/chats/{{chatId}}/messages"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \"content\": \"Hola!\"\r\n}"
+order: 2484

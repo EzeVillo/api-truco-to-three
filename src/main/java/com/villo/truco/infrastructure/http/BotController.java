@@ -53,7 +53,7 @@ public class BotController {
   }
 
   @PostMapping("/matches/bot")
-  @Operation(summary = "Crear partida contra bot", description = "Crea una partida ya iniciada contra el bot elegido", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Crear partida contra bot", description = "Crea una partida ya iniciada contra el bot elegido. Las partidas contra bot no generan un chat asociado al match.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateBotMatchResponse.class))),
       @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),

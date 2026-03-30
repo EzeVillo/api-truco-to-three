@@ -36,8 +36,8 @@ public final class StompCupNotificationHandler implements
 
     LOGGER.debug("Publishing cup event cupId={} type={}", notification.cupId(),
         notification.eventType());
-    final var wsEvent = new CupWsEvent(notification.eventType(), notification.timestamp(),
-        notification.payload());
+    final var wsEvent = new CupWsEvent(notification.cupId().value().toString(),
+        notification.eventType(), notification.timestamp(), notification.payload());
     for (final var recipient : notification.recipients()) {
       sendEvent(recipient, wsEvent);
     }
@@ -48,7 +48,7 @@ public final class StompCupNotificationHandler implements
     final var userName = WebSocketUserNaming.userName(playerId);
     LOGGER.debug("Sending cup WS event to user={}", userName);
     try {
-      this.messagingTemplate.convertAndSendToUser(userName, "/queue/events", message);
+      this.messagingTemplate.convertAndSendToUser(userName, "/queue/cup", message);
       this.healthRegistry.recordSuccess();
     } catch (final RuntimeException ex) {
       this.healthRegistry.recordFailure(ex);

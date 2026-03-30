@@ -1,7 +1,7 @@
 package com.villo.truco.domain.model.match.events;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.List;
 
 public final class HandChangedEvent extends DomainEventBase {

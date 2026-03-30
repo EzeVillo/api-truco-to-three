@@ -33,7 +33,7 @@ class StompCupEventNotifierTest {
         new CupEventNotification(cupId, participants, "CUP_STARTED", System.currentTimeMillis(),
             Map.of()));
 
-    verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/events"), any());
+    verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/cup"), any());
   }
 
 }

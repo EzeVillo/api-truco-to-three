@@ -1,6 +1,5 @@
 package com.villo.truco.application.eventhandlers;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
@@ -22,6 +21,7 @@ import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.shared.DomainEventBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

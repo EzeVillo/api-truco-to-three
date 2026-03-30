@@ -1,4 +1,5 @@
 $kind: http-request
+name: Create match
 url: "{{URL_BASE_TRUCO_HTTP}}/matches"
 method: POST
 body:
@@ -12,6 +13,10 @@ scripts:
 
       pm.environment.set(\"matchId\", response.matchId);\r
 
-      pm.environment.set(\"inviteCode\", response.inviteCode);"
+      pm.environment.set(\"inviteCode\", response.inviteCode);\r
+
+      pm.environment.set(\"parentType\", \"MATCH\");\r
+
+      pm.environment.set(\"parentId\", response.matchId);"
     language: text/javascript
 order: 1000

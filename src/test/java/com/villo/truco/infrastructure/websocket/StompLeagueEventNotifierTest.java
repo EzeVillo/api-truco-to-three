@@ -32,7 +32,7 @@ class StompLeagueEventNotifierTest {
     handler.handle(new LeagueEventNotification(leagueId, participants, "LEAGUE_STARTED",
         System.currentTimeMillis(), Map.of()));
 
-    verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/events"), any());
+    verify(messaging, times(3)).convertAndSendToUser(any(), eq("/queue/league"), any());
   }
 
 }

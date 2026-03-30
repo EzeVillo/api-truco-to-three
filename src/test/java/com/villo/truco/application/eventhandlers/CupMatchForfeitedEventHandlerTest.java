@@ -22,8 +22,8 @@ class CupMatchForfeitedEventHandlerTest {
 
   private final CupQueryRepository cupQueryRepository = mock(CupQueryRepository.class);
   private final ForfeitCupUseCase forfeitCupUseCase = mock(ForfeitCupUseCase.class);
-  private final CupMatchForfeitedEventHandler handler = new CupMatchForfeitedEventHandler(cupQueryRepository,
-      forfeitCupUseCase);
+  private final CupMatchForfeitedEventHandler handler = new CupMatchForfeitedEventHandler(
+      cupQueryRepository, forfeitCupUseCase);
 
   @Test
   @DisplayName("delegates to ForfeitCupUseCase with loser when cup exists for match")

@@ -144,8 +144,8 @@ class EnvidoDecisionPolicyTest {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
 
-    assertThatThrownBy(() -> policy.decideResponse(20, 0, 0, POINTS_TO_WIN, null))
-        .isInstanceOf(PendingEnvidoCallRequiredException.class)
+    assertThatThrownBy(() -> policy.decideResponse(20, 0, 0, POINTS_TO_WIN, null)).isInstanceOf(
+            PendingEnvidoCallRequiredException.class)
         .hasMessage("Cannot decide envido response without a pending envido call");
   }
 
@@ -210,8 +210,8 @@ class EnvidoDecisionPolicyTest {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
-    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 24, 0, 0, POINTS_TO_WIN,
-        false, false);
+    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 24, 0, 0, POINTS_TO_WIN, false,
+        false);
     assertThat(result).isEmpty();
   }
 
@@ -220,8 +220,8 @@ class EnvidoDecisionPolicyTest {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
-    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 19, 0, 0, POINTS_TO_WIN,
-        false, false);
+    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 19, 0, 0, POINTS_TO_WIN, false,
+        false);
     assertThat(result).contains(doubleEnvidoRaise);
   }
 
@@ -230,8 +230,8 @@ class EnvidoDecisionPolicyTest {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
-    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 20, 0, 0, POINTS_TO_WIN,
-        false, false);
+    final var result = policy.decideCall(List.of(doubleEnvidoRaise), 20, 0, 0, POINTS_TO_WIN, false,
+        false);
     assertThat(result).isEmpty();
   }
 

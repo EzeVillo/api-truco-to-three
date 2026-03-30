@@ -17,22 +17,6 @@ public final class CupEventMapper {
 
   private static final String CUP_ID = "cupId";
 
-  public Map<String, Object> map(final CupDomainEvent event) {
-
-    return switch (event) {
-      case CupPlayerJoinedEvent e -> mapPlayerJoined(e);
-      case CupPlayerLeftEvent e -> mapPlayerLeft(e);
-      case CupCancelledEvent e -> Map.of(CUP_ID, e.getCupId().value().toString());
-      case CupStartedEvent e -> Map.of(CUP_ID, e.getCupId().value().toString());
-      case CupBoutActivatedEvent e -> mapBoutActivated(e);
-      case CupMatchActivatedEvent e -> mapMatchActivated(e);
-      case CupAdvancedEvent e -> mapAdvanced(e);
-      case CupPlayerForfeitedEvent e -> mapPlayerForfeited(e);
-      case CupFinishedEvent e -> mapFinished(e);
-      default -> Map.of();
-    };
-  }
-
   private static Map<String, Object> mapPlayerJoined(final CupPlayerJoinedEvent event) {
 
     final var map = new LinkedHashMap<String, Object>();
@@ -90,6 +74,22 @@ public final class CupEventMapper {
     map.put(CUP_ID, event.getCupId().value().toString());
     map.put("champion", event.getChampion().value().toString());
     return map;
+  }
+
+  public Map<String, Object> map(final CupDomainEvent event) {
+
+    return switch (event) {
+      case CupPlayerJoinedEvent e -> mapPlayerJoined(e);
+      case CupPlayerLeftEvent e -> mapPlayerLeft(e);
+      case CupCancelledEvent e -> Map.of(CUP_ID, e.getCupId().value().toString());
+      case CupStartedEvent e -> Map.of(CUP_ID, e.getCupId().value().toString());
+      case CupBoutActivatedEvent e -> mapBoutActivated(e);
+      case CupMatchActivatedEvent e -> mapMatchActivated(e);
+      case CupAdvancedEvent e -> mapAdvanced(e);
+      case CupPlayerForfeitedEvent e -> mapPlayerForfeited(e);
+      case CupFinishedEvent e -> mapFinished(e);
+      default -> Map.of();
+    };
   }
 
 }

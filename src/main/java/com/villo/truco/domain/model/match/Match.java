@@ -1,6 +1,5 @@
 package com.villo.truco.domain.model.match;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
@@ -26,6 +25,7 @@ import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.shared.AggregateBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;

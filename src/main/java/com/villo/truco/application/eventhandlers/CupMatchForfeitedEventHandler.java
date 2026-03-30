@@ -7,7 +7,8 @@ import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import java.util.Objects;
 
-public final class CupMatchForfeitedEventHandler implements ApplicationEventHandler<MatchForfeited> {
+public final class CupMatchForfeitedEventHandler implements
+    ApplicationEventHandler<MatchForfeited> {
 
   private final CupQueryRepository cupQueryRepository;
   private final ForfeitCupUseCase forfeitCupUseCase;

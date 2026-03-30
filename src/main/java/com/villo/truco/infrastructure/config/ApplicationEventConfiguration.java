@@ -1,5 +1,7 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.ChatEventMapper;
+import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
 import com.villo.truco.application.eventhandlers.CupEventMapper;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
@@ -11,11 +13,13 @@ import com.villo.truco.application.eventhandlers.MatchRecipientResolver;
 import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.infrastructure.actuator.metrics.ChatEventMetricsEventHandler;
 import com.villo.truco.infrastructure.actuator.metrics.CupEventMetricsEventHandler;
 import com.villo.truco.infrastructure.actuator.metrics.LeagueEventMetricsEventHandler;
 import com.villo.truco.infrastructure.actuator.metrics.MatchEventMetricsEventHandler;
 import com.villo.truco.infrastructure.events.InProcessApplicationEventPublisher;
 import com.villo.truco.infrastructure.events.TransactionalApplicationEventPublisher;
+import com.villo.truco.infrastructure.websocket.StompChatNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompCupNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompLeagueNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompMatchNotificationHandler;
@@ -43,6 +47,13 @@ public class ApplicationEventConfiguration {
   }
 
   @Bean
+  StompChatNotificationHandler stompChatNotificationHandler() {
+
+    return new StompChatNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
   StompMatchNotificationHandler stompMatchNotificationHandler() {
 
     return new StompMatchNotificationHandler(this.messagingTemplate,
@@ -64,6 +75,12 @@ public class ApplicationEventConfiguration {
   }
 
   @Bean
+  ChatEventMetricsEventHandler chatEventMetricsHandler() {
+
+    return new ChatEventMetricsEventHandler(this.meterRegistry);
+  }
+
+  @Bean
   MatchEventMetricsEventHandler matchEventMetricsHandler() {
 
     return new MatchEventMetricsEventHandler(this.meterRegistry);
@@ -79,6 +96,12 @@ public class ApplicationEventConfiguration {
   LeagueEventMetricsEventHandler leagueEventMetricsHandler() {
 
     return new LeagueEventMetricsEventHandler(this.meterRegistry);
+  }
+
+  @Bean
+  ChatEventMapper chatEventMapper() {
+
+    return new ChatEventMapper();
   }
 
   @Bean
@@ -103,6 +126,13 @@ public class ApplicationEventConfiguration {
   LeagueEventMapper leagueEventMapper() {
 
     return new LeagueEventMapper();
+  }
+
+  @Bean
+  ChatNotificationEventTranslator chatNotificationTranslator(
+      final ApplicationEventPublisher publisher) {
+
+    return new ChatNotificationEventTranslator(chatEventMapper(), publisher);
   }
 
   @Bean

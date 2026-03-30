@@ -1,6 +1,5 @@
 package com.villo.truco.domain.model.match;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
@@ -30,6 +29,7 @@ import com.villo.truco.domain.model.match.valueobjects.ScoringResult;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.shared.EntityBase;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.List;

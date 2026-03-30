@@ -17,9 +17,8 @@ class CardSelectionPolicyTest {
 
     final var policy = new CardSelectionPolicy(BALANCED, new Random());
 
-    assertThatThrownBy(() -> policy.select(List.of(), null))
-        .isInstanceOf(BotWithoutCardsException.class)
-        .hasMessage("Bot has no cards to play");
+    assertThatThrownBy(() -> policy.select(List.of(), null)).isInstanceOf(
+        BotWithoutCardsException.class).hasMessage("Bot has no cards to play");
   }
 
 }

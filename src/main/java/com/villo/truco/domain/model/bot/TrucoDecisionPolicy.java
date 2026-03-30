@@ -20,8 +20,8 @@ final class TrucoDecisionPolicy {
     this.random = random;
   }
 
-  Optional<BotTrucoCall> decideCall(final BotTrucoCall availableCall,
-      final double handStrength, final int myScore, final int rivalScore, final int pointsToWin) {
+  Optional<BotTrucoCall> decideCall(final BotTrucoCall availableCall, final double handStrength,
+      final int myScore, final int rivalScore, final int pointsToWin) {
 
     if (availableCall == null) {
       return Optional.empty();
@@ -31,12 +31,12 @@ final class TrucoDecisionPolicy {
       return Optional.empty();
     }
 
-    final var botWinsIfRejected =
-        TrucoScoreStrategy.botWinsIfRejected(myScore, availableCall, pointsToWin);
-    final var botExceedsIfAccepted =
-        TrucoScoreStrategy.botExceedsIfAccepted(myScore, availableCall, pointsToWin);
-    final var rivalExceedsIfAccepted =
-        TrucoScoreStrategy.rivalExceedsIfAccepted(rivalScore, availableCall, pointsToWin);
+    final var botWinsIfRejected = TrucoScoreStrategy.botWinsIfRejected(myScore, availableCall,
+        pointsToWin);
+    final var botExceedsIfAccepted = TrucoScoreStrategy.botExceedsIfAccepted(myScore, availableCall,
+        pointsToWin);
+    final var rivalExceedsIfAccepted = TrucoScoreStrategy.rivalExceedsIfAccepted(rivalScore,
+        availableCall, pointsToWin);
 
     if (botWinsIfRejected) {
       if (!botExceedsIfAccepted) {
@@ -69,8 +69,8 @@ final class TrucoDecisionPolicy {
     return Optional.of(availableCall);
   }
 
-  Optional<BotTrucoCall> decideRaise(final BotTrucoCall availableRaise,
-      final double handStrength, final int myScore, final int rivalScore, final int pointsToWin) {
+  Optional<BotTrucoCall> decideRaise(final BotTrucoCall availableRaise, final double handStrength,
+      final int myScore, final int rivalScore, final int pointsToWin) {
 
     if (availableRaise == null) {
       return Optional.empty();
@@ -82,10 +82,10 @@ final class TrucoDecisionPolicy {
 
     final var botWinsIfRejected = TrucoScoreStrategy.botWinsIfRejected(myScore, availableRaise,
         pointsToWin);
-    final var botExceedsIfAccepted = TrucoScoreStrategy.botExceedsIfAccepted(myScore, availableRaise,
-        pointsToWin);
-    final var rivalExceedsIfAccepted = TrucoScoreStrategy.rivalExceedsIfAccepted(rivalScore, availableRaise,
-        pointsToWin);
+    final var botExceedsIfAccepted = TrucoScoreStrategy.botExceedsIfAccepted(myScore,
+        availableRaise, pointsToWin);
+    final var rivalExceedsIfAccepted = TrucoScoreStrategy.rivalExceedsIfAccepted(rivalScore,
+        availableRaise, pointsToWin);
 
     if (botWinsIfRejected) {
       if (!botExceedsIfAccepted) {
@@ -139,4 +139,5 @@ final class TrucoDecisionPolicy {
     }
     return BotTrucoResponse.NO_QUIERO;
   }
+
 }

@@ -1,7 +1,5 @@
 package com.villo.truco.infrastructure.persistence.mappers;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
-import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.model.match.CardPlaySnapshot;
 import com.villo.truco.domain.model.match.EnvidoSnapshot;
 import com.villo.truco.domain.model.match.HandSnapshot;
@@ -19,6 +17,8 @@ import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.RoundId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;

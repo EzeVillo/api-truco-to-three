@@ -28,4 +28,15 @@ class ApplicationEventConfigurationTest {
     assertThat(publisher).isInstanceOf(ApplicationEventPublisher.class);
   }
 
+  @Test
+  void buildsChatApplicationEventBeans() {
+
+    final var configuration = new ApplicationEventConfiguration(mock(SimpMessagingTemplate.class),
+        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class));
+
+    assertThat(configuration.chatEventMapper()).isNotNull();
+    assertThat(configuration.stompChatNotificationHandler()).isNotNull();
+    assertThat(configuration.chatEventMetricsHandler()).isNotNull();
+  }
+
 }

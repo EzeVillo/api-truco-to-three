@@ -7,7 +7,8 @@ import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import java.util.Objects;
 
-public final class LeagueMatchForfeitedEventHandler implements ApplicationEventHandler<MatchForfeited> {
+public final class LeagueMatchForfeitedEventHandler implements
+    ApplicationEventHandler<MatchForfeited> {
 
   private final LeagueQueryRepository leagueQueryRepository;
   private final ForfeitLeagueUseCase forfeitLeagueUseCase;

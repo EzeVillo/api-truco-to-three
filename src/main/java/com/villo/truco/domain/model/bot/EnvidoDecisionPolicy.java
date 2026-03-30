@@ -35,16 +35,12 @@ final class EnvidoDecisionPolicy {
       return Optional.empty();
     }
 
-    final var safeCalls = availableCalls.stream()
-        .filter(
-            call -> this.callRiskProfile(call, envidoScore, myScore, rivalScore, pointsToWin)
-                == CallRiskProfile.SAFE)
-        .toList();
-    final var viableCalls = safeCalls.isEmpty() ? availableCalls.stream()
-        .filter(
-            call -> this.callRiskProfile(call, envidoScore, myScore, rivalScore, pointsToWin)
-                == CallRiskProfile.SUICIDAL_TRAP)
-        .toList() : safeCalls;
+    final var safeCalls = availableCalls.stream().filter(
+        call -> this.callRiskProfile(call, envidoScore, myScore, rivalScore, pointsToWin)
+            == CallRiskProfile.SAFE).toList();
+    final var viableCalls = safeCalls.isEmpty() ? availableCalls.stream().filter(
+        call -> this.callRiskProfile(call, envidoScore, myScore, rivalScore, pointsToWin)
+            == CallRiskProfile.SUICIDAL_TRAP).toList() : safeCalls;
 
     if (viableCalls.isEmpty()) {
       return Optional.empty();
@@ -139,8 +135,7 @@ final class EnvidoDecisionPolicy {
     }
 
     final var rivalDiesIfWins = rivalScore + call.acceptedPointsIfRivalWins() > pointsToWin;
-    final var rivalDiesIfRejects =
-        rivalScore + call.rejectedPointsIfRivalDeclines() > pointsToWin;
+    final var rivalDiesIfRejects = rivalScore + call.rejectedPointsIfRivalDeclines() > pointsToWin;
 
     if (rivalDiesIfRejects) {
       return CallRiskProfile.SAFE;
@@ -202,14 +197,11 @@ final class EnvidoDecisionPolicy {
 
     return availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.ENVIDO).findFirst()
         .or(() -> availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.REAL_ENVIDO)
-            .findFirst())
-        .orElse(availableCalls.getFirst());
+            .findFirst()).orElse(availableCalls.getFirst());
   }
 
   private enum CallRiskProfile {
-    SAFE,
-    SUICIDAL_TRAP,
-    FORBIDDEN
+    SAFE, SUICIDAL_TRAP, FORBIDDEN
   }
 
 }

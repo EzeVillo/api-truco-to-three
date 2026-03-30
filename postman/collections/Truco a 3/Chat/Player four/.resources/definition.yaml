@@ -1,0 +1,7 @@
+$kind: collection
+name: Player four
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessTokenPlayerFour}}"
+order: 2624779109532387

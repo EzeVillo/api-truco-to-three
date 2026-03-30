@@ -19,6 +19,10 @@ scripts:
 
       pm.environment.set(\"leagueId\", response.leagueId);\r
 
-      pm.environment.set(\"leagueInviteCode\", response.inviteCode);"
+      pm.environment.set(\"leagueInviteCode\", response.inviteCode);\r
+
+      pm.environment.set(\"parentType\", \"LEAGUE\");\r
+
+      pm.environment.set(\"parentId\", response.leagueId);"
     language: text/javascript
 order: 1000

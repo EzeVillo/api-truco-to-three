@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.villo.truco.domain.shared.cards.valueobjects.Card;
-import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
 import com.villo.truco.domain.model.match.exceptions.CannotFoldWithoutCardsException;
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
@@ -19,6 +17,8 @@ import com.villo.truco.domain.model.match.valueobjects.HandId;
 import com.villo.truco.domain.model.match.valueobjects.RoundId;
 import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
 import java.util.Objects;

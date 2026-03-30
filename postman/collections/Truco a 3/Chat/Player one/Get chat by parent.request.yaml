@@ -1,0 +1,13 @@
+$kind: http-request
+name: Get chat by parent
+url: "{{URL_BASE_TRUCO_HTTP}}/chats/by-parent/{{parentType}}/{{parentId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"chatId\", response.chatId);"
+    language: text/javascript
+order: 1000

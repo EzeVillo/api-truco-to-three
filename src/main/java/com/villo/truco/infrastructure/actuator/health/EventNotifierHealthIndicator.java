@@ -40,4 +40,5 @@ public class EventNotifierHealthIndicator implements HealthIndicator {
 
     return Health.up().withDetails(details).build();
   }
+
 }

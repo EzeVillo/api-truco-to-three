@@ -22,8 +22,8 @@ class CupMatchCompletedEventHandlerTest {
 
   private final CupQueryRepository cupQueryRepository = mock(CupQueryRepository.class);
   private final AdvanceCupUseCase advanceCupUseCase = mock(AdvanceCupUseCase.class);
-  private final CupMatchCompletedEventHandler handler = new CupMatchCompletedEventHandler(cupQueryRepository,
-      advanceCupUseCase);
+  private final CupMatchCompletedEventHandler handler = new CupMatchCompletedEventHandler(
+      cupQueryRepository, advanceCupUseCase);
 
   @Test
   @DisplayName("delegates to AdvanceCupUseCase when cup exists for match")
