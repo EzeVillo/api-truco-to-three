@@ -1,6 +1,7 @@
 package com.villo.truco.application.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -16,6 +17,8 @@ import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.repositories.InMemoryChatRepositoryAdapter;
+import com.villo.truco.support.TestTransactionRunner;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +78,27 @@ class ChatLeagueStartedEventHandlerTest {
 
     verify(this.chatRepository, never()).save(any());
     verify(this.chatEventNotifier, never()).publishDomainEvents(any());
+  }
+
+  @Test
+  @DisplayName("revierte la creacion si falla la publicacion")
+  void rollsBackCreationWhenPublishingFails() {
+
+    final var repository = new InMemoryChatRepositoryAdapter();
+    final var leagueId = LeagueId.generate();
+    final var participants = List.of(PlayerId.generate(), PlayerId.generate(), PlayerId.generate());
+    final ChatEventNotifier failingNotifier = events -> {
+      throw new IllegalStateException("ws failed");
+    };
+    final var realHandler = new ChatLeagueStartedEventHandler(repository, repository,
+        failingNotifier);
+
+    assertThatThrownBy(() -> TestTransactionRunner.inTransaction(
+        () -> realHandler.handle(new LeagueStartedEvent(leagueId, participants)))).isInstanceOf(
+        IllegalStateException.class).hasMessage("ws failed");
+
+    assertThat(repository.findByParentTypeAndParentId(ChatParentType.LEAGUE,
+        leagueId.value().toString())).isEmpty();
   }
 
 }

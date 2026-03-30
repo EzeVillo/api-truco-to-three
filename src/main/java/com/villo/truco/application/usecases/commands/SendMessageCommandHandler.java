@@ -25,9 +25,7 @@ public final class SendMessageCommandHandler implements SendMessageUseCase {
   public ChatId handle(final SendMessageCommand command) {
 
     final var chat = this.chatResolver.resolve(command.chatId());
-
     chat.sendMessage(command.playerId(), command.content());
-
     this.chatRepository.save(chat);
     this.chatEventNotifier.publishDomainEvents(chat.getChatDomainEvents());
     chat.clearDomainEvents();

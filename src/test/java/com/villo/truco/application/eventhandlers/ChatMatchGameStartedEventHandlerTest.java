@@ -1,6 +1,7 @@
 package com.villo.truco.application.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -17,6 +18,8 @@ import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.repositories.InMemoryChatRepositoryAdapter;
+import com.villo.truco.support.TestTransactionRunner;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -116,6 +119,31 @@ class ChatMatchGameStartedEventHandlerTest {
 
     verify(this.chatRepository, never()).save(any());
     verify(this.chatEventNotifier, never()).publishDomainEvents(any());
+  }
+
+  @Test
+  @DisplayName("rollback descarta chat creado si falla la publicacion")
+  void rollsBackCreatedChatWhenPublishingFails() {
+
+    final var repository = new InMemoryChatRepositoryAdapter();
+    final var botRegistry = mock(BotRegistry.class);
+    final var playerOne = PlayerId.generate();
+    final var playerTwo = PlayerId.generate();
+    final var matchId = MatchId.generate();
+    when(botRegistry.isBot(playerOne)).thenReturn(false);
+    when(botRegistry.isBot(playerTwo)).thenReturn(false);
+    final ChatEventNotifier failingNotifier = events -> {
+      throw new IllegalStateException("ws failed");
+    };
+    final var transactionalHandler = new ChatMatchGameStartedEventHandler(botRegistry, repository,
+        repository, failingNotifier);
+
+    assertThatThrownBy(() -> TestTransactionRunner.inTransaction(() -> transactionalHandler.handle(
+        new GameStartedEvent(matchId, playerOne, playerTwo, 1)))).isInstanceOf(
+        IllegalStateException.class).hasMessage("ws failed");
+
+    assertThat(repository.findByParentTypeAndParentId(ChatParentType.MATCH,
+        matchId.value().toString())).isEmpty();
   }
 
 }

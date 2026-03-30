@@ -1,6 +1,7 @@
 package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,8 @@ import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.repositories.InMemoryChatRepositoryAdapter;
+import com.villo.truco.support.TestTransactionRunner;
 import java.util.LinkedHashSet;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +54,32 @@ class SendMessageCommandHandlerTest {
     assertThat(publishedEvents).hasSize(1);
     assertThat(publishedEvents.getFirst()).isInstanceOf(ChatEventEnvelope.class);
     assertThat(chat.getChatDomainEvents()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("restaura el chat si falla la publicacion")
+  void restoresChatStateWhenPublishingFails() {
+
+    final var sender = PlayerId.generate();
+    final var other = PlayerId.generate();
+    final var repository = new InMemoryChatRepositoryAdapter();
+    final var chat = Chat.create(ChatParentType.MATCH, "parent-123",
+        new LinkedHashSet<>(List.of(sender, other)));
+    repository.save(chat);
+    chat.clearDomainEvents();
+
+    final var chatResolver = new ChatResolver(repository);
+    final ChatEventNotifier failingNotifier = events -> {
+      throw new IllegalStateException("ws failed");
+    };
+    final var handler = new SendMessageCommandHandler(chatResolver, repository, failingNotifier);
+
+    assertThatThrownBy(() -> TestTransactionRunner.inTransaction(
+        () -> handler.handle(new SendMessageCommand(chat.getId(), sender, "hola")))).isInstanceOf(
+        IllegalStateException.class).hasMessage("ws failed");
+
+    final var stored = repository.findById(chat.getId()).orElseThrow();
+    assertThat(stored.toReadView().messages()).isEmpty();
   }
 
 }
