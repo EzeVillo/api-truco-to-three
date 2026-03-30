@@ -40,9 +40,10 @@ public record MatchStateDTO(String matchId, String status, int gamesWonPlayerOne
     final var availableActions = AvailableActionDTO.fromActions(
         match.getAvailableActions(requestingPlayer));
 
-    final var playedHands = match.getPlayedHands().stream().map(
-        ph -> new PlayedHandDTO(CardDTO.from(ph.cardPlayerOne()), CardDTO.from(ph.cardPlayerTwo()),
-            ph.winner() != null ? ph.winner().value().toString() : null)).toList();
+    final var playedHands = match.getPlayedHands().stream().map(ph -> new PlayedHandDTO(
+        ph.cardPlayerOne() != null ? CardDTO.from(ph.cardPlayerOne()) : null,
+        ph.cardPlayerTwo() != null ? CardDTO.from(ph.cardPlayerTwo()) : null,
+        ph.winner() != null ? ph.winner().value().toString() : null)).toList();
 
     final var handInfo = match.getCurrentHandInfo();
 

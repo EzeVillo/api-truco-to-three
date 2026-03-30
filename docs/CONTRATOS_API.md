@@ -919,6 +919,7 @@ evento, no dentro del `payload`.
     - `{ seat, card: { suit, number } }`
 - `HAND_RESOLVED`:
     - `{ cardPlayerOne, cardPlayerTwo, winnerSeat }`
+    - en el cierre anticipado puntual por `1 de espada`, la carta del rival puede llegar en `null`
 - `TURN_CHANGED`:
     - `{ seat }`
 - `TRUCO_CALLED`:

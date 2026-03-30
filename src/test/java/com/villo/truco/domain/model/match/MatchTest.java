@@ -14,14 +14,21 @@ import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
+import com.villo.truco.domain.model.match.valueobjects.HandId;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.domain.model.match.valueobjects.RoundId;
+import com.villo.truco.domain.model.match.valueobjects.RoundStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoCall;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -80,6 +87,27 @@ class MatchTest {
         match.playCard(rival, match.getCurrentRound().getHandOf(rival).getCards().getFirst());
       }
     }
+  }
+
+  private Round createRoundOnSecondHandAfterTie(final Card openingCard) {
+
+    final var manoHand = Hand.reconstruct(HandId.generate(),
+        List.of(openingCard, Card.of(Suit.ORO, 6)));
+    final var pieHand = Hand.reconstruct(HandId.generate(),
+        List.of(Card.of(Suit.BASTO, 7), Card.of(Suit.COPA, 3)));
+    final var firstHandTie = new Round.PlayedHand(Card.of(Suit.ORO, 4), Card.of(Suit.COPA, 4),
+        null);
+
+    return Round.reconstruct(RoundId.generate(), 1, this.playerOne, this.playerOne, this.playerTwo,
+        manoHand, pieHand, List.of(firstHandTie), List.of(), RoundStatus.PLAYING, this.playerOne,
+        null, null);
+  }
+
+  private Match matchInProgressWithRound(final Round round) {
+
+    return Match.reconstruct(MatchId.generate(), this.playerOne, this.playerTwo, null,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), MatchStatus.IN_PROGRESS, 0, 0, 1, 0, 0, 1,
+        true, true, this.playerOne, round);
   }
 
   @Nested
@@ -362,6 +390,29 @@ class MatchTest {
       final var match = matchInProgress();
 
       assertThatThrownBy(() -> match.callTruco(playerTwo)).isInstanceOf(NotYourTurnException.class);
+    }
+
+  }
+
+  @Nested
+  @DisplayName("cierre anticipado")
+  class CierreAnticipado {
+
+    @Test
+    @DisplayName("jugar ancho de espada en segunda tras parda suma puntos y arranca la siguiente ronda")
+    void immediateClosureAddsPointsAndStartsNextRound() {
+
+      final var anchoDeEspada = Card.of(Suit.ESPADA, 1);
+      final var match = matchInProgressWithRound(createRoundOnSecondHandAfterTie(anchoDeEspada));
+
+      match.playCard(playerOne, anchoDeEspada);
+
+      assertThat(match.getScorePlayerOne()).isEqualTo(1);
+      assertThat(match.getScorePlayerTwo()).isZero();
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
+      assertThat(match.getCurrentRound()).isNotNull();
+      assertThat(match.getCurrentRound().getRoundNumber()).isEqualTo(2);
+      assertThat(match.getRoundStatus()).isEqualTo(RoundStatus.PLAYING);
     }
 
   }

@@ -3,6 +3,7 @@ package com.villo.truco.application.eventhandlers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
+import com.villo.truco.domain.model.match.events.HandResolvedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
@@ -39,6 +40,20 @@ class MatchEventMapperTest {
     @SuppressWarnings("unchecked") final var cardMap = (java.util.Map<String, Object>) payload.get(
         "card");
     assertThat(cardMap).containsEntry("suit", "ESPADA").containsEntry("number", 1);
+  }
+
+  @Test
+  @DisplayName("HandResolvedEvent con carta rival nula a payload serializable")
+  void handResolvedMapsNullCard() {
+
+    final var card = Card.of(Suit.ESPADA, 1);
+    final var payload = mapper.map(new HandResolvedEvent(card, null, PlayerSeat.PLAYER_ONE));
+
+    assertThat(payload).containsEntry("winnerSeat", "PLAYER_ONE");
+    @SuppressWarnings("unchecked") final var cardMap = (java.util.Map<String, Object>) payload.get(
+        "cardPlayerOne");
+    assertThat(cardMap).containsEntry("suit", "ESPADA").containsEntry("number", 1);
+    assertThat(payload).containsEntry("cardPlayerTwo", null);
   }
 
   @Test

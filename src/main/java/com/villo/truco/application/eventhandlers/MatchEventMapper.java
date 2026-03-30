@@ -164,6 +164,10 @@ public final class MatchEventMapper {
 
   private static Map<String, Object> mapCard(final Card card) {
 
+    if (card == null) {
+      return null;
+    }
+
     final var map = new LinkedHashMap<String, Object>();
     map.put("suit", card.suit().name());
     map.put("number", card.number());

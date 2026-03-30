@@ -99,6 +99,10 @@ public class MatchMapper {
 
   private RoundData.CardData toCardData(final Card card) {
 
+    if (card == null) {
+      return null;
+    }
+
     return new RoundData.CardData(card.suit().name(), card.number());
   }
 
@@ -145,6 +149,10 @@ public class MatchMapper {
   }
 
   private Card toCard(final RoundData.CardData data) {
+
+    if (data == null) {
+      return null;
+    }
 
     return Card.of(Suit.valueOf(data.suit()), data.number());
   }

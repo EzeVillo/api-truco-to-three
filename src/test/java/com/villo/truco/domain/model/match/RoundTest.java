@@ -9,6 +9,7 @@ import com.villo.truco.domain.model.match.exceptions.CannotFoldWithoutCardsExcep
 import com.villo.truco.domain.model.match.exceptions.CardNotInHandException;
 import com.villo.truco.domain.model.match.exceptions.EnvidoNotAllowedException;
 import com.villo.truco.domain.model.match.exceptions.FoldNotAllowedException;
+import com.villo.truco.domain.model.match.exceptions.InvalidRoundStateException;
 import com.villo.truco.domain.model.match.exceptions.InvalidTrucoCallException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
@@ -729,6 +730,102 @@ class RoundTest {
     assertThat(actionsOfType(actions, "RESPOND_TRUCO")).contains("QUIERO_Y_ME_VOY_AL_MAZO");
   }
 
+  @Test
+  @DisplayName("segunda mano tras parda y ancho de espada del abridor cierra la ronda")
+  void shouldCloseRoundImmediatelyOnSecondHandAfterTieWithAnchoDeEspada() {
+
+    final var anchoDeEspada = Card.of(Suit.ESPADA, 1);
+    final var roundAfterTie = createRoundOnSecondHandAfterTie(anchoDeEspada);
+    roundAfterTie.clearDomainEvents();
+
+    roundAfterTie.playCard(this.mano, anchoDeEspada);
+
+    assertThat(roundAfterTie.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(roundAfterTie.getCurrentTurn()).isEqualTo(this.mano);
+    assertThat(roundAfterTie.getRoundWinner()).contains(this.mano);
+    assertThat(roundAfterTie.getPlayedHands()).hasSize(2);
+
+    final var resolvedHand = roundAfterTie.getPlayedHands().getLast();
+    assertThat(resolvedHand.cardPlayerOne()).isEqualTo(anchoDeEspada);
+    assertThat(resolvedHand.cardPlayerTwo()).isNull();
+    assertThat(resolvedHand.winner()).isEqualTo(this.mano);
+    assertThat(roundAfterTie.getAvailableActions(this.mano)).isEmpty();
+    assertThat(roundAfterTie.getAvailableActions(this.pie)).isEmpty();
+    assertThat(roundAfterTie.getDomainEvents()).anyMatch(
+        event -> event.getClass().getSimpleName().equals("HandResolvedEvent"));
+    assertThat(roundAfterTie.getDomainEvents()).anyMatch(
+        event -> event.getClass().getSimpleName().equals("RoundEndedEvent"));
+    assertThat(roundAfterTie.getDomainEvents()).noneMatch(
+        event -> event.getClass().getSimpleName().equals("TurnChangedEvent"));
+  }
+
+  @Test
+  @DisplayName("tercera mano y ancho de espada del abridor cierra la ronda")
+  void shouldCloseRoundImmediatelyOnThirdHandWithAnchoDeEspada() {
+
+    final var anchoDeEspada = Card.of(Suit.ESPADA, 1);
+    final var roundOnThirdHand = createRoundOnThirdHand(anchoDeEspada);
+    roundOnThirdHand.clearDomainEvents();
+
+    roundOnThirdHand.playCard(this.pie, anchoDeEspada);
+
+    assertThat(roundOnThirdHand.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(roundOnThirdHand.getCurrentTurn()).isEqualTo(this.pie);
+    assertThat(roundOnThirdHand.getRoundWinner()).contains(this.pie);
+    assertThat(roundOnThirdHand.getPlayedHands()).hasSize(3);
+
+    final var resolvedHand = roundOnThirdHand.getPlayedHands().getLast();
+    assertThat(resolvedHand.cardPlayerOne()).isNull();
+    assertThat(resolvedHand.cardPlayerTwo()).isEqualTo(anchoDeEspada);
+    assertThat(resolvedHand.winner()).isEqualTo(this.pie);
+    assertThat(roundOnThirdHand.getAvailableActions(this.mano)).isEmpty();
+    assertThat(roundOnThirdHand.getAvailableActions(this.pie)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("cierre anticipado por ancho de espada deja al rival sin jugar ni cantar")
+  void shouldBlockOpponentActionsAfterImmediateClosure() {
+
+    final var anchoDeEspada = Card.of(Suit.ESPADA, 1);
+    final var roundAfterTie = createRoundOnSecondHandAfterTie(anchoDeEspada);
+
+    roundAfterTie.playCard(this.mano, anchoDeEspada);
+
+    assertThatThrownBy(() -> roundAfterTie.playCard(this.pie, Card.of(Suit.ORO, 7))).isInstanceOf(
+        InvalidRoundStateException.class);
+    assertThatThrownBy(() -> roundAfterTie.callTruco(this.pie)).isInstanceOf(
+        InvalidRoundStateException.class);
+  }
+
+  @Test
+  @DisplayName("ancho de espada en primera mano no cierra la ronda")
+  void shouldNotCloseRoundImmediatelyOnFirstHandWithAnchoDeEspada() {
+
+    final var anchoDeEspada = Card.of(Suit.ESPADA, 1);
+    final var firstHandRound = createRoundOnFirstHand(anchoDeEspada);
+
+    firstHandRound.playCard(this.mano, anchoDeEspada);
+
+    assertThat(firstHandRound.getStatus()).isEqualTo(RoundStatus.PLAYING);
+    assertThat(firstHandRound.getCurrentTurn()).isEqualTo(this.pie);
+    assertThat(firstHandRound.getRoundWinner()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("otra carta en segunda mano tras parda no cierra la ronda")
+  void shouldNotCloseRoundImmediatelyWithOtherCardAfterTie() {
+
+    final var otherCard = Card.of(Suit.ESPADA, 7);
+    final var roundAfterTie = createRoundOnSecondHandAfterTie(otherCard);
+
+    roundAfterTie.playCard(this.mano, otherCard);
+
+    assertThat(roundAfterTie.getStatus()).isEqualTo(RoundStatus.PLAYING);
+    assertThat(roundAfterTie.getCurrentTurn()).isEqualTo(this.pie);
+    assertThat(roundAfterTie.getRoundWinner()).isEmpty();
+    assertThat(roundAfterTie.getAvailableActions(this.pie)).isNotEmpty();
+  }
+
   private Round createRoundWithTrucoInProgressAndResponderHasNoCards() {
 
     final var callerCard = Card.of(Suit.ESPADA, 1);
@@ -742,6 +839,44 @@ class RoundTest {
     roundNoCards.getTrucoStateMachine().initializeState(TrucoCall.TRUCO, this.mano, 1);
 
     return roundNoCards;
+  }
+
+  private Round createRoundOnFirstHand(final Card openingCard) {
+
+    final var manoHand = Hand.reconstruct(HandId.generate(),
+        List.of(openingCard, Card.of(Suit.ORO, 6), Card.of(Suit.COPA, 5)));
+    final var pieHand = Hand.reconstruct(HandId.generate(),
+        List.of(Card.of(Suit.BASTO, 7), Card.of(Suit.ORO, 4), Card.of(Suit.COPA, 3)));
+
+    return Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano, this.pie, manoHand,
+        pieHand, List.of(), List.of(), RoundStatus.PLAYING, this.mano, null, null);
+  }
+
+  private Round createRoundOnSecondHandAfterTie(final Card openingCard) {
+
+    final var manoHand = Hand.reconstruct(HandId.generate(),
+        List.of(openingCard, Card.of(Suit.ORO, 6)));
+    final var pieHand = Hand.reconstruct(HandId.generate(),
+        List.of(Card.of(Suit.BASTO, 7), Card.of(Suit.COPA, 3)));
+    final var firstHandTie = new Round.PlayedHand(Card.of(Suit.ORO, 4), Card.of(Suit.COPA, 4),
+        null);
+
+    return Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano, this.pie, manoHand,
+        pieHand, List.of(firstHandTie), List.of(), RoundStatus.PLAYING, this.mano, null, null);
+  }
+
+  private Round createRoundOnThirdHand(final Card openingCard) {
+
+    final var manoHand = Hand.reconstruct(HandId.generate(), List.of(Card.of(Suit.ORO, 7)));
+    final var pieHand = Hand.reconstruct(HandId.generate(), List.of(openingCard));
+    final var firstHandWonByMano = new Round.PlayedHand(Card.of(Suit.ESPADA, 7),
+        Card.of(Suit.ORO, 6), this.mano);
+    final var secondHandWonByPie = new Round.PlayedHand(Card.of(Suit.BASTO, 4),
+        Card.of(Suit.ESPADA, 5), this.pie);
+
+    return Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano, this.pie, manoHand,
+        pieHand, List.of(firstHandWonByMano, secondHandWonByPie), List.of(), RoundStatus.PLAYING,
+        this.pie, null, null);
   }
 
   private List<String> actionsOfType(final List<AvailableAction> actions, final String type) {

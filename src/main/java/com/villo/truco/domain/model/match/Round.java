@@ -123,9 +123,9 @@ final class Round extends EntityBase<RoundId> {
 
     if (this.currentHandCards.size() == 2) {
       this.resolveCurrentHand();
-      if (this.status == RoundStatus.FINISHED) {
-        this.emitAvailableActionsUpdates();
-      }
+    } else if (AnchoDeEspadaImmediateClosurePolicy.shouldCloseRound(this.status, card,
+        this.playedHands.size(), this.firstHandWasTie())) {
+      this.resolveCurrentHandWithoutOpponentCard(playerId);
     } else {
       this.changeTurnTo(this.getOpponent(playerId));
     }
@@ -137,11 +137,24 @@ final class Round extends EntityBase<RoundId> {
     final var cardPie = this.getCardPlayedBy(this.getOpponent(mano));
 
     final var winner = this.resolveHandWinner(cardMano, cardPie);
-    this.playedHands.add(new PlayedHand(cardMano, cardPie, winner.orElse(null)));
+    this.finishResolvedHand(cardMano, cardPie, winner.orElse(null));
+  }
+
+  private void resolveCurrentHandWithoutOpponentCard(final PlayerId winner) {
+
+    final var cardMano = this.getCardPlayedByOrNull(this.mano);
+    final var cardPie = this.getCardPlayedByOrNull(this.getOpponent(this.mano));
+    this.finishResolvedHand(cardMano, cardPie, winner);
+  }
+
+  private void finishResolvedHand(final Card cardMano, final Card cardPie,
+      final PlayerId handWinner) {
+
+    this.playedHands.add(new PlayedHand(cardMano, cardPie, handWinner));
 
     final var cardPlayerOne = this.getCardFor(this.playerOne, cardMano, cardPie);
     final var cardPlayerTwo = this.getCardFor(this.playerTwo, cardMano, cardPie);
-    final var winnerSeat = winner.map(this::seatOf).orElse(null);
+    final var winnerSeat = Optional.ofNullable(handWinner).map(this::seatOf).orElse(null);
     this.addDomainEvent(new HandResolvedEvent(cardPlayerOne, cardPlayerTwo, winnerSeat));
 
     this.currentHandCards.clear();
@@ -151,9 +164,11 @@ final class Round extends EntityBase<RoundId> {
     if (this.status == RoundStatus.FINISHED) {
       this.getRoundWinner()
           .ifPresent(winnerId -> this.addDomainEvent(new RoundEndedEvent(this.seatOf(winnerId))));
-    } else {
-      this.changeTurnTo(winner.orElse(mano));
+      this.emitAvailableActionsUpdates();
+      return;
     }
+
+    this.changeTurnTo(handWinner != null ? handWinner : this.mano);
   }
 
   private Optional<PlayerId> resolveHandWinner(final Card cardMano, final Card cardPie) {
@@ -391,6 +406,11 @@ final class Round extends EntityBase<RoundId> {
     return playedHands.isEmpty();
   }
 
+  private boolean firstHandWasTie() {
+
+    return this.playedHands.size() == 1 && this.playedHands.getFirst().winner() == null;
+  }
+
   boolean hasPlayerPlayedInCurrentHand(final PlayerId playerId) {
 
     return this.currentHandCards.stream().anyMatch(cp -> cp.playerId().equals(playerId));
@@ -458,6 +478,12 @@ final class Round extends EntityBase<RoundId> {
 
     return this.currentHandCards.stream().filter(cp -> cp.playerId().equals(playerId))
         .map(CardPlay::card).findFirst().orElseThrow();
+  }
+
+  private Card getCardPlayedByOrNull(final PlayerId playerId) {
+
+    return this.currentHandCards.stream().filter(cp -> cp.playerId().equals(playerId))
+        .map(CardPlay::card).findFirst().orElse(null);
   }
 
   private PlayerId getOpponent(final PlayerId playerId) {
