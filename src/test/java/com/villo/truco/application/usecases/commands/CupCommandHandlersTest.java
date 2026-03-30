@@ -302,12 +302,10 @@ class CupCommandHandlersTest {
 
     handler.handle(new StartCupCommand(cup.getId(), p1));
 
-    final var pendingBouts = cup.getBouts().stream().filter(b -> b.status() == BoutStatus.PENDING)
-        .count();
     assertThat(cupSaved.get()).isSameAs(cup);
-    assertThat(matchSaves.get()).isEqualTo((int) pendingBouts);
-    assertThat(cup.getBouts().stream().filter(b -> b.status() == BoutStatus.PENDING)
-        .allMatch(b -> b.matchId() != null)).isTrue();
+    assertThat(matchSaves.get()).isGreaterThan(0);
+    assertThat(cup.getBouts().stream().filter(b -> b.matchId() != null).count())
+        .isEqualTo(matchSaves.get());
   }
 
   @Test

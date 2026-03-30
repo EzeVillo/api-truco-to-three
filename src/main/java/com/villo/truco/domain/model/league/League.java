@@ -138,7 +138,7 @@ public final class League extends AggregateBase<LeagueId> {
     rotation.add(1, last);
   }
 
-  public void start(final PlayerId playerId) {
+  public List<FixtureActivation> start(final PlayerId playerId) {
 
     Objects.requireNonNull(playerId, "PlayerId cannot be null");
 
@@ -151,6 +151,7 @@ public final class League extends AggregateBase<LeagueId> {
     }
 
     this.initializeFixtures();
+    return this.activateNextFixtures();
   }
 
   public void join(final PlayerId playerId, final InviteCode inviteCode) {
@@ -221,7 +222,7 @@ public final class League extends AggregateBase<LeagueId> {
         matchId);
   }
 
-  public List<FixtureActivation> activateNextFixtures() {
+  List<FixtureActivation> activateNextFixtures() {
 
     final var activations = new ArrayList<FixtureActivation>();
 
@@ -261,7 +262,7 @@ public final class League extends AggregateBase<LeagueId> {
     return allEarlierResolved && noPendingFixture;
   }
 
-  public void forfeitPlayer(final PlayerId forfeiter) {
+  public List<FixtureActivation> forfeitPlayer(final PlayerId forfeiter) {
 
     Objects.requireNonNull(forfeiter, "Forfeiter cannot be null");
 
@@ -298,9 +299,11 @@ public final class League extends AggregateBase<LeagueId> {
       this.addDomainEvent(
           new LeagueFinishedEvent(this.id, List.copyOf(this.participants), this.getLeaders()));
     }
+
+    return this.activateNextFixtures();
   }
 
-  public void recordMatchWinner(final MatchId matchId, final PlayerId winner) {
+  public List<FixtureActivation> recordMatchWinner(final MatchId matchId, final PlayerId winner) {
 
     Objects.requireNonNull(matchId, "MatchId cannot be null");
     Objects.requireNonNull(winner, "Winner cannot be null");
@@ -333,6 +336,8 @@ public final class League extends AggregateBase<LeagueId> {
       this.addDomainEvent(
           new LeagueFinishedEvent(this.id, List.copyOf(this.participants), this.getLeaders()));
     }
+
+    return this.activateNextFixtures();
   }
 
   public boolean hasPlayer(final PlayerId playerId) {

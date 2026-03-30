@@ -13,6 +13,7 @@ import com.villo.truco.domain.model.cup.exceptions.InvalidCupPlayersException;
 import com.villo.truco.domain.model.cup.exceptions.OnlyCreatorCanStartCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerNotInCupException;
+import com.villo.truco.domain.model.cup.valueobjects.BoutPairing;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -167,6 +168,30 @@ class CupTest {
     final var cup = Cup.create(creator, 4, GamesToPlay.of(1));
 
     assertThatThrownBy(() -> cup.start(creator)).isInstanceOf(CupNotReadyException.class);
+  }
+
+  @Test
+  @DisplayName("start: retorna los BoutPairing de los bouts PENDING generados")
+  void startReturnsPendingBoutPairings() {
+
+    final var players = generatePlayers(4);
+    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3));
+    for (int i = 1; i < players.length; i++) {
+      cup.join(players[i], cup.getInviteCode());
+    }
+
+    final var pairings = cup.start(players[0]);
+
+    assertThat(pairings).hasSize(2);
+    assertThat(pairings).allSatisfy(p -> {
+      assertThat(p.playerOne()).isNotNull();
+      assertThat(p.playerTwo()).isNotNull();
+      assertThat(p.boutId()).isNotNull();
+    });
+    final var pairingPlayers = pairings.stream()
+        .flatMap(p -> java.util.stream.Stream.of(p.playerOne(), p.playerTwo()))
+        .collect(java.util.stream.Collectors.toSet());
+    assertThat(pairingPlayers).containsExactlyInAnyOrder(players);
   }
 
   @Test

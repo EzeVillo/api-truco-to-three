@@ -31,11 +31,9 @@ public final class StartLeagueCommandHandler implements StartLeagueUseCase {
 
     final var league = this.leagueResolver.resolve(command.leagueId());
 
-    league.start(command.playerId());
-
     final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
 
-    for (final var activation : league.activateNextFixtures()) {
+    for (final var activation : league.start(command.playerId())) {
       final var match = Match.createReady(activation.playerOne(), activation.playerTwo(),
           matchRules);
       this.matchRepository.save(match);
