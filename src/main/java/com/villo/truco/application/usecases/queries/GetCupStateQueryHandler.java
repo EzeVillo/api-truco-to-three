@@ -6,7 +6,6 @@ import com.villo.truco.application.dto.CupStateDTO;
 import com.villo.truco.application.ports.in.GetCupStateUseCase;
 import com.villo.truco.application.queries.GetCupStateQuery;
 import com.villo.truco.application.usecases.commands.CupResolver;
-import com.villo.truco.domain.model.cup.exceptions.PlayerNotInCupException;
 import java.util.Objects;
 
 public final class GetCupStateQueryHandler implements GetCupStateUseCase {
@@ -34,9 +33,7 @@ public final class GetCupStateQueryHandler implements GetCupStateUseCase {
 
     final var cup = this.cupResolver.resolve(query.cupId());
 
-    if (!cup.hasPlayer(query.requestingPlayer())) {
-      throw new PlayerNotInCupException();
-    }
+    cup.validatePlayerInCup(query.requestingPlayer());
 
     final var champion = cup.getChampion() != null ? cup.getChampion().value().toString() : null;
 

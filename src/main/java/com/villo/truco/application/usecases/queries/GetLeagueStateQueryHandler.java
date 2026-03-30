@@ -7,7 +7,6 @@ import com.villo.truco.application.dto.LeagueStateDTO;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
 import com.villo.truco.application.queries.GetLeagueStateQuery;
 import com.villo.truco.application.usecases.commands.LeagueResolver;
-import com.villo.truco.domain.model.league.exceptions.PlayerNotInLeagueException;
 import java.util.Objects;
 
 public final class GetLeagueStateQueryHandler implements GetLeagueStateUseCase {
@@ -24,9 +23,7 @@ public final class GetLeagueStateQueryHandler implements GetLeagueStateUseCase {
 
     final var league = this.leagueResolver.resolve(query.leagueId());
 
-    if (!league.hasPlayer(query.requestingPlayer())) {
-      throw new PlayerNotInLeagueException();
-    }
+    league.validatePlayerInLeague(query.requestingPlayer());
 
     final var standings = league.getWinsByPlayer().entrySet().stream()
         .map(entry -> new LeagueStandingDTO(entry.getKey().value().toString(), entry.getValue()))

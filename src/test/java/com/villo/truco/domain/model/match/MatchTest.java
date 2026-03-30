@@ -1014,4 +1014,31 @@ class MatchTest {
 
   }
 
+  @Nested
+  @DisplayName("validatePlayerInMatch")
+  class ValidatePlayerInMatch {
+
+    @Test
+    @DisplayName("lanza PlayerNotInMatchException si el jugador no pertenece al match")
+    void throwsForOutsider() {
+
+      final var match = matchInProgress();
+      final var outsider = PlayerId.generate();
+
+      assertThatThrownBy(() -> match.validatePlayerInMatch(outsider))
+          .isInstanceOf(PlayerNotInMatchException.class);
+    }
+
+    @Test
+    @DisplayName("no lanza excepción si el jugador pertenece al match")
+    void doesNotThrowForParticipant() {
+
+      final var match = matchInProgress();
+
+      org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+          () -> match.validatePlayerInMatch(playerOne));
+    }
+
+  }
+
 }
