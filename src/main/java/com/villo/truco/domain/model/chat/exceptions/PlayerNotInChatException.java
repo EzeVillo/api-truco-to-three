@@ -5,9 +5,9 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 
 public final class PlayerNotInChatException extends DomainException {
 
-    public PlayerNotInChatException(final PlayerId playerId) {
+  public PlayerNotInChatException(final PlayerId playerId) {
 
-        super("Player not in chat: " + playerId.value());
-    }
+    super("Player not in chat: " + playerId.value());
+  }
 
 }

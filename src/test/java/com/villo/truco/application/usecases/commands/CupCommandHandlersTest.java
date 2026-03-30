@@ -304,8 +304,8 @@ class CupCommandHandlersTest {
 
     assertThat(cupSaved.get()).isSameAs(cup);
     assertThat(matchSaves.get()).isGreaterThan(0);
-    assertThat(cup.getBouts().stream().filter(b -> b.matchId() != null).count())
-        .isEqualTo(matchSaves.get());
+    assertThat(cup.getBouts().stream().filter(b -> b.matchId() != null).count()).isEqualTo(
+        matchSaves.get());
   }
 
   @Test

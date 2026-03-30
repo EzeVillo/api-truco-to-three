@@ -18,45 +18,45 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ChatUseCaseConfiguration {
 
-    private final ChatQueryRepository chatQueryRepository;
-    private final ChatRepository chatRepository;
-    private final ChatEventNotifier chatEventNotifier;
-    private final UseCasePipeline retryTransactionalPipeline;
+  private final ChatQueryRepository chatQueryRepository;
+  private final ChatRepository chatRepository;
+  private final ChatEventNotifier chatEventNotifier;
+  private final UseCasePipeline retryTransactionalPipeline;
 
-    public ChatUseCaseConfiguration(final ChatQueryRepository chatQueryRepository,
-        final ChatRepository chatRepository, final ChatEventNotifier chatEventNotifier,
-        @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
+  public ChatUseCaseConfiguration(final ChatQueryRepository chatQueryRepository,
+      final ChatRepository chatRepository, final ChatEventNotifier chatEventNotifier,
+      @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
-        this.chatQueryRepository = chatQueryRepository;
-        this.chatRepository = chatRepository;
-        this.chatEventNotifier = chatEventNotifier;
-        this.retryTransactionalPipeline = retryTransactionalPipeline;
-    }
+    this.chatQueryRepository = chatQueryRepository;
+    this.chatRepository = chatRepository;
+    this.chatEventNotifier = chatEventNotifier;
+    this.retryTransactionalPipeline = retryTransactionalPipeline;
+  }
 
-    @Bean
-    ChatResolver chatResolver() {
+  @Bean
+  ChatResolver chatResolver() {
 
-        return new ChatResolver(this.chatQueryRepository);
-    }
+    return new ChatResolver(this.chatQueryRepository);
+  }
 
-    @Bean
-    SendMessageUseCase sendMessageCommandHandler() {
+  @Bean
+  SendMessageUseCase sendMessageCommandHandler() {
 
-        final var handler = new SendMessageCommandHandler(this.chatResolver(), this.chatRepository,
-            this.chatEventNotifier);
-        return this.retryTransactionalPipeline.wrap(handler)::handle;
-    }
+    final var handler = new SendMessageCommandHandler(this.chatResolver(), this.chatRepository,
+        this.chatEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
 
-    @Bean
-    GetChatMessagesUseCase getChatMessagesQueryHandler() {
+  @Bean
+  GetChatMessagesUseCase getChatMessagesQueryHandler() {
 
-        return new GetChatMessagesQueryHandler(this.chatResolver());
-    }
+    return new GetChatMessagesQueryHandler(this.chatResolver());
+  }
 
-    @Bean
-    GetChatByParentUseCase getChatByParentQueryHandler() {
+  @Bean
+  GetChatByParentUseCase getChatByParentQueryHandler() {
 
-        return new GetChatByParentQueryHandler(this.chatQueryRepository);
-    }
+    return new GetChatByParentQueryHandler(this.chatQueryRepository);
+  }
 
 }

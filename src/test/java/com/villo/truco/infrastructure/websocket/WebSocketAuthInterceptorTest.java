@@ -76,7 +76,7 @@ class WebSocketAuthInterceptorTest {
 
     final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
     accessor.setSessionAttributes(new java.util.HashMap<>());
-      accessor.setDestination("/user/queue/match");
+    accessor.setDestination("/user/queue/match");
 
     final Message<byte[]> message = MessageBuilderSupport.build(accessor);
 
@@ -106,75 +106,75 @@ class WebSocketAuthInterceptorTest {
     final var decoder = mock(JwtDecoder.class);
     final var interceptor = new WebSocketAuthInterceptor(decoder);
 
-      final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
-      final var attrs = new java.util.HashMap<String, Object>();
-      attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
-      accessor.setSessionAttributes(attrs);
-      accessor.setDestination("/user/queue/match");
+    final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+    final var attrs = new java.util.HashMap<String, Object>();
+    attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
+    accessor.setSessionAttributes(attrs);
+    accessor.setDestination("/user/queue/match");
 
-      final Message<byte[]> message = MessageBuilderSupport.build(accessor);
+    final Message<byte[]> message = MessageBuilderSupport.build(accessor);
 
-      assertDoesNotThrow(() -> interceptor.preSend(message, null));
+    assertDoesNotThrow(() -> interceptor.preSend(message, null));
   }
 
-    @Test
-    void shouldAllowSubscribeToChatQueueWhenAuthenticated() {
+  @Test
+  void shouldAllowSubscribeToChatQueueWhenAuthenticated() {
 
-        final var decoder = mock(JwtDecoder.class);
-        final var interceptor = new WebSocketAuthInterceptor(decoder);
+    final var decoder = mock(JwtDecoder.class);
+    final var interceptor = new WebSocketAuthInterceptor(decoder);
 
-        final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
-        final var attrs = new java.util.HashMap<String, Object>();
-        attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
-        accessor.setSessionAttributes(attrs);
-        accessor.setDestination("/user/queue/chat");
+    final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+    final var attrs = new java.util.HashMap<String, Object>();
+    attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
+    accessor.setSessionAttributes(attrs);
+    accessor.setDestination("/user/queue/chat");
 
-        final Message<byte[]> message = MessageBuilderSupport.build(accessor);
+    final Message<byte[]> message = MessageBuilderSupport.build(accessor);
 
-        assertDoesNotThrow(() -> interceptor.preSend(message, null));
-    }
+    assertDoesNotThrow(() -> interceptor.preSend(message, null));
+  }
 
-    @Test
-    void shouldAllowSubscribeToLeagueQueueWhenAuthenticated() {
+  @Test
+  void shouldAllowSubscribeToLeagueQueueWhenAuthenticated() {
 
-        final var decoder = mock(JwtDecoder.class);
-        final var interceptor = new WebSocketAuthInterceptor(decoder);
+    final var decoder = mock(JwtDecoder.class);
+    final var interceptor = new WebSocketAuthInterceptor(decoder);
 
-        final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
-        final var attrs = new java.util.HashMap<String, Object>();
-        attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
-        accessor.setSessionAttributes(attrs);
-        accessor.setDestination("/user/queue/league");
+    final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+    final var attrs = new java.util.HashMap<String, Object>();
+    attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
+    accessor.setSessionAttributes(attrs);
+    accessor.setDestination("/user/queue/league");
 
-        final Message<byte[]> message = MessageBuilderSupport.build(accessor);
+    final Message<byte[]> message = MessageBuilderSupport.build(accessor);
 
-        assertDoesNotThrow(() -> interceptor.preSend(message, null));
-    }
+    assertDoesNotThrow(() -> interceptor.preSend(message, null));
+  }
 
-    @Test
-    void shouldAllowSubscribeToCupQueueWhenAuthenticated() {
+  @Test
+  void shouldAllowSubscribeToCupQueueWhenAuthenticated() {
 
-        final var decoder = mock(JwtDecoder.class);
-        final var interceptor = new WebSocketAuthInterceptor(decoder);
+    final var decoder = mock(JwtDecoder.class);
+    final var interceptor = new WebSocketAuthInterceptor(decoder);
 
-        final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
-        final var attrs = new java.util.HashMap<String, Object>();
-        attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
-        accessor.setSessionAttributes(attrs);
-        accessor.setDestination("/user/queue/cup");
+    final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+    final var attrs = new java.util.HashMap<String, Object>();
+    attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
+    accessor.setSessionAttributes(attrs);
+    accessor.setDestination("/user/queue/cup");
 
-        final Message<byte[]> message = MessageBuilderSupport.build(accessor);
+    final Message<byte[]> message = MessageBuilderSupport.build(accessor);
 
-        assertDoesNotThrow(() -> interceptor.preSend(message, null));
-    }
+    assertDoesNotThrow(() -> interceptor.preSend(message, null));
+  }
 
-    @Test
-    void shouldRejectSubscribeToOldEventsQueueWhenAuthenticated() {
+  @Test
+  void shouldRejectSubscribeToOldEventsQueueWhenAuthenticated() {
 
-        final var decoder = mock(JwtDecoder.class);
-        final var interceptor = new WebSocketAuthInterceptor(decoder);
+    final var decoder = mock(JwtDecoder.class);
+    final var interceptor = new WebSocketAuthInterceptor(decoder);
 
-        final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+    final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
     final var attrs = new java.util.HashMap<String, Object>();
     attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
     accessor.setSessionAttributes(attrs);
@@ -182,7 +182,7 @@ class WebSocketAuthInterceptorTest {
 
     final Message<byte[]> message = MessageBuilderSupport.build(accessor);
 
-        assertThrows(MessageDeliveryException.class, () -> interceptor.preSend(message, null));
+    assertThrows(MessageDeliveryException.class, () -> interceptor.preSend(message, null));
   }
 
   private Message<byte[]> connectMessage(final String authorizationHeader) {

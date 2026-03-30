@@ -1025,8 +1025,8 @@ class MatchTest {
       final var match = matchInProgress();
       final var outsider = PlayerId.generate();
 
-      assertThatThrownBy(() -> match.validatePlayerInMatch(outsider))
-          .isInstanceOf(PlayerNotInMatchException.class);
+      assertThatThrownBy(() -> match.validatePlayerInMatch(outsider)).isInstanceOf(
+          PlayerNotInMatchException.class);
     }
 
     @Test

@@ -7,8 +7,8 @@ import java.util.Optional;
 
 public interface ChatQueryRepository {
 
-    Optional<Chat> findById(ChatId chatId);
+  Optional<Chat> findById(ChatId chatId);
 
-    Optional<Chat> findByParentTypeAndParentId(ChatParentType parentType, String parentId);
+  Optional<Chat> findByParentTypeAndParentId(ChatParentType parentType, String parentId);
 
 }

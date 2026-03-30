@@ -5,8 +5,8 @@ import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 
 public interface ChatRepository {
 
-    void save(Chat chat);
+  void save(Chat chat);
 
-    void delete(ChatId chatId);
+  void delete(ChatId chatId);
 
 }

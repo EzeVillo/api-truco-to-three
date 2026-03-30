@@ -8,17 +8,17 @@ import java.util.Objects;
 
 public final class ChatResolver {
 
-    private final ChatQueryRepository chatQueryRepository;
+  private final ChatQueryRepository chatQueryRepository;
 
-    public ChatResolver(final ChatQueryRepository chatQueryRepository) {
+  public ChatResolver(final ChatQueryRepository chatQueryRepository) {
 
-        this.chatQueryRepository = Objects.requireNonNull(chatQueryRepository);
-    }
+    this.chatQueryRepository = Objects.requireNonNull(chatQueryRepository);
+  }
 
-    public Chat resolve(final ChatId chatId) {
+  public Chat resolve(final ChatId chatId) {
 
-        return this.chatQueryRepository.findById(chatId)
-            .orElseThrow(() -> new ChatNotFoundException(chatId));
-    }
+    return this.chatQueryRepository.findById(chatId)
+        .orElseThrow(() -> new ChatNotFoundException(chatId));
+  }
 
 }

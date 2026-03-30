@@ -10,10 +10,9 @@ public record ChatMessageResponse(
     @Schema(description = "Contenido del mensaje", example = "¡Truco!") String content,
     @Schema(description = "Timestamp del envío en milisegundos epoch", example = "1774886400000") long sentAt) {
 
-    public static ChatMessageResponse from(final ChatMessageDTO dto) {
+  public static ChatMessageResponse from(final ChatMessageDTO dto) {
 
-        return new ChatMessageResponse(dto.messageId(), dto.senderId(), dto.content(),
-            dto.sentAt());
-    }
+    return new ChatMessageResponse(dto.messageId(), dto.senderId(), dto.content(), dto.sentAt());
+  }
 
 }

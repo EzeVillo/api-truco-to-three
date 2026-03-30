@@ -5,18 +5,18 @@ import java.util.UUID;
 
 public record ChatId(UUID value) {
 
-    public static ChatId of(final String value) {
+  public static ChatId of(final String value) {
 
-        try {
-            return new ChatId(UUID.fromString(value));
-        } catch (final IllegalArgumentException e) {
-            throw new InvalidIdException(value);
-        }
+    try {
+      return new ChatId(UUID.fromString(value));
+    } catch (final IllegalArgumentException e) {
+      throw new InvalidIdException(value);
     }
+  }
 
-    public static ChatId generate() {
+  public static ChatId generate() {
 
-        return new ChatId(UUID.randomUUID());
-    }
+    return new ChatId(UUID.randomUUID());
+  }
 
 }

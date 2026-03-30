@@ -6,15 +6,15 @@ import java.util.Objects;
 
 public record GetChatMessagesQuery(ChatId chatId, PlayerId requestingPlayer) {
 
-    public GetChatMessagesQuery {
+  public GetChatMessagesQuery {
 
-        Objects.requireNonNull(chatId);
-        Objects.requireNonNull(requestingPlayer);
-    }
+    Objects.requireNonNull(chatId);
+    Objects.requireNonNull(requestingPlayer);
+  }
 
-    public GetChatMessagesQuery(final String chatId, final String requestingPlayer) {
+  public GetChatMessagesQuery(final String chatId, final String requestingPlayer) {
 
-        this(ChatId.of(chatId), PlayerId.of(requestingPlayer));
-    }
+    this(ChatId.of(chatId), PlayerId.of(requestingPlayer));
+  }
 
 }

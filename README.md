@@ -118,17 +118,17 @@ Cobertura de calidad aplicada:
 Workflows disponibles:
 
 - `CI - Build and Test` (`.github/workflows/ci.yml`):
-  - Corre en cualquier `pull_request`.
-  - Corre en `push` a cualquier branch.
-  - Ejecuta `test` en PR y ramas.
-  - Ejecuta `build` en push (no en PR) para evitar build duplicado con Sonar.
+    - Corre en cualquier `pull_request`.
+    - Corre en `push` a cualquier branch.
+    - Ejecuta `test` en PR y ramas.
+    - Ejecuta `build` en push (no en PR) para evitar build duplicado con Sonar.
 - `SonarQube Analysis` (`.github/workflows/sonar.yml`):
-  - Corre en cualquier `pull_request`.
-  - Ejecuta `clean build sonar` (incluye tests) con quality gate bloqueante.
-  - Valida cobertura minima via JaCoCo (`coverageMinimum` o `COVERAGE_MINIMUM`, default `0.70`).
+    - Corre en cualquier `pull_request`.
+    - Ejecuta `clean build sonar` (incluye tests) con quality gate bloqueante.
+    - Valida cobertura minima via JaCoCo (`coverageMinimum` o `COVERAGE_MINIMUM`, default `0.70`).
 - `Release` (`.github/workflows/release.yml`):
-  - Corre al hacer push de tags semanticos `v*`.
-  - Publica GitHub Release con el JAR generado.
+    - Corre al hacer push de tags semanticos `v*`.
+    - Publica GitHub Release con el JAR generado.
 
 Secrets requeridos para Sonar:
 

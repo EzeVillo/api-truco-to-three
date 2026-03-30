@@ -37,4 +37,5 @@ public class EventNotifierHealthRegistry {
 
     return Optional.ofNullable(this.lastFailureMessage.get());
   }
+
 }

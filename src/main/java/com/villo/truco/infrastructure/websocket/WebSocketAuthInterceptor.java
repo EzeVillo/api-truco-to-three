@@ -21,8 +21,8 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
 
   private static final String IDENTITY_ATTR = "authenticatedPlayer";
   private static final String TOKEN_HEADER = "Authorization";
-  private static final Set<String> ALLOWED_DESTINATIONS = Set.of(
-      "/user/queue/match", "/user/queue/league", "/user/queue/cup", "/user/queue/chat");
+  private static final Set<String> ALLOWED_DESTINATIONS = Set.of("/user/queue/match",
+      "/user/queue/league", "/user/queue/cup", "/user/queue/chat");
   private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
 
   private final JwtDecoder jwtDecoder;

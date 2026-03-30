@@ -11,10 +11,10 @@ public record ChatMessagesResponse(
     @Schema(description = "ID del recurso padre", example = "a1b2c3d4-5678-9abc-def0-1234567890ab") String parentId,
     @Schema(description = "Mensajes del chat (máximo 50)") List<ChatMessageResponse> messages) {
 
-    public static ChatMessagesResponse from(final ChatMessagesDTO dto) {
+  public static ChatMessagesResponse from(final ChatMessagesDTO dto) {
 
-        return new ChatMessagesResponse(dto.chatId(), dto.parentType(), dto.parentId(),
-            dto.messages().stream().map(ChatMessageResponse::from).toList());
-    }
+    return new ChatMessagesResponse(dto.chatId(), dto.parentType(), dto.parentId(),
+        dto.messages().stream().map(ChatMessageResponse::from).toList());
+  }
 
 }

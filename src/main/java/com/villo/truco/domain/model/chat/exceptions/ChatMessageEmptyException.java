@@ -4,9 +4,9 @@ import com.villo.truco.domain.shared.DomainException;
 
 public final class ChatMessageEmptyException extends DomainException {
 
-    public ChatMessageEmptyException() {
+  public ChatMessageEmptyException() {
 
-        super("Message content cannot be empty");
-    }
+    super("Message content cannot be empty");
+  }
 
 }
