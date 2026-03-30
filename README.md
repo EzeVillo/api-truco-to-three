@@ -1,135 +1,243 @@
-﻿# Truco Master - Backend
+# Truco Master - Backend
 
-Backend de un juego online de Truco Argentino (1v1), disenado para mostrar criterios de arquitectura
-y modelado de dominio en un contexto de reglas complejas.
+Backend de Truco Argentino con DDD estricto, Spring Boot y eventos en tiempo real.
+El dominio implementa la variante de "truco a 3": cada game se gana llegando exactamente a `3`
+puntos; si un jugador se pasa, pierde ese game. Un match se resuelve al mejor de `1`, `3` o `5`
+games.
+
+## Estado actual
 
 ## Estado del proyecto
 
-- Backend funcional.
-- API REST + eventos en tiempo real por WebSocket/STOMP.
-- CI/CD activa con GitHub Actions (build/test en PR y ramas, release por tags `v*`).
-- Analisis estatico externo con SonarQube Community en PR.
+- matches entre jugadores
+- matches contra bots
+- ligas round-robin
+- copas single elimination
+- chat por recurso
+- autenticacion JWT
+- REST + WebSocket/STOMP
+- persistencia con PostgreSQL + Flyway
+- health checks, metricas y schedulers de timeout
 
-## Tabla de contenido
+## Reglas de dominio principales
 
-- [Arquitectura](#arquitectura)
-- [Decisiones tecnicas](#decisiones-tecnicas)
-- [Diagrama C4 (simple)](#diagrama-c4-simple)
-- [Stack](#stack)
-- [Como correr el proyecto](#como-correr-el-proyecto)
-- [Calidad y testing](#calidad-y-testing)
-- [Capturas](#capturas)
-- [Trade-offs](#trade-offs)
-- [Backlog tecnico](#backlog-tecnico)
-- [Documentacion API](#documentacion-api)
-- [Normas de codificacion](#normas-de-codificacion)
+- Un game de truco se juega a `3` puntos exactos.
+- Si un jugador supera `3`, ese game lo gana el rival.
+- Un match acepta `gamesToPlay = 1 | 3 | 5`.
+- Ligas:
+  `3` a `8` jugadores, todos contra todos.
+- Copas:
+  `4` a `8` jugadores, eliminacion directa con soporte de byes.
+- El chat se crea automaticamente al iniciar un match, liga o copa.
+
+## Capacidades
+
+- Auth:
+  registro, login y acceso guest con JWT.
+- Match:
+  crear, unirse, iniciar, jugar carta, cantar/responder truco, cantar/responder envido, fold,
+  abandono y consulta de estado.
+- Bots:
+  catalogo de personalidades y creacion de match listo para jugar.
+- League:
+  creacion, join, leave, start, tabla, fixture y avance automatico.
+- Cup:
+  creacion, join, leave, start, bracket, avance automatico y resolucion por forfeit.
+- Chat:
+  lectura, envio de mensajes, limite de 50 mensajes y rate limit de 2 segundos por jugador.
+- Tiempo real:
+  eventos privados por jugador para match, league, cup y chat.
 
 ## Arquitectura
 
 El proyecto esta estructurado en capas con enfoque de Clean Architecture:
 
-- `domain`: reglas de negocio puras (agregados, value objects, excepciones, eventos de dominio).
-- `application`: casos de uso, comandos/queries, puertos de entrada/salida.
-- `infrastructure`: adaptadores HTTP, WebSocket, seguridad JWT, persistencia in-memory y
-  configuracion Spring.
+- `domain`
+  reglas del negocio, agregados, value objects, domain events y especificaciones.
+- `application`
+  comandos, queries, DTOs, puertos y casos de uso.
+- `infrastructure`
+  HTTP, seguridad, WebSocket, persistencia, schedulers, configuracion y adaptadores externos.
 
-La separacion de capas se valida automaticamente con ArchUnit en
+Agregados principales del dominio:
+
+- `match`
+- `league`
+- `cup`
+- `chat`
+- `bot`
+- `user`
+
+La restriccion de dependencias se valida con ArchUnit en
 `src/test/java/com/villo/truco/architecture/CleanArchitectureTest.java`.
-
-## Decisiones tecnicas
-
-Estas son las decisiones principales del proyecto:
-
-- Clean Architecture con reglas de dependencia validadas por tests de arquitectura.
-- DDD tactico para encapsular invariantes del juego:
-    - Aggregates: `Match`, `League`.
-    - Value Objects: `MatchId`, `PlayerId`, `Card`, `MatchRules`, etc.
-    - Domain Events para publicar cambios relevantes del juego.
-- Seguridad JWT:
-    - Emision de token por jugador.
-    - Validacion de `issuer`, `audience` y expiracion.
-    - Restriccion de acceso por `matchId` para evitar acceso cruzado entre partidas.
-- Tiempo real con STOMP/WebSocket para notificar eventos de la partida.
-- Concurrencia controlada en operaciones sensibles (`start match`) mediante lock por partida.
-- Persistencia in-memory por alcance inicial del proyecto (rapidez de iteracion y foco en dominio).
-
-## Diagrama C4 (simple)
-
-```mermaid
-flowchart LR
-    U1[Jugador 1] --> FE[Frontend Web]
-    U2[Jugador 2] --> FE
-
-    FE -->|REST + JWT| API[Truco Backend API]
-    FE -->|WebSocket STOMP| WS[Realtime Gateway]
-
-    API --> APP[Application Layer<br/>Use Cases]
-    APP --> DOM[Domain Layer<br/>Match/League + Rules]
-    APP --> REPO[(InMemory Repositories)]
-    DOM --> EVT[Domain Events]
-    EVT --> WS
-```
 
 ## Stack
 
 - Java 21
-- Spring Boot
+- Spring Boot 4
 - Spring Web
-- Spring Security + OAuth2 Resource Server (JWT)
-- Spring WebSocket (STOMP)
-- Gradle
-- JUnit 5 + ArchUnit
+- Spring Security + OAuth2 Resource Server
+- Spring WebSocket / STOMP
+- Spring Data JPA
+- PostgreSQL
+- Flyway
+- Springdoc OpenAPI
+- JUnit 5
+- ArchUnit
+- Testcontainers
+- JaCoCo
 
-## Como correr el proyecto
+## Estructura del proyecto
+
+```text
+src/main/java/com/villo/truco
+|- domain
+|- application
+|- infrastructure
+
+src/main/resources
+|- application.yaml
+|- db/migration
+```
+
+## Como correrlo localmente
 
 ### Requisitos
 
 - JDK 21
+- Docker Desktop o una instancia local de PostgreSQL
 
-### Comandos
+### Base de datos recomendada
 
-```bash
-./gradlew test
-./gradlew bootRun
+Levantar PostgreSQL y Adminer con Docker Compose:
+
+```powershell
+docker compose up -d
 ```
+
+Servicios locales:
+
+- API: `http://localhost:8080`
+- PostgreSQL: `localhost:5432`
+- Adminer: `http://localhost:8081`
+
+Credenciales por defecto:
+
+- DB name: `truco`
+- DB user: `truco`
+- DB password: `truco`
+
+### Variables de entorno
+
+Valores por defecto definidos en `application.yaml`:
+
+- `TRUCO_DB_USER=truco`
+- `TRUCO_DB_PASSWORD=truco`
+- `TRUCO_JWT_SECRET=truco-local-dev-secret-key-32-bytes`
+- `TRUCO_JWT_ISSUER=truco-api`
+- `TRUCO_JWT_AUDIENCE=truco-clients`
+
+### Ejecutar la aplicacion
 
 En Windows:
 
 ```powershell
-.\gradlew.bat test
 .\gradlew.bat bootRun
 ```
 
-API local: `http://localhost:8080`
+En Linux/macOS:
 
-## Calidad y testing
+```bash
+./gradlew bootRun
+```
 
-Cobertura de calidad aplicada:
+Flyway corre al iniciar y valida el esquema sobre PostgreSQL.
 
-- Tests unitarios de dominio para reglas de Truco/Envido, rondas, scoring y edge cases.
-- Tests de concurrencia para inicio simultaneo de partida.
-- Tests de seguridad HTTP (JWT, endpoints protegidos, CORS preflight).
-- Tests de arquitectura (ArchUnit) para garantizar dependencia correcta entre capas.
+## Testing y calidad
 
-## CI/CD y calidad automatizada
+Ejecutar tests:
 
-Workflows disponibles:
+```powershell
+.\gradlew.bat test
+```
 
-- `CI - Build and Test` (`.github/workflows/ci.yml`):
-    - Corre en cualquier `pull_request`.
-    - Corre en `push` a cualquier branch.
-    - Ejecuta `test` en PR y ramas.
-    - Ejecuta `build` en push (no en PR) para evitar build duplicado con Sonar.
-- `SonarQube Analysis` (`.github/workflows/sonar.yml`):
-    - Corre en cualquier `pull_request`.
-    - Ejecuta `clean build sonar` (incluye tests) con quality gate bloqueante.
-    - Valida cobertura minima via JaCoCo (`coverageMinimum` o `COVERAGE_MINIMUM`, default `0.70`).
-- `Release` (`.github/workflows/release.yml`):
-    - Corre al hacer push de tags semanticos `v*`.
-    - Publica GitHub Release con el JAR generado.
+Generar build completo:
 
-## Documentacion API
+```powershell
+.\gradlew.bat build
+```
 
-La documentacion de contratos REST, WebSocket, enums y errores se movio a:
+La suite cubre:
 
-- `docs/CONTRATOS_API.md`
+- reglas de dominio de truco, envido, turnos, folds y scoring
+- bots y toma de decisiones
+- casos de uso de match, chat, cup y league
+- persistencia JPA e in-memory
+- seguridad HTTP
+- WebSocket/STOMP
+- configuracion Spring
+- arquitectura por capas con ArchUnit
+
+JaCoCo corre sobre `test` y `check` exige cobertura minima configurable.
+Si no se define nada, el minimo actual es `0.70`.
+
+Para tests se usa H2 en memoria (`src/test/resources/application-test.yaml`).
+
+## API y tiempo real
+
+Documentacion disponible:
+
+- contratos funcionales para frontend:
+  `docs/CONTRATOS_API.md`
+- OpenAPI JSON:
+  `http://localhost:8080/v3/api-docs`
+- Swagger UI:
+  `http://localhost:8080/swagger-ui/index.html`
+
+Recursos REST principales:
+
+- `/api/auth`
+- `/api/matches`
+- `/api/leagues`
+- `/api/cups`
+- `/api/chats`
+- `/api/bots`
+
+WebSocket/STOMP:
+
+- endpoint nativo: `/ws`
+- endpoint SockJS: `/ws-sockjs`
+- colas por usuario:
+  `/user/queue/match`, `/user/queue/league`, `/user/queue/cup`, `/user/queue/chat`
+
+## Observabilidad y operacion
+
+- Actuator expone `health` y `metrics`
+- health groups:
+  `liveness` y `readiness`
+- schedulers de timeout para matches, leagues y cups
+- heartbeat de scheduler incluido en readiness
+- logging con `requestId` en MDC
+
+Health endpoint:
+
+- `http://localhost:8080/actuator/health`
+
+## Persistencia
+
+La aplicacion usa PostgreSQL en runtime. Tambien conviven algunos adaptadores in-memory para
+componentes puntuales del sistema.
+
+## CI/CD
+
+Workflows actuales en `.github/workflows`:
+
+- `ci.yml`
+  ejecuta tests en cada push y build luego del test.
+- `release.yml`
+  publica GitHub Release al pushear tags `v*` con el JAR generado.
+
+## Notas
+
+- El `README` busca dar contexto rapido del sistema.
+- El detalle de contratos REST, WS, enums y errores esta en `docs/CONTRATOS_API.md`.
