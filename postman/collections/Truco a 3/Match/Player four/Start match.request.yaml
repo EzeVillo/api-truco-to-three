@@ -1,4 +1,4 @@
 $kind: http-request
 url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/start"
 method: POST
-order: 1003
+order: 2000

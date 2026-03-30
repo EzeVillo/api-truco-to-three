@@ -1,5 +1,4 @@
 $kind: http-request
-name: Create match
 url: "{{URL_BASE_TRUCO_HTTP}}/bots"
 method: GET
-order: 1515
+order: 1000

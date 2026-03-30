@@ -1,5 +1,4 @@
 $kind: http-request
-name: Create match
 url: "{{URL_BASE_TRUCO_HTTP}}/matches"
 method: POST
 body:

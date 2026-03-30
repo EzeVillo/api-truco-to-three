@@ -1,7 +1,6 @@
 $kind: collection
-name: Player one
 auth:
-  - id: 76ab1a8e-bc93-44f8-9504-0a87fe04b521
+  - id: a810e8cc-7ce3-4e24-970d-a00c0efe8f0a
     type: bearer
     name: bearer auth
     credentials:

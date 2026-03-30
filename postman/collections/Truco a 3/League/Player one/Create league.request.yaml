@@ -1,5 +1,4 @@
 $kind: http-request
-name: Create league
 url: "{{URL_BASE_TRUCO_HTTP}}/leagues"
 method: POST
 body:

@@ -1,5 +1,4 @@
 $kind: http-request
-name: Get chat by parent
 url: "{{URL_BASE_TRUCO_HTTP}}/chats/by-parent/{{parentType}}/{{parentId}}"
 method: GET
 scripts:

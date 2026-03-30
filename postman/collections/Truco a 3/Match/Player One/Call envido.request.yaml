@@ -8,5 +8,5 @@ body:
     \    \"call\": \"FALTA_ENVIDO\"\r
 
     }"
-examples: .resources/Call envido.resources/examples
+examples: ./.resources/Call envido.resources/examples
 order: 7000

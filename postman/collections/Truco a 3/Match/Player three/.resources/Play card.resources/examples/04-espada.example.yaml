@@ -12,8 +12,8 @@ request:
 
       }"
 response:
-  statusCode: 204
-  statusText: ""
+  statusCode: 200
+  statusText: OK
   headers:
     vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
     x-request-id: 9a11d17f-687a-4f32-a142-3ff93deba89c
@@ -28,6 +28,6 @@ response:
     connection: keep-alive
     Content-Type: application/json
   body:
-    type: json
+    type: text
     content: ""
-order: 1774373910297
+order: 15000

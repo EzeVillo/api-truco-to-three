@@ -1,8 +1,25 @@
 $kind: http-request
-name: Send message
 url: "{{URL_BASE_TRUCO_HTTP}}/chats/{{chatId}}/messages"
 method: POST
 body:
   type: json
-  content: "{\r\n    \"content\": \"Hola!\"\r\n}"
-order: 2484
+  content: "{\r
+
+    \    \"content\": \"Hola! {{number}}\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "let current = pm.environment.get(\"number\");\r
+
+      let num = current ? parseInt(current, 10) : 0;\r
+
+      console.log(num)\r
+
+      num += 1;\r
+
+      console.log(num.toString())\r
+
+      pm.environment.set(\"number\", num.toString());"
+    language: text/javascript
+order: 3000

@@ -1,5 +1,4 @@
 $kind: http-request
-name: Get messages
 url: "{{URL_BASE_TRUCO_HTTP}}/chats/{{chatId}}/messages"
 method: GET
-order: 2196
+order: 2000
