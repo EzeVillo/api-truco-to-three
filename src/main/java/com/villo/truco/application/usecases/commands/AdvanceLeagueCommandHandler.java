@@ -31,11 +31,9 @@ public final class AdvanceLeagueCommandHandler implements AdvanceLeagueUseCase {
 
     final var league = this.leagueResolver.resolve(command.leagueId());
 
-    league.recordMatchWinner(command.matchId(), command.winner());
-
     final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
 
-    for (final var activation : league.activateNextFixtures()) {
+    for (final var activation : league.recordMatchWinner(command.matchId(), command.winner())) {
       final var match = Match.createReady(activation.playerOne(), activation.playerTwo(),
           matchRules);
       this.matchRepository.save(match);

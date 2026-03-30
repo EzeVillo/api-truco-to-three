@@ -182,7 +182,7 @@ public final class Cup extends AggregateBase<CupId> {
     this.addDomainEvent(new CupPlayerLeftEvent(this.id, List.copyOf(this.participants), playerId));
   }
 
-  public void start(final PlayerId playerId) {
+  public List<BoutPairing> start(final PlayerId playerId) {
 
     Objects.requireNonNull(playerId, "PlayerId cannot be null");
 
@@ -199,6 +199,11 @@ public final class Cup extends AggregateBase<CupId> {
     LOGGER.info("Cup started: cupId={}, participants={}, bouts={}", this.id,
         this.participants.size(), this.bouts.size());
     this.addDomainEvent(new CupStartedEvent(this.id, List.copyOf(this.participants)));
+
+    return this.bouts.stream()
+        .filter(b -> b.status() == BoutStatus.PENDING)
+        .map(b -> new BoutPairing(b.id(), b.playerOne(), b.playerTwo()))
+        .toList();
   }
 
   private void generateBracket() {

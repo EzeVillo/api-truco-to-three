@@ -33,7 +33,6 @@ class LeagueTest {
       league.join(players[i], league.getInviteCode());
     }
     league.start(players[0]);
-    league.activateNextFixtures();
     return league;
   }
 

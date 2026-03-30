@@ -2,7 +2,6 @@ package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.StartCupCommand;
 import com.villo.truco.application.ports.in.StartCupUseCase;
-import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.ports.CupEventNotifier;
@@ -31,18 +30,14 @@ public final class StartCupCommandHandler implements StartCupUseCase {
 
     final var cup = this.cupResolver.resolve(command.cupId());
 
-    cup.start(command.playerId());
+    final var pairings = cup.start(command.playerId());
 
     final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay());
 
-    for (final var bout : cup.getBouts()) {
-      if (bout.status() != BoutStatus.PENDING) {
-        continue;
-      }
-
-      final var match = Match.createReady(bout.playerOne(), bout.playerTwo(), matchRules);
+    for (final var pairing : pairings) {
+      final var match = Match.createReady(pairing.playerOne(), pairing.playerTwo(), matchRules);
       this.matchRepository.save(match);
-      cup.linkBoutMatch(bout.boutId(), match.getId());
+      cup.linkBoutMatch(pairing.boutId(), match.getId());
     }
 
     this.cupRepository.save(cup);
