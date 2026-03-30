@@ -13,7 +13,6 @@ import com.villo.truco.domain.model.cup.exceptions.InvalidCupPlayersException;
 import com.villo.truco.domain.model.cup.exceptions.OnlyCreatorCanStartCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerNotInCupException;
-import com.villo.truco.domain.model.cup.valueobjects.BoutPairing;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -654,11 +653,13 @@ class CupTest {
 
       final var p1 = PlayerId.generate();
       final var p2 = PlayerId.generate();
-      final var cup = createStartedCup(p1, p2);
+      final var p3 = PlayerId.generate();
+      final var p4 = PlayerId.generate();
+      final var cup = createStartedCup(p1, p2, p3, p4);
       final var outsider = PlayerId.generate();
 
-      assertThatThrownBy(() -> cup.validatePlayerInCup(outsider))
-          .isInstanceOf(PlayerNotInCupException.class);
+      assertThatThrownBy(() -> cup.validatePlayerInCup(outsider)).isInstanceOf(
+          PlayerNotInCupException.class);
     }
 
     @Test
@@ -667,10 +668,11 @@ class CupTest {
 
       final var p1 = PlayerId.generate();
       final var p2 = PlayerId.generate();
-      final var cup = createStartedCup(p1, p2);
+      final var p3 = PlayerId.generate();
+      final var p4 = PlayerId.generate();
+      final var cup = createStartedCup(p1, p2, p3, p4);
 
-      org.junit.jupiter.api.Assertions.assertDoesNotThrow(
-          () -> cup.validatePlayerInCup(p1));
+      org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> cup.validatePlayerInCup(p1));
     }
 
   }

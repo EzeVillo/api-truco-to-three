@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.league.events.LeagueAdvancedEvent;
-import com.villo.truco.domain.model.league.exceptions.PlayerNotInLeagueException;
 import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
 import com.villo.truco.domain.model.league.events.LeaguePlayerForfeitedEvent;
+import com.villo.truco.domain.model.league.exceptions.PlayerNotInLeagueException;
 import com.villo.truco.domain.model.league.valueobjects.FixtureStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -283,11 +283,12 @@ class LeagueTest {
 
       final var p1 = PlayerId.generate();
       final var p2 = PlayerId.generate();
-      final var league = createStartedLeague(p1, p2);
+      final var p3 = PlayerId.generate();
+      final var league = createStartedLeague(p1, p2, p3);
       final var outsider = PlayerId.generate();
 
-      assertThatThrownBy(() -> league.validatePlayerInLeague(outsider))
-          .isInstanceOf(PlayerNotInLeagueException.class);
+      assertThatThrownBy(() -> league.validatePlayerInLeague(outsider)).isInstanceOf(
+          PlayerNotInLeagueException.class);
     }
 
     @Test
@@ -296,10 +297,10 @@ class LeagueTest {
 
       final var p1 = PlayerId.generate();
       final var p2 = PlayerId.generate();
-      final var league = createStartedLeague(p1, p2);
+      final var p3 = PlayerId.generate();
+      final var league = createStartedLeague(p1, p2, p3);
 
-      org.junit.jupiter.api.Assertions.assertDoesNotThrow(
-          () -> league.validatePlayerInLeague(p1));
+      org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> league.validatePlayerInLeague(p1));
     }
 
   }
