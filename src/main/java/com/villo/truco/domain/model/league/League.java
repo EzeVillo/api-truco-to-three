@@ -266,9 +266,7 @@ public final class League extends AggregateBase<LeagueId> {
 
     Objects.requireNonNull(forfeiter, "Forfeiter cannot be null");
 
-    if (!this.participants.contains(forfeiter)) {
-      throw new PlayerNotInLeagueException();
-    }
+    this.validatePlayerInLeague(forfeiter);
 
     final var unresolvedFixtures = this.fixtures.stream().filter(
         f -> (f.status() == FixtureStatus.PENDING || f.status() == FixtureStatus.SCHEDULED)
@@ -343,6 +341,13 @@ public final class League extends AggregateBase<LeagueId> {
   public boolean hasPlayer(final PlayerId playerId) {
 
     return this.participants.contains(playerId);
+  }
+
+  public void validatePlayerInLeague(final PlayerId playerId) {
+
+    if (!this.participants.contains(playerId)) {
+      throw new PlayerNotInLeagueException();
+    }
   }
 
   public boolean hasPlayerPendingFixtures(final PlayerId playerId) {
@@ -424,9 +429,7 @@ public final class League extends AggregateBase<LeagueId> {
       throw new LeagueNotWaitingException();
     }
 
-    if (!this.participants.contains(playerId)) {
-      throw new PlayerNotInLeagueException();
-    }
+    this.validatePlayerInLeague(playerId);
 
     if (this.participants.getFirst().equals(playerId)) {
       final var participantsCopy = List.copyOf(this.participants);

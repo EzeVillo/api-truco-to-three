@@ -495,7 +495,7 @@ public final class Match extends AggregateBase<MatchId> {
     }
   }
 
-  private void validatePlayerInMatch(final PlayerId playerId) {
+  public void validatePlayerInMatch(final PlayerId playerId) {
 
     if (!PlayerInMatchSpecification.isSatisfiedBy(playerId, this.playerOne, this.playerTwo)) {
       throw new PlayerNotInMatchException(playerId);

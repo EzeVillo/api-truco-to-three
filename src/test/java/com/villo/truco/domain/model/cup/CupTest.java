@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class CupTest {
@@ -641,6 +642,37 @@ class CupTest {
     assertThat(rounds.get(0).bouts()).hasSize(2);
     assertThat(rounds.get(1).roundNumber()).isEqualTo(2);
     assertThat(rounds.get(1).bouts()).hasSize(1);
+  }
+
+  @Nested
+  @DisplayName("validatePlayerInCup")
+  class ValidatePlayerInCup {
+
+    @Test
+    @DisplayName("lanza PlayerNotInCupException si el jugador no pertenece al cup")
+    void throwsForOutsider() {
+
+      final var p1 = PlayerId.generate();
+      final var p2 = PlayerId.generate();
+      final var cup = createStartedCup(p1, p2);
+      final var outsider = PlayerId.generate();
+
+      assertThatThrownBy(() -> cup.validatePlayerInCup(outsider))
+          .isInstanceOf(PlayerNotInCupException.class);
+    }
+
+    @Test
+    @DisplayName("no lanza excepción si el jugador pertenece al cup")
+    void doesNotThrowForParticipant() {
+
+      final var p1 = PlayerId.generate();
+      final var p2 = PlayerId.generate();
+      final var cup = createStartedCup(p1, p2);
+
+      org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+          () -> cup.validatePlayerInCup(p1));
+    }
+
   }
 
 }

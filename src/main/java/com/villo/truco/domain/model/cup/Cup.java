@@ -162,9 +162,7 @@ public final class Cup extends AggregateBase<CupId> {
       throw new CupNotWaitingException();
     }
 
-    if (!this.participants.contains(playerId)) {
-      throw new PlayerNotInCupException();
-    }
+    this.validatePlayerInCup(playerId);
 
     if (this.participants.getFirst().equals(playerId)) {
       final var participantsCopy = List.copyOf(this.participants);
@@ -326,9 +324,7 @@ public final class Cup extends AggregateBase<CupId> {
 
     Objects.requireNonNull(forfeiter, "Forfeiter cannot be null");
 
-    if (!this.participants.contains(forfeiter)) {
-      throw new PlayerNotInCupException();
-    }
+    this.validatePlayerInCup(forfeiter);
 
     this.forfeitedPlayers.add(forfeiter);
 
@@ -427,6 +423,13 @@ public final class Cup extends AggregateBase<CupId> {
   public boolean hasPlayer(final PlayerId playerId) {
 
     return this.participants.contains(playerId);
+  }
+
+  public void validatePlayerInCup(final PlayerId playerId) {
+
+    if (!this.participants.contains(playerId)) {
+      throw new PlayerNotInCupException();
+    }
   }
 
   public boolean isPlayerStillCompeting(final PlayerId playerId) {
