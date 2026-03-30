@@ -9,8 +9,6 @@ y modelado de dominio en un contexto de reglas complejas.
 - API REST + eventos en tiempo real por WebSocket/STOMP.
 - CI/CD activa con GitHub Actions (build/test en PR y ramas, release por tags `v*`).
 - Analisis estatico externo con SonarQube Community en PR.
-- Frontend conectado y funcionando (link publico pendiente).
-- Demo publica: pendiente de publicacion.
 
 ## Tabla de contenido
 
@@ -129,55 +127,6 @@ Workflows disponibles:
 - `Release` (`.github/workflows/release.yml`):
     - Corre al hacer push de tags semanticos `v*`.
     - Publica GitHub Release con el JAR generado.
-
-Secrets requeridos para Sonar:
-
-- `SONAR_HOST_URL`
-- `SONAR_TOKEN`
-
-## Capturas
-
-Pendiente de carga de imagenes.
-
-Sugerido (cuando las tengas):
-
-- `docs/screenshots/lobby.png`
-- `docs/screenshots/match-in-progress.png`
-- `docs/screenshots/truco-envido-flow.png`
-- `docs/screenshots/league-view.png`
-
-Ejemplo de referencia en Markdown:
-
-```md
-![Lobby](docs/screenshots/lobby.png)
-```
-
-## Trade-offs
-
-Decisiones conscientes de alcance:
-
-- Persistencia in-memory en lugar de base de datos para priorizar modelado del dominio y reglas del
-  juego.
-- Seguridad enfocada al caso de uso actual (JWT stateless), sin refresh token ni gestion de usuarios
-  externos.
-- Observabilidad basica por logs estructurados; no hay stack de metricas/tracing completo todavia.
-- Frontend no versionado aun en este repo para portfolio (pendiente de publicacion/enlace).
-
-## Backlog tecnico
-
-Proximos pasos priorizados:
-
-- Observabilidad: metricas y trazas distribuidas.
-- Publicar demo y agregar walkthrough.
-- Versionar y enlazar frontend publico.
-
-## Normas de codificacion
-
-- Ver `AGENTS.md` para reglas cortas y ejecutables para agentes de IA.
-- Ver `README_CODIFICACION.md` para la guia detallada de clean code, arquitectura por capas, reglas
-  de dominio, testing y checklist de PR.
-- Ver `README_CLEAN_CODE.md` para un playbook reutilizable (humano + agente IA) de cuando usar
-  cada practica, con adaptacion concreta a este repositorio.
 
 ## Documentacion API
 
