@@ -1,5 +1,6 @@
 package com.villo.truco.application.commands;
 
+import com.villo.truco.application.shared.EnumArgumentParser;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -16,7 +17,8 @@ public record CallEnvidoCommand(MatchId matchId, PlayerId playerId, EnvidoCall c
 
   public CallEnvidoCommand(final String matchId, final String playerId, final String call) {
 
-    this(MatchId.of(matchId), PlayerId.of(playerId), EnvidoCall.valueOf(call));
+    this(MatchId.of(matchId), PlayerId.of(playerId),
+        EnumArgumentParser.parse(EnvidoCall.class, "call", call));
   }
 
 }

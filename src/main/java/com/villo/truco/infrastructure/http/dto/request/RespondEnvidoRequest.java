@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "Solicitud para responder un canto de envido")
 public record RespondEnvidoRequest(
-    @NotBlank @Schema(description = "Respuesta al envido", example = "QUIERO") String response) {
+    @NotBlank @Schema(description = "Respuesta al envido", example = "QUIERO", allowableValues = {
+        "QUIERO", "NO_QUIERO"}) String response) {
 
 }

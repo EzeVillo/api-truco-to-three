@@ -26,7 +26,7 @@ class GlobalExceptionHandlerTest {
   private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
   @Test
-  @DisplayName("MethodArgumentNotValidException → 400 con errores de campo en message")
+  @DisplayName("MethodArgumentNotValidException -> 400 con errores de campo en message")
   void validationErrors() {
 
     final var bindingResult = new BeanPropertyBindingResult(new Object(), "request");
@@ -46,7 +46,7 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  @DisplayName("HttpMessageNotReadableException sin causa específica → 400 con mensaje genérico")
+  @DisplayName("HttpMessageNotReadableException sin causa especifica -> 400 con mensaje generico")
   void missingBody() {
 
     final var ex = new HttpMessageNotReadableException("Required request body is missing",
@@ -61,7 +61,21 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  @DisplayName("ApplicationException NOT_FOUND → 404")
+  @DisplayName("ApplicationException BAD_REQUEST -> 400")
+  void applicationBadRequest() {
+
+    final var ex = new ApplicationException(ApplicationStatus.BAD_REQUEST, "invalid enum") {
+    };
+
+    final var response = handler.handleApplicationException(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().message()).isEqualTo("invalid enum");
+  }
+
+  @Test
+  @DisplayName("ApplicationException NOT_FOUND -> 404")
   void applicationNotFound() {
 
     final var ex = new ApplicationException(ApplicationStatus.NOT_FOUND, "not found") {
@@ -73,7 +87,7 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  @DisplayName("DomainException → 422")
+  @DisplayName("DomainException -> 422")
   void domainException() {
 
     final var ex = new DomainException("invalid state");
@@ -84,7 +98,7 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  @DisplayName("Exception genérica → 500 sin exponer internals")
+  @DisplayName("Exception generica -> 500 sin exponer internals")
   void unexpectedException() {
 
     final var ex = new RuntimeException("db connection failed");
@@ -98,7 +112,7 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  @DisplayName("NoResourceFoundException → 404 con método y path en message")
+  @DisplayName("NoResourceFoundException -> 404 con metodo y path en message")
   void resourceNotFound() {
 
     final var ex = mock(NoResourceFoundException.class);
@@ -115,7 +129,7 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  @DisplayName("HttpRequestMethodNotSupportedException → 405 con métodos soportados")
+  @DisplayName("HttpRequestMethodNotSupportedException -> 405 con metodos soportados")
   void methodNotAllowed() {
 
     final var ex = new HttpRequestMethodNotSupportedException("DELETE", List.of("GET", "POST"));

@@ -194,6 +194,11 @@ Documentacion disponible:
 - Swagger UI:
   `http://localhost:8080/swagger-ui/index.html`
 
+Contrato de errores relevante:
+
+- los enums recibidos como `String` son case-sensitive; si se envia un valor fuera del contrato, la
+  API responde `400` con `InvalidEnumValueException` y lista de valores permitidos
+
 Recursos REST principales:
 
 - `/api/auth`

@@ -1,5 +1,6 @@
 package com.villo.truco.application.queries;
 
+import com.villo.truco.application.shared.EnumArgumentParser;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
@@ -17,7 +18,8 @@ public record GetChatByParentQuery(ChatParentType parentType, String parentId,
   public GetChatByParentQuery(final String parentType, final String parentId,
       final String requestingPlayer) {
 
-    this(ChatParentType.valueOf(parentType), parentId, PlayerId.of(requestingPlayer));
+    this(EnumArgumentParser.parse(ChatParentType.class, "parentType", parentType), parentId,
+        PlayerId.of(requestingPlayer));
   }
 
 }

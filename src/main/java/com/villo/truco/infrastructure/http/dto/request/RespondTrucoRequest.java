@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "Solicitud para responder un canto de truco")
 public record RespondTrucoRequest(
-    @NotBlank @Schema(description = "Respuesta al truco", example = "QUIERO") String response) {
+    @NotBlank @Schema(description = "Respuesta al truco", example = "QUIERO", allowableValues = {
+        "QUIERO", "NO_QUIERO", "QUIERO_Y_ME_VOY_AL_MAZO"}) String response) {
 
 }

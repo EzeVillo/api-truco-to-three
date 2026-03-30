@@ -74,6 +74,7 @@ public class GlobalExceptionHandler {
   private HttpStatus resolveStatus(final ApplicationStatus status) {
 
     return switch (status) {
+      case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
       case NOT_FOUND -> HttpStatus.NOT_FOUND;
       case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
       case UNPROCESSABLE -> HttpStatus.UNPROCESSABLE_CONTENT;

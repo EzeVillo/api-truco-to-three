@@ -2,6 +2,6 @@ package com.villo.truco.application.exceptions;
 
 public enum ApplicationStatus {
 
-  NOT_FOUND, UNAUTHORIZED, UNPROCESSABLE
+  BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, UNPROCESSABLE
 
 }

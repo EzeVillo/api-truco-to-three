@@ -1,5 +1,6 @@
 package com.villo.truco.application.commands;
 
+import com.villo.truco.application.shared.EnumArgumentParser;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -16,7 +17,8 @@ public record RespondTrucoCommand(MatchId matchId, PlayerId playerId, TrucoRespo
 
   public RespondTrucoCommand(final String matchId, final String playerId, final String response) {
 
-    this(MatchId.of(matchId), PlayerId.of(playerId), TrucoResponse.valueOf(response));
+    this(MatchId.of(matchId), PlayerId.of(playerId),
+        EnumArgumentParser.parse(TrucoResponse.class, "response", response));
 
   }
 

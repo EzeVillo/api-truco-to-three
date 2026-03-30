@@ -63,11 +63,32 @@ Formato estandar para errores (`ErrorResponse`):
 
 HTTP status usados:
 
+- `400` Bad Request
 - `401` Unauthorized
 - `404` Not Found
 - `405` Method Not Allowed
 - `422` Unprocessable Content
 - `500` Internal Server Error
+
+Casos comunes de `400`:
+
+- body faltante o malformado
+- validaciones de bean validation sobre el request
+- valor de enum invalido en campos string tipados por contrato
+
+Cuando se envia un enum invalido, el backend responde con `InvalidEnumValueException` y detalla el
+campo, el valor recibido y los valores permitidos.
+
+Ejemplo:
+
+```json
+{
+  "errorCode": "InvalidEnumValueException",
+  "message": "Invalid value 'INVALIDO' for field 'response'. Allowed values: QUIERO, NO_QUIERO",
+  "timestamp": "2026-03-30T18:00:00Z",
+  "requestId": "b1f4d7a0-2f29-4e8f-b8ea-a302f9084f3b"
+}
+```
 
 ## 3. API REST - Auth
 
@@ -215,6 +236,10 @@ Request:
 
 Response `204` sin body.
 
+Errores:
+
+- `400` si `suit` no coincide exactamente con `ESPADA`, `BASTO`, `COPA` u `ORO`
+
 ### 4.5 Cantar truco
 
 `POST /api/matches/{matchId}/truco`
@@ -241,6 +266,11 @@ Request:
 
 Response `204` sin body.
 
+Errores:
+
+- `400` si `response` no coincide exactamente con `QUIERO`, `NO_QUIERO` o
+  `QUIERO_Y_ME_VOY_AL_MAZO`
+
 ### 4.7 Cantar envido
 
 `POST /api/matches/{matchId}/envido`
@@ -257,6 +287,10 @@ Request:
 
 Response `204` sin body.
 
+Errores:
+
+- `400` si `call` no coincide exactamente con `ENVIDO`, `REAL_ENVIDO` o `FALTA_ENVIDO`
+
 ### 4.8 Responder envido
 
 `POST /api/matches/{matchId}/envido/respond`
@@ -272,6 +306,10 @@ Request:
 ```
 
 Response `204` sin body.
+
+Errores:
+
+- `400` si `response` no coincide exactamente con `QUIERO` o `NO_QUIERO`
 
 ### 4.9 Irse al mazo
 
@@ -736,13 +774,15 @@ Response `200`: misma estructura que 7.2.
 
 Errores:
 
+- `400` si `parentType` no coincide exactamente con `MATCH`, `LEAGUE` o `CUP`
 - `404` si no existe chat para ese recurso
 - `422` si el jugador no pertenece al chat
 
 ## 8. Enums y valores permitidos
 
-Estos valores se parsean con `Enum.valueOf(...)`, por lo que deben enviarse exactamente igual (
-mayusculas y guiones bajos).
+Estos valores son case-sensitive y deben enviarse exactamente igual, en mayusculas y con guiones
+bajos cuando aplique. Si el valor no coincide, la API responde `400` con
+`InvalidEnumValueException`.
 
 ### 8.1 Requests
 
