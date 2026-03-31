@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.CupMatchAbandonedEventHandler;
 import com.villo.truco.application.eventhandlers.CupMatchCompletedEventHandler;
 import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
 import com.villo.truco.application.ports.in.AdvanceCupUseCase;
@@ -119,6 +120,12 @@ public class CupUseCaseConfiguration {
   CupMatchCompletedEventHandler cupMatchCompletedHandler() {
 
     return new CupMatchCompletedEventHandler(this.cupQueryRepository, advanceCupCommandHandler());
+  }
+
+  @Bean
+  CupMatchAbandonedEventHandler cupMatchAbandonedHandler() {
+
+    return new CupMatchAbandonedEventHandler(this.cupQueryRepository, advanceCupCommandHandler());
   }
 
   @Bean

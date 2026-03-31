@@ -916,6 +916,7 @@ evento, no dentro del `payload`.
 - `GAME_STARTED`
 - `GAME_SCORE_CHANGED`
 - `MATCH_FINISHED`
+- `MATCH_ABANDONED`
 - `FOLDED`
 - `MATCH_FORFEITED`
 - `PLAYER_HAND_UPDATED`
@@ -982,10 +983,14 @@ evento, no dentro del `payload`.
     - `{ gamesWonPlayerOne, gamesWonPlayerTwo }`
 - `MATCH_FINISHED`:
     - `{ winnerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+- `MATCH_ABANDONED`:
+    - abandono voluntario del jugador; cierra solo el match actual
+    - `{ winnerSeat, abandonerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
 - `FOLDED`:
     - `{ seat }`
 - `MATCH_FORFEITED`:
-    - `{ winnerSeat, loserSeat }`
+    - forfeit administrativo por AFK/timeout; puede disparar forfeit de competición
+    - `{ winnerSeat, loserSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
 - `PLAYER_HAND_UPDATED`:
     - `{ seat, cards: [{ suit, number }] }`
 - `AVAILABLE_ACTIONS_UPDATED`:

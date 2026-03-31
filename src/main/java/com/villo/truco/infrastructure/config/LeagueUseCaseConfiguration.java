@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.LeagueMatchAbandonedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchCompletedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedEventHandler;
 import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
@@ -119,6 +120,13 @@ public class LeagueUseCaseConfiguration {
   LeagueMatchCompletedEventHandler leagueMatchCompletedHandler() {
 
     return new LeagueMatchCompletedEventHandler(this.leagueQueryRepository,
+        advanceLeagueCommandHandler());
+  }
+
+  @Bean
+  LeagueMatchAbandonedEventHandler leagueMatchAbandonedHandler() {
+
+    return new LeagueMatchAbandonedEventHandler(this.leagueQueryRepository,
         advanceLeagueCommandHandler());
   }
 

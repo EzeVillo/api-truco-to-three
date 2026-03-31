@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.commands.AbandonMatchCommand;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
@@ -127,8 +128,8 @@ class AbandonMatchCommandHandlerTest {
   }
 
   @Test
-  @DisplayName("publica MatchForfeitedEvent tras el abandono")
-  void publishesMatchForfeitedEvent() {
+  @DisplayName("publica MatchAbandonedEvent tras el abandono")
+  void publishesMatchAbandonedEvent() {
 
     final var match = matchInProgress();
     final var savedMatch = new AtomicReference<Match>();
@@ -138,7 +139,22 @@ class AbandonMatchCommandHandlerTest {
     handler.handle(
         new AbandonMatchCommand(match.getId().value().toString(), playerOne.value().toString()));
 
-    assertThat(publishedEvents).anyMatch(e -> e instanceof MatchForfeitedEvent);
+    assertThat(publishedEvents).anyMatch(e -> e instanceof MatchAbandonedEvent);
+  }
+
+  @Test
+  @DisplayName("no publica MatchForfeitedEvent tras el abandono")
+  void doesNotPublishMatchForfeitedEvent() {
+
+    final var match = matchInProgress();
+    final var savedMatch = new AtomicReference<Match>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
+    final var handler = handlerWith(match, savedMatch, publishedEvents);
+
+    handler.handle(
+        new AbandonMatchCommand(match.getId().value().toString(), playerOne.value().toString()));
+
+    assertThat(publishedEvents).noneMatch(e -> e instanceof MatchForfeitedEvent);
   }
 
   @Test

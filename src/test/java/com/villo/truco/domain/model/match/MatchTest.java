@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
+import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
@@ -924,6 +925,24 @@ class MatchTest {
     }
 
     @Test
+    @DisplayName("abandono en READY emite MatchAbandonedEvent")
+    void readyAbandonEmitsMatchAbandonedEvent() {
+
+      final var match = Match.createReady(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+      match.clearDomainEvents();
+
+      match.abandon(playerOne);
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getMatchWinner()).isEqualTo(playerTwo);
+      assertThat(match.getDomainEvents()).anyMatch(
+          event -> event instanceof MatchAbandonedEvent abandoned
+              && abandoned.getWinnerSeat() == PlayerSeat.PLAYER_TWO
+              && abandoned.getAbandonerSeat() == PlayerSeat.PLAYER_ONE);
+    }
+
+    @Test
     @DisplayName("abandona P2 → gana P1, estado FINISHED")
     void playerTwoAbandonsMakesPlayerOneWin() {
 
@@ -944,6 +963,19 @@ class MatchTest {
 
       assertThatThrownBy(() -> match.abandon(stranger)).isInstanceOf(
           PlayerNotInMatchException.class);
+    }
+
+    @Test
+    @DisplayName("abandono no emite MatchForfeitedEvent")
+    void abandonDoesNotEmitMatchForfeitedEvent() {
+
+      final var match = matchInProgress();
+      match.clearDomainEvents();
+
+      match.abandon(playerOne);
+
+      assertThat(match.getDomainEvents()).noneMatch(event -> event instanceof MatchForfeitedEvent);
+      assertThat(match.getDomainEvents()).anyMatch(event -> event instanceof MatchAbandonedEvent);
     }
 
   }

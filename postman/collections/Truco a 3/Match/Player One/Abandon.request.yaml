@@ -1,0 +1,5 @@
+$kind: http-request
+name: Abandon
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/abandon"
+method: POST
+order: 1148041985792561

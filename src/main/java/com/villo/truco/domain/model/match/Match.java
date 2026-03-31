@@ -2,6 +2,7 @@ package com.villo.truco.domain.model.match;
 
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
+import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
@@ -313,10 +314,27 @@ public final class Match extends AggregateBase<MatchId> {
 
   public void abandon(final PlayerId abandoner) {
 
-    Objects.requireNonNull(abandoner);
+    Objects.requireNonNull(abandoner, "Abandoner cannot be null");
     this.validatePlayerInMatch(abandoner);
-    final var winner = abandoner.equals(this.playerOne) ? this.playerTwo : this.playerOne;
-    this.forfeit(winner);
+
+    if (this.status == MatchStatus.FINISHED) {
+      return;
+    }
+
+    if (this.status == MatchStatus.WAITING_FOR_PLAYERS) {
+      throw new InvalidMatchStateException(this.status, MatchStatus.READY);
+    }
+
+    final var abandonerSeat = this.seatOf(abandoner);
+    final var winnerSeat =
+        abandonerSeat == PlayerSeat.PLAYER_ONE ? PlayerSeat.PLAYER_TWO : PlayerSeat.PLAYER_ONE;
+
+    this.finishAdministrativeWin(winnerSeat);
+    LOGGER.info("Match abandoned: matchId={}, abandoner={}, winner={}", this.id, abandoner,
+        this.resolvePlayer(winnerSeat));
+    this.addDomainEvent(
+        new MatchAbandonedEvent(this.id, this.playerOne, this.playerTwo, winnerSeat, abandonerSeat,
+            this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
   }
 
   public boolean timeoutForfeit() {
@@ -374,18 +392,30 @@ public final class Match extends AggregateBase<MatchId> {
     }
 
     final var winningSeat = this.seatOf(winner);
-    if (winningSeat == PlayerSeat.PLAYER_ONE) {
-      this.gamesWonPlayerOne = this.rules.gamesToWin();
-    } else {
-      this.gamesWonPlayerTwo = this.rules.gamesToWin();
-    }
-
-    this.status = MatchStatus.FINISHED;
-    this.currentRound = null;
+    this.finishAdministrativeWin(winningSeat);
     LOGGER.info("Match forfeited by timeout: matchId={}, winner={}", this.id, winner);
     this.addDomainEvent(
         new MatchForfeitedEvent(this.id, this.playerOne, this.playerTwo, winningSeat,
             this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
+  }
+
+  private void finishAdministrativeWin(final PlayerSeat winningSeat) {
+
+    if (winningSeat == PlayerSeat.PLAYER_ONE) {
+      this.gamesWonPlayerOne = this.rules.gamesToWin();
+      this.gamesWonPlayerTwo = Math.min(this.gamesWonPlayerTwo, this.rules.gamesToWin() - 1);
+    } else {
+      this.gamesWonPlayerTwo = this.rules.gamesToWin();
+      this.gamesWonPlayerOne = Math.min(this.gamesWonPlayerOne, this.rules.gamesToWin() - 1);
+    }
+
+    this.status = MatchStatus.FINISHED;
+    this.currentRound = null;
+  }
+
+  private PlayerId resolvePlayer(final PlayerSeat seat) {
+
+    return seat == PlayerSeat.PLAYER_ONE ? this.playerOne : this.playerTwo;
   }
 
   private void startNewRoundIfNeeded(final boolean newGameStarted) {
@@ -620,11 +650,6 @@ public final class Match extends AggregateBase<MatchId> {
     Objects.requireNonNull(playerId, "PlayerId cannot be null");
     this.validatePlayerInMatch(playerId);
     return MatchPlayerDecisionViewExtractor.extract(this, playerId);
-  }
-
-  public boolean hasPlayer(final PlayerId playerId) {
-
-    return PlayerInMatchSpecification.isSatisfiedBy(playerId, this.playerOne, this.playerTwo);
   }
 
   public List<Card> getCardsOf(final PlayerId playerId) {

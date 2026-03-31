@@ -8,7 +8,9 @@ import com.villo.truco.domain.model.match.events.FoldedEvent;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
+import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
+import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
@@ -20,6 +22,7 @@ import com.villo.truco.domain.model.match.events.TrucoCancelledByEnvidoEvent;
 import com.villo.truco.domain.model.match.events.TrucoRespondedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
+import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.LinkedHashMap;
@@ -174,6 +177,28 @@ public final class MatchEventMapper {
     return map;
   }
 
+  private static Map<String, Object> mapMatchAbandoned(final MatchAbandonedEvent event) {
+
+    final var map = new LinkedHashMap<String, Object>();
+    map.put("winnerSeat", event.getWinnerSeat().name());
+    map.put("abandonerSeat", event.getAbandonerSeat().name());
+    map.put("gamesWonPlayerOne", event.getGamesWonPlayerOne());
+    map.put("gamesWonPlayerTwo", event.getGamesWonPlayerTwo());
+    return map;
+  }
+
+  private static Map<String, Object> mapMatchForfeited(final MatchForfeitedEvent event) {
+
+    final var map = new LinkedHashMap<String, Object>();
+    map.put("winnerSeat", event.getWinnerSeat().name());
+    map.put("loserSeat",
+        event.getWinnerSeat() == PlayerSeat.PLAYER_ONE ? PlayerSeat.PLAYER_TWO.name()
+            : PlayerSeat.PLAYER_ONE.name());
+    map.put("gamesWonPlayerOne", event.getGamesWonPlayerOne());
+    map.put("gamesWonPlayerTwo", event.getGamesWonPlayerTwo());
+    return map;
+  }
+
   private static Map<String, Object> mapPlayerReady(final PlayerReadyEvent event) {
 
     return Map.of("seat", event.getSeat().name());
@@ -195,7 +220,9 @@ public final class MatchEventMapper {
       case RoundEndedEvent e -> mapRoundEnded(e);
       case GameStartedEvent e -> mapGameStarted(e);
       case GameScoreChangedEvent e -> mapGameScoreChanged(e);
+      case MatchAbandonedEvent e -> mapMatchAbandoned(e);
       case MatchFinishedEvent e -> mapMatchFinished(e);
+      case MatchForfeitedEvent e -> mapMatchForfeited(e);
       case FoldedEvent e -> mapFolded(e);
       case PlayerHandUpdatedEvent e -> mapPlayerHandUpdated(e);
       case AvailableActionsUpdatedEvent e -> mapAvailableActionsUpdated(e);

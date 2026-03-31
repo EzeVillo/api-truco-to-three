@@ -7,6 +7,7 @@ import com.villo.truco.application.eventhandlers.ChatCupStartedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatLeagueCancelledEventHandler;
 import com.villo.truco.application.eventhandlers.ChatLeagueFinishedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatLeagueStartedEventHandler;
+import com.villo.truco.application.eventhandlers.ChatMatchAbandonedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatMatchFinishedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatMatchForfeitedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatMatchGameStartedEventHandler;
@@ -122,6 +123,12 @@ public class EventNotifierConfiguration {
   }
 
   @Bean
+  ChatMatchAbandonedEventHandler chatMatchAbandonedHandler() {
+
+    return new ChatMatchAbandonedEventHandler(this.chatRepository, this.chatQueryRepository);
+  }
+
+  @Bean
   ChatMatchForfeitedEventHandler chatMatchForfeitedHandler() {
 
     return new ChatMatchForfeitedEventHandler(this.chatRepository, this.chatQueryRepository);
@@ -139,7 +146,7 @@ public class EventNotifierConfiguration {
     final List<MatchDomainEventHandler<?>> handlers = List.of(this.matchNotificationEventTranslator,
         this.competitionDomainEventTranslator, this.botDomainEventTranslator,
         this.chatMatchGameStartedHandler(chatEventNotifier()), this.chatMatchFinishedHandler(),
-        this.chatMatchForfeitedHandler());
+        this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler());
     return new MatchDomainEventDispatcher(handlers);
   }
 

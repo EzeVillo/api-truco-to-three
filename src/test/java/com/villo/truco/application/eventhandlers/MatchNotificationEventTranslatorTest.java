@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.events.MatchEventNotification;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -76,6 +77,26 @@ class MatchNotificationEventTranslatorTest {
 
     final var notification = (MatchEventNotification) published.get(0);
     assertThat(notification.recipients()).containsExactlyInAnyOrder(p1, p2);
+  }
+
+  @Test
+  @DisplayName("MatchAbandonedEvent - publica MATCH_ABANDONED con payload mapeado")
+  void matchAbandonedPublishesNotification() {
+
+    final var matchId = MatchId.generate();
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var event = new MatchAbandonedEvent(matchId, p1, p2, PlayerSeat.PLAYER_TWO,
+        PlayerSeat.PLAYER_ONE, 0, 3);
+
+    translator.handle(event);
+
+    assertThat(published).hasSize(1);
+    final var notification = (MatchEventNotification) published.getFirst();
+    assertThat(notification.eventType()).isEqualTo("MATCH_ABANDONED");
+    assertThat(notification.recipients()).containsExactlyInAnyOrder(p1, p2);
+    assertThat(notification.payload()).containsEntry("winnerSeat", "PLAYER_TWO")
+        .containsEntry("abandonerSeat", "PLAYER_ONE");
   }
 
 }
