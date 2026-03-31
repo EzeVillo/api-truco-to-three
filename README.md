@@ -24,6 +24,13 @@ games.
 - Un game de truco se juega a `3` puntos exactos.
 - Si un jugador supera `3`, ese game lo gana el rival.
 - Un match acepta `gamesToPlay = 1 | 3 | 5`.
+- No te podes ir al mazo siendo mano si no hubo truco ni envido cantado.
+- En el envido no se puede mentir.
+- Si te cantan truco, podes decir `quiero y me voy al mazo`: los puntos del truco los gana el rival,
+  y si al sumarlos se pasa de `3`, pierde ese game.
+- Si no tenes cartas en la mano, no podes decir `quiero y me voy al mazo`.
+- Si la primera mano termina parda, o si se esta jugando la tercera mano y el jugador mano tira el
+  ancho de espada, la ronda termina automaticamente y el rival ya no puede cantar truco.
 - Ligas:
   `3` a `8` jugadores, todos contra todos.
 - Copas:
