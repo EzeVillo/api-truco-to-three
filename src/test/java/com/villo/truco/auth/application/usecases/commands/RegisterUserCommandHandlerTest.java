@@ -60,6 +60,12 @@ class RegisterUserCommandHandlerTest {
       }
 
       @Override
+      public Optional<User> findById(final PlayerId playerId) {
+
+        return Optional.ofNullable(savedUser.get()).filter(user -> user.getId().equals(playerId));
+      }
+
+      @Override
       public Optional<User> findByUsername(final Username username) {
 
         return Optional.ofNullable(savedUser.get());
@@ -112,6 +118,12 @@ class RegisterUserCommandHandlerTest {
       }
 
       @Override
+      public Optional<User> findById(final PlayerId playerId) {
+
+        return store.values().stream().filter(user -> user.getId().equals(playerId)).findFirst();
+      }
+
+      @Override
       public Optional<User> findByUsername(final Username username) {
 
         return Optional.ofNullable(store.get(username.value()));
@@ -144,6 +156,12 @@ class RegisterUserCommandHandlerTest {
       @Override
       public void saveEnsuringUsernameAvailable(final User user) {
 
+      }
+
+      @Override
+      public Optional<User> findById(final PlayerId playerId) {
+
+        return Optional.empty();
       }
 
       @Override

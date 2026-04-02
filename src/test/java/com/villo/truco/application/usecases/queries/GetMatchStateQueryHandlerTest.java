@@ -12,6 +12,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -68,7 +69,7 @@ class GetMatchStateQueryHandlerTest {
       }
     };
 
-    this.handler = new GetMatchStateQueryHandler(queryRepo);
+    this.handler = new GetMatchStateQueryHandler(queryRepo, TestPublicActorResolver.guestStyle());
   }
 
   @Test

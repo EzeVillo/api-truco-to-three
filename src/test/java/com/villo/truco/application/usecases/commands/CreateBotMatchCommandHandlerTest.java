@@ -32,6 +32,7 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -242,7 +243,8 @@ class CreateBotMatchCommandHandlerTest {
     assertThat(chatRepository.findByParentTypeAndParentId(ChatParentType.MATCH,
         result.matchId())).isEmpty();
 
-    final var queryHandler = new GetChatByParentQueryHandler(chatRepository);
+    final var queryHandler = new GetChatByParentQueryHandler(chatRepository,
+        TestPublicActorResolver.guestStyle());
     assertThatThrownBy(() -> queryHandler.handle(
         new GetChatByParentQuery(ChatParentType.MATCH, result.matchId(),
             humanPlayer))).isInstanceOf(ChatNotFoundException.class);
@@ -264,7 +266,8 @@ class CreateBotMatchCommandHandlerTest {
 
     handler.handle(new GameStartedEvent(matchId, humanPlayerOne, humanPlayerTwo, 1));
 
-    final ChatMessagesDTO dto = new GetChatByParentQueryHandler(chatRepository).handle(
+    final ChatMessagesDTO dto = new GetChatByParentQueryHandler(chatRepository,
+        TestPublicActorResolver.guestStyle()).handle(
         new GetChatByParentQuery(ChatParentType.MATCH, matchId.value().toString(), humanPlayerOne));
 
     assertThat(dto.parentType()).isEqualTo(ChatParentType.MATCH.name());

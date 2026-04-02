@@ -8,6 +8,7 @@ import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.auth.infrastructure.persistence.entities.UserJpaEntity;
 import com.villo.truco.auth.infrastructure.persistence.mappers.UserMapper;
 import com.villo.truco.auth.infrastructure.persistence.repositories.spring.SpringDataUserRepository;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,6 +42,13 @@ public class JpaUserRepositoryAdapter implements UserRepository {
       }
       throw ex;
     }
+  }
+
+  @Override
+  public Optional<User> findById(final PlayerId playerId) {
+
+    return this.springDataRepo.findById(playerId.value()).map(this.mapper::toSnapshot)
+        .map(UserRehydrator::rehydrate);
   }
 
   @Override

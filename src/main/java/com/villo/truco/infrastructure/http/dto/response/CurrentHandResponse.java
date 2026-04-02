@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record CurrentHandResponse(
     @Schema(description = "Carta jugada por player one") CardResponse cardPlayerOne,
     @Schema(description = "Carta jugada por player two") CardResponse cardPlayerTwo,
-    @Schema(description = "Jugador que es mano en la mano actual", example = "player-1") String mano) {
+    @Schema(description = "Nombre visible del jugador que es mano en la mano actual", example = "juancho") String mano) {
 
   public static CurrentHandResponse from(final CurrentHandDTO dto) {
 

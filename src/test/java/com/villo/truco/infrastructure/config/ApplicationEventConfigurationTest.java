@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.events.InProcessApplicationEventPublisher;
@@ -34,7 +35,7 @@ class ApplicationEventConfigurationTest {
     final var configuration = new ApplicationEventConfiguration(mock(SimpMessagingTemplate.class),
         mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class));
 
-    assertThat(configuration.chatEventMapper()).isNotNull();
+    assertThat(configuration.chatEventMapper(mock(PublicActorResolver.class))).isNotNull();
     assertThat(configuration.stompChatNotificationHandler()).isNotNull();
     assertThat(configuration.chatEventMetricsHandler()).isNotNull();
   }

@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.config;
 import com.villo.truco.application.eventhandlers.CupMatchAbandonedEventHandler;
 import com.villo.truco.application.eventhandlers.CupMatchCompletedEventHandler;
 import com.villo.truco.application.eventhandlers.CupMatchForfeitedEventHandler;
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.CreateCupUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
@@ -37,6 +38,7 @@ public class CupUseCaseConfiguration {
   private final MatchRepository matchRepository;
   private final CupEventNotifier cupEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
+  private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
 
@@ -44,6 +46,7 @@ public class CupUseCaseConfiguration {
       final CupRepository cupRepository, final MatchRepository matchRepository,
       @Lazy final CupEventNotifier cupEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
+      final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
 
@@ -52,6 +55,7 @@ public class CupUseCaseConfiguration {
     this.matchRepository = matchRepository;
     this.cupEventNotifier = cupEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
+    this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
   }
@@ -97,7 +101,7 @@ public class CupUseCaseConfiguration {
   @Bean
   GetCupStateUseCase getCupStateQueryHandler() {
 
-    return new GetCupStateQueryHandler(this.cupResolver());
+    return new GetCupStateQueryHandler(this.cupResolver(), this.publicActorResolver);
   }
 
   @Bean

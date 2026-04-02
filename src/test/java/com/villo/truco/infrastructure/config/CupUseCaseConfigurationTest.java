@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
@@ -25,7 +26,8 @@ class CupUseCaseConfigurationTest {
     final var configuration = new CupUseCaseConfiguration(mock(CupQueryRepository.class),
         mock(com.villo.truco.domain.ports.CupRepository.class), mock(MatchRepository.class),
         mock(CupEventNotifier.class), availabilityConfiguration.playerAvailabilityChecker(),
-        new UseCasePipeline(List.of()), new UseCasePipeline(List.of()));
+        mock(PublicActorResolver.class), new UseCasePipeline(List.of()),
+        new UseCasePipeline(List.of()));
 
     assertThat(configuration.cupResolver()).isNotNull();
     assertThat(configuration.getCupStateQueryHandler()).isNotNull();

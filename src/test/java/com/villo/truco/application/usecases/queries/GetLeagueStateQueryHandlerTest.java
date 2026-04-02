@@ -13,6 +13,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +77,7 @@ class GetLeagueStateQueryHandlerTest {
     };
 
     final var resolver = new LeagueResolver(queryRepo);
-    this.handler = new GetLeagueStateQueryHandler(resolver);
+    this.handler = new GetLeagueStateQueryHandler(resolver, TestPublicActorResolver.guestStyle());
   }
 
   @Test

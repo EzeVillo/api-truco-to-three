@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
@@ -24,8 +25,8 @@ class MatchUseCaseConfigurationTest {
 
     final var configuration = new MatchUseCaseConfiguration(mock(MatchQueryRepository.class),
         mock(MatchRepository.class), mock(MatchEventNotifier.class),
-        availabilityConfiguration.playerAvailabilityChecker(), new UseCasePipeline(List.of()),
-        new UseCasePipeline(List.of()));
+        availabilityConfiguration.playerAvailabilityChecker(), mock(PublicActorResolver.class),
+        new UseCasePipeline(List.of()), new UseCasePipeline(List.of()));
 
     assertThat(configuration.matchResolver()).isNotNull();
     assertThat(configuration.getMatchStateQueryHandler()).isNotNull();

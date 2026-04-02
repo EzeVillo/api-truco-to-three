@@ -9,7 +9,7 @@ public record MatchStateResponse(
     @Schema(description = "Estado de la partida", example = "IN_PROGRESS") String status,
     @Schema(description = "Juegos ganados por player one", example = "1") int gamesWonPlayerOne,
     @Schema(description = "Juegos ganados por player two", example = "0") int gamesWonPlayerTwo,
-    @Schema(description = "ID del ganador final de la partida, si existe", example = "player-1") String matchWinner,
+    @Schema(description = "Nombre visible del ganador final de la partida, si existe", example = "juancho") String matchWinner,
     @Schema(description = "Estado de la ronda actual") RoundStateResponse roundGame) {
 
   public static MatchStateResponse from(final MatchStateDTO dto) {

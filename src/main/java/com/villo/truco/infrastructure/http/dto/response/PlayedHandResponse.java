@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record PlayedHandResponse(
     @Schema(description = "Carta jugada por player one") CardResponse cardPlayerOne,
     @Schema(description = "Carta jugada por player two") CardResponse cardPlayerTwo,
-    @Schema(description = "Ganador de la mano", example = "player-1") String winner) {
+    @Schema(description = "Nombre visible del ganador de la mano", example = "juancho") String winner) {
 
   public static PlayedHandResponse from(final PlayedHandDTO dto) {
 

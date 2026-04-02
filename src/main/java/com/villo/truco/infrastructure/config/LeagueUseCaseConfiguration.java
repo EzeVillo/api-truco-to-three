@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.config;
 import com.villo.truco.application.eventhandlers.LeagueMatchAbandonedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchCompletedEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueMatchForfeitedEventHandler;
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.CreateLeagueUseCase;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
@@ -37,6 +38,7 @@ public class LeagueUseCaseConfiguration {
   private final MatchRepository matchRepository;
   private final LeagueEventNotifier leagueEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
+  private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
 
@@ -44,6 +46,7 @@ public class LeagueUseCaseConfiguration {
       final LeagueRepository leagueRepository, final MatchRepository matchRepository,
       @Lazy final LeagueEventNotifier leagueEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
+      final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
 
@@ -52,6 +55,7 @@ public class LeagueUseCaseConfiguration {
     this.matchRepository = matchRepository;
     this.leagueEventNotifier = leagueEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
+    this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
   }
@@ -113,7 +117,7 @@ public class LeagueUseCaseConfiguration {
   @Bean
   GetLeagueStateUseCase getLeagueStateQueryHandler() {
 
-    return new GetLeagueStateQueryHandler(this.leagueResolver());
+    return new GetLeagueStateQueryHandler(this.leagueResolver(), this.publicActorResolver);
   }
 
   @Bean

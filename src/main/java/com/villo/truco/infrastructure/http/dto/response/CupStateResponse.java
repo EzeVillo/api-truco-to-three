@@ -9,7 +9,7 @@ public record CupStateResponse(
     @Schema(description = "ID de la copa", example = "cup-abc123") String cupId,
     @Schema(description = "Estado de la copa", example = "IN_PROGRESS") String status,
     @Schema(description = "Rondas del bracket") List<CupRoundResponse> rounds,
-    @Schema(description = "ID del campeón (cuando la copa finaliza)", example = "player-1") String champion) {
+    @Schema(description = "Nombre visible del campeon (cuando la copa finaliza)", example = "juancho") String champion) {
 
   public static CupStateResponse from(final CupStateDTO dto) {
 

@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.GetChatByParentUseCase;
 import com.villo.truco.application.ports.in.GetChatMessagesUseCase;
 import com.villo.truco.application.ports.in.SendMessageUseCase;
@@ -21,15 +22,18 @@ public class ChatUseCaseConfiguration {
   private final ChatQueryRepository chatQueryRepository;
   private final ChatRepository chatRepository;
   private final ChatEventNotifier chatEventNotifier;
+  private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
 
   public ChatUseCaseConfiguration(final ChatQueryRepository chatQueryRepository,
       final ChatRepository chatRepository, final ChatEventNotifier chatEventNotifier,
+      final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.chatQueryRepository = chatQueryRepository;
     this.chatRepository = chatRepository;
     this.chatEventNotifier = chatEventNotifier;
+    this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
   }
 
@@ -50,13 +54,13 @@ public class ChatUseCaseConfiguration {
   @Bean
   GetChatMessagesUseCase getChatMessagesQueryHandler() {
 
-    return new GetChatMessagesQueryHandler(this.chatResolver());
+    return new GetChatMessagesQueryHandler(this.chatResolver(), this.publicActorResolver);
   }
 
   @Bean
   GetChatByParentUseCase getChatByParentQueryHandler() {
 
-    return new GetChatByParentQueryHandler(this.chatQueryRepository);
+    return new GetChatByParentQueryHandler(this.chatQueryRepository, this.publicActorResolver);
   }
 
 }

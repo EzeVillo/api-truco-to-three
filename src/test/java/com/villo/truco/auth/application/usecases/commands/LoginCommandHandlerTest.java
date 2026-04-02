@@ -60,6 +60,12 @@ class LoginCommandHandlerTest {
       }
 
       @Override
+      public Optional<User> findById(final PlayerId playerId) {
+
+        return PLAYER_ID.equals(playerId) ? Optional.of(user) : Optional.empty();
+      }
+
+      @Override
       public Optional<User> findByUsername(final Username username) {
 
         return USERNAME.equals(username.value()) ? Optional.of(user) : Optional.empty();

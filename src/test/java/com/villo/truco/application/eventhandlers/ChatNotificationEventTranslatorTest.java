@@ -11,6 +11,7 @@ import com.villo.truco.domain.model.chat.events.MessageSentEvent;
 import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ class ChatNotificationEventTranslatorTest {
   private final List<ApplicationEvent> published = new ArrayList<>();
   private final ApplicationEventPublisher publisher = published::add;
   private final ChatNotificationEventTranslator translator = new ChatNotificationEventTranslator(
-      new ChatEventMapper(), publisher);
+      new ChatEventMapper(TestPublicActorResolver.guestStyle()), publisher);
 
   @Test
   @DisplayName("ChatCreatedEvent -> publica ChatEventNotification con payload de parent")
@@ -63,8 +64,9 @@ class ChatNotificationEventTranslatorTest {
     assertThat(notification.recipients()).containsExactlyElementsOf(recipients);
     assertThat(notification.eventType()).isEqualTo("MESSAGE_SENT");
     assertThat(notification.timestamp()).isEqualTo(inner.getTimestamp());
-    assertThat(notification.payload()).containsEntry("senderId", sender.value().toString())
-        .containsEntry("content", "hola").containsEntry("sentAt", 1234L);
+    assertThat(notification.payload()).containsEntry("sender",
+            TestPublicActorResolver.displayName(sender)).containsEntry("content", "hola")
+        .containsEntry("sentAt", 1234L);
   }
 
 }

@@ -61,7 +61,10 @@ Enviar siempre UUID valido en:
 
 - `matchId`
 - `leagueId`
-- `playerId` (cuando aplique en payload/respuesta)
+- `playerId` en auth, claims y referencias tecnicas donde aplique
+
+En respuestas REST de lectura y payloads WebSocket orientados a UI, los actores visibles se
+devuelven como `displayName` en lugar de `playerId`.
 
 ## 2. Contrato de errores
 
@@ -443,7 +446,7 @@ Response `200`:
   "matchWinner": null,
   "roundGame": {
     "status": "IN_PROGRESS",
-    "currentTurn": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "currentTurn": "juancho",
     "scorePlayerOne": 2,
     "scorePlayerTwo": 1,
     "myCards": [
@@ -477,13 +480,13 @@ Response `200`:
           "suit": "COPA",
           "number": 5
         },
-        "winner": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        "winner": "juancho"
       }
     ],
     "currentHand": {
       "cardPlayerOne": null,
       "cardPlayerTwo": null,
-      "mano": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      "mano": "juancho"
     }
   }
 }
@@ -694,10 +697,10 @@ Response `200`:
           "boutId": "b1c2d3e4-...",
           "roundNumber": 1,
           "bracketPosition": 0,
-          "playerOneId": "uuid-p1",
-          "playerTwoId": "uuid-p2",
+          "playerOne": "juancho",
+          "playerTwo": "martina",
           "matchId": "uuid-match",
-          "winnerId": null,
+          "winner": null,
           "status": "PENDING"
         }
       ]
@@ -710,10 +713,10 @@ Response `200`:
           "boutId": "c2d3e4f5-...",
           "roundNumber": 2,
           "bracketPosition": 0,
-          "playerOneId": null,
-          "playerTwoId": null,
+          "playerOne": null,
+          "playerTwo": null,
           "matchId": null,
-          "winnerId": null,
+          "winner": null,
           "status": "AWAITING"
         }
       ]
@@ -723,7 +726,8 @@ Response `200`:
 }
 ```
 
-Cuando la copa finaliza, `status` es `FINISHED` y `champion` contiene el `playerId` del campeón.
+Cuando la copa finaliza, `status` es `FINISHED` y `champion` contiene el `displayName` del
+campeón.
 
 Errores:
 
@@ -830,7 +834,7 @@ Response `200`:
   "messages": [
     {
       "messageId": "d4e5f6a7-b8c9-0123-4567-89abcdef0123",
-      "senderId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "sender": "juancho",
       "content": "Buena mano!",
       "sentAt": 1772768158123
     }
@@ -975,7 +979,7 @@ Cada tipo de recurso tiene su propia estructura de evento:
   "eventType": "MESSAGE_SENT",
   "timestamp": 1772768158123,
   "payload": {
-    "senderId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "sender": "juancho",
     "content": "Buena mano!",
     "sentAt": 1772768158123
   }
@@ -1093,9 +1097,9 @@ evento, no dentro del `payload`.
     - `{ cupId, matchId }` — se emite a todos los participantes de la copa cuando un partido de
       bracket es activado.
 - `LEAGUE_PLAYER_JOINED` / `CUP_PLAYER_JOINED`:
-    - `{ leagueId/cupId, playerId }`
+    - `{ leagueId/cupId, player }` — `player` contiene `displayName`
 - `LEAGUE_PLAYER_LEFT` / `CUP_PLAYER_LEFT`:
-    - `{ leagueId/cupId, playerId }`
+    - `{ leagueId/cupId, player }` — `player` contiene `displayName`
 - `LEAGUE_CANCELLED` / `CUP_CANCELLED`:
     - `{ leagueId/cupId }`
 - `LEAGUE_STARTED` / `CUP_STARTED`:
@@ -1105,19 +1109,21 @@ evento, no dentro del `payload`.
 - `CUP_BOUT_ACTIVATED`:
     - `{ cupId, boutId }`
 - `LEAGUE_ADVANCED`:
-    - `{ leagueId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+    - `{ leagueId, matchId, winner }` — `winner` contiene `displayName`; `matchId` puede ser `null`
+      cuando el avance es automático
       (por ejemplo, forfeit del oponente)
 - `CUP_ADVANCED`:
-    - `{ cupId, matchId, winnerId }` — `matchId` puede ser `null` cuando el avance es automático
+    - `{ cupId, matchId, winner }` — `winner` contiene `displayName`; `matchId` puede ser `null`
+      cuando el avance es automático
       (por ejemplo, bye o forfeit del oponente)
 - `LEAGUE_PLAYER_FORFEITED`:
-    - `{ leagueId, playerId }`
+    - `{ leagueId, forfeiter }` — `forfeiter` contiene `displayName`
 - `CUP_PLAYER_FORFEITED`:
-    - `{ cupId, playerId }`
+    - `{ cupId, forfeiter }` — `forfeiter` contiene `displayName`
 - `LEAGUE_FINISHED`:
-    - `{ leagueId, leaders: [playerId, ...] }`
+    - `{ leagueId, leaders: [displayName, ...] }`
 - `CUP_FINISHED`:
-    - `{ cupId, champion: playerId }`
+    - `{ cupId, champion: displayName }`
 
 ## 9. API REST - Bots
 

@@ -1,5 +1,5 @@
 package com.villo.truco.application.dto;
 
-public record LeagueStandingDTO(String playerId, int wins) {
+public record LeagueStandingDTO(String player, int wins) {
 
 }

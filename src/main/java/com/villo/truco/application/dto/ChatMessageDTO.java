@@ -1,13 +1,16 @@
 package com.villo.truco.application.dto;
 
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.domain.model.chat.ChatMessageView;
 
-public record ChatMessageDTO(String messageId, String senderId, String content, long sentAt) {
+public record ChatMessageDTO(String messageId, String sender, String content, long sentAt) {
 
-  public static ChatMessageDTO from(final ChatMessageView message) {
+  public static ChatMessageDTO from(final ChatMessageView message,
+      final PublicActorResolver publicActorResolver) {
 
     return new ChatMessageDTO(message.id().value().toString(),
-        message.senderId().value().toString(), message.content(), message.sentAt().toEpochMilli());
+        publicActorResolver.resolve(message.senderId()), message.content(),
+        message.sentAt().toEpochMilli());
   }
 
 }

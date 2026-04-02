@@ -10,6 +10,7 @@ import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.support.TestPublicActorResolver;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +52,8 @@ class GetChatByParentQueryHandlerTest {
       }
     };
 
-    this.handler = new GetChatByParentQueryHandler(queryRepository);
+    this.handler = new GetChatByParentQueryHandler(queryRepository,
+        TestPublicActorResolver.guestStyle());
   }
 
   @Test
@@ -64,7 +66,8 @@ class GetChatByParentQueryHandlerTest {
     assertThat(dto.parentType()).isEqualTo(ChatParentType.MATCH.name());
     assertThat(dto.parentId()).isEqualTo(PARENT_ID);
     assertThat(dto.messages()).hasSize(1);
-    assertThat(dto.messages().getFirst().senderId()).isEqualTo(this.playerTwo.value().toString());
+    assertThat(dto.messages().getFirst().sender()).isEqualTo(
+        TestPublicActorResolver.displayName(this.playerTwo));
     assertThat(dto.messages().getFirst().content()).isEqualTo("buenas");
   }
 

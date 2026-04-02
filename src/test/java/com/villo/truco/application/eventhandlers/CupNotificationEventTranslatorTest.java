@@ -8,6 +8,7 @@ import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.domain.model.cup.events.CupStartedEvent;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.support.TestPublicActorResolver;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,7 @@ class CupNotificationEventTranslatorTest {
   private final List<ApplicationEvent> published = new ArrayList<>();
   private final ApplicationEventPublisher publisher = published::add;
   private final CupNotificationEventTranslator translator = new CupNotificationEventTranslator(
-      new CupEventMapper(), publisher);
+      new CupEventMapper(TestPublicActorResolver.guestStyle()), publisher);
 
   @Test
   @DisplayName("CupStartedEvent → publica CupEventNotification con todos los participantes")

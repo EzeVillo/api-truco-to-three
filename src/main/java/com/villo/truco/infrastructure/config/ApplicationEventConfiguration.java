@@ -10,6 +10,7 @@ import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslat
 import com.villo.truco.application.eventhandlers.MatchEventMapper;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchRecipientResolver;
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
@@ -99,9 +100,9 @@ public class ApplicationEventConfiguration {
   }
 
   @Bean
-  ChatEventMapper chatEventMapper() {
+  ChatEventMapper chatEventMapper(final PublicActorResolver publicActorResolver) {
 
-    return new ChatEventMapper();
+    return new ChatEventMapper(publicActorResolver);
   }
 
   @Bean
@@ -117,22 +118,22 @@ public class ApplicationEventConfiguration {
   }
 
   @Bean
-  CupEventMapper cupEventMapper() {
+  CupEventMapper cupEventMapper(final PublicActorResolver publicActorResolver) {
 
-    return new CupEventMapper();
+    return new CupEventMapper(publicActorResolver);
   }
 
   @Bean
-  LeagueEventMapper leagueEventMapper() {
+  LeagueEventMapper leagueEventMapper(final PublicActorResolver publicActorResolver) {
 
-    return new LeagueEventMapper();
+    return new LeagueEventMapper(publicActorResolver);
   }
 
   @Bean
   ChatNotificationEventTranslator chatNotificationTranslator(
-      final ApplicationEventPublisher publisher) {
+      final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
 
-    return new ChatNotificationEventTranslator(chatEventMapper(), publisher);
+    return new ChatNotificationEventTranslator(chatEventMapper(publicActorResolver), publisher);
   }
 
   @Bean
@@ -152,16 +153,16 @@ public class ApplicationEventConfiguration {
 
   @Bean
   CupNotificationEventTranslator cupNotificationTranslator(
-      final ApplicationEventPublisher publisher) {
+      final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
 
-    return new CupNotificationEventTranslator(cupEventMapper(), publisher);
+    return new CupNotificationEventTranslator(cupEventMapper(publicActorResolver), publisher);
   }
 
   @Bean
   LeagueNotificationEventTranslator leagueNotificationTranslator(
-      final ApplicationEventPublisher publisher) {
+      final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
 
-    return new LeagueNotificationEventTranslator(leagueEventMapper(), publisher);
+    return new LeagueNotificationEventTranslator(leagueEventMapper(publicActorResolver), publisher);
   }
 
   @Bean

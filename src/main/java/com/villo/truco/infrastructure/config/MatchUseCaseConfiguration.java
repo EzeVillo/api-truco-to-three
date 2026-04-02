@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
@@ -39,12 +40,14 @@ public class MatchUseCaseConfiguration {
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
+  private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
 
   public MatchUseCaseConfiguration(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
+      final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
 
@@ -52,6 +55,7 @@ public class MatchUseCaseConfiguration {
     this.matchRepository = matchRepository;
     this.matchEventNotifier = matchEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
+    this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
   }
@@ -145,7 +149,7 @@ public class MatchUseCaseConfiguration {
   @Bean
   GetMatchStateUseCase getMatchStateQueryHandler() {
 
-    return new GetMatchStateQueryHandler(this.matchQueryRepository);
+    return new GetMatchStateQueryHandler(this.matchQueryRepository, this.publicActorResolver);
   }
 
 }
