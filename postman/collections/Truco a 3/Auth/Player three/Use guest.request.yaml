@@ -1,12 +1,23 @@
 $kind: http-request
+name: Use guest
 url: "{{URL_BASE_TRUCO_HTTP}}/auth/guest"
 method: POST
 scripts:
   - type: afterResponse
-    code: "const response = pm.response.json();\r
+    code: "if (pm.response.code === 200) {\r
+
+      \    const now = Date.now();\r
+
+      \    const response = pm.response.json();\r
 
       \r
 
-      pm.environment.set(\"accessTokenPlayerThree\", response.accessToken);"
+      \    pm.environment.set(\"accessTokenPlayerThree\",
+      response.accessToken);\r
+
+      \    pm.environment.set(\"accessTokenPlayerThreeExpiresAt\", String(now +
+      (response.accessTokenExpiresIn * 1000)));\r
+
+      }"
     language: text/javascript
 order: 1000

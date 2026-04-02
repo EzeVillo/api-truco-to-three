@@ -9,13 +9,31 @@ values:
   - key: accessTokenPlayerOne
     value: ""
     enabled: true
+  - key: refreshTokenPlayerOne
+    value: ""
+    enabled: true
+  - key: accessTokenPlayerOneExpiresAt
+    value: ""
+    enabled: true
+  - key: refreshTokenPlayerOneExpiresAt
+    value: ""
+    enabled: true
   - key: accessTokenPlayerTwo
+    value: ""
+    enabled: true
+  - key: accessTokenPlayerTwoExpiresAt
     value: ""
     enabled: true
   - key: accessTokenPlayerThree
     value: ""
     enabled: true
+  - key: accessTokenPlayerThreeExpiresAt
+    value: ""
+    enabled: true
   - key: accessTokenPlayerFour
+    value: ""
+    enabled: true
+  - key: accessTokenPlayerFourExpiresAt
     value: ""
     enabled: true
   - key: inviteCode
