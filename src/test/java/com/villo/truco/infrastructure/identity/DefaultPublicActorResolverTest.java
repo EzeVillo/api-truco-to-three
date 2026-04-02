@@ -3,12 +3,7 @@ package com.villo.truco.infrastructure.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.application.ports.BotRegistry;
-import com.villo.truco.auth.domain.model.user.User;
-import com.villo.truco.auth.domain.model.user.UserRehydrator;
-import com.villo.truco.auth.domain.model.user.UserSnapshot;
-import com.villo.truco.auth.domain.model.user.valueobjects.HashedPassword;
-import com.villo.truco.auth.domain.model.user.valueobjects.Username;
-import com.villo.truco.auth.domain.ports.UserRepository;
+import com.villo.truco.auth.domain.ports.UserQueryRepository;
 import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.bot.valueobjects.BotPersonality;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -21,38 +16,18 @@ import org.junit.jupiter.api.Test;
 @DisplayName("DefaultPublicActorResolver")
 class DefaultPublicActorResolverTest {
 
-  private static User rehydratedUser(final PlayerId playerId, final String username) {
+  private static UserQueryRepository userQueryRepositoryWith(
+      final Map<PlayerId, String> usernamesById) {
 
-    return UserRehydrator.rehydrate(
-        new UserSnapshot(playerId, new Username(username), new HashedPassword("hashed")));
-  }
-
-  private static UserRepository userRepositoryWith(final Map<PlayerId, User> usersById) {
-
-    return new UserRepository() {
-      @Override
-      public void saveEnsuringUsernameAvailable(final User user) {
-
+    return playerIds -> {
+      final var result = new java.util.LinkedHashMap<PlayerId, String>();
+      for (final var playerId : playerIds) {
+        final var username = usernamesById.get(playerId);
+        if (username != null) {
+          result.put(playerId, username);
+        }
       }
-
-      @Override
-      public Optional<User> findById(final PlayerId playerId) {
-
-        return Optional.ofNullable(usersById.get(playerId));
-      }
-
-      @Override
-      public Optional<User> findByUsername(final Username username) {
-
-        return usersById.values().stream()
-            .filter(user -> user.username().value().equals(username.value())).findFirst();
-      }
-
-      @Override
-      public boolean existsByUsername(final Username username) {
-
-        return findByUsername(username).isPresent();
-      }
+      return result;
     };
   }
 
@@ -118,8 +93,7 @@ class DefaultPublicActorResolverTest {
 
     final var playerId = PlayerId.generate();
     final var resolver = new DefaultPublicActorResolver(
-        userRepositoryWith(Map.of(playerId, rehydratedUser(playerId, "juancho"))),
-        emptyBotRegistry());
+        userQueryRepositoryWith(Map.of(playerId, "juancho")), emptyBotRegistry());
 
     assertThat(resolver.resolve(playerId)).isEqualTo("juancho");
   }
@@ -130,7 +104,7 @@ class DefaultPublicActorResolverTest {
 
     final var botId = PlayerId.generate();
     final var bot = new BotProfile(botId, "El Mentiroso", new BotPersonality(90, 20, 70, 50, 30));
-    final var resolver = new DefaultPublicActorResolver(userRepositoryWith(Map.of()),
+    final var resolver = new DefaultPublicActorResolver(userQueryRepositoryWith(Map.of()),
         botRegistryWith(bot));
 
     assertThat(resolver.resolve(botId)).isEqualTo("El Mentiroso");
@@ -141,7 +115,7 @@ class DefaultPublicActorResolverTest {
   void resolvesGuestToSyntheticDisplayName() {
 
     final var guestId = PlayerId.of("12345678-1234-1234-1234-1234567890ab");
-    final var resolver = new DefaultPublicActorResolver(userRepositoryWith(Map.of()),
+    final var resolver = new DefaultPublicActorResolver(userQueryRepositoryWith(Map.of()),
         emptyBotRegistry());
 
     assertThat(resolver.resolve(guestId)).isEqualTo("Invitado-12345678");
@@ -153,10 +127,28 @@ class DefaultPublicActorResolverTest {
 
     final var playerId = PlayerId.of("aaaaaaaa-1234-1234-1234-1234567890ab");
     final var resolver = new DefaultPublicActorResolver(
-        userRepositoryWith(Map.of(playerId, rehydratedUser(playerId, "martina"))),
-        emptyBotRegistry());
+        userQueryRepositoryWith(Map.of(playerId, "martina")), emptyBotRegistry());
 
     assertThat(resolver.resolve(playerId)).isEqualTo("martina");
+  }
+
+  @Test
+  @DisplayName("resuelve varios actores en batch conservando usernames, bots e invitados")
+  void resolvesAllActorsInBatch() {
+
+    final var registeredPlayer = PlayerId.generate();
+    final var botId = PlayerId.generate();
+    final var guestId = PlayerId.of("bbbbbbbb-1234-1234-1234-1234567890ab");
+    final var bot = new BotProfile(botId, "El Pescador", new BotPersonality(30, 40, 50, 60, 70));
+
+    final var resolver = new DefaultPublicActorResolver(
+        userQueryRepositoryWith(Map.of(registeredPlayer, "flor")), botRegistryWith(bot));
+
+    final var resolvedActors = resolver.resolveAll(
+        List.of(registeredPlayer, botId, guestId, registeredPlayer));
+
+    assertThat(resolvedActors).containsEntry(registeredPlayer, "flor")
+        .containsEntry(botId, "El Pescador").containsEntry(guestId, "Invitado-bbbbbbbb");
   }
 
 }

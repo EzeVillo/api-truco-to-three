@@ -7,7 +7,10 @@ import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.GetCupStateUseCase;
 import com.villo.truco.application.queries.GetCupStateQuery;
 import com.villo.truco.application.usecases.commands.CupResolver;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public final class GetCupStateQueryHandler implements GetCupStateUseCase {
 
@@ -32,6 +35,12 @@ public final class GetCupStateQueryHandler implements GetCupStateUseCase {
     };
   }
 
+  private static String displayNameOf(final Map<PlayerId, String> actorNames,
+      final PlayerId playerId) {
+
+    return playerId != null ? actorNames.get(playerId) : null;
+  }
+
   @Override
   public CupStateDTO handle(final GetCupStateQuery query) {
 
@@ -39,8 +48,8 @@ public final class GetCupStateQueryHandler implements GetCupStateUseCase {
 
     cup.validatePlayerInCup(query.requestingPlayer());
 
-    final var champion =
-        cup.getChampion() != null ? this.publicActorResolver.resolve(cup.getChampion()) : null;
+    final var actorNames = this.publicActorResolver.resolveAll(Set.copyOf(cup.getParticipants()));
+    final var champion = displayNameOf(actorNames, cup.getChampion());
 
     final var allRounds = cup.getRounds();
     final int totalRounds = allRounds.size();
@@ -48,12 +57,10 @@ public final class GetCupStateQueryHandler implements GetCupStateUseCase {
     final var rounds = allRounds.stream().map(round -> {
       final var bouts = round.bouts().stream().map(
           bout -> new CupBoutDTO(bout.boutId().value().toString(), bout.roundNumber(),
-              bout.bracketPosition(),
-              bout.playerOne() != null ? this.publicActorResolver.resolve(bout.playerOne()) : null,
-              bout.playerTwo() != null ? this.publicActorResolver.resolve(bout.playerTwo()) : null,
+              bout.bracketPosition(), displayNameOf(actorNames, bout.playerOne()),
+              displayNameOf(actorNames, bout.playerTwo()),
               bout.matchId() != null ? bout.matchId().value().toString() : null,
-              bout.winner() != null ? this.publicActorResolver.resolve(bout.winner()) : null,
-              bout.status().name())).toList();
+              displayNameOf(actorNames, bout.winner()), bout.status().name())).toList();
 
       return new CupRoundDTO(round.roundNumber(), roundName(round.roundNumber(), totalRounds),
           bouts);

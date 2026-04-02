@@ -1,5 +1,6 @@
 package com.villo.truco.application.usecases.queries;
 
+import com.villo.truco.application.assemblers.MatchStateDTOAssembler;
 import com.villo.truco.application.dto.MatchStateDTO;
 import com.villo.truco.application.exceptions.MatchNotFoundException;
 import com.villo.truco.application.ports.PublicActorResolver;
@@ -11,13 +12,13 @@ import java.util.Objects;
 public final class GetMatchStateQueryHandler implements GetMatchStateUseCase {
 
   private final MatchQueryRepository queryRepository;
-  private final PublicActorResolver publicActorResolver;
+  private final MatchStateDTOAssembler dtoAssembler;
 
   public GetMatchStateQueryHandler(final MatchQueryRepository queryRepository,
       final PublicActorResolver publicActorResolver) {
 
     this.queryRepository = Objects.requireNonNull(queryRepository);
-    this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
+    this.dtoAssembler = new MatchStateDTOAssembler(publicActorResolver);
   }
 
   @Override
@@ -28,7 +29,7 @@ public final class GetMatchStateQueryHandler implements GetMatchStateUseCase {
 
     match.validatePlayerInMatch(query.requestingPlayer());
 
-    return MatchStateDTO.of(match, query.requestingPlayer(), this.publicActorResolver);
+    return this.dtoAssembler.toDto(match, query.requestingPlayer());
   }
 
 }

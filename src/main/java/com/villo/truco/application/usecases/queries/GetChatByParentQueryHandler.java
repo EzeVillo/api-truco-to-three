@@ -1,5 +1,6 @@
 package com.villo.truco.application.usecases.queries;
 
+import com.villo.truco.application.assemblers.ChatMessagesDTOAssembler;
 import com.villo.truco.application.dto.ChatMessagesDTO;
 import com.villo.truco.application.exceptions.ChatNotFoundException;
 import com.villo.truco.application.ports.PublicActorResolver;
@@ -11,13 +12,13 @@ import java.util.Objects;
 public final class GetChatByParentQueryHandler implements GetChatByParentUseCase {
 
   private final ChatQueryRepository chatQueryRepository;
-  private final PublicActorResolver publicActorResolver;
+  private final ChatMessagesDTOAssembler dtoAssembler;
 
   public GetChatByParentQueryHandler(final ChatQueryRepository chatQueryRepository,
       final PublicActorResolver publicActorResolver) {
 
     this.chatQueryRepository = Objects.requireNonNull(chatQueryRepository);
-    this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
+    this.dtoAssembler = new ChatMessagesDTOAssembler(publicActorResolver);
   }
 
   @Override
@@ -29,7 +30,7 @@ public final class GetChatByParentQueryHandler implements GetChatByParentUseCase
 
     chat.validateParticipant(query.requestingPlayer());
 
-    return ChatMessagesDTO.of(chat.toReadView(), this.publicActorResolver);
+    return this.dtoAssembler.toDto(chat.toReadView());
   }
 
 }
