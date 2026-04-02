@@ -2,274 +2,172 @@ $kind: collection
 name: Truco a 3
 scripts:
   - type: http:beforeRequest
-    code: "const PLAYER_CONFIG = {\r
-
-      \    \"Player one\": {\r
-
-      \        accessToken: \"accessTokenPlayerOne\",\r
-
-      \        accessTokenExpiresAt: \"accessTokenPlayerOneExpiresAt\",\r
-
-      \        refreshToken: \"refreshTokenPlayerOne\",\r
-
-      \        refreshTokenExpiresAt: \"refreshTokenPlayerOneExpiresAt\",\r
-
-      \        reauthRequest: \"Auth > Player one > Login user\"\r
-
-      \    },\r
-
-      \    \"Player two\": {\r
-
-      \        accessToken: \"accessTokenPlayerTwo\",\r
-
-      \        accessTokenExpiresAt: \"accessTokenPlayerTwoExpiresAt\",\r
-
-      \        reauthRequest: \"Auth > Player two > Use guest\"\r
-
-      \    },\r
-
-      \    \"Player three\": {\r
-
-      \        accessToken: \"accessTokenPlayerThree\",\r
-
-      \        accessTokenExpiresAt: \"accessTokenPlayerThreeExpiresAt\",\r
-
-      \        reauthRequest: \"Auth > Player three > Use guest\"\r
-
-      \    },\r
-
-      \    \"Player four\": {\r
-
-      \        accessToken: \"accessTokenPlayerFour\",\r
-
-      \        accessTokenExpiresAt: \"accessTokenPlayerFourExpiresAt\",\r
-
-      \        reauthRequest: \"Auth > Player four > Use guest\"\r
-
-      \    }\r
-
-      };\r
-
-      \r
-
-      const BUFFER_MS = 30_000;\r
-
-      const REFRESH_TIMEOUT_MS = 3000;\r
-
-      let requestBlocked = false;\r
-
-      \r
-
-      function getLocationNames() {\r
-
-      \    const executionLocation = pm.execution && pm.execution.location;\r
-
-      \    if (Array.isArray(executionLocation)) {\r
-
-      \        return executionLocation\r
-
-      \            .map((entry) => typeof entry === \"string\" ? entry : entry
-      && entry.name)\r
-
-      \            .filter(Boolean);\r
-
-      \    }\r
-
-      \r
-
-      \    if (executionLocation && Array.isArray(executionLocation.current))
-      {\r
-
-      \        return executionLocation.current\r
-
-      \            .map((entry) => typeof entry === \"string\" ? entry : entry
-      && entry.name)\r
-
-      \            .filter(Boolean);\r
-
-      \    }\r
-
-      \r
-
-      \    return [];\r
-
-      }\r
-
-      \r
-
-      function blockRequest(message) {\r
-
-      \    requestBlocked = true;\r
-
-      \    console.error(message);\r
-
-      \r
-
-      \    if (pm.execution && typeof pm.execution.skipRequest === \"function\")
-      {\r
-
-      \        pm.execution.skipRequest();\r
-
-      \    }\r
-
-      }\r
-
-      \r
-
-      function getExpiresAt(variableName) {\r
-
-      \    return Number(pm.environment.get(variableName) || 0);\r
-
-      }\r
-
-      \r
-
-      function persistUserSession(response) {\r
-
-      \    const now = Date.now();\r
-
-      \    pm.environment.set(\"accessTokenPlayerOne\", response.accessToken);\r
-
-      \    pm.environment.set(\"refreshTokenPlayerOne\",
-      response.refreshToken);\r
-
-      \    pm.environment.set(\"accessTokenPlayerOneExpiresAt\", String(now +
-      (response.accessTokenExpiresIn * 1000)));\r
-
-      \    pm.environment.set(\"refreshTokenPlayerOneExpiresAt\", String(now +
-      (response.refreshTokenExpiresIn * 1000)));\r
-
-      }\r
-
-      \r
-
-      const locationNames = getLocationNames();\r
-
-      const playerName = locationNames.find((name) =>
-      Object.prototype.hasOwnProperty.call(PLAYER_CONFIG, name));\r
-
-      const shouldHandleRequest = !locationNames.includes(\"Auth\") &&
-      Boolean(playerName);\r
-
-      \r
-
-      if (shouldHandleRequest) {\r
-
-      \    const player = PLAYER_CONFIG[playerName];\r
-
-      \    const now = Date.now();\r
-
-      \    const accessToken = pm.environment.get(player.accessToken) || \"\";\r
-
-      \    const accessTokenExpiresAt =
-      getExpiresAt(player.accessTokenExpiresAt);\r
-
-      \    const accessTokenStillValid = accessToken && accessTokenExpiresAt >
-      (now + BUFFER_MS);\r
-
-      \r
-
-      \    if (!accessTokenStillValid) {\r
-
-      \        if (!player.refreshToken) {\r
-
-      \            blockRequest(`${playerName} no tiene una sesion guest
-      vigente. Ejecuta ${player.reauthRequest} antes de reintentar esta
-      request.`);\r
-
-      \        }\r
-
-      \r
-
-      \        if (!requestBlocked) {\r
-
-      \            const refreshToken = pm.environment.get(player.refreshToken)
-      || \"\";\r
-
-      \            const refreshTokenExpiresAt =
-      getExpiresAt(player.refreshTokenExpiresAt);\r
-
-      \r
-
-      \            if (!refreshToken || refreshTokenExpiresAt <= now) {\r
-
-      \                blockRequest(`${playerName} no tiene un refresh token
-      vigente. Ejecuta ${player.reauthRequest} antes de reintentar esta
-      request.`);\r
-
-      \            }\r
-
-      \r
-
-      \            if (!requestBlocked) {\r
-
-      \                pm.sendRequest({\r
-
-      \                    url: \"{{URL_BASE_TRUCO_HTTP}}/auth/refresh\",\r
-
-      \                    method: \"POST\",\r
-
-      \                    auth: {\r
-
-      \                        type: \"noauth\"\r
-
-      \                    },\r
-
-      \                    timeout: REFRESH_TIMEOUT_MS,\r
-
-      \                    header: {\r
-
-      \                        \"Content-Type\": \"application/json\",\r
-
-      \                        \"Authorization\": \"\"\r
-
-      \                    },\r
-
-      \                    body: {\r
-
-      \                        mode: \"raw\",\r
-
-      \                        raw: JSON.stringify({\r
-
-      \                            refreshToken\r
-
-      \                        })\r
-
-      \                    }\r
-
-      \                }, (error, response) => {\r
-
-      \                    if (error) {\r
-
-      \                        blockRequest(`No se pudo refrescar la sesion de
-      ${playerName} dentro de ${REFRESH_TIMEOUT_MS}ms: ${error.message}`);\r
-
-      \                        return;\r
-
-      \                    }\r
-
-      \r
-
-      \                    if (!response || response.code !== 200) {\r
-
-      \                        blockRequest(`El refresh de ${playerName} fallo
-      con status ${response ? response.code : \"desconocido\"}. Ejecuta
-      ${player.reauthRequest}.`);\r
-
-      \                        return;\r
-
-      \                    }\r
-
-      \r
-
-      \                    persistUserSession(response.json());\r
-
-      \                });\r
-
-      \            }\r
-
-      \        }\r
-
-      \    }\r
-
-      }"
+    code: >
+      (async () => {
+          const PLAYER_CONFIG = {
+              "Player one": {
+                  accessToken: "accessTokenPlayerOne",
+                  accessTokenExpiresAt: "accessTokenPlayerOneExpiresAt",
+                  refreshTokenVariable: "refreshTokenPlayerOne",
+                  refreshTokenExpiresAt: "refreshTokenPlayerOneExpiresAt",
+                  reauthRequest: "Auth > Player one > Login user"
+              },
+              "Player two": {
+                  accessToken: "accessTokenPlayerTwo",
+                  accessTokenExpiresAt: "accessTokenPlayerTwoExpiresAt",
+                  reauthRequest: "Auth > Player two > Use guest"
+              },
+              "Player three": {
+                  accessToken: "accessTokenPlayerThree",
+                  accessTokenExpiresAt: "accessTokenPlayerThreeExpiresAt",
+                  reauthRequest: "Auth > Player three > Use guest"
+              },
+              "Player four": {
+                  accessToken: "accessTokenPlayerFour",
+                  accessTokenExpiresAt: "accessTokenPlayerFourExpiresAt",
+                  reauthRequest: "Auth > Player four > Use guest"
+              }
+          };
+
+          const BUFFER_MS = 30_000;
+          const REFRESH_TIMEOUT_MS = 3000;
+
+          function getLocationNames() {
+              const executionLocation = pm.execution && pm.execution.location;
+
+              if (Array.isArray(executionLocation)) {
+                  return executionLocation
+                      .map((entry) => (typeof entry === "string" ? entry : entry && entry.name))
+                      .filter(Boolean);
+              }
+
+              if (executionLocation && Array.isArray(executionLocation.current)) {
+                  return executionLocation.current
+                      .map((entry) => (typeof entry === "string" ? entry : entry && entry.name))
+                      .filter(Boolean);
+              }
+
+              return [];
+          }
+
+          function clearAuthorizationHeader() {
+              pm.request.headers.remove("Authorization");
+          }
+
+          function setAuthorizationHeader(token) {
+              pm.request.headers.upsert({
+                  key: "Authorization",
+                  value: `Bearer ${token}`
+              });
+          }
+
+          function getExpiresAt(variableName) {
+              return Number(pm.environment.get(variableName) || 0);
+          }
+
+          function persistUserSession(playerConfig, response) {
+              const now = Date.now();
+
+              pm.environment.set(playerConfig.accessToken, response.accessToken);
+              pm.environment.set(
+                  playerConfig.accessTokenExpiresAt,
+                  String(now + (response.accessTokenExpiresIn * 1000))
+              );
+
+              if (playerConfig.refreshTokenVariable && response.refreshToken) {
+                  pm.environment.set(playerConfig.refreshTokenVariable, response.refreshToken);
+              }
+
+              if (playerConfig.refreshTokenExpiresAt && response.refreshTokenExpiresIn) {
+                  pm.environment.set(
+                      playerConfig.refreshTokenExpiresAt,
+                      String(now + (response.refreshTokenExpiresIn * 1000))
+                  );
+              }
+          }
+
+          const locationNames = getLocationNames();
+          const playerName = locationNames.find((name) =>
+              Object.prototype.hasOwnProperty.call(PLAYER_CONFIG, name)
+          );
+          const shouldHandleRequest = !locationNames.includes("Auth") && Boolean(playerName);
+
+          if (!shouldHandleRequest) {
+              clearAuthorizationHeader();
+              return;
+          }
+
+          const player = PLAYER_CONFIG[playerName];
+          const now = Date.now();
+          const accessToken = pm.environment.get(player.accessToken) || "";
+          const accessTokenExpiresAt = getExpiresAt(player.accessTokenExpiresAt);
+          const accessTokenStillValid = Boolean(accessToken) && accessTokenExpiresAt > (now + BUFFER_MS);
+
+          if (accessTokenStillValid) {
+              setAuthorizationHeader(accessToken);
+              return;
+          }
+
+          clearAuthorizationHeader();
+
+          if (!player.refreshTokenVariable) {
+              throw new Error(
+                  `${playerName} no tiene una sesion guest vigente. Ejecuta ${player.reauthRequest} antes de reintentar esta request.`
+              );
+              return;
+          }
+
+          const refreshToken = pm.environment.get(player.refreshTokenVariable) || "";
+          const refreshTokenExpiresAt = getExpiresAt(player.refreshTokenExpiresAt);
+
+          if (!refreshToken || refreshTokenExpiresAt <= now) {
+              throw new Error(
+                  `${playerName} no tiene un refresh token vigente. Ejecuta ${player.reauthRequest} antes de reintentar esta request.`
+              );
+              return;
+          }
+
+          try {
+              const response = await pm.sendRequest({
+                  url: "{{URL_BASE_TRUCO_HTTP}}/auth/refresh",
+                  method: "POST",
+                  auth: {
+                      type: "noauth"
+                  },
+                  timeout: REFRESH_TIMEOUT_MS,
+                  header: {
+                      "Content-Type": "application/json"
+                  },
+                  body: {
+                      mode: "raw",
+                      raw: JSON.stringify({
+                          refreshToken
+                      })
+                  }
+              });
+
+              if (!response || response.code !== 200) {
+                  throw new Error(
+                      `El refresh de ${playerName} fallo con status ${response ? response.code : "desconocido"}. Ejecuta ${player.reauthRequest}.`
+                  );
+                  return;
+              }
+
+              persistUserSession(player, response.json());
+
+              const refreshedAccessToken = pm.environment.get(player.accessToken) || "";
+              if (!refreshedAccessToken) {
+                  throw new Error(
+                      `El refresh de ${playerName} no devolvio un access token utilizable. Ejecuta ${player.reauthRequest}.`
+                  );
+                  return;
+              }
+
+              setAuthorizationHeader(refreshedAccessToken);
+          } catch (error) {
+              throw new Error(
+                  `No se pudo refrescar la sesion de ${playerName} dentro de ${REFRESH_TIMEOUT_MS}ms: ${error.message}`
+              );
+          }
+      })();
+    language: text/javascript

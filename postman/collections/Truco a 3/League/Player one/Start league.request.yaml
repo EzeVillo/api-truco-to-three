@@ -1,8 +1,4 @@
 $kind: http-request
 url: "{{URL_BASE_TRUCO_HTTP}}/leagues/{{leagueId}}/start"
 method: POST
-auth:
-  type: bearer
-  credentials:
-    token: "{{accessTokenPlayerOne}}"
 order: 2000
