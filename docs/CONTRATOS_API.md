@@ -13,16 +13,28 @@ Base URL (local):
 
 ## 1. Autenticacion y reglas generales
 
-### 1.1 Token
+### 1.1 Tokens
 
-- Tipo: `Bearer <JWT>`
-- Se obtiene en:
-    - `POST /api/auth/register` (registro de usuario)
-    - `POST /api/auth/login` (login con credenciales)
-    - `POST /api/auth/guest` (acceso como invitado)
-- Claims relevantes:
+- Access token:
+    - tipo: `Bearer <JWT>`
+    - uso: endpoints protegidos REST y autenticacion WebSocket/STOMP
+    - se obtiene en:
+        - `POST /api/auth/register`
+        - `POST /api/auth/login`
+        - `POST /api/auth/refresh`
+        - `POST /api/auth/guest`
+- Refresh token:
+    - tipo: token opaco
+    - uso: body JSON de `POST /api/auth/refresh` y `DELETE /api/auth/logout`
+    - se obtiene en:
+        - `POST /api/auth/register`
+        - `POST /api/auth/login`
+        - `POST /api/auth/refresh`
+    - no existe para guest
+- Claims relevantes del access token:
     - `sub`: `playerId` (UUID)
     - `iss`, `aud`, `iat`, `exp`
+    - `token_use`: `user` o `guest`
 
 ### 1.2 Endpoints protegidos
 
@@ -32,6 +44,8 @@ Segun configuracion de seguridad:
     - `POST /api/auth/register`
     - `POST /api/auth/login`
     - `POST /api/auth/guest`
+    - `POST /api/auth/refresh`
+    - `DELETE /api/auth/logout`
 - Requieren Bearer token:
     - Todo `/api/**` no listado arriba (matches, leagues, etc.)
 
@@ -101,21 +115,31 @@ Request:
 ```json
 {
   "username": "juancho",
-  "password": "secret123"
+  "password": "Clave1!"
 }
 ```
+
+Reglas:
+
+- `username` solo puede contener letras ASCII (`A-Z`, `a-z`) y numeros (`0-9`)
+- `username` debe contener al menos 3 letras
+- `password` debe tener al menos 5 caracteres, al menos 1 numero y al menos 1 simbolo
 
 Response `200`:
 
 ```json
 {
   "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "accessToken": "<jwt>"
+  "accessToken": "<jwt>",
+  "refreshToken": "<opaque-refresh-token>",
+  "accessTokenExpiresIn": 900,
+  "refreshTokenExpiresIn": 2592000
 }
 ```
 
 Errores:
 
+- `400` si el body es invalido o no cumple las reglas de validacion del request
 - `422` si el username ya esta en uso
 
 ### 3.2 Login
@@ -127,7 +151,7 @@ Request:
 ```json
 {
   "username": "juancho",
-  "password": "secret123"
+  "password": "Clave1!"
 }
 ```
 
@@ -136,13 +160,18 @@ Response `200`:
 ```json
 {
   "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "accessToken": "<jwt>"
+  "accessToken": "<jwt>",
+  "refreshToken": "<opaque-refresh-token>",
+  "accessTokenExpiresIn": 900,
+  "refreshTokenExpiresIn": 2592000
 }
 ```
 
 Errores:
 
 - `401` si las credenciales son invalidas (username no existe o contraseña incorrecta)
+
+- `400` si el body es invalido o no cumple las reglas de validacion del request
 
 ### 3.3 Acceso como invitado
 
@@ -155,11 +184,66 @@ Response `200`:
 ```json
 {
   "playerId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "accessToken": "<jwt>"
+  "accessToken": "<jwt>",
+  "accessTokenExpiresIn": 604800
 }
 ```
 
 No persiste cuenta. El `playerId` es efimero.
+
+### 3.4 Refresh de sesion
+
+`POST /api/auth/refresh`
+
+Request:
+
+```json
+{
+  "refreshToken": "<opaque-refresh-token>"
+}
+```
+
+Response `200`:
+
+```json
+{
+  "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "accessToken": "<jwt>",
+  "refreshToken": "<new-opaque-refresh-token>",
+  "accessTokenExpiresIn": 900,
+  "refreshTokenExpiresIn": 2592000
+}
+```
+
+Reglas:
+
+- siempre rota el refresh token
+- el refresh token anterior deja de ser valido inmediatamente
+- si se reusa un refresh token rotado o revocado, la cadena de esa sesion queda revocada
+- no afecta otras sesiones activas del mismo usuario
+
+Errores:
+
+- `401` si el refresh token es invalido, expirado, revocado o rotado
+
+### 3.5 Logout de sesion
+
+`DELETE /api/auth/logout`
+
+Request:
+
+```json
+{
+  "refreshToken": "<opaque-refresh-token>"
+}
+```
+
+Response `204` sin body.
+
+Reglas:
+
+- revoca solo la sesion asociada al refresh token enviado
+- si el refresh token no existe, responde `204` igual
 
 ## 4. API REST - Matches
 
@@ -1155,11 +1239,21 @@ Errores:
 
 ## 10. Flujo de autenticacion recomendado
 
-1. El FE llama a `/api/auth/register`, `/api/auth/login` o `/api/auth/guest` para obtener un JWT con
-   el `playerId`.
-2. Usa ese JWT como `Bearer` en todos los endpoints protegidos (`/api/matches/**`,
-   `/api/leagues/**`, `/api/cups/**`).
-3. Para WebSocket, envia el JWT en el header `Authorization` del frame STOMP `CONNECT`.
+### 10.1 Usuarios persistidos
+
+1. El FE llama a `/api/auth/register` o `/api/auth/login`.
+2. Guarda `accessToken` y `refreshToken`.
+3. Usa el `accessToken` como `Bearer` en todos los endpoints protegidos.
+4. Antes de que expire, o al recibir `401`, llama a `/api/auth/refresh` con el `refreshToken`.
+5. Reemplaza ambos tokens por los nuevos valores devueltos.
+6. Si habia una conexion WebSocket activa, reconecta con el nuevo `accessToken`.
+
+### 10.2 Guest
+
+1. El FE llama a `/api/auth/guest`.
+2. Guarda solo `accessToken`.
+3. Usa ese `accessToken` como `Bearer` y para el frame STOMP `CONNECT`.
+4. Guest no soporta refresh. Si expira, debe pedir una nueva sesion guest.
 
 ## 11. Notas para FE
 

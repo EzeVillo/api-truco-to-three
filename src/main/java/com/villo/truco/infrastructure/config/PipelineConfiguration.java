@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.config;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
 import com.villo.truco.infrastructure.pipeline.TransactionalBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 public class PipelineConfiguration {
+
+  @Bean
+  Clock clock() {
+
+    return Clock.systemUTC();
+  }
 
   @Bean
   TransactionTemplate transactionTemplate(final PlatformTransactionManager txManager) {

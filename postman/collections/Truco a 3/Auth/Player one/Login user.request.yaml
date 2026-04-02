@@ -1,4 +1,5 @@
 $kind: http-request
+name: Login user
 url: "{{URL_BASE_TRUCO_HTTP}}/auth/login"
 method: POST
 body:
@@ -7,15 +8,30 @@ body:
 
     \  \"username\": \"EzeVillo\",\r
 
-    \  \"password\": \"secret123\"\r
+    \  \"password\": \"Clave1!\"\r
 
     }"
 scripts:
   - type: afterResponse
-    code: "const response = pm.response.json();\r
+    code: "if (pm.response.code === 200) {\r
+
+      \    const now = Date.now();\r
+
+      \    const response = pm.response.json();\r
 
       \r
 
-      pm.environment.set(\"accessTokenPlayerOne\", response.accessToken);"
+      \    pm.environment.set(\"accessTokenPlayerOne\", response.accessToken);\r
+
+      \    pm.environment.set(\"refreshTokenPlayerOne\",
+      response.refreshToken);\r
+
+      \    pm.environment.set(\"accessTokenPlayerOneExpiresAt\", String(now +
+      (response.accessTokenExpiresIn * 1000)));\r
+
+      \    pm.environment.set(\"refreshTokenPlayerOneExpiresAt\", String(now +
+      (response.refreshTokenExpiresIn * 1000)));\r
+
+      }"
     language: text/javascript
 order: 2000

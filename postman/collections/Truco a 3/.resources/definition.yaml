@@ -1,1 +1,275 @@
 $kind: collection
+name: Truco a 3
+scripts:
+  - type: http:beforeRequest
+    code: "const PLAYER_CONFIG = {\r
+
+      \    \"Player one\": {\r
+
+      \        accessToken: \"accessTokenPlayerOne\",\r
+
+      \        accessTokenExpiresAt: \"accessTokenPlayerOneExpiresAt\",\r
+
+      \        refreshToken: \"refreshTokenPlayerOne\",\r
+
+      \        refreshTokenExpiresAt: \"refreshTokenPlayerOneExpiresAt\",\r
+
+      \        reauthRequest: \"Auth > Player one > Login user\"\r
+
+      \    },\r
+
+      \    \"Player two\": {\r
+
+      \        accessToken: \"accessTokenPlayerTwo\",\r
+
+      \        accessTokenExpiresAt: \"accessTokenPlayerTwoExpiresAt\",\r
+
+      \        reauthRequest: \"Auth > Player two > Use guest\"\r
+
+      \    },\r
+
+      \    \"Player three\": {\r
+
+      \        accessToken: \"accessTokenPlayerThree\",\r
+
+      \        accessTokenExpiresAt: \"accessTokenPlayerThreeExpiresAt\",\r
+
+      \        reauthRequest: \"Auth > Player three > Use guest\"\r
+
+      \    },\r
+
+      \    \"Player four\": {\r
+
+      \        accessToken: \"accessTokenPlayerFour\",\r
+
+      \        accessTokenExpiresAt: \"accessTokenPlayerFourExpiresAt\",\r
+
+      \        reauthRequest: \"Auth > Player four > Use guest\"\r
+
+      \    }\r
+
+      };\r
+
+      \r
+
+      const BUFFER_MS = 30_000;\r
+
+      const REFRESH_TIMEOUT_MS = 3000;\r
+
+      let requestBlocked = false;\r
+
+      \r
+
+      function getLocationNames() {\r
+
+      \    const executionLocation = pm.execution && pm.execution.location;\r
+
+      \    if (Array.isArray(executionLocation)) {\r
+
+      \        return executionLocation\r
+
+      \            .map((entry) => typeof entry === \"string\" ? entry : entry
+      && entry.name)\r
+
+      \            .filter(Boolean);\r
+
+      \    }\r
+
+      \r
+
+      \    if (executionLocation && Array.isArray(executionLocation.current))
+      {\r
+
+      \        return executionLocation.current\r
+
+      \            .map((entry) => typeof entry === \"string\" ? entry : entry
+      && entry.name)\r
+
+      \            .filter(Boolean);\r
+
+      \    }\r
+
+      \r
+
+      \    return [];\r
+
+      }\r
+
+      \r
+
+      function blockRequest(message) {\r
+
+      \    requestBlocked = true;\r
+
+      \    console.error(message);\r
+
+      \r
+
+      \    if (pm.execution && typeof pm.execution.skipRequest === \"function\")
+      {\r
+
+      \        pm.execution.skipRequest();\r
+
+      \    }\r
+
+      }\r
+
+      \r
+
+      function getExpiresAt(variableName) {\r
+
+      \    return Number(pm.environment.get(variableName) || 0);\r
+
+      }\r
+
+      \r
+
+      function persistUserSession(response) {\r
+
+      \    const now = Date.now();\r
+
+      \    pm.environment.set(\"accessTokenPlayerOne\", response.accessToken);\r
+
+      \    pm.environment.set(\"refreshTokenPlayerOne\",
+      response.refreshToken);\r
+
+      \    pm.environment.set(\"accessTokenPlayerOneExpiresAt\", String(now +
+      (response.accessTokenExpiresIn * 1000)));\r
+
+      \    pm.environment.set(\"refreshTokenPlayerOneExpiresAt\", String(now +
+      (response.refreshTokenExpiresIn * 1000)));\r
+
+      }\r
+
+      \r
+
+      const locationNames = getLocationNames();\r
+
+      const playerName = locationNames.find((name) =>
+      Object.prototype.hasOwnProperty.call(PLAYER_CONFIG, name));\r
+
+      const shouldHandleRequest = !locationNames.includes(\"Auth\") &&
+      Boolean(playerName);\r
+
+      \r
+
+      if (shouldHandleRequest) {\r
+
+      \    const player = PLAYER_CONFIG[playerName];\r
+
+      \    const now = Date.now();\r
+
+      \    const accessToken = pm.environment.get(player.accessToken) || \"\";\r
+
+      \    const accessTokenExpiresAt =
+      getExpiresAt(player.accessTokenExpiresAt);\r
+
+      \    const accessTokenStillValid = accessToken && accessTokenExpiresAt >
+      (now + BUFFER_MS);\r
+
+      \r
+
+      \    if (!accessTokenStillValid) {\r
+
+      \        if (!player.refreshToken) {\r
+
+      \            blockRequest(`${playerName} no tiene una sesion guest
+      vigente. Ejecuta ${player.reauthRequest} antes de reintentar esta
+      request.`);\r
+
+      \        }\r
+
+      \r
+
+      \        if (!requestBlocked) {\r
+
+      \            const refreshToken = pm.environment.get(player.refreshToken)
+      || \"\";\r
+
+      \            const refreshTokenExpiresAt =
+      getExpiresAt(player.refreshTokenExpiresAt);\r
+
+      \r
+
+      \            if (!refreshToken || refreshTokenExpiresAt <= now) {\r
+
+      \                blockRequest(`${playerName} no tiene un refresh token
+      vigente. Ejecuta ${player.reauthRequest} antes de reintentar esta
+      request.`);\r
+
+      \            }\r
+
+      \r
+
+      \            if (!requestBlocked) {\r
+
+      \                pm.sendRequest({\r
+
+      \                    url: \"{{URL_BASE_TRUCO_HTTP}}/auth/refresh\",\r
+
+      \                    method: \"POST\",\r
+
+      \                    auth: {\r
+
+      \                        type: \"noauth\"\r
+
+      \                    },\r
+
+      \                    timeout: REFRESH_TIMEOUT_MS,\r
+
+      \                    header: {\r
+
+      \                        \"Content-Type\": \"application/json\",\r
+
+      \                        \"Authorization\": \"\"\r
+
+      \                    },\r
+
+      \                    body: {\r
+
+      \                        mode: \"raw\",\r
+
+      \                        raw: JSON.stringify({\r
+
+      \                            refreshToken\r
+
+      \                        })\r
+
+      \                    }\r
+
+      \                }, (error, response) => {\r
+
+      \                    if (error) {\r
+
+      \                        blockRequest(`No se pudo refrescar la sesion de
+      ${playerName} dentro de ${REFRESH_TIMEOUT_MS}ms: ${error.message}`);\r
+
+      \                        return;\r
+
+      \                    }\r
+
+      \r
+
+      \                    if (!response || response.code !== 200) {\r
+
+      \                        blockRequest(`El refresh de ${playerName} fallo
+      con status ${response ? response.code : \"desconocido\"}. Ejecuta
+      ${player.reauthRequest}.`);\r
+
+      \                        return;\r
+
+      \                    }\r
+
+      \r
+
+      \                    persistUserSession(response.json());\r
+
+      \                });\r
+
+      \            }\r
+
+      \        }\r
+
+      \    }\r
+
+      }"

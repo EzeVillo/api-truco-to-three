@@ -12,21 +12,43 @@ import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
 class CleanArchitectureTest {
 
   @ArchTest
-  static final ArchRule layered_architecture_must_be_respected = layeredArchitecture().consideringOnlyDependenciesInLayers()
-      .layer("Domain").definedBy("..domain..").layer("Application").definedBy("..application..")
-      .layer("Infrastructure").definedBy("..infrastructure..").whereLayer("Domain")
+  static final ArchRule truco_layered_architecture_must_be_respected = layeredArchitecture().consideringOnlyDependenciesInLayers()
+      .layer("Domain").definedBy("com.villo.truco.domain..").layer("Application")
+      .definedBy("com.villo.truco.application..").layer("Infrastructure")
+      .definedBy("com.villo.truco.infrastructure..").whereLayer("Domain")
       .mayOnlyBeAccessedByLayers("Application", "Infrastructure").whereLayer("Application")
       .mayOnlyBeAccessedByLayers("Infrastructure").whereLayer("Infrastructure")
       .mayNotBeAccessedByAnyLayer();
 
   @ArchTest
-  static final ArchRule domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
-      .that().resideInAPackage("..domain..").should().dependOnClassesThat()
-      .resideInAnyPackage("..application..", "..infrastructure..", "org.springframework..");
+  static final ArchRule auth_layered_architecture_must_be_respected = layeredArchitecture().consideringOnlyDependenciesInLayers()
+      .layer("AuthDomain").definedBy("com.villo.truco.auth.domain..").layer("AuthApplication")
+      .definedBy("com.villo.truco.auth.application..").layer("AuthInfrastructure")
+      .definedBy("com.villo.truco.auth.infrastructure..").whereLayer("AuthDomain")
+      .mayOnlyBeAccessedByLayers("AuthApplication", "AuthInfrastructure")
+      .whereLayer("AuthApplication").mayOnlyBeAccessedByLayers("AuthInfrastructure")
+      .whereLayer("AuthInfrastructure").mayNotBeAccessedByAnyLayer();
 
   @ArchTest
-  static final ArchRule application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
-      .that().resideInAPackage("..application..").should().dependOnClassesThat()
+  static final ArchRule truco_domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.domain..").should().dependOnClassesThat()
+      .resideInAnyPackage("com.villo.truco.application..", "com.villo.truco.infrastructure..",
+          "org.springframework..");
+
+  @ArchTest
+  static final ArchRule auth_domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.auth.domain..").should().dependOnClassesThat()
+      .resideInAnyPackage("com.villo.truco.auth.application..",
+          "com.villo.truco.auth.infrastructure..", "org.springframework..");
+
+  @ArchTest
+  static final ArchRule truco_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.application..").should().dependOnClassesThat()
+      .resideInAnyPackage("org.springframework..");
+
+  @ArchTest
+  static final ArchRule auth_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.auth.application..").should().dependOnClassesThat()
       .resideInAnyPackage("org.springframework..");
 
   @ArchTest
@@ -43,9 +65,14 @@ class CleanArchitectureTest {
       .haveFullyQualifiedName("com.villo.truco.domain.model.chat.ChatMessageSnapshot");
 
   @ArchTest
-  static final ArchRule http_layer_must_use_input_ports_not_usecase_implementations = ArchRuleDefinition.noClasses()
-      .that().resideInAPackage("..infrastructure.http..").should().dependOnClassesThat()
-      .resideInAPackage("..application.usecases..");
+  static final ArchRule truco_http_layer_must_use_input_ports_not_usecase_implementations = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.infrastructure.http..").should()
+      .dependOnClassesThat().resideInAPackage("..application.usecases..");
+
+  @ArchTest
+  static final ArchRule auth_http_layer_must_use_input_ports_not_usecase_implementations = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.auth.infrastructure.http..").should()
+      .dependOnClassesThat().resideInAPackage("..auth.application.usecases..");
 
   @ArchTest
   static final ArchRule bot_domain_must_not_depend_on_match_domain = ArchRuleDefinition.noClasses()
