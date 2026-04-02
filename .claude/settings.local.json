@@ -61,7 +61,23 @@
       "Bash(perl -i -0pe 's/this\\\\.cupEventNotifier\\\\.publishDomainEvents\\\\\\(cup\\\\.getId\\\\\\(\\\\\\), cup\\\\.getParticipants\\\\\\(\\\\\\),\\\\n        cup\\\\.getDomainEvents\\\\\\(\\\\\\)\\\\\\);/this.cupEventNotifier.publishDomainEvents\\(cup.getCupDomainEvents\\(\\)\\);/g' \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/AdvanceCupCommandHandler.java\" \"C:/Users/ezevi_30ey2ks/Desktop/Proyectos/truco-master/src/main/java/com/villo/truco/application/usecases/commands/JoinCupCommandHandler.java\")",
       "Bash(__NEW_LINE_4463688fc5f6dcfc__ perl:*)",
       "Bash(git mv:*)",
-      "Bash(xargs sed:*)"
+      "Bash(xargs sed:*)",
+      "Bash(cmd.exe /C \"set JDK_JAVA_OPTIONS=-Djava.io.tmpdir=C:/Temp && gradlew.bat test\")",
+      "Bash(cmd.exe /C \"set JDK_JAVA_OPTIONS=-Djava.io.tmpdir=C:/Temp && gradlew.bat test 2>&1\")",
+      "Bash(cmd.exe /C \"set JDK_JAVA_OPTIONS=-Djava.io.tmpdir=C:/Temp && gradlew.bat test > C:/Temp/gradle_out.txt 2>&1\")",
+      "Read(//c/Temp/**)",
+      "Bash(powershell.exe -Command '$env:JDK_JAVA_OPTIONS=\"\"-Djava.io.tmpdir=C:/Temp\"\"; $output = & \"\".\\\\gradlew.bat\"\" test 2>&1; $output | Out-File -FilePath C:\\\\Temp\\\\gradle_ps.txt; Write-Host \"\"Exit: $LASTEXITCODE\"\"')",
+      "Read(//c/tmp/**)",
+      "Bash(java -Djava.io.tmpdir=C:/Temp TestPipe)",
+      "Bash(echo \"TEMP en bash: $TEMP\")",
+      "Bash(echo \"TMP en bash: $TMP\")",
+      "Bash(java -XshowSettings:all -version)",
+      "Bash(powershell.exe -Command 'Write-Host \"\"TEMP en PS: $env:TEMP\"\"; Write-Host \"\"TMP en PS: $env:TMP\"\"; java -XshowSettings:all -version 2>&1 | Select-String tmpdir')",
+      "Read(//c/Users/ezevi_30ey2ks/.jdks/ms-21.0.9/**)",
+      "Bash(java TestAutobind)",
+      "Bash(export TEMP=\"C:\\\\Temp\")",
+      "Bash(export TMP=\"C:\\\\Temp\")",
+      "Bash(git status:*)"
     ]
   }
 }

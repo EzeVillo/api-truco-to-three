@@ -14,7 +14,7 @@ games.
 - ligas round-robin
 - copas single elimination
 - chat por recurso
-- autenticacion JWT
+- autenticacion con access token corto para usuarios y refresh token rotado
 - REST + WebSocket/STOMP
 - persistencia con PostgreSQL + Flyway
 - health checks, metricas y schedulers de timeout
@@ -40,7 +40,8 @@ games.
 ## Capacidades
 
 - Auth:
-  registro, login y acceso guest con JWT.
+  register/login con access token corto + refresh token rotado y acceso guest con access token
+  largo.
 - Match:
   crear, unirse, iniciar, jugar carta, cantar/responder truco, cantar/responder envido, fold,
   abandono y consulta de estado.
@@ -143,6 +144,19 @@ Valores por defecto definidos en `application.yaml`:
 - `TRUCO_JWT_SECRET=truco-local-dev-secret-key-32-bytes`
 - `TRUCO_JWT_ISSUER=truco-api`
 - `TRUCO_JWT_AUDIENCE=truco-clients`
+- `TRUCO_USER_ACCESS_TOKEN_EXPIRATION_SECONDS=900`
+- `TRUCO_GUEST_ACCESS_TOKEN_EXPIRATION_SECONDS=604800`
+- `TRUCO_REFRESH_TOKEN_EXPIRATION_SECONDS=2592000`
+
+### Autenticacion
+
+- `POST /api/auth/register` y `POST /api/auth/login` devuelven:
+  `playerId`, `accessToken`, `refreshToken`, `accessTokenExpiresIn`, `refreshTokenExpiresIn`
+- `POST /api/auth/refresh` rota siempre el refresh token y devuelve un nuevo par de tokens
+- `DELETE /api/auth/logout` revoca solo la sesion asociada al refresh token enviado
+- `POST /api/auth/guest` devuelve solo `playerId`, `accessToken` y `accessTokenExpiresIn`
+- WebSocket sigue autenticando solo con `accessToken`; si el FE refresca, reconecta con el token
+  nuevo
 
 ### Ejecutar la aplicacion
 

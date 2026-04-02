@@ -29,7 +29,9 @@ truco:
     jwt-secret: ${TRUCO_JWT_SECRET:truco-local-dev-secret-key-32-bytes}
     issuer: ${TRUCO_JWT_ISSUER:truco-api}
     audience: ${TRUCO_JWT_AUDIENCE:truco-clients}
-    access-token-expiration-seconds: 86400
+    user-access-token-expiration-seconds: ${TRUCO_USER_ACCESS_TOKEN_EXPIRATION_SECONDS:900}
+    guest-access-token-expiration-seconds: ${TRUCO_GUEST_ACCESS_TOKEN_EXPIRATION_SECONDS:604800}
+    refresh-token-expiration-seconds: ${TRUCO_REFRESH_TOKEN_EXPIRATION_SECONDS:2592000}
 
 logging:
   pattern:

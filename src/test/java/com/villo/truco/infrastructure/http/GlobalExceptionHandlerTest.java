@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.exceptions.ApplicationException;
 import com.villo.truco.application.exceptions.ApplicationStatus;
+import com.villo.truco.auth.domain.model.auth.exceptions.InvalidUserSessionRefreshException;
 import com.villo.truco.domain.shared.DomainException;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -84,6 +85,19 @@ class GlobalExceptionHandlerTest {
     final var response = handler.handleApplicationException(ex);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  @Test
+  @DisplayName("InvalidUserSessionRefreshException -> 401")
+  void invalidUserSessionRefresh() {
+
+    final var ex = new InvalidUserSessionRefreshException();
+
+    final var response = handler.handleInvalidUserSessionRefresh(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().errorCode()).isEqualTo("InvalidUserSessionRefreshException");
   }
 
   @Test

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.villo.truco.application.exceptions.ApplicationException;
 import com.villo.truco.application.exceptions.ApplicationStatus;
+import com.villo.truco.auth.domain.model.auth.exceptions.InvalidUserSessionRefreshException;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import java.time.Instant;
@@ -79,6 +80,17 @@ public class GlobalExceptionHandler {
       case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
       case UNPROCESSABLE -> HttpStatus.UNPROCESSABLE_CONTENT;
     };
+  }
+
+  @ExceptionHandler(InvalidUserSessionRefreshException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidUserSessionRefresh(
+      final InvalidUserSessionRefreshException ex) {
+
+    LOGGER.warn("Domain exception mapped to {}: {}", HttpStatus.UNAUTHORIZED, ex.getMessage(), ex);
+
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+        new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now(),
+            MDC.get(REQUEST_ID_KEY)));
   }
 
   @ExceptionHandler(DomainException.class)

@@ -4,6 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "truco.security")
 public record TrucoSecurityProperties(String jwtSecret, String issuer, String audience,
-                                      long accessTokenExpirationSeconds) {
+                                      long userAccessTokenExpirationSeconds,
+                                      long guestAccessTokenExpirationSeconds,
+                                      long refreshTokenExpirationSeconds) {
 
 }
