@@ -49,10 +49,17 @@ Segun configuracion de seguridad:
 - Requieren Bearer token:
     - Todo `/api/**` no listado arriba (matches, leagues, etc.)
 
-### 1.3 Regla de pertenencia de token
+### 1.3 Regla de autorizacion en recursos de juego
 
-En endpoints protegidos de match, el token debe tener el mismo `matchId` del path.
-Si no coincide, responde `401`.
+En endpoints protegidos alcanza con un Bearer token valido.
+
+La pertenencia al recurso y las reglas de acceso se validan dentro de los casos de uso:
+
+- un jugador solo puede operar sobre partidas en las que participa
+- un espectador solo puede consultar una partida si ya quedo registrado como espectador de esa
+  partida
+- spectate solo esta permitido para miembros de la misma liga o copa del match, nunca para uno de
+  los dos jugadores activos
 
 ### 1.4 IDs
 
@@ -501,6 +508,86 @@ Errores:
 - `404` si la partida no existe
 - `422` si el jugador no pertenece a la partida
 
+### 4.12 Obtener estado de partida como espectador
+
+`GET /api/matches/{matchId}/spectate`
+
+Auth: Bearer requerido.
+
+Request body: sin body.
+
+Response `200`:
+
+```json
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+  "status": "IN_PROGRESS",
+  "gamesWonPlayerOne": 1,
+  "gamesWonPlayerTwo": 0,
+  "matchWinner": null,
+  "currentRound": {
+    "status": "IN_PROGRESS",
+    "currentTurn": "juancho",
+    "scorePlayerOne": 2,
+    "scorePlayerTwo": 1,
+    "roundStatus": "PLAYING",
+    "currentTrucoCall": "TRUCO",
+    "winner": null,
+    "playedHands": [
+      {
+        "cardPlayerOne": {
+          "suit": "ORO",
+          "number": 3
+        },
+        "cardPlayerTwo": {
+          "suit": "COPA",
+          "number": 5
+        },
+        "winner": "juancho"
+      }
+    ],
+    "currentHand": {
+      "cardPlayerOne": null,
+      "cardPlayerTwo": null,
+      "mano": "martina"
+    }
+  },
+  "spectatorCount": 3
+}
+```
+
+Reglas:
+
+- devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- solo funciona si el jugador ya esta registrado como espectador de ese match
+- hoy ese registro se produce al suscribirse por STOMP a `/user/queue/match-spectate` enviando el
+  header nativo `matchId`
+
+Errores:
+
+- `404` si la partida no existe
+- `422` si el jugador no esta registrado como espectador de esa partida
+
+### 4.13 Flujo de spectate
+
+El flujo actual de spectate es WebSocket-first:
+
+1. Conectar STOMP con `Authorization: Bearer <jwt>`.
+2. Suscribirse a `/user/queue/match-spectate`.
+3. En esa `SUBSCRIBE`, enviar header nativo `matchId: <uuid-del-match>`.
+4. Si el alta es valida, el backend registra el espectador y envia `SPECTATE_STATE`.
+5. Desde ese momento, `GET /api/matches/{matchId}/spectate` devuelve el snapshot REST del mismo
+   estado de espectador.
+
+Restricciones de negocio:
+
+- el match debe estar `IN_PROGRESS`
+- el espectador debe pertenecer a la misma liga o copa del match
+- un jugador no puede spectear su propio match
+- un jugador no puede spectear dos matches al mismo tiempo
+- al terminar el match, o si el espectador pasa a ser jugador activo en una liga/copa, el backend
+  lo desregistra automaticamente
+
 ## 5. API REST - Leagues
 
 ### 5.1 Crear liga
@@ -922,11 +1009,16 @@ El token debe contener `sub` (playerId).
 Suscripciones permitidas por interceptor:
 
 - `/user/queue/match` — eventos de match
+- `/user/queue/match-spectate` — alta y eventos de espectador
 - `/user/queue/league` — eventos de liga
 - `/user/queue/cup` — eventos de copa
 - `/user/queue/chat` — eventos de chat en tiempo real
 
 Cualquier otro destino se rechaza
+
+Para `/user/queue/match-spectate`, ademas del destino hay que enviar en la `SUBSCRIBE`:
+
+- header nativo `matchId: <uuid>`
 
 ### 9.4 Forma del evento WS
 
@@ -986,6 +1078,27 @@ Cada tipo de recurso tiene su propia estructura de evento:
 }
 ```
 
+**Spectate** (`/user/queue/match-spectate`):
+
+```json
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+  "eventType": "SPECTATE_STATE",
+  "timestamp": 1772768158123,
+  "payload": {
+    "matchState": {
+      "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+      "status": "IN_PROGRESS",
+      "gamesWonPlayerOne": 1,
+      "gamesWonPlayerTwo": 0,
+      "matchWinner": null,
+      "currentRound": null,
+      "spectatorCount": 3
+    }
+  }
+}
+```
+
 Nota: los IDs de recurso (`matchId`, `leagueId`, `cupId`, `chatId`) son campos top-level del
 evento, no dentro del `payload`.
 
@@ -1012,6 +1125,7 @@ evento, no dentro del `payload`.
 - `PLAYER_READY`
 - `HAND_RESOLVED`
 - `HAND_CHANGED`
+- `SPECTATOR_COUNT_CHANGED`
 
 ### 9.5b eventType posibles — Liga (`/user/queue/league`, todos los participantes de la liga)
 
@@ -1041,6 +1155,19 @@ evento, no dentro del `payload`.
 
 - `CHAT_CREATED` — chat creado automáticamente al iniciar match/liga/copa
 - `MESSAGE_SENT` — un participante envió un mensaje
+
+### 9.5e eventType posibles — Spectate (
+`/user/queue/match-spectate`, espectadores activos del match)
+
+- `SPECTATE_STATE` — snapshot inicial enviado al completar la suscripcion
+- `SPECTATE_ERROR` — error al intentar registrarse como espectador
+- `SPECTATOR_COUNT_CHANGED` — cambia la cantidad de espectadores del match
+- ademas se reenvian los eventos publicos del match que no estan atados a un asiento concreto
+
+No se reenvian al espectador los eventos privados por asiento:
+
+- `PLAYER_HAND_UPDATED`
+- `AVAILABLE_ACTIONS_UPDATED`
 
 ### 9.6 Payload por evento (resumen)
 
@@ -1083,6 +1210,8 @@ evento, no dentro del `payload`.
     - `{ seat, cards: [{ suit, number }] }`
 - `AVAILABLE_ACTIONS_UPDATED`:
     - `{ seat, availableActions: [{ type, parameter? }] }`
+- `SPECTATOR_COUNT_CHANGED`:
+    - `{ spectatorCount }`
 - `PLAYER_READY`:
     - `{ seat }`
 - `PLAYER_JOINED`:
@@ -1124,6 +1253,10 @@ evento, no dentro del `payload`.
     - `{ leagueId, leaders: [displayName, ...] }`
 - `CUP_FINISHED`:
     - `{ cupId, champion: displayName }`
+- `SPECTATE_STATE`:
+    - `{ matchState }` - `matchState` respeta la forma de `GET /api/matches/{matchId}/spectate`
+- `SPECTATE_ERROR`:
+    - `{ error }`
 
 ## 9. API REST - Bots
 
@@ -1268,6 +1401,12 @@ Errores:
 - Los eventos de liga (`LEAGUE_*`) llegan a **todos los participantes** de la liga, no solo a los
   dos jugadores de cada partido.
 - Los eventos de copa (`CUP_*`) llegan a **todos los participantes** de la copa.
+- Spectate se activa por WebSocket, no por REST: para empezar a mirar un match hay que suscribirse
+  a `/user/queue/match-spectate` con header `matchId`.
+- Si la conexion WebSocket del espectador se corta o hace `UNSUBSCRIBE`, el backend deja de
+  registrarlo como espectador de ese match.
+- `GET /api/matches/{matchId}/spectate` sirve para refrescar el snapshot de un espectador ya
+  registrado. Si se consulta despues de perder la sesion de spectate, responde `422`.
 - En ligas, los partidos se crean **on-demand**: al iniciar la liga solo se crea el partido de la
   fecha 1. Cuando ese partido termina (o es forfeiteado), la liga activa automáticamente el
   siguiente partido elegible y envía un evento `LEAGUE_MATCH_ACTIVATED` a todos los participantes.
@@ -1297,3 +1436,15 @@ Flujo recomendado para reconectar tras una desconexión:
 
 5. Aplicar el estado del GET como base autoritativa
 6. Descartar eventos bufferados con `timestamp` anterior al GET; aplicar los posteriores
+
+### 11.2 Nota especifica para spectate
+
+Si el cliente estaba en modo espectador y la conexion se cae:
+
+1. Reconectar STOMP con el JWT vigente.
+2. Re-suscribirse a `/user/queue/match-spectate` enviando otra vez `matchId` en la `SUBSCRIBE`.
+3. Esperar el evento `SPECTATE_STATE`, que vuelve a registrar al espectador y trae el snapshot
+   inicial.
+
+No asumir que la sesion de spectate sigue viva tras una desconexion: el backend la limpia al
+procesar `UNSUBSCRIBE` o `DISCONNECT`.

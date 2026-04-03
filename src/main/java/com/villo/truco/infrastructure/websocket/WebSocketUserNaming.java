@@ -8,9 +8,14 @@ public final class WebSocketUserNaming {
 
   }
 
+  public static String userName(final String playerId) {
+
+    return playerId;
+  }
+
   public static String userName(final PlayerId playerId) {
 
-    return playerId.value().toString();
+    return userName(playerId.value().toString());
   }
 
 }

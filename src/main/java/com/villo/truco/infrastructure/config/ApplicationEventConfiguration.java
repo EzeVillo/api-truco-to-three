@@ -24,6 +24,8 @@ import com.villo.truco.infrastructure.websocket.StompChatNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompCupNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompLeagueNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompMatchNotificationHandler;
+import com.villo.truco.infrastructure.websocket.StompSpectatorCountHandler;
+import com.villo.truco.infrastructure.websocket.StompSpectatorNotificationHandler;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -97,6 +99,19 @@ public class ApplicationEventConfiguration {
   LeagueEventMetricsEventHandler leagueEventMetricsHandler() {
 
     return new LeagueEventMetricsEventHandler(this.meterRegistry);
+  }
+
+  @Bean
+  StompSpectatorNotificationHandler stompSpectatorNotificationHandler() {
+
+    return new StompSpectatorNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  StompSpectatorCountHandler stompSpectatorCountHandler() {
+
+    return new StompSpectatorCountHandler(this.messagingTemplate, this.eventNotifierHealthRegistry);
   }
 
   @Bean

@@ -16,12 +16,14 @@ import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetMatchStateUseCase;
+import com.villo.truco.application.ports.in.GetSpectateMatchStateUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
 import com.villo.truco.application.queries.GetMatchStateQuery;
+import com.villo.truco.application.queries.GetSpectateMatchStateQuery;
 import com.villo.truco.infrastructure.http.dto.request.CallEnvidoRequest;
 import com.villo.truco.infrastructure.http.dto.request.CreateMatchRequest;
 import com.villo.truco.infrastructure.http.dto.request.JoinMatchRequest;
@@ -32,6 +34,7 @@ import com.villo.truco.infrastructure.http.dto.response.CreateMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import com.villo.truco.infrastructure.http.dto.response.JoinMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
+import com.villo.truco.infrastructure.http.dto.response.SpectatorMatchStateResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -72,13 +75,15 @@ public class MatchController {
   private final FoldUseCase fold;
   private final AbandonMatchUseCase abandonMatch;
   private final GetMatchStateUseCase getMatchState;
+  private final GetSpectateMatchStateUseCase getSpectateMatchState;
 
   public MatchController(final CreateMatchUseCase createMatch, final JoinMatchUseCase joinMatch,
       final StartMatchUseCase startMatch, final PlayCardUseCase playCard,
       final CallTrucoUseCase callTruco, final RespondTrucoUseCase respondTruco,
       final CallEnvidoUseCase callEnvido, final RespondEnvidoUseCase respondEnvido,
       final FoldUseCase fold, final AbandonMatchUseCase abandonMatch,
-      final GetMatchStateUseCase getMatchState) {
+      final GetMatchStateUseCase getMatchState,
+      final GetSpectateMatchStateUseCase getSpectateMatchState) {
 
     this.createMatch = Objects.requireNonNull(createMatch);
     this.joinMatch = Objects.requireNonNull(joinMatch);
@@ -91,6 +96,7 @@ public class MatchController {
     this.fold = Objects.requireNonNull(fold);
     this.abandonMatch = Objects.requireNonNull(abandonMatch);
     this.getMatchState = Objects.requireNonNull(getMatchState);
+    this.getSpectateMatchState = Objects.requireNonNull(getSpectateMatchState);
   }
 
   @PostMapping
@@ -252,6 +258,22 @@ public class MatchController {
 
     this.abandonMatch.handle(new AbandonMatchCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{matchId}/spectate")
+  @Operation(summary = "Obtener estado de partida como espectador", description = "Devuelve estado de la partida para un espectador registrado (sin cartas ni acciones disponibles)", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Estado de partida para espectador", content = @Content(schema = @Schema(implementation = SpectatorMatchStateResponse.class))),
+      @ApiResponse(responseCode = "400", description = "No está especteando esta partida", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<SpectatorMatchStateResponse> getSpectateMatchState(
+      @Parameter(description = "ID de la partida") @PathVariable final String matchId,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    final var state = this.getSpectateMatchState.handle(
+        new GetSpectateMatchStateQuery(matchId, jwt.getSubject()));
+    return ResponseEntity.ok(SpectatorMatchStateResponse.from(state));
   }
 
 }

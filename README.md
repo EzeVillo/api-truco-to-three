@@ -13,6 +13,7 @@ games.
 - matches contra bots
 - ligas round-robin
 - copas single elimination
+- spectating de matches de ligas y copas
 - chat por recurso
 - autenticacion con access token corto para usuarios y refresh token rotado
 - REST + WebSocket/STOMP
@@ -44,17 +45,21 @@ games.
   largo.
 - Match:
   crear, unirse, iniciar, jugar carta, cantar/responder truco, cantar/responder envido, fold,
-  abandono y consulta de estado.
+  abandono, consulta de estado del jugador y consulta de estado para espectador registrado.
 - Bots:
   catalogo de personalidades y creacion de match listo para jugar.
 - League:
   creacion, join, leave, start, tabla, fixture y avance automatico.
 - Cup:
   creacion, join, leave, start, bracket, avance automatico y resolucion por forfeit.
+- Spectators:
+  solo participantes de la misma liga o copa pueden spectear matches en progreso; la vista de
+  espectador no expone cartas privadas ni acciones disponibles.
 - Chat:
   lectura, envio de mensajes, limite de 50 mensajes y rate limit de 2 segundos por jugador.
 - Tiempo real:
-  eventos privados por jugador para match, league, cup y chat.
+  eventos privados por jugador para match, league, cup y chat, mas canal de spectate para
+  snapshots y eventos publicos del match.
 
 ## Arquitectura
 
@@ -234,7 +239,12 @@ WebSocket/STOMP:
 - endpoint nativo: `/ws`
 - endpoint SockJS: `/ws-sockjs`
 - colas por usuario:
-  `/user/queue/match`, `/user/queue/league`, `/user/queue/cup`, `/user/queue/chat`
+  `/user/queue/match`, `/user/queue/match-spectate`, `/user/queue/league`, `/user/queue/cup`,
+  `/user/queue/chat`
+- spectate:
+  el alta de espectador se registra al suscribirse por STOMP a `/user/queue/match-spectate`
+  enviando header nativo `matchId`; la API expone `GET /api/matches/{matchId}/spectate` para leer
+  el snapshot del espectador ya registrado.
 
 ## Observabilidad y operacion
 

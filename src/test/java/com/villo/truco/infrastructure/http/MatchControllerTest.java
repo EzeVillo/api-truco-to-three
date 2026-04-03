@@ -14,6 +14,7 @@ import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetMatchStateUseCase;
+import com.villo.truco.application.ports.in.GetSpectateMatchStateUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
@@ -54,8 +55,9 @@ class MatchControllerTest {
     when(join.handle(any())).thenReturn(new JoinMatchDTO("m1"));
     when(get.handle(any())).thenReturn(mock(MatchStateDTO.class));
 
+    final GetSpectateMatchStateUseCase getSpectate = mock(GetSpectateMatchStateUseCase.class);
     final var controller = new MatchController(create, join, start, play, truco, respondTruco,
-        envido, respondEnvido, fold, abandon, get);
+        envido, respondEnvido, fold, abandon, get, getSpectate);
     final var jwt = jwt("11111111-1111-1111-1111-111111111111");
     final var matchId = "22222222-2222-2222-2222-222222222222";
 
