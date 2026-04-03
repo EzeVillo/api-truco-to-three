@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -81,16 +82,14 @@ public class SecurityConfiguration {
 
     return jwt -> issuer.equals(jwt.getClaimAsString("iss")) ? OAuth2TokenValidatorResult.success()
         : OAuth2TokenValidatorResult.failure(
-            new org.springframework.security.oauth2.core.OAuth2Error("invalid_token",
-                "Invalid issuer", null));
+            new OAuth2Error("invalid_token", "Invalid issuer", null));
   }
 
   private OAuth2TokenValidator<Jwt> audienceValidator(final String audience) {
 
     return jwt -> jwt.getAudience().contains(audience) ? OAuth2TokenValidatorResult.success()
         : OAuth2TokenValidatorResult.failure(
-            new org.springframework.security.oauth2.core.OAuth2Error("invalid_token",
-                "Invalid audience", null));
+            new OAuth2Error("invalid_token", "Invalid audience", null));
   }
 
 }

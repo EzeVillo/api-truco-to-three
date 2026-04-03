@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>WS Events Debug</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 16px;
+          max-width: 900px;
+        }
+        .row {
+          display: grid;
+          grid-template-columns: 180px 1fr;
+          gap: 8px;
+          margin-bottom: 10px;
+          align-items: center;
+        }
+        input, button, textarea, select {
+          font-family: inherit;
+          font-size: 14px;
+          padding: 8px;
+        }
+        textarea {
+          width: 100%;
+          min-height: 120px;
+          resize: vertical;
+        }
+        #messages {
+          border: 1px solid #ccc;
+          padding: 10px;
+          height: 360px;
+          overflow: auto;
+          white-space: pre-wrap;
+          background: #fafafa;
+        }
+        .buttons {
+          display: flex;
+          gap: 8px;
+          margin: 12px 0;
+        }
+        .hint {
+          font-size: 12px;
+          color: #555;
+          margin-top: -4px;
+          margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<h2>WebSocket /events Debug</h2>
+
+<div class="row">
+    <label for="endpointType">Endpoint type</label>
+    <select id="endpointType">
+        <option value="native">Native WS (/ws)</option>
+        <option value="sockjs">SockJS (/ws-sockjs)</option>
+    </select>
+</div>
+
+<div class="row">
+    <label for="baseUrl">Base URL</label>
+    <input id="baseUrl" value="http://localhost:8080"/>
+</div>
+
+<div class="row">
+    <label for="topic">Topic</label>
+    <select id="topic">
+        <option value="/user/queue/match">/user/queue/match</option>
+        <option value="/user/queue/match-spectate">/user/queue/match-spectate</option>
+        <option value="/user/queue/league">/user/queue/league</option>
+        <option value="/user/queue/cup">/user/queue/cup</option>
+        <option value="/user/queue/chat">/user/queue/chat</option>
+    </select>
+</div>
+
+<div class="row" id="matchIdRow" style="display: none;">
+    <label for="matchId">matchId</label>
+    <input id="matchId" placeholder="uuid required for /user/queue/match-spectate"/>
+</div>
+<div class="hint" id="matchIdHint" style="display: none;">Se envia en SUBSCRIBE como header nativo:
+    matchId: &lt;uuid&gt;
+</div>
+
+<div class="row">
+    <label for="token">Bearer token</label>
+    <textarea id="token" placeholder="paste JWT access token"></textarea>
+</div>
+<div class="hint">Se envia en CONNECT como header nativo: Authorization: Bearer &lt;token&gt;</div>
+
+<div class="buttons">
+    <button id="connectBtn">Connect + Subscribe</button>
+    <button id="disconnectBtn">Disconnect</button>
+    <button id="clearBtn">Clear log</button>
+</div>
+
+<div id="messages"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+<script>
+    const messagesEl = document.getElementById('messages');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const endpointTypeEl = document.getElementById('endpointType');
+    const baseUrlEl = document.getElementById('baseUrl');
+    const topicEl = document.getElementById('topic');
+    const matchIdEl = document.getElementById('matchId');
+    const matchIdRowEl = document.getElementById('matchIdRow');
+    const matchIdHintEl = document.getElementById('matchIdHint');
+    const tokenEl = document.getElementById('token');
+
+    let client = null;
+    let subscription = null;
+
+    function log(line, data) {
+      const ts = new Date().toISOString();
+      const msg = data !== undefined
+        ? `[${ts}] ${line}\n${typeof data === 'string' ? data : JSON.stringify(data, null, 2)}\n`
+        : `[${ts}] ${line}\n`;
+      messagesEl.textContent += msg;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function normalizeBaseUrl(url) {
+      return url.replace(/\/$/, '');
+    }
+
+    function toWsUrl(httpBase) {
+      if (httpBase.startsWith('https://')) {
+        return 'wss://' + httpBase.substring('https://'.length);
+      }
+      if (httpBase.startsWith('http://')) {
+        return 'ws://' + httpBase.substring('http://'.length);
+      }
+      return httpBase;
+    }
+
+    function disconnect() {
+      if (subscription) {
+        subscription.unsubscribe();
+        subscription = null;
+      }
+      if (client) {
+        client.deactivate();
+        client = null;
+      }
+      log('Disconnected');
+    }
+
+    function requiresMatchId(topic) {
+      return topic === '/user/queue/match-spectate';
+    }
+
+    function syncTopicFields() {
+      const showMatchId = requiresMatchId(topicEl.value);
+      matchIdRowEl.style.display = showMatchId ? 'grid' : 'none';
+      matchIdHintEl.style.display = showMatchId ? 'block' : 'none';
+      matchIdEl.disabled = !showMatchId;
+      if (!showMatchId) {
+        matchIdEl.value = '';
+      }
+    }
+
+    connectBtn.addEventListener('click', () => {
+      disconnect();
+
+      const baseUrl = normalizeBaseUrl(baseUrlEl.value.trim());
+      const topic = topicEl.value;
+      const matchId = matchIdEl.value.trim();
+      const token = tokenEl.value.trim();
+
+      if (!baseUrl || !token) {
+        log('Missing required fields: baseUrl, token');
+        return;
+      }
+
+      const connectHeaders = { Authorization: `Bearer ${token}` };
+      const subscribeHeaders = {};
+
+      if (requiresMatchId(topic)) {
+        if (!matchId) {
+          log('Missing required field: matchId for /user/queue/match-spectate');
+          return;
+        }
+        subscribeHeaders.matchId = matchId;
+      }
+
+      const useSockJs = endpointTypeEl.value === 'sockjs';
+      const wsBase = toWsUrl(baseUrl);
+
+      client = new StompJs.Client({
+        reconnectDelay: 2000,
+        connectHeaders,
+        debug: (str) => log('STOMP', str),
+        brokerURL: useSockJs ? undefined : `${wsBase}/ws`,
+        webSocketFactory: useSockJs
+          ? () => new SockJS(`${baseUrl}/ws-sockjs`)
+          : undefined,
+        onConnect: () => {
+          log(`Connected. Subscribing to ${topic}`, subscribeHeaders);
+          subscription = client.subscribe(topic, (frame) => {
+            try {
+              const parsed = JSON.parse(frame.body);
+              log('EVENT', parsed);
+            } catch (_) {
+              log('EVENT_RAW', frame.body);
+            }
+          }, subscribeHeaders);
+        },
+        onStompError: (frame) => {
+          log('STOMP ERROR', {
+            message: frame.headers['message'],
+            body: frame.body
+          });
+        },
+        onWebSocketError: (evt) => {
+          log('WS ERROR', evt);
+        },
+        onWebSocketClose: (evt) => {
+          log('WS CLOSED', { code: evt.code, reason: evt.reason });
+        }
+      });
+
+      log('Connecting...');
+      client.activate();
+    });
+
+    topicEl.addEventListener('change', syncTopicFields);
+    disconnectBtn.addEventListener('click', disconnect);
+    clearBtn.addEventListener('click', () => {
+      messagesEl.textContent = '';
+    });
+
+    syncTopicFields();
+</script>
+</body>
+</html>
