@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/envido/respond"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"response\": \"QUIERO\"\r
+
+    }"
+examples: ./.resources/Respond envido.resources/examples
+order: 8000

@@ -1,0 +1,33 @@
+$kind: http-example
+request:
+  url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/play-card"
+  method: POST
+  body:
+    type: json
+    content: "{\r
+
+      \    \"suit\": \"COPA\",\r
+
+      \    \"number\": 10\r
+
+      }"
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+    x-request-id: 9a11d17f-687a-4f32-a142-3ff93deba89c
+    x-content-type-options: nosniff
+    x-xss-protection: "0"
+    cache-control: no-cache, no-store, max-age=0, must-revalidate
+    pragma: no-cache
+    expires: "0"
+    x-frame-options: DENY
+    date: Tue, 24 Mar 2026 17:38:23 GMT
+    keep-alive: timeout=60
+    connection: keep-alive
+    Content-Type: application/json
+  body:
+    type: text
+    content: ""
+order: 30000

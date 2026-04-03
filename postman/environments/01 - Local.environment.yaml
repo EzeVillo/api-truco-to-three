@@ -1,54 +1,71 @@
 name: 01 - Local
 values:
   - key: URL_BASE_TRUCO_HTTP
-    value: localhost:8080/api
+    value: 'localhost:8080/api'
     enabled: true
   - key: matchId
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerOne
-    value: ""
+    value: ''
     enabled: true
   - key: refreshTokenPlayerOne
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerOneExpiresAt
-    value: ""
+    value: ''
     enabled: true
   - key: refreshTokenPlayerOneExpiresAt
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerTwo
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerTwoExpiresAt
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerThree
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerThreeExpiresAt
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerFour
-    value: ""
+    value: ''
     enabled: true
   - key: accessTokenPlayerFourExpiresAt
-    value: ""
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerFive
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerFiveExpiresAt
+    value: ''
     enabled: true
   - key: inviteCode
-    value: ""
+    value: ''
     enabled: true
   - key: leagueId
-    value: ""
+    value: ''
     enabled: true
   - key: leagueInviteCode
-    value: ""
+    value: ''
     enabled: true
   - key: cupId
-    value: ""
+    value: ''
     enabled: true
   - key: cupInviteCode
-    value: ""
+    value: ''
     enabled: true
-color: null
+  - key: parentType
+    value: ''
+    enabled: true
+  - key: parentId
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerSix
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerSixExpiresAt
+    value: ''
+    enabled: true

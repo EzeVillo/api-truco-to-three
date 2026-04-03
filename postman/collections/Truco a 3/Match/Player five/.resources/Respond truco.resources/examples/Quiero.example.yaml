@@ -1,0 +1,31 @@
+$kind: http-example
+request:
+  url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/truco/respond"
+  method: POST
+  body:
+    type: json
+    content: "{\r
+
+      \    \"response\": \"QUIERO\"\r
+
+      }"
+response:
+  statusCode: 204
+  statusText: No Content
+  headers:
+    - key: Vary
+      value: Origin
+    - key: Vary
+      value: Access-Control-Request-Method
+    - key: Vary
+      value: Access-Control-Request-Headers
+    - key: Date
+      value: Tue, 03 Mar 2026 22:42:04 GMT
+    - key: Keep-Alive
+      value: timeout=60
+    - key: Connection
+      value: keep-alive
+  body:
+    type: text
+    content: ""
+order: 1000

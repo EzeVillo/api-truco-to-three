@@ -12,6 +12,8 @@ scripts:
 
       \r
 
+      \    console.log(\"Player four: \" + response.playerId)\r
+
       \    pm.environment.set(\"accessTokenPlayerFour\",
       response.accessToken);\r
 

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/chats/{{chatId}}/messages"
+method: GET
+order: 1000

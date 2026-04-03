@@ -26,6 +26,16 @@ scripts:
                   accessToken: "accessTokenPlayerFour",
                   accessTokenExpiresAt: "accessTokenPlayerFourExpiresAt",
                   reauthRequest: "Auth > Player four > Use guest"
+              },
+              "Player five": {
+                  accessToken: "accessTokenPlayerFive",
+                  accessTokenExpiresAt: "accessTokenPlayerFiveExpiresAt",
+                  reauthRequest: "Auth > Player five > Use guest"
+              },
+              "Player six": {
+                  accessToken: "accessTokenPlayerSix",
+                  accessTokenExpiresAt: "accessTokenPlayerSixExpiresAt",
+                  reauthRequest: "Auth > Player six > Use guest"
               }
           };
 

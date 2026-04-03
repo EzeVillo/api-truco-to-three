@@ -10,7 +10,9 @@ scripts:
 
       \    const response = pm.response.json();\r
 
-      \r
+      \    \r
+
+      \    console.log(\"Player two: \" + response.playerId)\r
 
       \    pm.environment.set(\"accessTokenPlayerTwo\", response.accessToken);\r
 

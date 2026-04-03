@@ -12,12 +12,12 @@ scripts:
 
       \    \r
 
-      \    console.log(\"Player three: \" + response.playerId)\r
+      \    console.log(\"Player six: \" + response.playerId)\r
 
-      \    pm.environment.set(\"accessTokenPlayerThree\",
+      \    pm.environment.set(\"accessTokenPlayerSix\",
       response.accessToken);\r
 
-      \    pm.environment.set(\"accessTokenPlayerThreeExpiresAt\", String(now +
+      \    pm.environment.set(\"accessTokenPlayerSixExpiresAt\", String(now +
       (response.accessTokenExpiresIn * 1000)));\r
 
       }"

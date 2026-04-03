@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/truco/respond"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"response\": \"QUIERO\"\r
+
+    }"
+examples: ./.resources/Respond truco.resources/examples
+order: 7000

@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}"
+method: GET
+body:
+  type: text
+  content: "{\r
+
+    \    \"response\": \"QUIERO\"\r
+
+    }"
+order: 3000
