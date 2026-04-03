@@ -1,11 +1,9 @@
-# Truco Master - Backend
+# Truco a 3 puntos - Backend
 
 Backend de Truco Argentino con DDD estricto, Spring Boot y eventos en tiempo real.
 El dominio implementa la variante de "truco a 3": cada game se gana llegando exactamente a `3`
 puntos; si un jugador se pasa, pierde ese game. Un match se resuelve al mejor de `1`, `3` o `5`
 games.
-
-## Estado actual
 
 ## Estado del proyecto
 
