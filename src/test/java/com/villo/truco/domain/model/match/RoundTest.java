@@ -50,7 +50,9 @@ class RoundTest {
   private void playFullHand() {
 
     this.playCardFromHand(this.round.getCurrentTurn());
-    this.playCardFromHand(this.round.getCurrentTurn());
+    if (this.round.getStatus() != RoundStatus.FINISHED) {
+      this.playCardFromHand(this.round.getCurrentTurn());
+    }
   }
 
   @Test
