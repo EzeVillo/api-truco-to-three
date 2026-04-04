@@ -14,10 +14,11 @@ public final class MatchSnapshotExtractor {
     final RoundSnapshot roundSnapshot = currentRound != null ? extractRound(currentRound) : null;
 
     return new MatchSnapshot(match.getId(), match.getPlayerOne(), match.getPlayerTwo(),
-        match.getInviteCode(), match.getRules(), match.getStatus(), match.getGamesWonPlayerOne(),
-        match.getGamesWonPlayerTwo(), match.getGameNumber(), match.getScorePlayerOne(),
-        match.getScorePlayerTwo(), match.getRoundNumber(), match.isReadyPlayerOne(),
-        match.isReadyPlayerTwo(), match.getFirstManoOfGame(), roundSnapshot);
+        match.getInviteCode(), match.getRules(), match.getVisibility(), match.getStatus(),
+        match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(), match.getGameNumber(),
+        match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getRoundNumber(),
+        match.isReadyPlayerOne(), match.isReadyPlayerTwo(), match.getFirstManoOfGame(),
+        roundSnapshot);
   }
 
   private static RoundSnapshot extractRound(final Round round) {

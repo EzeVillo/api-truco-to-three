@@ -18,6 +18,7 @@ import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ class CupTest {
 
   private static Cup createStartedCup(final PlayerId... players) {
 
-    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3));
+    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3), Visibility.PRIVATE);
     for (int i = 1; i < players.length; i++) {
       cup.join(players[i], cup.getInviteCode());
     }
@@ -56,7 +57,7 @@ class CupTest {
   void createInitialState() {
 
     final var creator = PlayerId.generate();
-    final var cup = Cup.create(creator, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PRIVATE);
 
     assertThat(cup.getStatus()).isEqualTo(CupStatus.WAITING_FOR_PLAYERS);
     assertThat(cup.getInviteCode()).isNotNull();
@@ -68,23 +69,23 @@ class CupTest {
   @DisplayName("create: lanza InvalidCupPlayersException si numberOfPlayers < 4")
   void createRejectsFewerThan4Players() {
 
-    assertThatThrownBy(() -> Cup.create(PlayerId.generate(), 3, GamesToPlay.of(1))).isInstanceOf(
-        InvalidCupPlayersException.class);
+    assertThatThrownBy(() -> Cup.create(PlayerId.generate(), 3, GamesToPlay.of(1),
+        Visibility.PRIVATE)).isInstanceOf(InvalidCupPlayersException.class);
   }
 
   @Test
   @DisplayName("create: lanza InvalidCupPlayersException si numberOfPlayers > 8")
   void createRejectsMoreThan8Players() {
 
-    assertThatThrownBy(() -> Cup.create(PlayerId.generate(), 9, GamesToPlay.of(1))).isInstanceOf(
-        InvalidCupPlayersException.class);
+    assertThatThrownBy(() -> Cup.create(PlayerId.generate(), 9, GamesToPlay.of(1),
+        Visibility.PRIVATE)).isInstanceOf(InvalidCupPlayersException.class);
   }
 
   @Test
   @DisplayName("join: transiciona a WAITING_FOR_START cuando se llena")
   void joinTransitionsToWaitingForStartWhenFull() {
 
-    final var cup = Cup.create(PlayerId.generate(), 4, GamesToPlay.of(1));
+    final var cup = Cup.create(PlayerId.generate(), 4, GamesToPlay.of(1), Visibility.PRIVATE);
     cup.join(PlayerId.generate(), cup.getInviteCode());
     cup.join(PlayerId.generate(), cup.getInviteCode());
     cup.join(PlayerId.generate(), cup.getInviteCode());
@@ -96,7 +97,7 @@ class CupTest {
   @DisplayName("join: lanza CupNotWaitingException cuando la copa ya está llena (estado WAITING_FOR_START)")
   void joinRejectsWhenFull() {
 
-    final var cup = Cup.create(PlayerId.generate(), 4, GamesToPlay.of(1));
+    final var cup = Cup.create(PlayerId.generate(), 4, GamesToPlay.of(1), Visibility.PRIVATE);
     cup.join(PlayerId.generate(), cup.getInviteCode());
     cup.join(PlayerId.generate(), cup.getInviteCode());
     cup.join(PlayerId.generate(), cup.getInviteCode());
@@ -110,7 +111,7 @@ class CupTest {
   void joinRejectsDuplicatePlayer() {
 
     final var creator = PlayerId.generate();
-    final var cup = Cup.create(creator, 4, GamesToPlay.of(1));
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(1), Visibility.PRIVATE);
 
     assertThatThrownBy(() -> cup.join(creator, cup.getInviteCode())).isInstanceOf(
         PlayerAlreadyInCupException.class);
@@ -121,7 +122,7 @@ class CupTest {
   void leaveCreatorCancelsCup() {
 
     final var creator = PlayerId.generate();
-    final var cup = Cup.create(creator, 4, GamesToPlay.of(1));
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(1), Visibility.PRIVATE);
     cup.join(PlayerId.generate(), cup.getInviteCode());
 
     cup.leave(creator);
@@ -135,7 +136,7 @@ class CupTest {
   void leaveFromWaitingForStartTransitionsBack() {
 
     final var players = generatePlayers(4);
-    final var cup = Cup.create(players[0], 4, GamesToPlay.of(1));
+    final var cup = Cup.create(players[0], 4, GamesToPlay.of(1), Visibility.PRIVATE);
     for (int i = 1; i < 4; i++) {
       cup.join(players[i], cup.getInviteCode());
     }
@@ -151,7 +152,7 @@ class CupTest {
   void startRejectsNonCreator() {
 
     final var players = generatePlayers(4);
-    final var cup = Cup.create(players[0], 4, GamesToPlay.of(1));
+    final var cup = Cup.create(players[0], 4, GamesToPlay.of(1), Visibility.PRIVATE);
     for (int i = 1; i < 4; i++) {
       cup.join(players[i], cup.getInviteCode());
     }
@@ -165,7 +166,7 @@ class CupTest {
   void startRejectsWhenNotReady() {
 
     final var creator = PlayerId.generate();
-    final var cup = Cup.create(creator, 4, GamesToPlay.of(1));
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(1), Visibility.PRIVATE);
 
     assertThatThrownBy(() -> cup.start(creator)).isInstanceOf(CupNotReadyException.class);
   }
@@ -175,7 +176,7 @@ class CupTest {
   void startReturnsPendingBoutPairings() {
 
     final var players = generatePlayers(4);
-    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3));
+    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3), Visibility.PRIVATE);
     for (int i = 1; i < players.length; i++) {
       cup.join(players[i], cup.getInviteCode());
     }

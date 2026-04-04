@@ -24,10 +24,13 @@ import com.villo.truco.domain.ports.CompetitionMembershipResolver;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
 import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
@@ -82,6 +85,18 @@ class SpectateMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
   }
 
@@ -118,6 +133,18 @@ class SpectateMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
   }
 
@@ -142,7 +169,8 @@ class SpectateMatchCommandHandlerTest {
       public Optional<League> findByMatchId(final MatchId id) {
 
         if (id.equals(matchId)) {
-          final var league = League.create(participants[0], participants.length, GamesToPlay.of(3));
+          final var league = League.create(participants[0], participants.length, GamesToPlay.of(3),
+              Visibility.PRIVATE);
           for (int i = 1; i < participants.length; i++) {
             league.join(participants[i], league.getInviteCode());
           }
@@ -167,6 +195,18 @@ class SpectateMatchCommandHandlerTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
   }
@@ -210,6 +250,18 @@ class SpectateMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
   }
 
@@ -251,6 +303,17 @@ class SpectateMatchCommandHandlerTest {
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
   }

@@ -12,6 +12,7 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,8 @@ class LeagueTest {
 
   private static League createStartedLeague(final PlayerId... players) {
 
-    final var league = League.create(players[0], players.length, GamesToPlay.of(3));
+    final var league = League.create(players[0], players.length, GamesToPlay.of(3),
+        Visibility.PRIVATE);
     for (int i = 1; i < players.length; i++) {
       league.join(players[i], league.getInviteCode());
     }

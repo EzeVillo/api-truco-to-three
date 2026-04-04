@@ -29,6 +29,8 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -75,6 +77,18 @@ class CreateBotMatchCommandHandlerTest {
 
       return List.of();
     }
+
+    @Override
+    public List<Match> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
+    }
   };
 
   private static final LeagueQueryRepository NO_LEAGUE_REPO = new LeagueQueryRepository() {
@@ -113,6 +127,18 @@ class CreateBotMatchCommandHandlerTest {
 
       return List.of();
     }
+
+    @Override
+    public List<League> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
+    }
   };
 
   private static final CupQueryRepository NO_CUP_REPO = new CupQueryRepository() {
@@ -150,6 +176,17 @@ class CreateBotMatchCommandHandlerTest {
     public List<CupId> findIdleCupIds(final Instant idleSince) {
 
       return List.of();
+    }
+
+    private List<Cup> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
     }
   };
 

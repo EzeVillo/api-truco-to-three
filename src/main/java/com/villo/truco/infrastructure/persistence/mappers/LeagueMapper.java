@@ -13,6 +13,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.persistence.entities.LeagueFixtureJpaEntity;
 import com.villo.truco.infrastructure.persistence.entities.LeagueJpaEntity;
 import com.villo.truco.infrastructure.persistence.entities.LeagueParticipantJpaEntity;
@@ -33,7 +34,8 @@ public class LeagueMapper {
     entity.setId(snapshot.id().value());
     entity.setNumberOfPlayers(snapshot.numberOfPlayers());
     entity.setGamesToPlay(snapshot.gamesToPlay().value());
-    entity.setInviteCode(snapshot.inviteCode().value());
+    entity.setInviteCode(snapshot.inviteCode() != null ? snapshot.inviteCode().value() : null);
+    entity.setVisibility(snapshot.visibility().name());
     entity.setStatus(snapshot.status().name());
     entity.setVersion((int) league.getVersion());
 
@@ -81,7 +83,8 @@ public class LeagueMapper {
 
     final var snapshot = new LeagueSnapshot(new LeagueId(entity.getId()),
         new ArrayList<>(participants), fixtures, winsByPlayer, entity.getNumberOfPlayers(),
-        GamesToPlay.of(entity.getGamesToPlay()), InviteCode.of(entity.getInviteCode()),
+        GamesToPlay.of(entity.getGamesToPlay()), Visibility.valueOf(entity.getVisibility()),
+        entity.getInviteCode() != null ? InviteCode.of(entity.getInviteCode()) : null,
         LeagueStatus.valueOf(entity.getStatus()));
 
     final var league = LeagueRehydrator.rehydrate(snapshot);

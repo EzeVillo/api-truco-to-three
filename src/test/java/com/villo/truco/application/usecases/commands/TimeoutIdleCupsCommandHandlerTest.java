@@ -8,9 +8,13 @@ import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -25,7 +29,7 @@ class TimeoutIdleCupsCommandHandlerTest {
 
   private Cup waitingForPlayersCup() {
 
-    return Cup.create(PlayerId.generate(), 4, GamesToPlay.of(3));
+    return Cup.create(PlayerId.generate(), 4, GamesToPlay.of(3), Visibility.PRIVATE);
   }
 
   private Cup waitingForStartCup() {
@@ -34,7 +38,7 @@ class TimeoutIdleCupsCommandHandlerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -59,8 +63,7 @@ class TimeoutIdleCupsCommandHandlerTest {
       }
 
       @Override
-      public Optional<Cup> findByMatchId(
-          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
       }
@@ -81,6 +84,17 @@ class TimeoutIdleCupsCommandHandlerTest {
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
         return List.copyOf(cups.keySet());
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 
@@ -171,8 +185,7 @@ class TimeoutIdleCupsCommandHandlerTest {
       }
 
       @Override
-      public Optional<Cup> findByMatchId(
-          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
       }
@@ -193,6 +206,17 @@ class TimeoutIdleCupsCommandHandlerTest {
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
         return List.of(CupId.generate(), goodCup.getId());
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

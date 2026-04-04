@@ -18,10 +18,13 @@ import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchE
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -89,6 +92,18 @@ class PlayerAvailabilityCheckerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final CupQueryRepository cupRepo = new CupQueryRepository() {
 
@@ -126,6 +141,17 @@ class PlayerAvailabilityCheckerTest {
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {
@@ -182,7 +208,7 @@ class PlayerAvailabilityCheckerTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     league.start(p1);
@@ -200,7 +226,7 @@ class PlayerAvailabilityCheckerTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     league.start(p1);
@@ -219,7 +245,7 @@ class PlayerAvailabilityCheckerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -239,7 +265,7 @@ class PlayerAvailabilityCheckerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -258,7 +284,7 @@ class PlayerAvailabilityCheckerTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     league.start(p1);
@@ -274,7 +300,7 @@ class PlayerAvailabilityCheckerTest {
   void throwsWhenPlayerInWaitingLeague() {
 
     final var creator = PlayerId.generate();
-    final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3));
+    final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     final var checker = checker(false, Optional.empty(), Optional.of(waitingLeague),
         Optional.empty(), Optional.empty());
 
@@ -287,7 +313,7 @@ class PlayerAvailabilityCheckerTest {
   void throwsWhenPlayerInWaitingCup() {
 
     final var creator = PlayerId.generate();
-    final var waitingCup = Cup.create(creator, 4, GamesToPlay.of(3));
+    final var waitingCup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     final var checker = checker(false, Optional.empty(), Optional.empty(), Optional.empty(),
         Optional.of(waitingCup));
 
@@ -324,7 +350,7 @@ class PlayerAvailabilityCheckerTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     league.start(p1);
@@ -340,7 +366,7 @@ class PlayerAvailabilityCheckerTest {
   void cannotStartMatchWhenInWaitingTournament() {
 
     final var creator = PlayerId.generate();
-    final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3));
+    final var waitingLeague = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
 
     final var checker = checker(false, false, Optional.empty(), Optional.of(waitingLeague),
         Optional.empty(), Optional.empty());
@@ -380,6 +406,18 @@ class PlayerAvailabilityCheckerTest {
     public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
       return List.of();
+    }
+
+    @Override
+    public List<Match> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
     }
 
   }

@@ -10,6 +10,7 @@ import com.villo.truco.domain.model.cup.events.CupPlayerForfeitedEvent;
 import com.villo.truco.domain.model.cup.events.CupPlayerJoinedEvent;
 import com.villo.truco.domain.model.cup.events.CupPlayerLeftEvent;
 import com.villo.truco.domain.model.cup.events.CupStartedEvent;
+import com.villo.truco.domain.model.cup.events.PublicCupLobbyOpenedEvent;
 import com.villo.truco.domain.model.cup.exceptions.BoutAlreadyResolvedException;
 import com.villo.truco.domain.model.cup.exceptions.BracketCorruptedException;
 import com.villo.truco.domain.model.cup.exceptions.CupFullException;
@@ -21,6 +22,8 @@ import com.villo.truco.domain.model.cup.exceptions.MatchNotPartOfCupException;
 import com.villo.truco.domain.model.cup.exceptions.OnlyCreatorCanStartCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerNotInCupException;
+import com.villo.truco.domain.model.cup.exceptions.PrivateCupVisibilityAccessException;
+import com.villo.truco.domain.model.cup.exceptions.PublicCupLobbyUnavailableException;
 import com.villo.truco.domain.model.cup.exceptions.WinnerNotInBoutException;
 import com.villo.truco.domain.model.cup.valueobjects.BoutId;
 import com.villo.truco.domain.model.cup.valueobjects.BoutPairing;
@@ -32,6 +35,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,14 +55,15 @@ public final class Cup extends AggregateBase<CupId> {
   private final Set<PlayerId> forfeitedPlayers;
   private final int numberOfPlayers;
   private final GamesToPlay gamesToPlay;
+  private final Visibility visibility;
   private final InviteCode inviteCode;
   private CupStatus status;
   private PlayerId champion;
 
   private Cup(final CupId id, final List<PlayerId> participants, final List<Bout> bouts,
       final Set<PlayerId> forfeitedPlayers, final int numberOfPlayers,
-      final GamesToPlay gamesToPlay, final InviteCode inviteCode, final CupStatus status,
-      final PlayerId champion) {
+      final GamesToPlay gamesToPlay, final Visibility visibility, final InviteCode inviteCode,
+      final CupStatus status, final PlayerId champion) {
 
     super(id);
     this.participants = participants;
@@ -66,16 +71,18 @@ public final class Cup extends AggregateBase<CupId> {
     this.forfeitedPlayers = forfeitedPlayers;
     this.numberOfPlayers = numberOfPlayers;
     this.gamesToPlay = gamesToPlay;
+    this.visibility = visibility;
     this.inviteCode = inviteCode;
     this.status = status;
     this.champion = champion;
   }
 
   public static Cup create(final PlayerId creatorId, final int numberOfPlayers,
-      final GamesToPlay gamesToPlay) {
+      final GamesToPlay gamesToPlay, final Visibility visibility) {
 
     Objects.requireNonNull(creatorId, "Creator cannot be null");
     Objects.requireNonNull(gamesToPlay, "GamesToPlay cannot be null");
+    Objects.requireNonNull(visibility, "Visibility cannot be null");
 
     if (numberOfPlayers < 4 || numberOfPlayers > 8) {
       throw new InvalidCupPlayersException("Cup numberOfPlayers must be between 4 and 8");
@@ -85,19 +92,25 @@ public final class Cup extends AggregateBase<CupId> {
     participants.add(creatorId);
 
     final var cup = new Cup(CupId.generate(), participants, new ArrayList<>(), new HashSet<>(),
-        numberOfPlayers, gamesToPlay, InviteCode.generate(), CupStatus.WAITING_FOR_PLAYERS, null);
-    LOGGER.info("Cup created: cupId={}, creator={}, numberOfPlayers={}, gamesToPlay={}",
-        cup.getId(), creatorId, numberOfPlayers, gamesToPlay);
+        numberOfPlayers, gamesToPlay, visibility,
+        visibility == Visibility.PRIVATE ? InviteCode.generate() : null,
+        CupStatus.WAITING_FOR_PLAYERS, null);
+    if (visibility == Visibility.PUBLIC) {
+      cup.addDomainEvent(new PublicCupLobbyOpenedEvent(cup.getId(), creatorId));
+    }
+    LOGGER.info(
+        "Cup created: cupId={}, creator={}, visibility={}, numberOfPlayers={}, " + "gamesToPlay={}",
+        cup.getId(), creatorId, visibility, numberOfPlayers, gamesToPlay);
     return cup;
   }
 
   static Cup reconstruct(final CupId id, final List<PlayerId> participants, final List<Bout> bouts,
       final Set<PlayerId> forfeitedPlayers, final int numberOfPlayers,
-      final GamesToPlay gamesToPlay, final InviteCode inviteCode, final CupStatus status,
-      final PlayerId champion) {
+      final GamesToPlay gamesToPlay, final Visibility visibility, final InviteCode inviteCode,
+      final CupStatus status, final PlayerId champion) {
 
     return new Cup(id, participants, bouts, forfeitedPlayers, numberOfPlayers, gamesToPlay,
-        inviteCode, status, champion);
+        visibility, inviteCode, status, champion);
   }
 
   private static int nextPowerOfTwo(final int n) {
@@ -139,6 +152,42 @@ public final class Cup extends AggregateBase<CupId> {
       this.status = CupStatus.WAITING_FOR_START;
       LOGGER.info("Cup ready: cupId={}, participants={}", this.id, this.participants.size());
     }
+  }
+
+  public List<BoutPairing> joinPublic(final PlayerId playerId) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+
+    if (this.visibility != Visibility.PUBLIC) {
+      throw new PrivateCupVisibilityAccessException();
+    }
+
+    if (this.status != CupStatus.WAITING_FOR_PLAYERS) {
+      throw new PublicCupLobbyUnavailableException();
+    }
+
+    if (this.participants.contains(playerId)) {
+      throw new PlayerAlreadyInCupException();
+    }
+
+    if (this.participants.size() >= this.numberOfPlayers) {
+      throw new CupFullException();
+    }
+
+    this.participants.add(playerId);
+    LOGGER.info("Player joined public cup: cupId={}, playerId={}, participants={}/{}", this.id,
+        playerId, this.participants.size(), this.numberOfPlayers);
+    this.addDomainEvent(
+        new CupPlayerJoinedEvent(this.id, List.copyOf(this.participants), playerId));
+
+    if (this.participants.size() != this.numberOfPlayers) {
+      return List.of();
+    }
+
+    this.status = CupStatus.WAITING_FOR_START;
+    LOGGER.info("Public cup ready: cupId={}, participants={}", this.id, this.participants.size());
+
+    return this.startInternal();
   }
 
   public void cancel() {
@@ -192,14 +241,7 @@ public final class Cup extends AggregateBase<CupId> {
       throw new OnlyCreatorCanStartCupException();
     }
 
-    this.generateBracket();
-    this.status = CupStatus.IN_PROGRESS;
-    LOGGER.info("Cup started: cupId={}, participants={}, bouts={}", this.id,
-        this.participants.size(), this.bouts.size());
-    this.addDomainEvent(new CupStartedEvent(this.id, List.copyOf(this.participants)));
-
-    return this.bouts.stream().filter(b -> b.status() == BoutStatus.PENDING)
-        .map(b -> new BoutPairing(b.id(), b.playerOne(), b.playerTwo())).toList();
+    return this.startInternal();
   }
 
   private void generateBracket() {
@@ -234,6 +276,18 @@ public final class Cup extends AggregateBase<CupId> {
       bout.resolveAsBye(player);
       this.advancePlayerToNextRound(1, boutPos, player);
     }
+  }
+
+  private List<BoutPairing> startInternal() {
+
+    this.generateBracket();
+    this.status = CupStatus.IN_PROGRESS;
+    LOGGER.info("Cup started: cupId={}, participants={}, bouts={}", this.id,
+        this.participants.size(), this.bouts.size());
+    this.addDomainEvent(new CupStartedEvent(this.id, List.copyOf(this.participants)));
+
+    return this.bouts.stream().filter(b -> b.status() == BoutStatus.PENDING)
+        .map(b -> new BoutPairing(b.id(), b.playerOne(), b.playerTwo())).toList();
   }
 
   private void advancePlayerToNextRound(final int currentRound, final int currentPos,
@@ -423,6 +477,11 @@ public final class Cup extends AggregateBase<CupId> {
     return this.participants.contains(playerId);
   }
 
+  public boolean isPublicLobbyOpen() {
+
+    return this.visibility == Visibility.PUBLIC && this.status == CupStatus.WAITING_FOR_PLAYERS;
+  }
+
   public void validatePlayerInCup(final PlayerId playerId) {
 
     if (!this.participants.contains(playerId)) {
@@ -456,6 +515,11 @@ public final class Cup extends AggregateBase<CupId> {
     return this.gamesToPlay;
   }
 
+  public Visibility getVisibility() {
+
+    return this.visibility;
+  }
+
   public PlayerId getChampion() {
 
     return this.champion;
@@ -481,7 +545,12 @@ public final class Cup extends AggregateBase<CupId> {
     return this.participants;
   }
 
-  int getNumberOfPlayers() {
+  public PlayerId getCreator() {
+
+    return this.participants.getFirst();
+  }
+
+  public int getNumberOfPlayers() {
 
     return this.numberOfPlayers;
   }

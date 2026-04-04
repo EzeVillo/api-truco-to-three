@@ -9,6 +9,9 @@ import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslato
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
+import com.villo.truco.application.eventhandlers.PublicLeagueLobbyEventTranslator;
+import com.villo.truco.application.eventhandlers.PublicMatchLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.SpectatorAutoKickOnCupMatchActivatedEventHandler;
 import com.villo.truco.application.eventhandlers.SpectatorAutoKickOnLeagueMatchActivatedEventHandler;
 import com.villo.truco.application.eventhandlers.SpectatorCleanupOnMatchEndEventHandler;
@@ -26,10 +29,12 @@ class EventNotifierConfigurationTest {
 
     final var configuration = new EventNotifierConfiguration(
         mock(ChatNotificationEventTranslator.class), mock(MatchNotificationEventTranslator.class),
-        mock(CompetitionDomainEventTranslator.class), mock(BotDomainEventTranslator.class),
-        mock(BotRegistry.class), mock(CupNotificationEventTranslator.class),
-        mock(LeagueNotificationEventTranslator.class), mock(ChatRepository.class),
-        mock(ChatQueryRepository.class), mock(SpectatorNotificationEventTranslator.class),
+        mock(PublicMatchLobbyEventTranslator.class), mock(CompetitionDomainEventTranslator.class),
+        mock(BotDomainEventTranslator.class), mock(BotRegistry.class),
+        mock(CupNotificationEventTranslator.class), mock(PublicCupLobbyEventTranslator.class),
+        mock(LeagueNotificationEventTranslator.class), mock(PublicLeagueLobbyEventTranslator.class),
+        mock(ChatRepository.class), mock(ChatQueryRepository.class),
+        mock(SpectatorNotificationEventTranslator.class),
         mock(SpectatorCleanupOnMatchEndEventHandler.class),
         mock(SpectatorAutoKickOnLeagueMatchActivatedEventHandler.class),
         mock(SpectatorAutoKickOnCupMatchActivatedEventHandler.class));

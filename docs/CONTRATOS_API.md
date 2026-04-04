@@ -73,6 +73,37 @@ Enviar siempre UUID valido en:
 En respuestas REST de lectura y payloads WebSocket orientados a UI, los actores visibles se
 devuelven como `displayName` en lugar de `playerId`.
 
+### 1.5 Salas publicas y privadas
+
+`matches`, `leagues` y `cups` aceptan `visibility: PUBLIC | PRIVATE` en creacion.
+
+- `PRIVATE`:
+    - devuelve `inviteCode`
+    - no aparece en lobby
+    - se entra por `POST /api/matches/join`, `POST /api/leagues/join`, `POST /api/cups/join`
+- `PUBLIC`:
+    - no devuelve `inviteCode`
+    - aparece en lobby
+    - se entra por id con:
+        - `POST /api/matches/{matchId}/join-public`
+        - `POST /api/leagues/{leagueId}/join-public`
+        - `POST /api/cups/{cupId}/join-public`
+- listados de lobby:
+    - `GET /api/matches/public`
+    - `GET /api/leagues/public`
+    - `GET /api/cups/public`
+- autostart:
+    - una partida publica pasa a `IN_PROGRESS` al entrar el segundo jugador
+    - una liga/copa publica arranca automaticamente al completarse el cupo y crea/linkea los
+      matches hijos en la misma operacion
+- restricciones del lobby:
+    - usuarios ocupados no pueden listar ni usar el lobby publico
+    - si un jugador ya fue eliminado de una liga/copa en progreso, vuelve a ser elegible
+    - REST devuelve una ventana cursor-based del lobby, no el listado completo
+    - `limit` default `20`, maximo `100`
+    - la navegacion es solo hacia adelante con `_links.next`
+    - el stream WS del lobby tambien es compartido; el backend no excluye creador ni participantes
+
 ## 2. Contrato de errores
 
 Formato estandar para errores (`ErrorResponse`):
@@ -89,10 +120,15 @@ HTTP status usados:
 
 - `400` Bad Request
 - `401` Unauthorized
+- `409` Conflict
 - `404` Not Found
 - `405` Method Not Allowed
 - `422` Unprocessable Content
 - `500` Internal Server Error
+
+Caso comun de `409`:
+
+- en `join-public`, otro request ocupo el ultimo lugar antes del retry final
 
 Casos comunes de `400`:
 
@@ -265,7 +301,8 @@ Request:
 
 ```json
 {
-  "gamesToPlay": 3
+  "gamesToPlay": 3,
+  "visibility": "PRIVATE"
 }
 ```
 
@@ -279,8 +316,18 @@ Response `200`:
 ```json
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
-  "accessToken": "<jwt>",
-  "inviteCode": "ABC123"
+  "inviteCode": "ABC123",
+  "visibility": "PRIVATE"
+}
+```
+
+Si `visibility` es `PUBLIC`, la respuesta es:
+
+```json
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+  "inviteCode": null,
+  "visibility": "PUBLIC"
 }
 ```
 
@@ -300,12 +347,74 @@ Response `200`:
 
 ```json
 {
-  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
-  "accessToken": "<jwt>"
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
 }
 ```
 
-### 4.3 Iniciar partida
+### 4.3 Listar partidas publicas
+
+`GET /api/matches/public`
+
+Auth: Bearer requerido.
+
+Semantica: devuelve una pagina cursor-based de matches publicos abiertos en lobby.
+
+Query params:
+
+- `limit` opcional, default `20`, maximo `100`
+- `after` opcional, cursor opaco para pedir la siguiente pagina
+
+Response `200`:
+
+```json
+{
+  "items": [
+    {
+      "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+      "host": "juancho",
+      "gamesToPlay": 3,
+      "totalSlots": 2,
+      "occupiedSlots": 1,
+      "status": "WAITING_FOR_PLAYERS",
+      "_links": {
+        "joinPublic": {
+          "href": "/api/matches/8b9c5936-9a1f-45ec-a587-24306689f6f7/join-public"
+        }
+      }
+    }
+  ],
+  "_links": {
+    "self": {
+      "href": "/api/matches/public?limit=20"
+    },
+    "next": {
+      "href": "/api/matches/public?limit=20&after=eyJjdXJzb3IiOiJvcGFxdWUifQ"
+    }
+  }
+}
+```
+
+Response `400`:
+
+- `limit < 1`
+- `limit > 100`
+- `after` invalido o mal formado
+
+### 4.4 Unirse a partida publica
+
+`POST /api/matches/{matchId}/join-public`
+
+Auth: Bearer requerido.
+
+Response `200`:
+
+```json
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
+}
+```
+
+### 4.5 Iniciar partida
 
 `POST /api/matches/{matchId}/start`
 
@@ -313,7 +422,7 @@ Auth: Bearer requerido.
 
 Response `204` sin body.
 
-### 4.4 Jugar carta
+### 4.6 Jugar carta
 
 `POST /api/matches/{matchId}/play-card`
 
@@ -334,7 +443,7 @@ Errores:
 
 - `400` si `suit` no coincide exactamente con `ESPADA`, `BASTO`, `COPA` u `ORO`
 
-### 4.5 Cantar truco
+### 4.7 Cantar truco
 
 `POST /api/matches/{matchId}/truco`
 
@@ -344,7 +453,7 @@ Request body: sin body.
 
 Response `204` sin body.
 
-### 4.6 Responder truco
+### 4.8 Responder truco
 
 `POST /api/matches/{matchId}/truco/respond`
 
@@ -365,7 +474,7 @@ Errores:
 - `400` si `response` no coincide exactamente con `QUIERO`, `NO_QUIERO` o
   `QUIERO_Y_ME_VOY_AL_MAZO`
 
-### 4.7 Cantar envido
+### 4.9 Cantar envido
 
 `POST /api/matches/{matchId}/envido`
 
@@ -385,7 +494,7 @@ Errores:
 
 - `400` si `call` no coincide exactamente con `ENVIDO`, `REAL_ENVIDO` o `FALTA_ENVIDO`
 
-### 4.8 Responder envido
+### 4.10 Responder envido
 
 `POST /api/matches/{matchId}/envido/respond`
 
@@ -405,7 +514,7 @@ Errores:
 
 - `400` si `response` no coincide exactamente con `QUIERO` o `NO_QUIERO`
 
-### 4.9 Irse al mazo
+### 4.11 Irse al mazo
 
 `POST /api/matches/{matchId}/fold`
 
@@ -415,7 +524,7 @@ Request body: sin body.
 
 Response `204` sin body.
 
-### 4.10 Abandonar partida
+### 4.12 Abandonar partida
 
 `POST /api/matches/{matchId}/abandon`
 
@@ -436,7 +545,7 @@ Nota: el abandono voluntario sincroniza automáticamente el resultado al liga si
 pertenece
 a uno (igual que el timeout automático y el fin normal de partida).
 
-### 4.11 Obtener estado de partida
+### 4.13 Obtener estado de partida
 
 `GET /api/matches/{matchId}`
 
@@ -508,7 +617,7 @@ Errores:
 - `404` si la partida no existe
 - `422` si el jugador no pertenece a la partida
 
-### 4.12 Obtener estado de partida como espectador
+### 4.14 Obtener estado de partida como espectador
 
 `GET /api/matches/{matchId}/spectate`
 
@@ -568,7 +677,7 @@ Errores:
 - `404` si la partida no existe
 - `422` si el jugador no esta registrado como espectador de esa partida
 
-### 4.13 Flujo de spectate
+### 4.15 Flujo de spectate
 
 El flujo actual de spectate es WebSocket-first:
 
@@ -599,7 +708,8 @@ Request:
 ```json
 {
   "numberOfPlayers": 4,
-  "gamesToPlay": 3
+  "gamesToPlay": 3,
+  "visibility": "PRIVATE"
 }
 ```
 
@@ -620,7 +730,17 @@ Response `200`:
 {
   "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "inviteCode": "ABCD1234",
-  "accessToken": "<jwt>"
+  "visibility": "PRIVATE"
+}
+```
+
+Si `visibility` es `PUBLIC`, la respuesta es:
+
+```json
+{
+  "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "inviteCode": null,
+  "visibility": "PUBLIC"
 }
 ```
 
@@ -644,7 +764,64 @@ Response `200`:
 }
 ```
 
-### 5.3 Salir de liga
+### 5.3 Listar ligas publicas
+
+`GET /api/leagues/public`
+
+Auth: Bearer requerido.
+
+Semantica: devuelve una pagina cursor-based de ligas publicas abiertas en lobby.
+
+Query params:
+
+- `limit` opcional, default `20`, maximo `100`
+- `after` opcional, cursor opaco para pedir la siguiente pagina
+
+Response `200`:
+
+```json
+{
+  "items": [
+    {
+      "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "host": "juancho",
+      "gamesToPlay": 3,
+      "totalSlots": 4,
+      "occupiedSlots": 2,
+      "status": "WAITING_FOR_PLAYERS",
+      "_links": {
+        "joinPublic": {
+          "href": "/api/leagues/a1b2c3d4-e5f6-7890-abcd-ef1234567890/join-public"
+        }
+      }
+    }
+  ],
+  "_links": {
+    "self": {
+      "href": "/api/leagues/public?limit=20"
+    },
+    "next": {
+      "href": "/api/leagues/public?limit=20&after=eyJjdXJzb3IiOiJvcGFxdWUifQ"
+    }
+  }
+}
+```
+
+### 5.4 Unirse a liga publica
+
+`POST /api/leagues/{leagueId}/join-public`
+
+Auth: Bearer requerido.
+
+Response `200`:
+
+```json
+{
+  "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+### 5.5 Salir de liga
 
 `POST /api/leagues/{leagueId}/leave`
 
@@ -652,7 +829,7 @@ Auth: Bearer requerido (token del liga).
 
 Response `204` sin body.
 
-### 5.4 Iniciar liga
+### 5.6 Iniciar liga
 
 `POST /api/leagues/{leagueId}/start`
 
@@ -660,7 +837,7 @@ Auth: Bearer requerido (solo el creador).
 
 Response `204` sin body.
 
-### 5.5 Obtener estado de liga
+### 5.7 Obtener estado de liga
 
 `GET /api/leagues/{leagueId}`
 
@@ -681,7 +858,8 @@ Request:
 ```json
 {
   "numberOfPlayers": 4,
-  "gamesToPlay": 3
+  "gamesToPlay": 3,
+  "visibility": "PRIVATE"
 }
 ```
 
@@ -700,7 +878,18 @@ Response `200`:
 ```json
 {
   "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "inviteCode": "ABCD1234"
+  "inviteCode": "ABCD1234",
+  "visibility": "PRIVATE"
+}
+```
+
+Si `visibility` es `PUBLIC`, la respuesta es:
+
+```json
+{
+  "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "inviteCode": null,
+  "visibility": "PUBLIC"
 }
 ```
 
@@ -732,7 +921,64 @@ Errores:
 - `422` si la copa no está en estado `WAITING_FOR_PLAYERS`, ya está llena o el jugador ya está en
   ella
 
-### 6.3 Salir de copa
+### 6.3 Listar copas publicas
+
+`GET /api/cups/public`
+
+Auth: Bearer requerido.
+
+Semantica: devuelve una pagina cursor-based de copas publicas abiertas en lobby.
+
+Query params:
+
+- `limit` opcional, default `20`, maximo `100`
+- `after` opcional, cursor opaco para pedir la siguiente pagina
+
+Response `200`:
+
+```json
+{
+  "items": [
+    {
+      "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "host": "juancho",
+      "gamesToPlay": 3,
+      "totalSlots": 8,
+      "occupiedSlots": 5,
+      "status": "WAITING_FOR_PLAYERS",
+      "_links": {
+        "joinPublic": {
+          "href": "/api/cups/a1b2c3d4-e5f6-7890-abcd-ef1234567890/join-public"
+        }
+      }
+    }
+  ],
+  "_links": {
+    "self": {
+      "href": "/api/cups/public?limit=20"
+    },
+    "next": {
+      "href": "/api/cups/public?limit=20&after=eyJjdXJzb3IiOiJvcGFxdWUifQ"
+    }
+  }
+}
+```
+
+### 6.4 Unirse a copa publica
+
+`POST /api/cups/{cupId}/join-public`
+
+Auth: Bearer requerido.
+
+Response `200`:
+
+```json
+{
+  "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+### 6.5 Salir de copa
 
 `POST /api/cups/{cupId}/leave`
 
@@ -744,7 +990,7 @@ Errores:
 
 - `422` si la copa ya inició, o si el jugador es el creador (el creador no puede salir)
 
-### 6.4 Iniciar copa
+### 6.6 Iniciar copa
 
 `POST /api/cups/{cupId}/start`
 
@@ -763,7 +1009,7 @@ Errores:
 
 - `422` si no es el creador, o la copa no tiene todos los jugadores (`WAITING_FOR_PLAYERS`)
 
-### 6.5 Obtener estado de copa
+### 6.7 Obtener estado de copa
 
 `GET /api/cups/{cupId}`
 
@@ -821,7 +1067,7 @@ Errores:
 - `404` si la copa no existe
 - `422` si el jugador no pertenece a la copa
 
-### 6.6 Estados de la copa (`status`)
+### 6.8 Estados de la copa (`status`)
 
 | Estado                | Descripción                                                     |
 |-----------------------|-----------------------------------------------------------------|
@@ -830,7 +1076,7 @@ Errores:
 | `IN_PROGRESS`         | Bracket generado y partidas en curso                            |
 | `FINISHED`            | Copa finalizada, hay campeón                                    |
 
-### 6.7 Estados de un bout (`BoutStatus`)
+### 6.9 Estados de un bout (`BoutStatus`)
 
 | Estado     | Descripción                                                          |
 |------------|----------------------------------------------------------------------|
@@ -839,7 +1085,7 @@ Errores:
 | `FINISHED` | Match terminado, hay ganador                                         |
 | `BYE`      | Jugador sin rival (bye), avanza automáticamente a la siguiente ronda |
 
-### 6.8 Nombres de ronda (`roundName`)
+### 6.10 Nombres de ronda (`roundName`)
 
 El campo `roundName` es informativo según la distancia a la final:
 
@@ -850,7 +1096,7 @@ El campo `roundName` es informativo según la distancia a la final:
 | 2                     | `Cuartos de final` |
 | 3+                    | `Ronda N`          |
 
-### 6.9 Flujo de avance automático
+### 6.11 Flujo de avance automático
 
 El bracket avanza automáticamente via eventos internos:
 
@@ -1014,6 +1260,10 @@ Suscripciones permitidas por interceptor:
 - `/user/queue/cup` — eventos de copa
 - `/user/queue/chat` — eventos de chat en tiempo real
 
+- `/topic/public-match-lobby` - stream compartido del lobby publico de matches
+- `/topic/public-cup-lobby` - stream compartido del lobby publico de copas
+- `/topic/public-league-lobby` - stream compartido del lobby publico de ligas
+
 Cualquier otro destino se rechaza
 
 Para `/user/queue/match-spectate`, ademas del destino hay que enviar en la `SUBSCRIBE`:
@@ -1099,8 +1349,32 @@ Cada tipo de recurso tiene su propia estructura de evento:
 }
 ```
 
+**Public lobby** (`/topic/public-match-lobby`, `/topic/public-cup-lobby`,
+`/topic/public-league-lobby`):
+
+El cliente debe bootstrapear por REST y usar estos topics solo para reconciliar deltas.
+
+```json
+{
+  "eventType": "PUBLIC_MATCH_LOBBY_UPSERT",
+  "timestamp": 1772768158123,
+  "payload": {
+    "lobby": {
+      "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+      "host": "juancho",
+      "gamesToPlay": 3,
+      "totalSlots": 2,
+      "occupiedSlots": 1,
+      "status": "WAITING_FOR_PLAYERS"
+    }
+  }
+}
+```
+
 Nota: los IDs de recurso (`matchId`, `leagueId`, `cupId`, `chatId`) son campos top-level del
 evento, no dentro del `payload`.
+Excepcion: los eventos de lobby publico no llevan `matchId`/`leagueId`/`cupId` top-level; el id va
+dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 
 ### 9.5 eventType posibles — Match (`/user/queue/match`, 2 jugadores del partido)
 
@@ -1157,6 +1431,7 @@ evento, no dentro del `payload`.
 - `MESSAGE_SENT` — un participante envió un mensaje
 
 ### 9.5e eventType posibles — Spectate (
+
 `/user/queue/match-spectate`, espectadores activos del match)
 
 - `SPECTATE_STATE` — snapshot inicial enviado al completar la suscripcion
@@ -1168,6 +1443,15 @@ No se reenvian al espectador los eventos privados por asiento:
 
 - `PLAYER_HAND_UPDATED`
 - `AVAILABLE_ACTIONS_UPDATED`
+
+### 9.5f eventType posibles - Lobby publico (`/topic/public-*`)
+
+- `PUBLIC_MATCH_LOBBY_UPSERT` - snapshot o actualizacion de un match que sigue abierto en lobby
+- `PUBLIC_MATCH_LOBBY_REMOVED` - remocion de un match que salio del lobby
+- `PUBLIC_CUP_LOBBY_UPSERT` - snapshot o actualizacion de una copa que sigue abierta en lobby
+- `PUBLIC_CUP_LOBBY_REMOVED` - remocion de una copa que salio del lobby
+- `PUBLIC_LEAGUE_LOBBY_UPSERT` - snapshot o actualizacion de una liga que sigue abierta en lobby
+- `PUBLIC_LEAGUE_LOBBY_REMOVED` - remocion de una liga que salio del lobby
 
 ### 9.6 Payload por evento (resumen)
 
@@ -1257,6 +1541,10 @@ No se reenvian al espectador los eventos privados por asiento:
     - `{ matchState }` - `matchState` respeta la forma de `GET /api/matches/{matchId}/spectate`
 - `SPECTATE_ERROR`:
     - `{ error }`
+- `PUBLIC_MATCH_LOBBY_UPSERT` / `PUBLIC_CUP_LOBBY_UPSERT` / `PUBLIC_LEAGUE_LOBBY_UPSERT`:
+    - `{ lobby }` - `lobby` respeta la forma de `GET /api/*/public`
+- `PUBLIC_MATCH_LOBBY_REMOVED` / `PUBLIC_CUP_LOBBY_REMOVED` / `PUBLIC_LEAGUE_LOBBY_REMOVED`:
+    - `{ id }`
 
 ## 9. API REST - Bots
 
@@ -1401,6 +1689,14 @@ Errores:
 - Los eventos de liga (`LEAGUE_*`) llegan a **todos los participantes** de la liga, no solo a los
   dos jugadores de cada partido.
 - Los eventos de copa (`CUP_*`) llegan a **todos los participantes** de la copa.
+- El lobby publico es broadcast por `/topic/public-match-lobby`, `/topic/public-cup-lobby` y
+  `/topic/public-league-lobby`.
+- El snapshot inicial del lobby se obtiene por REST (`GET /api/*/public`); los topics publicos
+  solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
+- El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al
+  crear/unirse/navegar a un match, liga o copa.
+- El backend no suprime eventos del lobby segun `playerId`; si el creador o participante no debe
+  ver un item, esa exclusion es responsabilidad del lifecycle del cliente.
 - Spectate se activa por WebSocket, no por REST: para empezar a mirar un match hay que suscribirse
   a `/user/queue/match-spectate` con header `matchId`.
 - Si la conexion WebSocket del espectador se corta o hace `UNSUBSCRIBE`, el backend deja de

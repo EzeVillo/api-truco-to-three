@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,7 @@ class LeagueCancelTest {
 
   private League waitingForPlayersLeague() {
 
-    return League.create(PlayerId.generate(), 3, GamesToPlay.of(3));
+    return League.create(PlayerId.generate(), 3, GamesToPlay.of(3), Visibility.PRIVATE);
   }
 
   private League waitingForStartLeague() {
@@ -21,7 +22,7 @@ class LeagueCancelTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     return league;
@@ -32,7 +33,7 @@ class LeagueCancelTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     league.start(p1);

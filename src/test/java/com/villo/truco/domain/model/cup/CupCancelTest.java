@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,7 @@ class CupCancelTest {
 
   private Cup waitingForPlayersCup() {
 
-    return Cup.create(PlayerId.generate(), 4, GamesToPlay.of(3));
+    return Cup.create(PlayerId.generate(), 4, GamesToPlay.of(3), Visibility.PRIVATE);
   }
 
   private Cup waitingForStartCup() {
@@ -22,7 +23,7 @@ class CupCancelTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -35,7 +36,7 @@ class CupCancelTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());

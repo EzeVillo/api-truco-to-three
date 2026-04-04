@@ -6,6 +6,7 @@ import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,7 @@ class CupPlayerAvailabilityTest {
 
   private static Cup createStartedCup(final PlayerId... players) {
 
-    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3));
+    final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3), Visibility.PRIVATE);
     for (int i = 1; i < players.length; i++) {
       cup.join(players[i], cup.getInviteCode());
     }

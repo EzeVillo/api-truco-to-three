@@ -11,15 +11,21 @@ import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
+import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.DomainException;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -61,6 +67,18 @@ class CreateMatchCommandHandlerTest {
 
       return List.of();
     }
+
+    @Override
+    public List<Match> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
+    }
   };
 
   private static final LeagueQueryRepository NO_LEAGUE_REPO = new LeagueQueryRepository() {
@@ -99,6 +117,18 @@ class CreateMatchCommandHandlerTest {
     public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
       return java.util.List.of();
+    }
+
+    @Override
+    public List<League> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
     }
   };
 
@@ -139,6 +169,17 @@ class CreateMatchCommandHandlerTest {
 
       return List.of();
     }
+
+    private List<Cup> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
+    }
   };
 
   private static final BotRegistry NO_BOT_REGISTRY = new BotRegistry() {
@@ -169,6 +210,8 @@ class CreateMatchCommandHandlerTest {
 
   private static final PlayerAvailabilityChecker FREE_CHECKER = new PlayerAvailabilityChecker(
       NO_ACTIVE_MATCH_REPO, NO_LEAGUE_REPO, NO_CUP_REPO, NO_BOT_REGISTRY);
+  private static final MatchEventNotifier NO_OP_MATCH_EVENT_NOTIFIER = events -> {
+  };
 
   @Test
   @DisplayName("crea partida con gamesToPlay valido")
@@ -176,9 +219,11 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final var handler = new CreateMatchCommandHandler(repository, FREE_CHECKER);
+    final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
+        FREE_CHECKER);
 
-    handler.handle(new CreateMatchCommand(PlayerId.generate().value().toString(), 3));
+    handler.handle(new CreateMatchCommand(PlayerId.generate().value().toString(), 3,
+        Visibility.PRIVATE.name()));
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getId()).isNotNull();
@@ -191,11 +236,12 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final var handler = new CreateMatchCommandHandler(repository, FREE_CHECKER);
+    final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
+        FREE_CHECKER);
 
     assertThatThrownBy(() -> handler.handle(
-        new CreateMatchCommand(PlayerId.generate().value().toString(), 7))).isInstanceOf(
-        DomainException.class);
+        new CreateMatchCommand(PlayerId.generate().value().toString(), 7,
+            Visibility.PRIVATE.name()))).isInstanceOf(DomainException.class);
 
     assertThat(savedMatch.get()).isNull();
   }
@@ -206,10 +252,12 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final MatchRepository repository = savedMatch::set;
-    final var handler = new CreateMatchCommandHandler(repository, FREE_CHECKER);
+    final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
+        FREE_CHECKER);
     final var playerId = PlayerId.generate();
 
-    handler.handle(new CreateMatchCommand(playerId.value().toString(), 5));
+    handler.handle(
+        new CreateMatchCommand(playerId.value().toString(), 5, Visibility.PRIVATE.name()));
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getPlayerOne()).isEqualTo(playerId);
@@ -253,17 +301,49 @@ class CreateMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final var busyChecker = new PlayerAvailabilityChecker(busyMatchRepo, NO_LEAGUE_REPO,
         NO_CUP_REPO, NO_BOT_REGISTRY);
-    final var handler = new CreateMatchCommandHandler(repository, busyChecker);
+    final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
+        busyChecker);
 
     assertThatThrownBy(() -> handler.handle(
-        new CreateMatchCommand(PlayerId.generate().value().toString(), 3))).isInstanceOf(
-        PlayerAlreadyInActiveMatchException.class);
+        new CreateMatchCommand(PlayerId.generate().value().toString(), 3,
+            Visibility.PRIVATE.name()))).isInstanceOf(PlayerAlreadyInActiveMatchException.class);
 
     assertThat(savedMatch.get()).isNull();
+  }
+
+  @Test
+  @DisplayName("publica y limpia domain events al crear un lobby publico")
+  void publishesAndClearsDomainEventsForPublicMatchCreation() {
+
+    final var savedMatch = new AtomicReference<Match>();
+    final var publishedEvents = new java.util.ArrayList<MatchDomainEvent>();
+    final MatchRepository repository = savedMatch::set;
+    final var handler = new CreateMatchCommandHandler(repository, publishedEvents::addAll,
+        FREE_CHECKER);
+
+    handler.handle(new CreateMatchCommand(PlayerId.generate().value().toString(), 3,
+        Visibility.PUBLIC.name()));
+
+    assertThat(savedMatch.get()).isNotNull();
+    assertThat(publishedEvents).hasSize(1);
+    assertThat(publishedEvents.getFirst()).isInstanceOf(PublicMatchLobbyOpenedEvent.class);
+    assertThat(savedMatch.get().getMatchDomainEvents()).isEmpty();
   }
 
 }

@@ -4,6 +4,7 @@ import com.villo.truco.application.events.LeagueEventNotification;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
+import com.villo.truco.domain.model.league.events.PublicLeagueLobbyOpenedEvent;
 import java.util.Objects;
 
 public final class LeagueNotificationEventTranslator implements
@@ -27,6 +28,10 @@ public final class LeagueNotificationEventTranslator implements
 
   @Override
   public void handle(final LeagueDomainEvent event) {
+
+    if (event instanceof PublicLeagueLobbyOpenedEvent) {
+      return;
+    }
 
     final var payload = this.mapper.map(event);
     this.publisher.publish(new LeagueEventNotification(event.getLeagueId(), event.getParticipants(),

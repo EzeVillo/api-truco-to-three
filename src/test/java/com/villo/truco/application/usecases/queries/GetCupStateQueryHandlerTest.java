@@ -9,10 +9,13 @@ import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.exceptions.PlayerNotInCupException;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.List;
@@ -31,7 +34,7 @@ class GetCupStateQueryHandlerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(player, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(player, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -72,6 +75,17 @@ class GetCupStateQueryHandlerTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     }), TestPublicActorResolver.guestStyle());
 
     final var state = handler.handle(new GetCupStateQuery(cup.getId(), player));
@@ -86,7 +100,7 @@ class GetCupStateQueryHandlerTest {
 
     final var owner = PlayerId.generate();
     final var stranger = PlayerId.generate();
-    final var cup = Cup.create(owner, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(owner, 4, GamesToPlay.of(3), Visibility.PRIVATE);
 
     final var handler = new GetCupStateQueryHandler(new CupResolver(new CupQueryRepository() {
       @Override
@@ -123,6 +137,17 @@ class GetCupStateQueryHandlerTest {
       public List<CupId> findIdleCupIds(Instant idleSince) {
 
         return List.of();
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     }), TestPublicActorResolver.guestStyle());
 

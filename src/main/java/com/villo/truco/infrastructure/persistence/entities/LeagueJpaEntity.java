@@ -19,36 +19,29 @@ import java.util.UUID;
 @Table(name = "leagues")
 public class LeagueJpaEntity {
 
-  @Id
-  private UUID id;
-
-  @Column(name = "number_of_players", nullable = false)
-  private int numberOfPlayers;
-
-  @Column(name = "games_to_play", nullable = false)
-  private int gamesToPlay;
-
-  @Column(name = "invite_code", nullable = false)
-  private String inviteCode;
-
-  @Column(nullable = false)
-  private String status;
-
-  @Column(name = "last_activity_at", nullable = false)
-  private Instant lastActivityAt;
-
-  @Version
-  private int version;
-
   @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("ordinal ASC")
-  private List<LeagueParticipantJpaEntity> participants = new ArrayList<>();
-
+  private final List<LeagueParticipantJpaEntity> participants = new ArrayList<>();
   @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<LeagueFixtureJpaEntity> fixtures = new ArrayList<>();
-
+  private final List<LeagueFixtureJpaEntity> fixtures = new ArrayList<>();
   @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<LeagueWinJpaEntity> wins = new ArrayList<>();
+  private final List<LeagueWinJpaEntity> wins = new ArrayList<>();
+  @Id
+  private UUID id;
+  @Column(name = "number_of_players", nullable = false)
+  private int numberOfPlayers;
+  @Column(name = "games_to_play", nullable = false)
+  private int gamesToPlay;
+  @Column(name = "invite_code")
+  private String inviteCode;
+  @Column(nullable = false)
+  private String visibility;
+  @Column(nullable = false)
+  private String status;
+  @Column(name = "last_activity_at", nullable = false)
+  private Instant lastActivityAt;
+  @Version
+  private int version;
 
   public LeagueJpaEntity() {
 
@@ -104,6 +97,16 @@ public class LeagueJpaEntity {
   public void setInviteCode(String inviteCode) {
 
     this.inviteCode = inviteCode;
+  }
+
+  public String getVisibility() {
+
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+
+    this.visibility = visibility;
   }
 
   public String getStatus() {

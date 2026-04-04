@@ -9,10 +9,13 @@ import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.exceptions.PlayerNotInLeagueException;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.List;
@@ -34,7 +37,7 @@ class GetLeagueStateQueryHandlerTest {
 
     this.creator = PlayerId.generate();
     this.participant = PlayerId.generate();
-    this.league = League.create(creator, 3, GamesToPlay.of(3));
+    this.league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     this.league.join(participant, league.getInviteCode());
 
     final LeagueQueryRepository queryRepo = new LeagueQueryRepository() {
@@ -73,6 +76,18 @@ class GetLeagueStateQueryHandlerTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

@@ -6,10 +6,14 @@ import com.villo.truco.application.commands.AdvanceCupCommand;
 import com.villo.truco.application.commands.CreateCupCommand;
 import com.villo.truco.application.commands.ForfeitCupCommand;
 import com.villo.truco.application.commands.JoinCupCommand;
+import com.villo.truco.application.commands.JoinPublicCupCommand;
 import com.villo.truco.application.commands.StartCupCommand;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
+import com.villo.truco.domain.model.cup.events.CupDomainEvent;
+import com.villo.truco.domain.model.cup.events.CupStartedEvent;
+import com.villo.truco.domain.model.cup.events.PublicCupLobbyOpenedEvent;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
@@ -19,11 +23,15 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,6 +74,18 @@ class CupCommandHandlersTest {
 
         return List.of();
       }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
       @Override
@@ -102,6 +122,18 @@ class CupCommandHandlersTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
@@ -140,6 +172,17 @@ class CupCommandHandlersTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {
       @Override
@@ -174,14 +217,20 @@ class CupCommandHandlersTest {
   void createCupHandlerCreatesAndSaves() {
 
     final var saved = new AtomicReference<Cup>();
-    final var handler = new CreateCupCommandHandler(saved::set, availableChecker());
+    final var publishedEvents = new ArrayList<CupDomainEvent>();
+    final var handler = new CreateCupCommandHandler(saved::set, publishedEvents::addAll,
+        availableChecker());
     final var creator = PlayerId.generate();
 
-    final var result = handler.handle(new CreateCupCommand(creator, 4, GamesToPlay.of(3)));
+    final var result = handler.handle(
+        new CreateCupCommand(creator, 4, GamesToPlay.of(3), Visibility.PUBLIC));
 
     assertThat(saved.get()).isNotNull();
     assertThat(result.cupId()).isEqualTo(saved.get().getId().value().toString());
-    assertThat(result.inviteCode()).isEqualTo(saved.get().getInviteCode().value());
+    assertThat(result.inviteCode()).isNull();
+    assertThat(publishedEvents).hasSize(1);
+    assertThat(publishedEvents.getFirst()).isInstanceOf(PublicCupLobbyOpenedEvent.class);
+    assertThat(saved.get().getCupDomainEvents()).isEmpty();
   }
 
   @Test
@@ -190,7 +239,7 @@ class CupCommandHandlersTest {
 
     final var creator = PlayerId.generate();
     final var joiner = PlayerId.generate();
-    final var cup = Cup.create(creator, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PRIVATE);
 
     final CupQueryRepository queryRepository = new CupQueryRepository() {
       @Override
@@ -228,6 +277,17 @@ class CupCommandHandlersTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final var saved = new AtomicReference<Cup>();
@@ -242,6 +302,86 @@ class CupCommandHandlersTest {
   }
 
   @Test
+  @DisplayName("JoinPublicCupCommandHandler arranca la copa y crea matches al completarse")
+  void joinPublicCupHandlerStartsCupAndCreatesMatches() {
+
+    final var creator = PlayerId.generate();
+    final var joinerOne = PlayerId.generate();
+    final var joinerTwo = PlayerId.generate();
+    final var joinerThree = PlayerId.generate();
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PUBLIC);
+    cup.joinPublic(joinerOne);
+    cup.joinPublic(joinerTwo);
+
+    final CupQueryRepository queryRepository = new CupQueryRepository() {
+      @Override
+      public Optional<Cup> findById(final CupId cupId) {
+
+        return Optional.of(cup);
+      }
+
+      @Override
+      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findByMatchId(final MatchId matchId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<CupId> findIdleCupIds(final Instant idleSince) {
+
+        return List.of();
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+    };
+
+    final var saved = new AtomicReference<Cup>();
+    final var matchSaves = new AtomicInteger();
+    final var publishedEvents = new ArrayList<CupDomainEvent>();
+    final var handler = new JoinPublicCupCommandHandler(new CupResolver(queryRepository),
+        saved::set, match -> matchSaves.incrementAndGet(), publishedEvents::addAll,
+        availableChecker());
+
+    final var result = handler.handle(new JoinPublicCupCommand(cup.getId(), joinerThree));
+
+    assertThat(result.cupId()).isEqualTo(cup.getId().value().toString());
+    assertThat(saved.get()).isSameAs(cup);
+    assertThat(cup.getStatus().name()).isEqualTo("IN_PROGRESS");
+    assertThat(matchSaves.get()).isGreaterThan(0);
+    assertThat(cup.getBouts().stream().filter(b -> b.matchId() != null).count()).isEqualTo(
+        matchSaves.get());
+    assertThat(
+        publishedEvents.stream().filter(CupStartedEvent.class::isInstance).count()).isEqualTo(1);
+  }
+
+  @Test
   @DisplayName("StartCupCommandHandler crea matches para bouts pendientes y persiste")
   void startCupHandlerCreatesMatchesAndSaves() {
 
@@ -249,7 +389,7 @@ class CupCommandHandlersTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -290,6 +430,17 @@ class CupCommandHandlersTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final var cupSaved = new AtomicReference<Cup>();
@@ -316,7 +467,7 @@ class CupCommandHandlersTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -363,6 +514,17 @@ class CupCommandHandlersTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final var saved = new AtomicReference<Cup>();
@@ -388,7 +550,7 @@ class CupCommandHandlersTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
-    final var cup = Cup.create(p1, 4, GamesToPlay.of(3));
+    final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(p2, cup.getInviteCode());
     cup.join(p3, cup.getInviteCode());
     cup.join(p4, cup.getInviteCode());
@@ -429,6 +591,17 @@ class CupCommandHandlersTest {
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

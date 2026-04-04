@@ -18,10 +18,13 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +79,18 @@ class StartMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final MatchRepository matchRepository = savedMatch::set;
@@ -117,6 +132,18 @@ class StartMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final CupQueryRepository cupQueryRepo = new CupQueryRepository() {
       @Override
@@ -154,6 +181,17 @@ class StartMatchCommandHandlerTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {
 
@@ -189,7 +227,8 @@ class StartMatchCommandHandlerTest {
   @DisplayName("lanza MatchNotFullException cuando playerTwo no se unió")
   void throwsMatchNotFullExceptionWhenPlayerTwoIsAbsent() {
 
-    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+        Visibility.PRIVATE);
     final var savedMatch = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerWith(match, savedMatch, publishedEvents);

@@ -22,6 +22,7 @@ import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.persistence.entities.MatchJpaEntity;
 import com.villo.truco.infrastructure.persistence.entities.RoundData;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,7 @@ public class MatchMapper {
     entity.setPlayerOne(snapshot.playerOne().value());
     entity.setPlayerTwo(snapshot.playerTwo() != null ? snapshot.playerTwo().value() : null);
     entity.setInviteCode(snapshot.inviteCode() != null ? snapshot.inviteCode().value() : null);
+    entity.setVisibility(snapshot.visibility().name());
     entity.setStatus(snapshot.status().name());
     entity.setGamesToWin(snapshot.rules().gamesToWin());
     entity.setGamesWonPlayerOne(snapshot.gamesWonPlayerOne());
@@ -66,10 +68,11 @@ public class MatchMapper {
         new PlayerId(entity.getPlayerOne()),
         entity.getPlayerTwo() != null ? new PlayerId(entity.getPlayerTwo()) : null,
         entity.getInviteCode() != null ? InviteCode.of(entity.getInviteCode()) : null,
-        new MatchRules(entity.getGamesToWin()), MatchStatus.valueOf(entity.getStatus()),
-        entity.getGamesWonPlayerOne(), entity.getGamesWonPlayerTwo(), entity.getGameNumber(),
-        entity.getScorePlayerOne(), entity.getScorePlayerTwo(), entity.getRoundNumber(),
-        entity.isReadyPlayerOne(), entity.isReadyPlayerTwo(),
+        new MatchRules(entity.getGamesToWin()), Visibility.valueOf(entity.getVisibility()),
+        MatchStatus.valueOf(entity.getStatus()), entity.getGamesWonPlayerOne(),
+        entity.getGamesWonPlayerTwo(), entity.getGameNumber(), entity.getScorePlayerOne(),
+        entity.getScorePlayerTwo(), entity.getRoundNumber(), entity.isReadyPlayerOne(),
+        entity.isReadyPlayerTwo(),
         entity.getFirstManoOfGame() != null ? new PlayerId(entity.getFirstManoOfGame()) : null,
         roundSnapshot);
 

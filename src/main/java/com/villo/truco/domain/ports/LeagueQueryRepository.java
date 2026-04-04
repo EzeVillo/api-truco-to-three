@@ -2,6 +2,8 @@ package com.villo.truco.domain.ports;
 
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -22,5 +24,9 @@ public interface LeagueQueryRepository {
   Optional<League> findWaitingByPlayer(PlayerId playerId);
 
   List<LeagueId> findIdleLeagueIds(Instant idleSince);
+
+  List<League> findPublicWaiting();
+
+  CursorPageResult<League> findPublicWaiting(CursorPageQuery pageQuery);
 
 }

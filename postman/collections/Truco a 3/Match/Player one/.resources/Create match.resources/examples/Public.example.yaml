@@ -1,0 +1,48 @@
+$kind: http-example
+request:
+  url: "{{URL_BASE_TRUCO_HTTP}}/matches"
+  method: POST
+  body:
+    type: json
+    content: "{\r
+
+      \  \"gamesToPlay\": 5,\r
+
+      \  \"visibility\": \"PUBLIC\"\r
+
+      }"
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    - key: vary
+      value: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+    - key: x-request-id
+      value: 1b0f517e-082c-4ad6-a2ba-11683be22aa2
+    - key: x-content-type-options
+      value: nosniff
+    - key: x-xss-protection
+      value: "0"
+    - key: cache-control
+      value: no-cache, no-store, max-age=0, must-revalidate
+    - key: pragma
+      value: no-cache
+    - key: expires
+      value: "0"
+    - key: x-frame-options
+      value: DENY
+    - key: content-type
+      value: application/json
+    - key: content-length
+      value: "90"
+    - key: date
+      value: Fri, 03 Apr 2026 23:38:54 GMT
+    - key: keep-alive
+      value: timeout=60
+    - key: connection
+      value: keep-alive
+  body:
+    type: json
+    content: '{"matchId":"478d8aad-a2af-4b3c-9dd7-339f31bbe8d0","inviteCode":null,"visibility":"PUBLIC"}'
+order: 1775474483231863
+name: Public

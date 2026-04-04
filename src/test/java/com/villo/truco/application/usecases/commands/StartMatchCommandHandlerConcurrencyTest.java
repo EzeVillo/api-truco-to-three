@@ -22,6 +22,8 @@ import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
@@ -110,6 +112,18 @@ class StartMatchCommandHandlerConcurrencyTest {
 
       return List.of();
     }
+
+    @Override
+    public List<Match> findPublicWaiting() {
+
+      return List.of();
+    }
+
+    @Override
+    public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+      return new CursorPageResult<>(findPublicWaiting(), null);
+    }
   };
   private StartMatchUseCase handler;
   private PlayerId playerOne;
@@ -170,6 +184,18 @@ class StartMatchCommandHandlerConcurrencyTest {
 
         return List.of();
       }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
@@ -207,6 +233,17 @@ class StartMatchCommandHandlerConcurrencyTest {
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {

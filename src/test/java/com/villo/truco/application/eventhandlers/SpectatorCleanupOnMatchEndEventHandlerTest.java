@@ -17,6 +17,8 @@ import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.model.spectator.Spectatorship;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
@@ -84,6 +86,18 @@ class SpectatorCleanupOnMatchEndEventHandlerTest {
       public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

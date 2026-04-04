@@ -1,0 +1,50 @@
+$kind: http-example
+request:
+  url: "{{URL_BASE_TRUCO_HTTP}}/cups"
+  method: POST
+  body:
+    type: json
+    content: "{\r
+
+      \  \"numberOfPlayers\": 4,\r
+
+      \  \"gamesToPlay\": 3,\r
+
+      \  \"visibility\": \"PRIVATE\"\r
+
+      }"
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    - key: vary
+      value: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+    - key: x-request-id
+      value: 873fb294-983b-425d-8c2b-3b0d1ec322d9
+    - key: x-content-type-options
+      value: nosniff
+    - key: x-xss-protection
+      value: "0"
+    - key: cache-control
+      value: no-cache, no-store, max-age=0, must-revalidate
+    - key: pragma
+      value: no-cache
+    - key: expires
+      value: "0"
+    - key: x-frame-options
+      value: DENY
+    - key: content-type
+      value: application/json
+    - key: content-length
+      value: "95"
+    - key: date
+      value: Fri, 03 Apr 2026 23:34:40 GMT
+    - key: keep-alive
+      value: timeout=60
+    - key: connection
+      value: keep-alive
+  body:
+    type: json
+    content: '{"cupId":"f9751ba4-8b01-4958-9b7d-15a57071c60a","inviteCode":"FAJYDM6E","visibility":"PRIVATE"}'
+order: 1775259282436
+name: Private

@@ -3,7 +3,13 @@ url: "{{URL_BASE_TRUCO_HTTP}}/matches"
 method: POST
 body:
   type: json
-  content: "{\r\n    \"gamesToPlay\": 5\r\n}"
+  content: "{\r
+
+    \  \"gamesToPlay\": 5,\r
+
+    \  \"visibility\": \"PRIVATE\"\r
+
+    }"
 scripts:
   - type: afterResponse
     code: "const response = pm.response.json();\r
@@ -18,4 +24,5 @@ scripts:
 
       pm.environment.set(\"parentId\", response.matchId);"
     language: text/javascript
+examples: .resources/Create match.resources/examples
 order: 1000

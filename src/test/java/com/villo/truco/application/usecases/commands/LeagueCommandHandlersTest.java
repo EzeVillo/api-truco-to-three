@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.application.commands.CreateLeagueCommand;
 import com.villo.truco.application.commands.JoinLeagueCommand;
+import com.villo.truco.application.commands.JoinPublicLeagueCommand;
 import com.villo.truco.application.commands.LeaveLeagueCommand;
 import com.villo.truco.application.commands.StartLeagueCommand;
 import com.villo.truco.application.ports.BotRegistry;
@@ -11,17 +12,24 @@ import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
+import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
+import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
+import com.villo.truco.domain.model.league.events.PublicLeagueLobbyOpenedEvent;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,6 +72,18 @@ class LeagueCommandHandlersTest {
 
         return List.of();
       }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
       @Override
@@ -100,6 +120,18 @@ class LeagueCommandHandlersTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
@@ -138,6 +170,17 @@ class LeagueCommandHandlersTest {
 
         return List.of();
       }
+
+      private List<Cup> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {
       @Override
@@ -172,14 +215,20 @@ class LeagueCommandHandlersTest {
   void createLeagueHandlerCreatesAndSaves() {
 
     final var saved = new AtomicReference<League>();
-    final var handler = new CreateLeagueCommandHandler(saved::set, availableChecker());
+    final var publishedEvents = new ArrayList<LeagueDomainEvent>();
+    final var handler = new CreateLeagueCommandHandler(saved::set, publishedEvents::addAll,
+        availableChecker());
     final var creator = PlayerId.generate();
 
-    final var result = handler.handle(new CreateLeagueCommand(creator, 3, GamesToPlay.of(3)));
+    final var result = handler.handle(
+        new CreateLeagueCommand(creator, 3, GamesToPlay.of(3), Visibility.PUBLIC));
 
     assertThat(saved.get()).isNotNull();
     assertThat(result.leagueId()).isEqualTo(saved.get().getId().value().toString());
-    assertThat(result.inviteCode()).isEqualTo(saved.get().getInviteCode().value());
+    assertThat(result.inviteCode()).isNull();
+    assertThat(publishedEvents).hasSize(1);
+    assertThat(publishedEvents.getFirst()).isInstanceOf(PublicLeagueLobbyOpenedEvent.class);
+    assertThat(saved.get().getLeagueDomainEvents()).isEmpty();
   }
 
   @Test
@@ -188,7 +237,7 @@ class LeagueCommandHandlersTest {
 
     final var creator = PlayerId.generate();
     final var joiner = PlayerId.generate();
-    final var league = League.create(creator, 3, GamesToPlay.of(3));
+    final var league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
 
     final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
       @Override
@@ -226,6 +275,18 @@ class LeagueCommandHandlersTest {
 
         return List.of();
       }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final var saved = new AtomicReference<League>();
@@ -240,12 +301,91 @@ class LeagueCommandHandlersTest {
   }
 
   @Test
+  @DisplayName("JoinPublicLeagueCommandHandler arranca la liga y crea matches al completarse")
+  void joinPublicLeagueHandlerStartsLeagueAndCreatesMatches() {
+
+    final var creator = PlayerId.generate();
+    final var joinerOne = PlayerId.generate();
+    final var joinerTwo = PlayerId.generate();
+    final var league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PUBLIC);
+    league.joinPublic(joinerOne);
+
+    final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
+      @Override
+      public Optional<League> findById(final LeagueId leagueId) {
+
+        return Optional.of(league);
+      }
+
+      @Override
+      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findByMatchId(final MatchId matchId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
+
+        return List.of();
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+    };
+
+    final var saved = new AtomicReference<League>();
+    final var matchSaves = new AtomicInteger();
+    final var publishedEvents = new ArrayList<LeagueDomainEvent>();
+    final var handler = new JoinPublicLeagueCommandHandler(new LeagueResolver(queryRepository),
+        saved::set, match -> matchSaves.incrementAndGet(), publishedEvents::addAll,
+        availableChecker());
+
+    final var result = handler.handle(new JoinPublicLeagueCommand(league.getId(), joinerTwo));
+
+    assertThat(result.leagueId()).isEqualTo(league.getId().value().toString());
+    assertThat(saved.get()).isSameAs(league);
+    assertThat(league.getStatus().name()).isEqualTo("IN_PROGRESS");
+    assertThat(matchSaves.get()).isGreaterThan(0);
+    assertThat(league.getFixtures().stream().filter(f -> f.matchId() != null).count()).isEqualTo(
+        matchSaves.get());
+    assertThat(
+        publishedEvents.stream().filter(LeagueStartedEvent.class::isInstance).count()).isEqualTo(1);
+  }
+
+  @Test
   @DisplayName("LeaveLeagueCommandHandler saca jugador y persiste")
   void leaveLeagueHandlerLeavesAndSaves() {
 
     final var creator = PlayerId.generate();
     final var leaver = PlayerId.generate();
-    final var league = League.create(creator, 3, GamesToPlay.of(3));
+    final var league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(leaver, league.getInviteCode());
 
     final LeagueQueryRepository queryRepository = new LeagueQueryRepository() {
@@ -284,6 +424,18 @@ class LeagueCommandHandlersTest {
 
         return List.of();
       }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
+      }
     };
 
     final var saved = new AtomicReference<League>();
@@ -303,7 +455,7 @@ class LeagueCommandHandlersTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
 
@@ -342,6 +494,18 @@ class LeagueCommandHandlersTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.of();
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

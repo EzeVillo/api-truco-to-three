@@ -1,5 +1,5 @@
 package com.villo.truco.application.dto;
 
-public record CreateLeagueDTO(String leagueId, String inviteCode) {
+public record CreateLeagueDTO(String leagueId, String inviteCode, String visibility) {
 
 }

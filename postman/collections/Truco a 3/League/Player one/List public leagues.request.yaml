@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/leagues/public"
+method: GET
+order: 1100

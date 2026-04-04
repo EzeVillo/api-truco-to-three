@@ -1,6 +1,8 @@
 package com.villo.truco.domain.ports;
 
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -19,5 +21,9 @@ public interface MatchQueryRepository {
   boolean hasUnfinishedMatch(PlayerId playerId);
 
   List<MatchId> findIdleMatchIds(Instant idleSince);
+
+  List<Match> findPublicWaiting();
+
+  CursorPageResult<Match> findPublicWaiting(CursorPageQuery pageQuery);
 
 }

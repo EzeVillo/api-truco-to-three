@@ -8,9 +8,13 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -25,7 +29,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
 
   private League waitingForPlayersLeague() {
 
-    return League.create(PlayerId.generate(), 3, GamesToPlay.of(3));
+    return League.create(PlayerId.generate(), 3, GamesToPlay.of(3), Visibility.PRIVATE);
   }
 
   private League waitingForStartLeague() {
@@ -33,7 +37,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     return league;
@@ -44,7 +48,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
-    final var league = League.create(p1, 3, GamesToPlay.of(3));
+    final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(p2, league.getInviteCode());
     league.join(p3, league.getInviteCode());
     league.start(p1);
@@ -71,8 +75,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByMatchId(
-          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
       }
@@ -93,6 +96,18 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.copyOf(leagues.keySet());
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 
@@ -182,8 +197,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByMatchId(
-          final com.villo.truco.domain.shared.valueobjects.MatchId matchId) {
+      public Optional<League> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
       }
@@ -204,6 +218,18 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
         return List.of(LeagueId.generate(), goodLeague.getId());
+      }
+
+      @Override
+      public List<League> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

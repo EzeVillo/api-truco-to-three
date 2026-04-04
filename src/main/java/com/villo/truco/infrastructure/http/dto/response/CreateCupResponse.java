@@ -6,11 +6,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Respuesta al crear copa")
 public record CreateCupResponse(
     @Schema(description = "ID de la copa", example = "cup-abc123") String cupId,
-    @Schema(description = "Código de invitación de la copa", example = "ABCD1234") String inviteCode) {
+    @Schema(description = "Codigo de invitacion de la copa. Solo aparece en salas PRIVATE", example = "ABCD1234", nullable = true) String inviteCode,
+    @Schema(description = "Visibilidad de la sala", example = "PRIVATE") String visibility) {
 
   public static CreateCupResponse from(final CreateCupDTO dto) {
 
-    return new CreateCupResponse(dto.cupId(), dto.inviteCode());
+    return new CreateCupResponse(dto.cupId(), dto.inviteCode(), dto.visibility());
   }
 
 }

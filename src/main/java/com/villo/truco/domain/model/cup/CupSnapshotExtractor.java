@@ -16,7 +16,8 @@ public final class CupSnapshotExtractor {
 
     return new CupSnapshot(cup.getId(), List.copyOf(cup.getParticipants()), bouts,
         new HashSet<>(cup.getForfeitedPlayersInternal()), cup.getNumberOfPlayers(),
-        cup.getGamesToPlay(), cup.getInviteCode(), cup.getStatus(), cup.getChampion());
+        cup.getGamesToPlay(), cup.getVisibility(), cup.getInviteCode(), cup.getStatus(),
+        cup.getChampion());
   }
 
   private static BoutSnapshot extractBout(final Bout bout) {

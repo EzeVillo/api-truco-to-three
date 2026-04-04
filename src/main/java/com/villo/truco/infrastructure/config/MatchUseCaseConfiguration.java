@@ -7,7 +7,9 @@ import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateMatchUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetMatchStateUseCase;
+import com.villo.truco.application.ports.in.GetPublicMatchesUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
+import com.villo.truco.application.ports.in.JoinPublicMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -18,6 +20,7 @@ import com.villo.truco.application.usecases.commands.CallTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.FoldCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.JoinPublicMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchResolver;
 import com.villo.truco.application.usecases.commands.PlayCardCommandHandler;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
@@ -25,6 +28,7 @@ import com.villo.truco.application.usecases.commands.RespondEnvidoCommandHandler
 import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
 import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
+import com.villo.truco.application.usecases.queries.GetPublicMatchesQueryHandler;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -69,7 +73,7 @@ public class MatchUseCaseConfiguration {
   @Bean
   CreateMatchUseCase createMatchCommandHandler() {
 
-    final var handler = new CreateMatchCommandHandler(this.matchRepository,
+    final var handler = new CreateMatchCommandHandler(this.matchRepository, this.matchEventNotifier,
         this.playerAvailabilityChecker);
     return this.transactionalPipeline.wrap(handler)::handle;
   }
@@ -79,6 +83,14 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new JoinMatchCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier, this.playerAvailabilityChecker);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  JoinPublicMatchUseCase joinPublicMatchCommandHandler() {
+
+    final var handler = new JoinPublicMatchCommandHandler(this.matchResolver(),
+        this.matchRepository, this.matchEventNotifier, this.playerAvailabilityChecker);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -150,6 +162,13 @@ public class MatchUseCaseConfiguration {
   GetMatchStateUseCase getMatchStateQueryHandler() {
 
     return new GetMatchStateQueryHandler(this.matchQueryRepository, this.publicActorResolver);
+  }
+
+  @Bean
+  GetPublicMatchesUseCase getPublicMatchesQueryHandler() {
+
+    return new GetPublicMatchesQueryHandler(this.matchQueryRepository, this.publicActorResolver,
+        this.playerAvailabilityChecker);
   }
 
 }

@@ -11,6 +11,7 @@ games.
 - matches contra bots
 - ligas round-robin
 - copas single elimination
+- lobby publico para partidas, ligas y copas
 - spectating de matches de ligas y copas
 - chat por recurso
 - autenticacion con access token corto para usuarios y refresh token rotado
@@ -42,14 +43,19 @@ games.
   register/login con access token corto + refresh token rotado y acceso guest con access token
   largo.
 - Match:
-  crear, unirse, iniciar, jugar carta, cantar/responder truco, cantar/responder envido, fold,
-  abandono, consulta de estado del jugador y consulta de estado para espectador registrado.
+  crear salas `PUBLIC` o `PRIVATE`, join privado por `inviteCode`, lobby publico por `id`,
+  autostart al llenarse, iniciar privado manual, jugar carta, cantar/responder truco,
+  cantar/responder envido, fold, abandono, consulta de estado del jugador y consulta de estado
+  para espectador registrado.
 - Bots:
   catalogo de personalidades y creacion de match listo para jugar.
 - League:
-  creacion, join, leave, start, tabla, fixture y avance automatico.
+  creacion `PUBLIC` o `PRIVATE`, join privado por `inviteCode`, lobby publico por `id`,
+  autostart publico al completarse, leave, start privado, tabla, fixture y avance automatico.
 - Cup:
-  creacion, join, leave, start, bracket, avance automatico y resolucion por forfeit.
+  creacion `PUBLIC` o `PRIVATE`, join privado por `inviteCode`, lobby publico por `id`,
+  autostart publico al completarse, leave, start privado, bracket, avance automatico y
+  resolucion por forfeit.
 - Spectators:
   solo participantes de la misma liga o copa pueden spectear matches en progreso; la vista de
   espectador no expone cartas privadas ni acciones disponibles.
@@ -222,6 +228,7 @@ Contrato de errores relevante:
 
 - los enums recibidos como `String` son case-sensitive; si se envia un valor fuera del contrato, la
   API responde `400` con `InvalidEnumValueException` y lista de valores permitidos
+- `join-public` devuelve `409` si otro request ocupó el ultimo lugar antes del retry final
 
 Recursos REST principales:
 
@@ -232,6 +239,24 @@ Recursos REST principales:
 - `/api/chats`
 - `/api/bots`
 
+## Salas Publicas y Privadas
+
+- `PRIVATE`:
+  mantiene el flujo historico; persiste `inviteCode`, no aparece en lobby y se entra por
+  `POST /api/*/join`.
+- `PUBLIC`:
+  no devuelve `inviteCode`, aparece en lobby y se entra por `POST /api/*/{id}/join-public`.
+- Lobby publico:
+  `GET /api/matches/public`, `GET /api/leagues/public`, `GET /api/cups/public`.
+  Usa `limit` y `after` para paginacion cursor-based; `limit` default `20`, maximo `100`.
+  Responde `items` + `_links.self`/`_links.next`; no hay `last`, `prev` ni totales.
+- Auto-start publico:
+  una partida publica pasa a `IN_PROGRESS` al entrar el segundo jugador.
+  una liga/copa publica inicia el torneo y crea/linkea los matches hijos al completarse el cupo.
+- Usuarios ocupados:
+  no pueden listar ni usar el lobby publico mientras tengan match activo o torneo pendiente.
+  si quedaron eliminados de una liga/copa en progreso, recuperan elegibilidad para el lobby.
+
 WebSocket/STOMP:
 
 - endpoint nativo: `/ws`
@@ -239,6 +264,9 @@ WebSocket/STOMP:
 - colas por usuario:
   `/user/queue/match`, `/user/queue/match-spectate`, `/user/queue/league`, `/user/queue/cup`,
   `/user/queue/chat`
+- topics publicos de lobby:
+  `/topic/public-match-lobby`, `/topic/public-league-lobby`, `/topic/public-cup-lobby`
+  solo emiten deltas `UPSERT`/`REMOVED`; el snapshot inicial del lobby se obtiene via REST.
 - spectate:
   el alta de espectador se registra al suscribirse por STOMP a `/user/queue/match-spectate`
   enviando header nativo `matchId`; la API expone `GET /api/matches/{matchId}/spectate` para leer

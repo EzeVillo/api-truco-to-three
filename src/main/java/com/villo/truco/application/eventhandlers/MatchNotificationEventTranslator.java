@@ -5,6 +5,7 @@ import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
+import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
 import java.util.Objects;
 
 public final class MatchNotificationEventTranslator implements
@@ -30,6 +31,10 @@ public final class MatchNotificationEventTranslator implements
 
   @Override
   public void handle(final MatchDomainEvent event) {
+
+    if (event instanceof PublicMatchLobbyOpenedEvent) {
+      return;
+    }
 
     final var inner = event instanceof MatchEventEnvelope env ? env.getInner() : event;
     final var payload = this.mapper.map(inner);

@@ -1,0 +1,50 @@
+$kind: http-example
+request:
+  url: "{{URL_BASE_TRUCO_HTTP}}/leagues"
+  method: POST
+  body:
+    type: json
+    content: "{\r
+
+      \  \"numberOfPlayers\": 4,\r
+
+      \  \"gamesToPlay\": 3,\r
+
+      \  \"visibility\": \"PRIVATE\"\r
+
+      }"
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    - key: vary
+      value: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+    - key: x-request-id
+      value: a6dce213-a8f0-4117-be14-0b09850e328f
+    - key: x-content-type-options
+      value: nosniff
+    - key: x-xss-protection
+      value: "0"
+    - key: cache-control
+      value: no-cache, no-store, max-age=0, must-revalidate
+    - key: pragma
+      value: no-cache
+    - key: expires
+      value: "0"
+    - key: x-frame-options
+      value: DENY
+    - key: content-type
+      value: application/json
+    - key: content-length
+      value: "98"
+    - key: date
+      value: Fri, 03 Apr 2026 23:33:45 GMT
+    - key: keep-alive
+      value: timeout=60
+    - key: connection
+      value: keep-alive
+  body:
+    type: json
+    content: '{"leagueId":"2af8c73f-1893-4738-b987-3ae61eacf451","inviteCode":"DCWSJZUU","visibility":"PRIVATE"}'
+order: 1775259232754
+name: Private

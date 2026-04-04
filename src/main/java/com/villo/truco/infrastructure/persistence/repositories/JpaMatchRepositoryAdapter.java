@@ -4,14 +4,19 @@ import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
+import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.entities.MatchJpaEntity;
 import com.villo.truco.infrastructure.persistence.mappers.MatchMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataMatchRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,16 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
 
     this.springDataRepo = springDataRepo;
     this.mapper = mapper;
+  }
+
+  private static PublicLobbyCursor decodeCursor(final String encodedCursor) {
+
+    return encodedCursor == null ? null : PublicLobbyCursor.decode(encodedCursor);
+  }
+
+  private static String encodeCursor(final MatchJpaEntity entity) {
+
+    return new PublicLobbyCursor(entity.getLastActivityAt(), entity.getId()).encode();
   }
 
   @Override
@@ -71,6 +86,34 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
     return this.springDataRepo.findIdleMatchIds(idleSince).stream().map(MatchId::new).toList();
+  }
+
+  @Override
+  public List<Match> findPublicWaiting() {
+
+    return this.springDataRepo.findPublicWaiting().stream().map(this.mapper::toDomain).toList();
+  }
+
+  @Override
+  public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+    final var afterCursor = decodeCursor(pageQuery.after());
+    final var pageable = PageRequest.of(0, pageQuery.limit() + 1);
+    final List<MatchJpaEntity> entities;
+
+    if (afterCursor == null) {
+      entities = this.springDataRepo.findInitialPublicWaitingPage(pageable);
+    } else {
+      entities = this.springDataRepo.findPublicWaitingPage(afterCursor.lastActivityAt(),
+          afterCursor.resourceId(), pageable);
+    }
+
+    final var hasMore = entities.size() > pageQuery.limit();
+    final var pageItems = hasMore ? entities.subList(0, pageQuery.limit()) : entities;
+    final var nextCursor = hasMore ? encodeCursor(pageItems.getLast()) : null;
+
+    return new CursorPageResult<>(pageItems.stream().map(this.mapper::toDomain).toList(),
+        nextCursor);
   }
 
 }

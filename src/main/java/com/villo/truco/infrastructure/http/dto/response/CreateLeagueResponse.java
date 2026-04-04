@@ -5,12 +5,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Respuesta al crear liga")
 public record CreateLeagueResponse(
-    @Schema(description = "ID del liga", example = "league-123") String leagueId,
-    @Schema(description = "Código de invitación del liga", example = "ABCD1234") String inviteCode) {
+    @Schema(description = "ID de la liga", example = "league-123") String leagueId,
+    @Schema(description = "Codigo de invitacion de la liga. Solo aparece en salas PRIVATE", example = "ABCD1234", nullable = true) String inviteCode,
+    @Schema(description = "Visibilidad de la sala", example = "PRIVATE") String visibility) {
 
   public static CreateLeagueResponse from(final CreateLeagueDTO dto) {
 
-    return new CreateLeagueResponse(dto.leagueId(), dto.inviteCode());
+    return new CreateLeagueResponse(dto.leagueId(), dto.inviteCode(), dto.visibility());
   }
 
 }

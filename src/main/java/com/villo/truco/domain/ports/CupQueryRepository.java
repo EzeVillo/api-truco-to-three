@@ -2,6 +2,8 @@ package com.villo.truco.domain.ports;
 
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -22,5 +24,7 @@ public interface CupQueryRepository {
   Optional<Cup> findWaitingByPlayer(PlayerId playerId);
 
   List<CupId> findIdleCupIds(Instant idleSince);
+
+  CursorPageResult<Cup> findPublicWaiting(CursorPageQuery pageQuery);
 
 }

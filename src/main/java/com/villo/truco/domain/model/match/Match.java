@@ -10,11 +10,14 @@ import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
+import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
 import com.villo.truco.domain.model.match.events.ScoreChangedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
 import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
+import com.villo.truco.domain.model.match.exceptions.PrivateMatchVisibilityAccessException;
+import com.villo.truco.domain.model.match.exceptions.PublicMatchLobbyUnavailableException;
 import com.villo.truco.domain.model.match.exceptions.SamePlayerMatchException;
 import com.villo.truco.domain.model.match.valueobjects.AvailableAction;
 import com.villo.truco.domain.model.match.valueobjects.CurrentHandInfo;
@@ -30,6 +33,7 @@ import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -42,6 +46,7 @@ public final class Match extends AggregateBase<MatchId> {
   private final MatchRules rules;
 
   private final PlayerId playerOne;
+  private final Visibility visibility;
   private final InviteCode inviteCode;
   private PlayerId playerTwo;
   private PlayerId firstManoOfGame = null;
@@ -62,13 +67,15 @@ public final class Match extends AggregateBase<MatchId> {
   private boolean readyPlayerTwo;
 
   private Match(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
-      final InviteCode inviteCode, final MatchRules rules, final MatchStatus initialStatus) {
+      final InviteCode inviteCode, final MatchRules rules, final Visibility visibility,
+      final MatchStatus initialStatus) {
 
     super(id);
     this.playerOne = playerOne;
     this.playerTwo = playerTwo;
     this.inviteCode = inviteCode;
     this.rules = rules;
+    this.visibility = visibility;
     this.status = initialStatus;
     this.gamesWonPlayerOne = 0;
     this.gamesWonPlayerTwo = 0;
@@ -77,14 +84,20 @@ public final class Match extends AggregateBase<MatchId> {
     this.readyPlayerTwo = false;
   }
 
-  public static Match create(final PlayerId playerOne, final MatchRules rules) {
+  public static Match create(final PlayerId playerOne, final MatchRules rules,
+      final Visibility visibility) {
 
     Objects.requireNonNull(playerOne, "PlayerOne cannot be null");
     Objects.requireNonNull(rules, "MatchRules cannot be null");
-    final var match = new Match(MatchId.generate(), playerOne, null, InviteCode.generate(), rules,
+    Objects.requireNonNull(visibility, "Visibility cannot be null");
+    final var inviteCode = visibility == Visibility.PRIVATE ? InviteCode.generate() : null;
+    final var match = new Match(MatchId.generate(), playerOne, null, inviteCode, rules, visibility,
         MatchStatus.WAITING_FOR_PLAYERS);
-    LOGGER.info("Match created: matchId={}, playerOne={}, rules={gamesToWin={}}", match.getId(),
-        playerOne, rules.gamesToWin());
+    if (visibility == Visibility.PUBLIC) {
+      match.addDomainEvent(new PublicMatchLobbyOpenedEvent(match.getId(), playerOne));
+    }
+    LOGGER.info("Match created: matchId={}, playerOne={}, visibility={}, rules={gamesToWin={}}",
+        match.getId(), playerOne, visibility, rules.gamesToWin());
     return match;
   }
 
@@ -97,21 +110,21 @@ public final class Match extends AggregateBase<MatchId> {
     if (playerOne.equals(playerTwo)) {
       throw new SamePlayerMatchException();
     }
-    final var match = new Match(MatchId.generate(), playerOne, playerTwo, null, rules,
-        MatchStatus.READY);
+    final var match = new Match(MatchId.generate(), playerOne, playerTwo, InviteCode.generate(),
+        rules, Visibility.PRIVATE, MatchStatus.READY);
     LOGGER.info("Ready match created: matchId={}, playerOne={}, playerTwo={}", match.getId(),
         playerOne, playerTwo);
     return match;
   }
 
   static Match reconstruct(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
-      final InviteCode inviteCode, final MatchRules rules, final MatchStatus status,
-      final int gamesWonPlayerOne, final int gamesWonPlayerTwo, final int gameNumber,
-      final int scorePlayerOne, final int scorePlayerTwo, final int roundNumber,
-      final boolean readyPlayerOne, final boolean readyPlayerTwo, final PlayerId firstManoOfGame,
-      final Round currentRound) {
+      final InviteCode inviteCode, final MatchRules rules, final Visibility visibility,
+      final MatchStatus status, final int gamesWonPlayerOne, final int gamesWonPlayerTwo,
+      final int gameNumber, final int scorePlayerOne, final int scorePlayerTwo,
+      final int roundNumber, final boolean readyPlayerOne, final boolean readyPlayerTwo,
+      final PlayerId firstManoOfGame, final Round currentRound) {
 
-    final var match = new Match(id, playerOne, playerTwo, inviteCode, rules, status);
+    final var match = new Match(id, playerOne, playerTwo, inviteCode, rules, visibility, status);
     match.gamesWonPlayerOne = gamesWonPlayerOne;
     match.gamesWonPlayerTwo = gamesWonPlayerTwo;
     match.gameNumber = gameNumber;
@@ -146,6 +159,32 @@ public final class Match extends AggregateBase<MatchId> {
     this.status = MatchStatus.READY;
     LOGGER.info("Player joined match: matchId={}, playerTwo={}", this.id, playerTwo);
     this.addDomainEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
+  }
+
+  public void joinPublic(final PlayerId playerTwo) {
+
+    Objects.requireNonNull(playerTwo, "PlayerTwo cannot be null");
+
+    if (this.visibility != Visibility.PUBLIC) {
+      throw new PrivateMatchVisibilityAccessException();
+    }
+
+    if (this.status != MatchStatus.WAITING_FOR_PLAYERS) {
+      throw new PublicMatchLobbyUnavailableException();
+    }
+
+    if (playerTwo.equals(this.playerOne)) {
+      throw new SamePlayerMatchException();
+    }
+
+    this.playerTwo = playerTwo;
+    this.status = MatchStatus.READY;
+    LOGGER.info("Player joined public match: matchId={}, playerTwo={}", this.id, playerTwo);
+    this.addDomainEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
+
+    this.readyPlayerOne = true;
+    this.readyPlayerTwo = true;
+    this.startInternal();
   }
 
   public void startMatch(final PlayerId playerId) {
@@ -184,9 +223,7 @@ public final class Match extends AggregateBase<MatchId> {
         new PlayerReadyEvent(this.id, this.playerOne, this.playerTwo, this.seatOf(playerId)));
 
     if (readyState.bothReady()) {
-      this.status = MatchStatus.IN_PROGRESS;
-      LOGGER.info("Match moved to IN_PROGRESS: matchId={}", this.id);
-      this.startNewGame();
+      this.startInternal();
     }
   }
 
@@ -442,6 +479,13 @@ public final class Match extends AggregateBase<MatchId> {
     this.startNewRound();
   }
 
+  private void startInternal() {
+
+    this.status = MatchStatus.IN_PROGRESS;
+    LOGGER.info("Match moved to IN_PROGRESS: matchId={}", this.id);
+    this.startNewGame();
+  }
+
   private void startNewRound() {
 
     final var nextRoundNumber = this.roundNumber + 1;
@@ -559,6 +603,11 @@ public final class Match extends AggregateBase<MatchId> {
     return this.playerTwo;
   }
 
+  public Visibility getVisibility() {
+
+    return this.visibility;
+  }
+
   public InviteCode getInviteCode() {
 
     return this.inviteCode;
@@ -587,6 +636,11 @@ public final class Match extends AggregateBase<MatchId> {
   public boolean isFinished() {
 
     return this.status == MatchStatus.FINISHED;
+  }
+
+  public boolean isPublicLobbyOpen() {
+
+    return this.visibility == Visibility.PUBLIC && this.status == MatchStatus.WAITING_FOR_PLAYERS;
   }
 
   public boolean isReadyPlayerOne() {
@@ -676,6 +730,11 @@ public final class Match extends AggregateBase<MatchId> {
   MatchRules getRules() {
 
     return this.rules;
+  }
+
+  public int getGamesToPlay() {
+
+    return this.rules.gamesToWin() * 2 - 1;
   }
 
   int getGameNumber() {

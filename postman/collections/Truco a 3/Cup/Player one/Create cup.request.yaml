@@ -7,7 +7,9 @@ body:
 
     \  \"numberOfPlayers\": 4,\r
 
-    \  \"gamesToPlay\": 3\r
+    \  \"gamesToPlay\": 3,\r
+
+    \  \"visibility\": \"PRIVATE\"\r
 
     }"
 scripts:
@@ -24,4 +26,5 @@ scripts:
 
       pm.environment.set(\"parentId\", response.cupId);"
     language: text/javascript
+examples: .resources/Create cup.resources/examples
 order: 1000

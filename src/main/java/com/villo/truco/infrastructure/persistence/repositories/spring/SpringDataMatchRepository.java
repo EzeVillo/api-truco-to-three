@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,5 +25,23 @@ public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity,
   @Query("SELECT m.id FROM MatchJpaEntity m "
       + "WHERE m.status <> 'FINISHED' AND m.lastActivityAt < :idleSince")
   List<UUID> findIdleMatchIds(@Param("idleSince") Instant idleSince);
+
+  @Query("SELECT m FROM MatchJpaEntity m "
+      + "WHERE m.visibility = 'PUBLIC' AND m.status = 'WAITING_FOR_PLAYERS' "
+      + "ORDER BY m.lastActivityAt DESC")
+  List<MatchJpaEntity> findPublicWaiting();
+
+  @Query("SELECT m FROM MatchJpaEntity m "
+      + "WHERE m.visibility = 'PUBLIC' AND m.status = 'WAITING_FOR_PLAYERS' "
+      + "ORDER BY m.lastActivityAt DESC, m.id DESC")
+  List<MatchJpaEntity> findInitialPublicWaitingPage(Pageable pageable);
+
+  @Query("SELECT m FROM MatchJpaEntity m "
+      + "WHERE m.visibility = 'PUBLIC' AND m.status = 'WAITING_FOR_PLAYERS' "
+      + "AND (m.lastActivityAt < :afterActivityAt "
+      + "OR (m.lastActivityAt = :afterActivityAt AND m.id < :afterId)) "
+      + "ORDER BY m.lastActivityAt DESC, m.id DESC")
+  List<MatchJpaEntity> findPublicWaitingPage(@Param("afterActivityAt") Instant afterActivityAt,
+      @Param("afterId") UUID afterId, Pageable pageable);
 
 }

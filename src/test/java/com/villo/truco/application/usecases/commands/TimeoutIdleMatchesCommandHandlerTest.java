@@ -12,10 +12,13 @@ import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.pagination.CursorPageQuery;
+import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -42,7 +45,8 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
   private Match waitingMatch() {
 
-    return Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+    return Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+        Visibility.PRIVATE);
   }
 
   private Match readyMatch() {
@@ -96,6 +100,18 @@ class TimeoutIdleMatchesCommandHandlerTest {
       public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
         return List.copyOf(matches.keySet());
+      }
+
+      @Override
+      public List<Match> findPublicWaiting() {
+
+        return List.of();
+      }
+
+      @Override
+      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
+
+        return new CursorPageResult<>(findPublicWaiting(), null);
       }
     };
 

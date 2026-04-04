@@ -8,7 +8,9 @@ import com.villo.truco.application.ports.in.AdvanceCupUseCase;
 import com.villo.truco.application.ports.in.CreateCupUseCase;
 import com.villo.truco.application.ports.in.ForfeitCupUseCase;
 import com.villo.truco.application.ports.in.GetCupStateUseCase;
+import com.villo.truco.application.ports.in.GetPublicCupsUseCase;
 import com.villo.truco.application.ports.in.JoinCupUseCase;
+import com.villo.truco.application.ports.in.JoinPublicCupUseCase;
 import com.villo.truco.application.ports.in.LeaveCupUseCase;
 import com.villo.truco.application.ports.in.StartCupUseCase;
 import com.villo.truco.application.usecases.commands.AdvanceCupCommandHandler;
@@ -16,10 +18,12 @@ import com.villo.truco.application.usecases.commands.CreateCupCommandHandler;
 import com.villo.truco.application.usecases.commands.CupResolver;
 import com.villo.truco.application.usecases.commands.ForfeitCupCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinCupCommandHandler;
+import com.villo.truco.application.usecases.commands.JoinPublicCupCommandHandler;
 import com.villo.truco.application.usecases.commands.LeaveCupCommandHandler;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.commands.StartCupCommandHandler;
 import com.villo.truco.application.usecases.queries.GetCupStateQueryHandler;
+import com.villo.truco.application.usecases.queries.GetPublicCupsQueryHandler;
 import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
@@ -69,7 +73,7 @@ public class CupUseCaseConfiguration {
   @Bean
   CreateCupUseCase createCupCommandHandler() {
 
-    final var handler = new CreateCupCommandHandler(this.cupRepository,
+    final var handler = new CreateCupCommandHandler(this.cupRepository, this.cupEventNotifier,
         this.playerAvailabilityChecker);
     return this.transactionalPipeline.wrap(handler)::handle;
   }
@@ -79,6 +83,14 @@ public class CupUseCaseConfiguration {
 
     final var handler = new JoinCupCommandHandler(this.cupResolver(), this.cupRepository,
         this.playerAvailabilityChecker, this.cupEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  JoinPublicCupUseCase joinPublicCupCommandHandler() {
+
+    final var handler = new JoinPublicCupCommandHandler(this.cupResolver(), this.cupRepository,
+        this.matchRepository, this.cupEventNotifier, this.playerAvailabilityChecker);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -102,6 +114,13 @@ public class CupUseCaseConfiguration {
   GetCupStateUseCase getCupStateQueryHandler() {
 
     return new GetCupStateQueryHandler(this.cupResolver(), this.publicActorResolver);
+  }
+
+  @Bean
+  GetPublicCupsUseCase getPublicCupsQueryHandler() {
+
+    return new GetPublicCupsQueryHandler(this.cupQueryRepository, this.publicActorResolver,
+        this.playerAvailabilityChecker);
   }
 
   @Bean

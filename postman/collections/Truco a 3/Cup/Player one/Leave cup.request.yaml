@@ -1,0 +1,5 @@
+$kind: http-request
+name: Leave cup
+url: "{{URL_BASE_TRUCO_HTTP}}/cups/{{cupId}}/leave"
+method: POST
+order: 3916

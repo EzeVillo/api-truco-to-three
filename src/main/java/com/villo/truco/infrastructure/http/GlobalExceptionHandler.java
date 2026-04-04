@@ -79,6 +79,7 @@ public class GlobalExceptionHandler {
       case NOT_FOUND -> HttpStatus.NOT_FOUND;
       case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
       case UNPROCESSABLE -> HttpStatus.UNPROCESSABLE_CONTENT;
+      case CONFLICT -> HttpStatus.CONFLICT;
     };
   }
 

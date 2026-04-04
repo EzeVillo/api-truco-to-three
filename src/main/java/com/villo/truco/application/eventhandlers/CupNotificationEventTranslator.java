@@ -4,6 +4,7 @@ import com.villo.truco.application.events.CupEventNotification;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
+import com.villo.truco.domain.model.cup.events.PublicCupLobbyOpenedEvent;
 import java.util.Objects;
 
 public final class CupNotificationEventTranslator implements CupDomainEventHandler<CupDomainEvent> {
@@ -26,6 +27,10 @@ public final class CupNotificationEventTranslator implements CupDomainEventHandl
 
   @Override
   public void handle(final CupDomainEvent event) {
+
+    if (event instanceof PublicCupLobbyOpenedEvent) {
+      return;
+    }
 
     final var payload = this.mapper.map(event);
     this.publisher.publish(

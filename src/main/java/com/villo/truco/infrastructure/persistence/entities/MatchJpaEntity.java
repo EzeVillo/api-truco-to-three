@@ -29,6 +29,9 @@ public class MatchJpaEntity {
   private String inviteCode;
 
   @Column(nullable = false)
+  private String visibility;
+
+  @Column(nullable = false)
   private String status;
 
   @Column(name = "games_to_win", nullable = false)
@@ -135,6 +138,16 @@ public class MatchJpaEntity {
   public void setStatus(String status) {
 
     this.status = status;
+  }
+
+  public String getVisibility() {
+
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+
+    this.visibility = visibility;
   }
 
   public int getGamesToWin() {
@@ -245,6 +258,16 @@ public class MatchJpaEntity {
   public void setCurrentRound(RoundData currentRound) {
 
     this.currentRound = currentRound;
+  }
+
+  public Instant getLastActivityAt() {
+
+    return lastActivityAt;
+  }
+
+  public void setLastActivityAt(final Instant lastActivityAt) {
+
+    this.lastActivityAt = lastActivityAt;
   }
 
   public int getVersion() {

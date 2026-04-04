@@ -19,39 +19,31 @@ import java.util.UUID;
 @Table(name = "cups")
 public class CupJpaEntity {
 
-  @Id
-  private UUID id;
-
-  @Column(name = "number_of_players", nullable = false)
-  private int numberOfPlayers;
-
-  @Column(name = "games_to_play", nullable = false)
-  private int gamesToPlay;
-
-  @Column(name = "invite_code", nullable = false)
-  private String inviteCode;
-
-  @Column(nullable = false)
-  private String status;
-
-  @Column
-  private UUID champion;
-
-  @Column(name = "last_activity_at", nullable = false)
-  private Instant lastActivityAt;
-
-  @Version
-  private int version;
-
   @OneToMany(mappedBy = "cup", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("ordinal ASC")
-  private List<CupParticipantJpaEntity> participants = new ArrayList<>();
-
+  private final List<CupParticipantJpaEntity> participants = new ArrayList<>();
   @OneToMany(mappedBy = "cup", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<CupBoutJpaEntity> bouts = new ArrayList<>();
-
+  private final List<CupBoutJpaEntity> bouts = new ArrayList<>();
   @OneToMany(mappedBy = "cup", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<CupForfeitedPlayerJpaEntity> forfeitedPlayers = new ArrayList<>();
+  private final List<CupForfeitedPlayerJpaEntity> forfeitedPlayers = new ArrayList<>();
+  @Id
+  private UUID id;
+  @Column(name = "number_of_players", nullable = false)
+  private int numberOfPlayers;
+  @Column(name = "games_to_play", nullable = false)
+  private int gamesToPlay;
+  @Column(name = "invite_code")
+  private String inviteCode;
+  @Column(nullable = false)
+  private String visibility;
+  @Column(nullable = false)
+  private String status;
+  @Column
+  private UUID champion;
+  @Column(name = "last_activity_at", nullable = false)
+  private Instant lastActivityAt;
+  @Version
+  private int version;
 
   public CupJpaEntity() {
 
@@ -107,6 +99,16 @@ public class CupJpaEntity {
   public void setInviteCode(String inviteCode) {
 
     this.inviteCode = inviteCode;
+  }
+
+  public String getVisibility() {
+
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+
+    this.visibility = visibility;
   }
 
   public String getStatus() {

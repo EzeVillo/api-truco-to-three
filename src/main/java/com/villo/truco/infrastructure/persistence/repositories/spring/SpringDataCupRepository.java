@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,5 +29,23 @@ public interface SpringDataCupRepository extends JpaRepository<CupJpaEntity, UUI
       + "WHERE c.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') "
       + "AND c.lastActivityAt < :idleSince")
   List<UUID> findIdleCupIds(@Param("idleSince") Instant idleSince);
+
+  @Query("SELECT c FROM CupJpaEntity c "
+      + "WHERE c.visibility = 'PUBLIC' AND c.status = 'WAITING_FOR_PLAYERS' "
+      + "ORDER BY c.lastActivityAt DESC")
+  List<CupJpaEntity> findPublicWaiting();
+
+  @Query("SELECT c FROM CupJpaEntity c "
+      + "WHERE c.visibility = 'PUBLIC' AND c.status = 'WAITING_FOR_PLAYERS' "
+      + "ORDER BY c.lastActivityAt DESC, c.id DESC")
+  List<CupJpaEntity> findInitialPublicWaitingPage(Pageable pageable);
+
+  @Query("SELECT c FROM CupJpaEntity c "
+      + "WHERE c.visibility = 'PUBLIC' AND c.status = 'WAITING_FOR_PLAYERS' "
+      + "AND (c.lastActivityAt < :afterActivityAt "
+      + "OR (c.lastActivityAt = :afterActivityAt AND c.id < :afterId)) "
+      + "ORDER BY c.lastActivityAt DESC, c.id DESC")
+  List<CupJpaEntity> findPublicWaitingPage(@Param("afterActivityAt") Instant afterActivityAt,
+      @Param("afterId") UUID afterId, Pageable pageable);
 
 }

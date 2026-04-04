@@ -24,6 +24,9 @@ import com.villo.truco.infrastructure.websocket.StompChatNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompCupNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompLeagueNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompMatchNotificationHandler;
+import com.villo.truco.infrastructure.websocket.StompPublicCupLobbyNotificationHandler;
+import com.villo.truco.infrastructure.websocket.StompPublicLeagueLobbyNotificationHandler;
+import com.villo.truco.infrastructure.websocket.StompPublicMatchLobbyNotificationHandler;
 import com.villo.truco.infrastructure.websocket.StompSpectatorCountHandler;
 import com.villo.truco.infrastructure.websocket.StompSpectatorNotificationHandler;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -74,6 +77,27 @@ public class ApplicationEventConfiguration {
   StompLeagueNotificationHandler stompLeagueNotificationHandler() {
 
     return new StompLeagueNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  StompPublicMatchLobbyNotificationHandler stompPublicMatchLobbyNotificationHandler() {
+
+    return new StompPublicMatchLobbyNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  StompPublicCupLobbyNotificationHandler stompPublicCupLobbyNotificationHandler() {
+
+    return new StompPublicCupLobbyNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  StompPublicLeagueLobbyNotificationHandler stompPublicLeagueLobbyNotificationHandler() {
+
+    return new StompPublicLeagueLobbyNotificationHandler(this.messagingTemplate,
         this.eventNotifierHealthRegistry);
   }
 

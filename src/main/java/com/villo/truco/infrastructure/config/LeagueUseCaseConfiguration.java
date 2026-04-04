@@ -8,18 +8,22 @@ import com.villo.truco.application.ports.in.AdvanceLeagueUseCase;
 import com.villo.truco.application.ports.in.CreateLeagueUseCase;
 import com.villo.truco.application.ports.in.ForfeitLeagueUseCase;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
+import com.villo.truco.application.ports.in.GetPublicLeaguesUseCase;
 import com.villo.truco.application.ports.in.JoinLeagueUseCase;
+import com.villo.truco.application.ports.in.JoinPublicLeagueUseCase;
 import com.villo.truco.application.ports.in.LeaveLeagueUseCase;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
 import com.villo.truco.application.usecases.commands.AdvanceLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.ForfeitLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinLeagueCommandHandler;
+import com.villo.truco.application.usecases.commands.JoinPublicLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.LeagueResolver;
 import com.villo.truco.application.usecases.commands.LeaveLeagueCommandHandler;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.commands.StartLeagueCommandHandler;
 import com.villo.truco.application.usecases.queries.GetLeagueStateQueryHandler;
+import com.villo.truco.application.usecases.queries.GetPublicLeaguesQueryHandler;
 import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
@@ -70,7 +74,7 @@ public class LeagueUseCaseConfiguration {
   CreateLeagueUseCase createLeagueCommandHandler() {
 
     final var handler = new CreateLeagueCommandHandler(this.leagueRepository,
-        this.playerAvailabilityChecker);
+        this.leagueEventNotifier, this.playerAvailabilityChecker);
     return this.transactionalPipeline.wrap(handler)::handle;
   }
 
@@ -79,6 +83,15 @@ public class LeagueUseCaseConfiguration {
 
     final var handler = new JoinLeagueCommandHandler(this.leagueResolver(), this.leagueRepository,
         this.playerAvailabilityChecker, this.leagueEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  JoinPublicLeagueUseCase joinPublicLeagueCommandHandler() {
+
+    final var handler = new JoinPublicLeagueCommandHandler(this.leagueResolver(),
+        this.leagueRepository, this.matchRepository, this.leagueEventNotifier,
+        this.playerAvailabilityChecker);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -118,6 +131,13 @@ public class LeagueUseCaseConfiguration {
   GetLeagueStateUseCase getLeagueStateQueryHandler() {
 
     return new GetLeagueStateQueryHandler(this.leagueResolver(), this.publicActorResolver);
+  }
+
+  @Bean
+  GetPublicLeaguesUseCase getPublicLeaguesQueryHandler() {
+
+    return new GetPublicLeaguesQueryHandler(this.leagueQueryRepository, this.publicActorResolver,
+        this.playerAvailabilityChecker);
   }
 
   @Bean
