@@ -20,6 +20,7 @@ import com.villo.truco.application.ports.in.GetPublicMatchesUseCase;
 import com.villo.truco.application.ports.in.GetSpectateMatchStateUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.JoinPublicMatchUseCase;
+import com.villo.truco.application.ports.in.LeaveMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -57,6 +58,7 @@ class MatchControllerTest {
     final RespondEnvidoUseCase respondEnvido = mock(RespondEnvidoUseCase.class);
     final FoldUseCase fold = mock(FoldUseCase.class);
     final AbandonMatchUseCase abandon = mock(AbandonMatchUseCase.class);
+    final LeaveMatchUseCase leave = mock(LeaveMatchUseCase.class);
     final GetMatchStateUseCase get = mock(GetMatchStateUseCase.class);
     final GetPublicMatchesUseCase getPublic = mock(GetPublicMatchesUseCase.class);
 
@@ -72,7 +74,7 @@ class MatchControllerTest {
 
     final GetSpectateMatchStateUseCase getSpectate = mock(GetSpectateMatchStateUseCase.class);
     final var controller = new MatchController(create, join, joinPublic, start, play, truco,
-        respondTruco, envido, respondEnvido, fold, abandon, get, getPublic, getSpectate);
+        respondTruco, envido, respondEnvido, fold, abandon, leave, get, getPublic, getSpectate);
     final var jwt = jwt("11111111-1111-1111-1111-111111111111");
     final var matchId = "22222222-2222-2222-2222-222222222222";
 

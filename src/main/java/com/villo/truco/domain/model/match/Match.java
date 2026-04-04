@@ -8,6 +8,7 @@ import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
+import com.villo.truco.domain.model.match.events.MatchPlayerLeftEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
 import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
@@ -334,9 +335,33 @@ public final class Match extends AggregateBase<MatchId> {
     this.addGamePoints(result.winner(), result.points());
   }
 
+  public void leave(final PlayerId playerId) {
+
+    Objects.requireNonNull(playerId, "PlayerId cannot be null");
+    this.validatePlayerInMatch(playerId);
+
+    if (this.status != MatchStatus.WAITING_FOR_PLAYERS && this.status != MatchStatus.READY) {
+      throw new InvalidMatchStateException(this.status, MatchStatus.WAITING_FOR_PLAYERS,
+          MatchStatus.READY);
+    }
+
+    if (playerId.equals(this.playerOne)) {
+      this.status = MatchStatus.CANCELLED;
+      LOGGER.info("Match cancelled by creator: matchId={}, creatorId={}", this.id, playerId);
+      this.addDomainEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
+    } else {
+      this.playerTwo = null;
+      this.readyPlayerOne = false;
+      this.readyPlayerTwo = false;
+      this.status = MatchStatus.WAITING_FOR_PLAYERS;
+      LOGGER.info("Player left match: matchId={}, playerId={}", this.id, playerId);
+      this.addDomainEvent(new MatchPlayerLeftEvent(this.id, this.playerOne, PlayerSeat.PLAYER_TWO));
+    }
+  }
+
   public void cancel() {
 
-    if (this.status == MatchStatus.FINISHED) {
+    if (this.isFinished()) {
       return;
     }
 
@@ -344,7 +369,7 @@ public final class Match extends AggregateBase<MatchId> {
       throw new InvalidMatchStateException(this.status, MatchStatus.WAITING_FOR_PLAYERS);
     }
 
-    this.status = MatchStatus.FINISHED;
+    this.status = MatchStatus.CANCELLED;
     LOGGER.info("Match cancelled: matchId={}", this.id);
     this.addDomainEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
   }
@@ -354,12 +379,12 @@ public final class Match extends AggregateBase<MatchId> {
     Objects.requireNonNull(abandoner, "Abandoner cannot be null");
     this.validatePlayerInMatch(abandoner);
 
-    if (this.status == MatchStatus.FINISHED) {
+    if (this.status == MatchStatus.FINISHED || this.status == MatchStatus.CANCELLED) {
       return;
     }
 
-    if (this.status == MatchStatus.WAITING_FOR_PLAYERS) {
-      throw new InvalidMatchStateException(this.status, MatchStatus.READY);
+    if (this.status != MatchStatus.IN_PROGRESS) {
+      throw new InvalidMatchStateException(this.status, MatchStatus.IN_PROGRESS);
     }
 
     final var abandonerSeat = this.seatOf(abandoner);
@@ -420,7 +445,7 @@ public final class Match extends AggregateBase<MatchId> {
     Objects.requireNonNull(winner, "Winner cannot be null");
     this.validatePlayerInMatch(winner);
 
-    if (this.status == MatchStatus.FINISHED) {
+    if (this.isFinished()) {
       return;
     }
 
@@ -635,7 +660,7 @@ public final class Match extends AggregateBase<MatchId> {
 
   public boolean isFinished() {
 
-    return this.status == MatchStatus.FINISHED;
+    return this.status == MatchStatus.FINISHED || this.status == MatchStatus.CANCELLED;
   }
 
   public boolean isPublicLobbyOpen() {

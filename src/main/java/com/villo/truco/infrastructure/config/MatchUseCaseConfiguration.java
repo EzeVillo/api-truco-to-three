@@ -10,6 +10,7 @@ import com.villo.truco.application.ports.in.GetMatchStateUseCase;
 import com.villo.truco.application.ports.in.GetPublicMatchesUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.JoinPublicMatchUseCase;
+import com.villo.truco.application.ports.in.LeaveMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -21,6 +22,7 @@ import com.villo.truco.application.usecases.commands.CreateMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.FoldCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.JoinPublicMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.LeaveMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchResolver;
 import com.villo.truco.application.usecases.commands.PlayCardCommandHandler;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
@@ -29,6 +31,8 @@ import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
 import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetPublicMatchesQueryHandler;
+import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -47,13 +51,17 @@ public class MatchUseCaseConfiguration {
   private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
+  private final CupQueryRepository cupQueryRepository;
+  private final LeagueQueryRepository leagueQueryRepository;
 
   public MatchUseCaseConfiguration(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
-      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
+      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline,
+      final CupQueryRepository cupQueryRepository,
+      final LeagueQueryRepository leagueQueryRepository) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.matchRepository = matchRepository;
@@ -62,6 +70,8 @@ public class MatchUseCaseConfiguration {
     this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
+    this.cupQueryRepository = cupQueryRepository;
+    this.leagueQueryRepository = leagueQueryRepository;
   }
 
   @Bean
@@ -147,6 +157,14 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new AbandonMatchCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  LeaveMatchUseCase leaveMatchCommandHandler() {
+
+    final var handler = new LeaveMatchCommandHandler(this.matchResolver(), this.matchRepository,
+        this.matchEventNotifier, this.cupQueryRepository, this.leagueQueryRepository);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

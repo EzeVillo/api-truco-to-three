@@ -7,6 +7,7 @@ import com.villo.truco.application.commands.CreateMatchCommand;
 import com.villo.truco.application.commands.FoldCommand;
 import com.villo.truco.application.commands.JoinMatchCommand;
 import com.villo.truco.application.commands.JoinPublicMatchCommand;
+import com.villo.truco.application.commands.LeaveMatchCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
@@ -21,6 +22,7 @@ import com.villo.truco.application.ports.in.GetPublicMatchesUseCase;
 import com.villo.truco.application.ports.in.GetSpectateMatchStateUseCase;
 import com.villo.truco.application.ports.in.JoinMatchUseCase;
 import com.villo.truco.application.ports.in.JoinPublicMatchUseCase;
+import com.villo.truco.application.ports.in.LeaveMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
@@ -81,6 +83,7 @@ public class MatchController {
   private final RespondEnvidoUseCase respondEnvido;
   private final FoldUseCase fold;
   private final AbandonMatchUseCase abandonMatch;
+  private final LeaveMatchUseCase leaveMatch;
   private final GetMatchStateUseCase getMatchState;
   private final GetPublicMatchesUseCase getPublicMatches;
   private final GetSpectateMatchStateUseCase getSpectateMatchState;
@@ -90,8 +93,8 @@ public class MatchController {
       final PlayCardUseCase playCard, final CallTrucoUseCase callTruco,
       final RespondTrucoUseCase respondTruco, final CallEnvidoUseCase callEnvido,
       final RespondEnvidoUseCase respondEnvido, final FoldUseCase fold,
-      final AbandonMatchUseCase abandonMatch, final GetMatchStateUseCase getMatchState,
-      final GetPublicMatchesUseCase getPublicMatches,
+      final AbandonMatchUseCase abandonMatch, final LeaveMatchUseCase leaveMatch,
+      final GetMatchStateUseCase getMatchState, final GetPublicMatchesUseCase getPublicMatches,
       final GetSpectateMatchStateUseCase getSpectateMatchState) {
 
     this.createMatch = Objects.requireNonNull(createMatch);
@@ -105,6 +108,7 @@ public class MatchController {
     this.respondEnvido = Objects.requireNonNull(respondEnvido);
     this.fold = Objects.requireNonNull(fold);
     this.abandonMatch = Objects.requireNonNull(abandonMatch);
+    this.leaveMatch = Objects.requireNonNull(leaveMatch);
     this.getMatchState = Objects.requireNonNull(getMatchState);
     this.getPublicMatches = Objects.requireNonNull(getPublicMatches);
     this.getSpectateMatchState = Objects.requireNonNull(getSpectateMatchState);
@@ -293,15 +297,29 @@ public class MatchController {
   }
 
   @PostMapping("/{matchId}/abandon")
-  @Operation(summary = "Abandonar partida", description = "El jugador autenticado abandona voluntariamente la partida; el oponente gana", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Abandonar partida", description = "El jugador autenticado abandona voluntariamente la partida en curso; el oponente gana", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Partida abandonada"),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "No se puede abandonar en el estado actual", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+      @ApiResponse(responseCode = "422", description = "No se puede abandonar en el estado actual (solo permitido en IN_PROGRESS)", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<Void> abandonMatch(
       @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
       @AuthenticationPrincipal final Jwt jwt) {
 
     this.abandonMatch.handle(new AbandonMatchCommand(matchId, jwt.getSubject()));
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{matchId}/leave")
+  @Operation(summary = "Salir de partida", description = "El jugador autenticado se va de la partida antes de que empiece. Si es el creador, la partida queda cancelada. Si es el segundo jugador, vuelve a WAITING_FOR_PLAYERS.", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Jugador salió de la partida"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se puede salir en el estado actual (solo permitido antes de IN_PROGRESS)", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> leaveMatch(
+      @Parameter(description = "ID de la partida", example = "match-123") @PathVariable final String matchId,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    this.leaveMatch.handle(new LeaveMatchCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
   }
 

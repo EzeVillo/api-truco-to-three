@@ -534,18 +534,39 @@ Request body: sin body.
 
 Response `204` sin body.
 
-El jugador autenticado abandona voluntariamente la partida. El oponente gana automáticamente.
+El jugador autenticado abandona voluntariamente la partida en curso. El oponente gana
+automáticamente.
 
 Errores:
 
-- `422` si el jugador no pertenece a la partida o la partida está en estado `WAITING_FOR_PLAYERS` o
-  ya `FINISHED`
+- `422` si el jugador no pertenece a la partida o la partida no está en estado `IN_PROGRESS`
 
-Nota: el abandono voluntario sincroniza automáticamente el resultado al liga si la partida
-pertenece
-a uno (igual que el timeout automático y el fin normal de partida).
+Nota: el abandono voluntario sincroniza automáticamente el resultado a la liga si la partida
+pertenece a una (igual que el timeout automático y el fin normal de partida).
 
-### 4.13 Obtener estado de partida
+### 4.13 Salir de partida
+
+`POST /api/matches/{matchId}/leave`
+
+Auth: Bearer requerido.
+
+Request body: sin body.
+
+Response `204` sin body.
+
+El jugador autenticado se retira de la partida antes de que comience.
+
+- Si es el **creador** (playerOne): la partida queda `CANCELLED` y se notifica `MATCH_CANCELLED`.
+- Si es el **segundo jugador** (playerTwo): vuelve a `WAITING_FOR_PLAYERS` y se notifica
+  `MATCH_PLAYER_LEFT`.
+
+Errores:
+
+- `422` si el jugador no pertenece a la partida
+- `422` si la partida no está en estado `WAITING_FOR_PLAYERS` o `READY`
+- `422` si la partida pertenece a una copa o liga (usar `/cups/{id}/leave` o `/leagues/{id}/leave`)
+
+### 4.14 Obtener estado de partida
 
 `GET /api/matches/{matchId}`
 
@@ -619,7 +640,7 @@ Errores:
 - `404` si la partida no existe
 - `422` si el jugador no pertenece a la partida
 
-### 4.14 Obtener estado de partida como espectador
+### 4.15 Obtener estado de partida como espectador
 
 `GET /api/matches/{matchId}/spectate`
 
@@ -681,7 +702,7 @@ Errores:
 - `404` si la partida no existe
 - `422` si el jugador no esta registrado como espectador de esa partida
 
-### 4.15 Flujo de spectate
+### 4.16 Flujo de spectate
 
 El flujo actual de spectate es WebSocket-first:
 
@@ -1398,6 +1419,8 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `GAME_SCORE_CHANGED`
 - `MATCH_FINISHED`
 - `MATCH_ABANDONED`
+- `MATCH_CANCELLED`
+- `MATCH_PLAYER_LEFT`
 - `FOLDED`
 - `MATCH_FORFEITED`
 - `PLAYER_HAND_UPDATED`
@@ -1491,6 +1514,13 @@ No se reenvian al espectador los eventos privados por asiento:
 - `MATCH_ABANDONED`:
     - abandono voluntario del jugador; cierra solo el match actual
     - `{ winnerSeat, abandonerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+- `MATCH_CANCELLED`:
+    - el creador salió antes de que la partida comenzara (via `/leave`), o la partida fue
+      cancelada por timeout
+    - `{}`
+- `MATCH_PLAYER_LEFT`:
+    - el segundo jugador salió antes de que la partida comenzara; vuelve a `WAITING_FOR_PLAYERS`
+    - `{ leaverSeat }` — siempre `PLAYER_TWO`
 - `FOLDED`:
     - `{ seat }`
 - `MATCH_FORFEITED`:

@@ -124,7 +124,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
   }
 
   @Test
-  @DisplayName("match en WAITING_FOR_PLAYERS se cancela y queda FINISHED")
+  @DisplayName("match en WAITING_FOR_PLAYERS se cancela y queda CANCELLED")
   void waitingMatchIsCancelled() {
 
     final var match = waitingMatch();
@@ -135,7 +135,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     handler.handle();
 
     assertThat(savedMatch.get()).isNotNull();
-    assertThat(savedMatch.get().getStatus()).isEqualTo(MatchStatus.FINISHED);
+    assertThat(savedMatch.get().getStatus()).isEqualTo(MatchStatus.CANCELLED);
   }
 
   @Test

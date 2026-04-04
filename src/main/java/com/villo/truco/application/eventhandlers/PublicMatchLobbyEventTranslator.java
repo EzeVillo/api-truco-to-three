@@ -7,6 +7,7 @@ import com.villo.truco.application.ports.out.MatchDomainEventHandler;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
+import com.villo.truco.domain.model.match.events.MatchPlayerLeftEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -41,7 +42,7 @@ public final class PublicMatchLobbyEventTranslator implements
   public void handle(final MatchDomainEvent event) {
 
     if (!(event instanceof PublicMatchLobbyOpenedEvent || event instanceof PlayerJoinedEvent
-        || event instanceof MatchCancelledEvent)) {
+        || event instanceof MatchCancelledEvent || event instanceof MatchPlayerLeftEvent)) {
       return;
     }
 

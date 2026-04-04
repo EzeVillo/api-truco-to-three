@@ -77,7 +77,9 @@
       "Bash(java TestAutobind)",
       "Bash(export TEMP=\"C:\\\\Temp\")",
       "Bash(export TMP=\"C:\\\\Temp\")",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(mvn compile:*)",
+      "Bash(./mvnw compile:*)"
     ]
   }
 }

@@ -869,7 +869,7 @@ class MatchTest {
 
       match.cancel();
 
-      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.CANCELLED);
     }
 
     @Test
@@ -886,8 +886,8 @@ class MatchTest {
     }
 
     @Test
-    @DisplayName("cancel cuando ya está FINISHED es idempotente")
-    void cancelWhenAlreadyFinishedIsIdempotent() {
+    @DisplayName("cancel cuando ya está CANCELLED es idempotente")
+    void cancelWhenAlreadyCancelledIsIdempotent() {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
           Visibility.PRIVATE);
@@ -897,7 +897,7 @@ class MatchTest {
       match.cancel();
 
       assertThat(match.getDomainEvents()).isEmpty();
-      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.CANCELLED);
     }
 
     @Test
@@ -940,21 +940,15 @@ class MatchTest {
     }
 
     @Test
-    @DisplayName("abandono en READY emite MatchAbandonedEvent")
-    void readyAbandonEmitsMatchAbandonedEvent() {
+    @DisplayName("abandono en READY lanza InvalidMatchStateException")
+    void readyAbandonThrows() {
 
       final var match = Match.createReady(playerOne, playerTwo,
           MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
       match.clearDomainEvents();
 
-      match.abandon(playerOne);
-
-      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
-      assertThat(match.getMatchWinner()).isEqualTo(playerTwo);
-      assertThat(match.getDomainEvents()).anyMatch(
-          event -> event instanceof MatchAbandonedEvent abandoned
-              && abandoned.getWinnerSeat() == PlayerSeat.PLAYER_TWO
-              && abandoned.getAbandonerSeat() == PlayerSeat.PLAYER_ONE);
+      assertThatThrownBy(() -> match.abandon(playerOne)).isInstanceOf(
+          InvalidMatchStateException.class);
     }
 
     @Test
@@ -1011,7 +1005,7 @@ class MatchTest {
       final var result = match.timeoutForfeit();
 
       assertThat(result).isTrue();
-      assertThat(match.getStatus()).isEqualTo(MatchStatus.FINISHED);
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.CANCELLED);
       assertThat(match.getDomainEvents()).anyMatch(e -> e instanceof MatchCancelledEvent);
     }
 
