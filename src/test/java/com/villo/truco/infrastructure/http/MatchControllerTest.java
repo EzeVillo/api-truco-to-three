@@ -9,6 +9,7 @@ import com.villo.truco.application.dto.CreateMatchDTO;
 import com.villo.truco.application.dto.JoinMatchDTO;
 import com.villo.truco.application.dto.MatchStateDTO;
 import com.villo.truco.application.dto.PublicMatchLobbyDTO;
+import com.villo.truco.application.dto.RoundStateDTO;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
@@ -27,6 +28,7 @@ import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.http.dto.request.CreateMatchRequest;
 import com.villo.truco.infrastructure.http.dto.request.JoinMatchRequest;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -61,9 +63,11 @@ class MatchControllerTest {
     when(create.handle(any())).thenReturn(new CreateMatchDTO("m1", "ABCD", "PRIVATE"));
     when(join.handle(any())).thenReturn(new JoinMatchDTO("m1"));
     when(joinPublic.handle(any())).thenReturn(new JoinMatchDTO("m1"));
-    when(get.handle(any())).thenReturn(mock(MatchStateDTO.class));
+    when(get.handle(any())).thenReturn(new MatchStateDTO("m1", "IN_PROGRESS", 2, 1, 1, 0, null,
+        new RoundStateDTO("IN_PROGRESS", "juancho", List.of(), "PLAYING", "TRUCO", null, List.of(),
+            List.of(), null)));
     when(getPublic.handle(any())).thenReturn(new CursorPageResult<>(
-        java.util.List.of(new PublicMatchLobbyDTO("m1", "juancho", 3, 2, 1, "WAITING_FOR_PLAYERS")),
+        List.of(new PublicMatchLobbyDTO("m1", "juancho", 3, 2, 1, "WAITING_FOR_PLAYERS")),
         "cursor-1"));
 
     final GetSpectateMatchStateUseCase getSpectate = mock(GetSpectateMatchStateUseCase.class);
@@ -87,7 +91,12 @@ class MatchControllerTest {
     assertThat(publicMatches.getBody().items().getFirst()._links().joinPublic().href()).isEqualTo(
         "/api/matches/m1/join-public");
     assertThat(controller.joinPublicMatch(matchId, jwt).getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(controller.getMatchState(matchId, jwt).getStatusCode()).isEqualTo(HttpStatus.OK);
+    final var stateResponse = controller.getMatchState(matchId, jwt);
+    assertThat(stateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(stateResponse.getBody()).isNotNull();
+    assertThat(stateResponse.getBody().scorePlayerOne()).isEqualTo(2);
+    assertThat(stateResponse.getBody().scorePlayerTwo()).isEqualTo(1);
+    assertThat(stateResponse.getBody().roundGame()).isNotNull();
     assertThat(controller.startMatch(matchId, jwt).getStatusCode()).isEqualTo(
         HttpStatus.NO_CONTENT);
     assertThat(controller.callTruco(matchId, jwt).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);

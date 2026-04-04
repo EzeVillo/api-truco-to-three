@@ -34,8 +34,8 @@ public final class SpectatorMatchStateDTOAssembler {
         .orElse(null);
 
     return new SpectatorMatchStateDTO(match.getId().value().toString(), match.getStatus().name(),
-        match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(), matchWinner, roundState,
-        spectatorCount);
+        match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getGamesWonPlayerOne(),
+        match.getGamesWonPlayerTwo(), matchWinner, roundState, spectatorCount);
   }
 
   private Map<PlayerId, String> resolveActorNames(final Match match) {
@@ -75,9 +75,8 @@ public final class SpectatorMatchStateDTOAssembler {
         handInfo.cardPlayerTwo() != null ? CardDTO.from(handInfo.cardPlayerTwo()) : null,
         handInfo.mano() != null ? actorNames.get(handInfo.mano()) : null);
 
-    return new SpectatorRoundStateDTO(match.getStatus().name(), currentTurn,
-        match.getScorePlayerOne(), match.getScorePlayerTwo(), roundStatus, currentTrucoCall,
-        matchWinner, playedHands, currentHand);
+    return new SpectatorRoundStateDTO(match.getStatus().name(), currentTurn, roundStatus,
+        currentTrucoCall, matchWinner, playedHands, currentHand);
   }
 
 }

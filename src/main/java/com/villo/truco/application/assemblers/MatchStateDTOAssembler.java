@@ -36,7 +36,8 @@ public final class MatchStateDTOAssembler {
         .orElse(null);
 
     return new MatchStateDTO(match.getId().value().toString(), match.getStatus().name(),
-        match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(), matchWinner, roundState);
+        match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getGamesWonPlayerOne(),
+        match.getGamesWonPlayerTwo(), matchWinner, roundState);
   }
 
   private Map<PlayerId, String> resolveActorNames(final Match match) {
@@ -81,9 +82,8 @@ public final class MatchStateDTOAssembler {
         handInfo.cardPlayerTwo() != null ? CardDTO.from(handInfo.cardPlayerTwo()) : null,
         handInfo.mano() != null ? actorNames.get(handInfo.mano()) : null);
 
-    return new RoundStateDTO(match.getStatus().name(), currentTurn, match.getScorePlayerOne(),
-        match.getScorePlayerTwo(), myCards, roundStatus, currentTrucoCall, matchWinner,
-        availableActions, playedHands, currentHand);
+    return new RoundStateDTO(match.getStatus().name(), currentTurn, myCards, roundStatus,
+        currentTrucoCall, matchWinner, availableActions, playedHands, currentHand);
   }
 
 }

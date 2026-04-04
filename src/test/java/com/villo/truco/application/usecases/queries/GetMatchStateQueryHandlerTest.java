@@ -1,6 +1,6 @@
 package com.villo.truco.application.usecases.queries;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.queries.GetMatchStateQuery;
@@ -104,7 +104,11 @@ class GetMatchStateQueryHandlerTest {
     final var query = new GetMatchStateQuery(match.getId().value().toString(),
         playerOne.value().toString());
 
-    assertThatNoException().isThrownBy(() -> handler.handle(query));
+    final var result = handler.handle(query);
+
+    assertThat(result.scorePlayerOne()).isZero();
+    assertThat(result.scorePlayerTwo()).isZero();
+    assertThat(result.currentRound()).isNull();
   }
 
   @Test
@@ -114,7 +118,11 @@ class GetMatchStateQueryHandlerTest {
     final var query = new GetMatchStateQuery(match.getId().value().toString(),
         playerTwo.value().toString());
 
-    assertThatNoException().isThrownBy(() -> handler.handle(query));
+    final var result = handler.handle(query);
+
+    assertThat(result.scorePlayerOne()).isZero();
+    assertThat(result.scorePlayerTwo()).isZero();
+    assertThat(result.currentRound()).isNull();
   }
 
 }

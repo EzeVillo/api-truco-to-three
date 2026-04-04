@@ -9,8 +9,6 @@ import java.util.List;
 public record SpectatorRoundStateResponse(
     @Schema(description = "Estado interno de la ronda", example = "IN_PROGRESS") String status,
     @Schema(description = "ID del jugador al turno", example = "juancho") String currentTurn,
-    @Schema(description = "Puntaje de ronda de player one", example = "2") int scorePlayerOne,
-    @Schema(description = "Puntaje de ronda de player two", example = "1") int scorePlayerTwo,
     @Schema(description = "Estado de resolución de la ronda", example = "PLAYING") String roundStatus,
     @Schema(description = "Último canto de truco activo", example = "TRUCO") String currentTrucoCall,
     @Schema(description = "Ganador de la ronda, si existe", example = "juancho") String winner,
@@ -19,8 +17,8 @@ public record SpectatorRoundStateResponse(
 
   public static SpectatorRoundStateResponse from(final SpectatorRoundStateDTO dto) {
 
-    return new SpectatorRoundStateResponse(dto.status(), dto.currentTurn(), dto.scorePlayerOne(),
-        dto.scorePlayerTwo(), dto.roundStatus(), dto.currentTrucoCall(), dto.winner(),
+    return new SpectatorRoundStateResponse(dto.status(), dto.currentTurn(), dto.roundStatus(),
+        dto.currentTrucoCall(), dto.winner(),
         dto.playedHands().stream().map(PlayedHandResponse::from).toList(),
         dto.currentHand() != null ? CurrentHandResponse.from(dto.currentHand()) : null);
   }

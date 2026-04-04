@@ -352,6 +352,8 @@ class SpectateMatchCommandHandlerTest {
 
     assertThat(result).isNotNull();
     assertThat(result.matchId()).isEqualTo(this.match.getId().value().toString());
+    assertThat(result.scorePlayerOne()).isZero();
+    assertThat(result.scorePlayerTwo()).isZero();
     assertThat(result.spectatorCount()).isEqualTo(1);
     assertThat(this.repository.findBySpectatorId(this.spectator)
         .flatMap(Spectatorship::getActiveMatchId)).contains(this.match.getId());

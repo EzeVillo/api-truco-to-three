@@ -50,7 +50,7 @@ class SpectateSubscribeEventListenerTest {
     final var matchId = java.util.UUID.randomUUID().toString();
 
     when(useCase.handle(any())).thenReturn(
-        new SpectatorMatchStateDTO(matchId, "IN_PROGRESS", 0, 0, null, null, 1));
+        new SpectatorMatchStateDTO(matchId, "IN_PROGRESS", 0, 0, 0, 0, null, null, 1));
 
     listener.onSubscribe(
         new SessionSubscribeEvent(this, subscribeMessage(playerId, matchId, "session-1", "sub-1")));

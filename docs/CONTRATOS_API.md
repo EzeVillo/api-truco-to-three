@@ -110,7 +110,7 @@ Formato estandar para errores (`ErrorResponse`):
 
 ```json
 {
-  "errorCode": "com.villo.truco.application.exceptions.UnauthorizedAccessException",
+  "errorCode": "UnauthorizedAccessException",
   "message": "Missing authentication token",
   "timestamp": "2026-03-06T03:15:30Z"
 }
@@ -557,14 +557,14 @@ Response `200`:
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "status": "IN_PROGRESS",
+  "scorePlayerOne": 2,
+  "scorePlayerTwo": 1,
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
   "roundGame": {
     "status": "IN_PROGRESS",
     "currentTurn": "juancho",
-    "scorePlayerOne": 2,
-    "scorePlayerTwo": 1,
     "myCards": [
       {
         "suit": "ESPADA",
@@ -608,6 +608,8 @@ Response `200`:
 }
 ```
 
+- `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
+  `match`
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
 - `myCards` contiene solo las cartas del jugador autenticado
 - `availableActions` refleja las acciones disponibles para el jugador autenticado
@@ -631,14 +633,14 @@ Response `200`:
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "status": "IN_PROGRESS",
+  "scorePlayerOne": 2,
+  "scorePlayerTwo": 1,
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
   "currentRound": {
     "status": "IN_PROGRESS",
     "currentTurn": "juancho",
-    "scorePlayerOne": 2,
-    "scorePlayerTwo": 1,
     "roundStatus": "PLAYING",
     "currentTrucoCall": "TRUCO",
     "winner": null,
@@ -668,6 +670,8 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
+  `match`
 - solo funciona si el jugador ya esta registrado como espectador de ese match
 - hoy ese registro se produce al suscribirse por STOMP a `/user/queue/match-spectate` enviando el
   header nativo `matchId`
@@ -1339,6 +1343,8 @@ Cada tipo de recurso tiene su propia estructura de evento:
     "matchState": {
       "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
       "status": "IN_PROGRESS",
+      "scorePlayerOne": 2,
+      "scorePlayerTwo": 1,
       "gamesWonPlayerOne": 1,
       "gamesWonPlayerTwo": 0,
       "matchWinner": null,
