@@ -3,7 +3,6 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.exceptions.MatchNotFoundException;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.MatchQueryRepository;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import java.util.Objects;
 
@@ -20,12 +19,6 @@ public final class MatchResolver {
 
     return this.matchQueryRepository.findById(matchId)
         .orElseThrow(() -> new MatchNotFoundException(matchId));
-  }
-
-  public Match resolve(final JoinCode joinCode) {
-
-    return this.matchQueryRepository.findByJoinCode(joinCode)
-        .orElseThrow(() -> new MatchNotFoundException(joinCode));
   }
 
 }

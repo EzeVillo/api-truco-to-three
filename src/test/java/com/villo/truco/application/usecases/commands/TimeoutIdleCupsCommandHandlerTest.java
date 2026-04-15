@@ -11,7 +11,6 @@ import com.villo.truco.domain.ports.CupRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -54,12 +53,6 @@ class TimeoutIdleCupsCommandHandlerTest {
       public Optional<Cup> findById(final CupId cupId) {
 
         return Optional.ofNullable(cups.get(cupId));
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override
@@ -176,12 +169,6 @@ class TimeoutIdleCupsCommandHandlerTest {
           return Optional.of(goodCup);
         }
         throw new RuntimeException("simulated failure");
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override

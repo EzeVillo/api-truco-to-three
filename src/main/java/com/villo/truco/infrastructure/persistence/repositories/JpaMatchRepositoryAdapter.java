@@ -9,7 +9,6 @@ import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -70,12 +69,6 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   public Optional<Match> findById(final MatchId matchId) {
 
     return this.springDataRepo.findById(matchId.value()).map(this.mapper::toDomain);
-  }
-
-  @Override
-  public Optional<Match> findByJoinCode(final JoinCode joinCode) {
-
-    return this.springDataRepo.findByJoinCode(joinCode.value()).map(this.mapper::toDomain);
   }
 
   @Override

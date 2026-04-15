@@ -4,7 +4,6 @@ import com.villo.truco.application.exceptions.LeagueNotFoundException;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import java.util.Objects;
 
 public final class LeagueResolver {
@@ -20,12 +19,6 @@ public final class LeagueResolver {
 
     return this.leagueQueryRepository.findById(leagueId)
         .orElseThrow(() -> new LeagueNotFoundException(leagueId));
-  }
-
-  public League resolve(final JoinCode joinCode) {
-
-    return this.leagueQueryRepository.findByJoinCode(joinCode)
-        .orElseThrow(() -> new LeagueNotFoundException(joinCode));
   }
 
 }

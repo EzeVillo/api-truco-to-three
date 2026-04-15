@@ -263,6 +263,8 @@ Recursos REST principales:
   tambien devuelve `joinCode`, aparece en lobby y al completar cupo autoinicia.
 - Join unificado:
   tanto `PUBLIC` como `PRIVATE` se comparten y se resuelven por `POST /api/join/{joinCode}`.
+  La resolucion del join se realiza contra un registro global (`join_code_registry`) y garantiza
+  que un `joinCode` apunte a un unico recurso entre `MATCH`/`LEAGUE`/`CUP`.
 - Lobby publico:
   `GET /api/matches/public`, `GET /api/leagues/public`, `GET /api/cups/public`.
   Usa `limit` y `after` para paginacion cursor-based; `limit` default `20`, maximo `100`.

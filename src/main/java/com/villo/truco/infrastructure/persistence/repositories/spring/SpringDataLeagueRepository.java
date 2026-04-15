@@ -12,8 +12,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface SpringDataLeagueRepository extends JpaRepository<LeagueJpaEntity, UUID> {
 
-  Optional<LeagueJpaEntity> findByJoinCode(String joinCode);
-
   @Query("SELECT t FROM LeagueJpaEntity t JOIN t.fixtures f WHERE f.matchId = :matchId")
   Optional<LeagueJpaEntity> findByMatchId(@Param("matchId") UUID matchId);
 

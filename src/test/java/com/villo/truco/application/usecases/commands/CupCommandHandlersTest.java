@@ -23,7 +23,6 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -44,12 +43,6 @@ class CupCommandHandlersTest {
     final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
       @Override
       public Optional<Match> findById(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -87,12 +80,6 @@ class CupCommandHandlersTest {
     final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
       @Override
       public Optional<League> findById(final LeagueId leagueId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -136,12 +123,6 @@ class CupCommandHandlersTest {
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
       public Optional<Cup> findById(final CupId cupId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -252,12 +233,6 @@ class CupCommandHandlersTest {
       }
 
       @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
       public Optional<Cup> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
@@ -336,12 +311,6 @@ class CupCommandHandlersTest {
       }
 
       @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
       public Optional<Cup> findByMatchId(final MatchId id) {
 
         return Optional.empty();
@@ -411,12 +380,6 @@ class CupCommandHandlersTest {
       public Optional<Cup> findById(final CupId cupId) {
 
         return Optional.of(cup);
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override

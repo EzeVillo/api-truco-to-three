@@ -27,7 +27,6 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -60,12 +59,6 @@ class SpectateMatchCommandHandlerTest {
       public Optional<Match> findById(final MatchId matchId) {
 
         return matchId.equals(match.getId()) ? Optional.of(match) : Optional.empty();
-      }
-
-      @Override
-      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override
@@ -111,12 +104,6 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
       public boolean hasActiveMatch(final PlayerId playerId) {
 
         return false;
@@ -155,12 +142,6 @@ class SpectateMatchCommandHandlerTest {
 
       @Override
       public Optional<League> findById(final LeagueId leagueId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -222,12 +203,6 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
       public Optional<League> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
@@ -271,12 +246,6 @@ class SpectateMatchCommandHandlerTest {
 
       @Override
       public Optional<Cup> findById(final CupId cupId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }

@@ -12,7 +12,6 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -44,12 +43,6 @@ class GetCupStateQueryHandlerTest {
       public Optional<Cup> findById(CupId cupId) {
 
         return java.util.Optional.of(cup);
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override
@@ -107,12 +100,6 @@ class GetCupStateQueryHandlerTest {
       public Optional<Cup> findById(CupId cupId) {
 
         return Optional.of(cup);
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override

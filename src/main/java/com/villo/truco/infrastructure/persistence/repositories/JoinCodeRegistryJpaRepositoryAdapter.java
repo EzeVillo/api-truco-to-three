@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.persistence.repositories;
 import com.villo.truco.domain.ports.JoinCodeRegistryQueryRepository;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.shared.JoinCodeRegistration;
+import com.villo.truco.domain.shared.exceptions.JoinCodeRegistryCollisionException;
 import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.infrastructure.persistence.entities.JoinCodeRegistryJpaEntity;
@@ -29,11 +30,24 @@ public class JoinCodeRegistryJpaRepositoryAdapter implements JoinCodeRegistryRep
   @Transactional
   public void save(final JoinCodeRegistration registration) {
 
-    final var entity = new JoinCodeRegistryJpaEntity();
-    entity.setJoinCode(registration.joinCode().value());
-    entity.setTargetType(registration.targetType().name());
-    entity.setTargetId(registration.targetId());
-    this.springDataRepository.save(entity);
+    final var inserted = this.springDataRepository.insertIfAbsent(registration.joinCode().value(),
+        registration.targetType().name(), registration.targetId());
+    if (inserted == 1) {
+      return;
+    }
+
+    final var existing = this.findByJoinCode(registration.joinCode()).orElseThrow(
+        () -> new IllegalStateException(
+            "Join code registry rejected insert but row was not found for join code "
+                + registration.joinCode().value()));
+
+    if (existing.targetType() == registration.targetType() && existing.targetId()
+        .equals(registration.targetId())) {
+      return;
+    }
+
+    throw new JoinCodeRegistryCollisionException(registration.joinCode(), existing.targetType(),
+        existing.targetId(), registration.targetType(), registration.targetId());
   }
 
   @Override

@@ -13,7 +13,6 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -87,12 +86,6 @@ class PublicCupLobbyEventTranslatorTest {
       public Optional<Cup> findById(final CupId cupId) {
 
         return Optional.of(cup);
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override

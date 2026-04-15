@@ -10,7 +10,6 @@ import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -72,12 +71,6 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   public Optional<League> findById(final LeagueId leagueId) {
 
     return this.springDataRepo.findById(leagueId.value()).map(this.mapper::toDomain);
-  }
-
-  @Override
-  public Optional<League> findByJoinCode(final JoinCode joinCode) {
-
-    return this.springDataRepo.findByJoinCode(joinCode.value()).map(this.mapper::toDomain);
   }
 
   @Override

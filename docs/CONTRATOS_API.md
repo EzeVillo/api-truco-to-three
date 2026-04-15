@@ -86,6 +86,9 @@ segun el contrato) en lugar de `playerId`.
     - tambien devuelve `joinCode`
     - aparece en lobby
     - se entra por el mismo `POST /api/join/{joinCode}`
+- unicidad global de join code:
+    - `joinCode` es unico entre `MATCH`, `LEAGUE` y `CUP`
+    - `POST /api/join/{joinCode}` siempre resuelve un unico target (`targetType` + `targetId`)
 - listados de lobby:
     - `GET /api/matches/public`
     - `GET /api/leagues/public`

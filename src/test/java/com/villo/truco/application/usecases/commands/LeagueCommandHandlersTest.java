@@ -21,7 +21,6 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -42,12 +41,6 @@ class LeagueCommandHandlersTest {
     final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
       @Override
       public Optional<Match> findById(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -85,12 +78,6 @@ class LeagueCommandHandlersTest {
     final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
       @Override
       public Optional<League> findById(final LeagueId leagueId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -134,12 +121,6 @@ class LeagueCommandHandlersTest {
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
       public Optional<Cup> findById(final CupId cupId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -246,12 +227,6 @@ class LeagueCommandHandlersTest {
       }
 
       @Override
-      public Optional<League> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
       public Optional<League> findByMatchId(final MatchId matchId) {
 
         return Optional.empty();
@@ -314,12 +289,6 @@ class LeagueCommandHandlersTest {
       public Optional<League> findById(final LeagueId leagueId) {
 
         return Optional.of(league);
-      }
-
-      @Override
-      public Optional<League> findByJoinCode(final JoinCode joinCode) {
-
-        return Optional.empty();
       }
 
       @Override
