@@ -12,7 +12,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -38,7 +38,7 @@ class GetLeagueStateQueryHandlerTest {
     this.creator = PlayerId.generate();
     this.participant = PlayerId.generate();
     this.league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    this.league.join(participant, league.getInviteCode());
+    this.league.join(participant);
 
     final LeagueQueryRepository queryRepo = new LeagueQueryRepository() {
 
@@ -49,7 +49,7 @@ class GetLeagueStateQueryHandlerTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }

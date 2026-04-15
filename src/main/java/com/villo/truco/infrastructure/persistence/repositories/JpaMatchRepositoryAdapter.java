@@ -1,13 +1,16 @@
 package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.shared.JoinCodeRegistration;
 import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
+import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.entities.MatchJpaEntity;
@@ -27,12 +30,14 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
 
   private final SpringDataMatchRepository springDataRepo;
   private final MatchMapper mapper;
+  private final JoinCodeRegistryRepository joinCodeRegistryRepository;
 
   public JpaMatchRepositoryAdapter(final SpringDataMatchRepository springDataRepo,
-      final MatchMapper mapper) {
+      final MatchMapper mapper, final JoinCodeRegistryRepository joinCodeRegistryRepository) {
 
     this.springDataRepo = springDataRepo;
     this.mapper = mapper;
+    this.joinCodeRegistryRepository = joinCodeRegistryRepository;
   }
 
   private static PublicLobbyCursor decodeCursor(final String encodedCursor) {
@@ -52,6 +57,9 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
     try {
       final var entity = this.mapper.toEntity(match);
       this.springDataRepo.saveAndFlush(entity);
+      this.joinCodeRegistryRepository.save(
+          new JoinCodeRegistration(match.getJoinCode(), JoinTargetType.MATCH,
+              match.getId().value()));
       match.setVersion(entity.getVersion());
     } catch (final ObjectOptimisticLockingFailureException e) {
       throw new StaleAggregateException("Match " + match.getId() + " was modified concurrently", e);
@@ -65,9 +73,9 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   }
 
   @Override
-  public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+  public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
-    return this.springDataRepo.findByInviteCode(inviteCode.value()).map(this.mapper::toDomain);
+    return this.springDataRepo.findByJoinCode(joinCode.value()).map(this.mapper::toDomain);
   }
 
   @Override

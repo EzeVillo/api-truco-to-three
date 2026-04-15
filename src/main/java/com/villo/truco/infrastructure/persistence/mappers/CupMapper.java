@@ -10,7 +10,7 @@ import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -33,7 +33,7 @@ public class CupMapper {
     entity.setId(snapshot.id().value());
     entity.setNumberOfPlayers(snapshot.numberOfPlayers());
     entity.setGamesToPlay(snapshot.gamesToPlay().value());
-    entity.setInviteCode(snapshot.inviteCode() != null ? snapshot.inviteCode().value() : null);
+    entity.setJoinCode(snapshot.joinCode().value());
     entity.setVisibility(snapshot.visibility().name());
     entity.setStatus(snapshot.status().name());
     entity.setChampion(snapshot.champion() != null ? snapshot.champion().value() : null);
@@ -87,8 +87,7 @@ public class CupMapper {
     final var snapshot = new CupSnapshot(new CupId(entity.getId()), new ArrayList<>(participants),
         bouts, forfeitedPlayers, entity.getNumberOfPlayers(),
         GamesToPlay.of(entity.getGamesToPlay()), Visibility.valueOf(entity.getVisibility()),
-        entity.getInviteCode() != null ? InviteCode.of(entity.getInviteCode()) : null,
-        CupStatus.valueOf(entity.getStatus()), champion);
+        JoinCode.of(entity.getJoinCode()), CupStatus.valueOf(entity.getStatus()), champion);
 
     final var cup = CupRehydrator.rehydrate(snapshot);
     cup.setVersion(entity.getVersion());

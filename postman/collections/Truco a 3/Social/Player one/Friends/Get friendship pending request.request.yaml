@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get friendship pending request
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendship-requests/outgoing"
+method: GET
+order: 2396178431477941

@@ -5,8 +5,6 @@ import com.villo.truco.application.commands.CallEnvidoCommand;
 import com.villo.truco.application.commands.CallTrucoCommand;
 import com.villo.truco.application.commands.CreateMatchCommand;
 import com.villo.truco.application.commands.FoldCommand;
-import com.villo.truco.application.commands.JoinMatchCommand;
-import com.villo.truco.application.commands.JoinPublicMatchCommand;
 import com.villo.truco.application.commands.LeaveMatchCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
@@ -20,8 +18,6 @@ import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetMatchStateUseCase;
 import com.villo.truco.application.ports.in.GetPublicMatchesUseCase;
 import com.villo.truco.application.ports.in.GetSpectateMatchStateUseCase;
-import com.villo.truco.application.ports.in.JoinMatchUseCase;
-import com.villo.truco.application.ports.in.JoinPublicMatchUseCase;
 import com.villo.truco.application.ports.in.LeaveMatchUseCase;
 import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
@@ -32,13 +28,11 @@ import com.villo.truco.application.queries.GetPublicMatchesQuery;
 import com.villo.truco.application.queries.GetSpectateMatchStateQuery;
 import com.villo.truco.infrastructure.http.dto.request.CallEnvidoRequest;
 import com.villo.truco.infrastructure.http.dto.request.CreateMatchRequest;
-import com.villo.truco.infrastructure.http.dto.request.JoinMatchRequest;
 import com.villo.truco.infrastructure.http.dto.request.PlayCardRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondEnvidoRequest;
 import com.villo.truco.infrastructure.http.dto.request.RespondTrucoRequest;
 import com.villo.truco.infrastructure.http.dto.response.CreateMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
-import com.villo.truco.infrastructure.http.dto.response.JoinMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.MatchStateResponse;
 import com.villo.truco.infrastructure.http.dto.response.PublicMatchLobbyCollectionResponse;
 import com.villo.truco.infrastructure.http.dto.response.SpectatorMatchStateResponse;
@@ -73,8 +67,6 @@ public class MatchController {
   private static final Logger LOGGER = LoggerFactory.getLogger(MatchController.class);
 
   private final CreateMatchUseCase createMatch;
-  private final JoinMatchUseCase joinMatch;
-  private final JoinPublicMatchUseCase joinPublicMatch;
   private final StartMatchUseCase startMatch;
   private final PlayCardUseCase playCard;
   private final CallTrucoUseCase callTruco;
@@ -88,8 +80,7 @@ public class MatchController {
   private final GetPublicMatchesUseCase getPublicMatches;
   private final GetSpectateMatchStateUseCase getSpectateMatchState;
 
-  public MatchController(final CreateMatchUseCase createMatch, final JoinMatchUseCase joinMatch,
-      final JoinPublicMatchUseCase joinPublicMatch, final StartMatchUseCase startMatch,
+  public MatchController(final CreateMatchUseCase createMatch, final StartMatchUseCase startMatch,
       final PlayCardUseCase playCard, final CallTrucoUseCase callTruco,
       final RespondTrucoUseCase respondTruco, final CallEnvidoUseCase callEnvido,
       final RespondEnvidoUseCase respondEnvido, final FoldUseCase fold,
@@ -98,8 +89,6 @@ public class MatchController {
       final GetSpectateMatchStateUseCase getSpectateMatchState) {
 
     this.createMatch = Objects.requireNonNull(createMatch);
-    this.joinMatch = Objects.requireNonNull(joinMatch);
-    this.joinPublicMatch = Objects.requireNonNull(joinPublicMatch);
     this.startMatch = Objects.requireNonNull(startMatch);
     this.playCard = Objects.requireNonNull(playCard);
     this.callTruco = Objects.requireNonNull(callTruco);
@@ -131,23 +120,6 @@ public class MatchController {
     return ResponseEntity.ok(CreateMatchResponse.from(dto));
   }
 
-  @PostMapping("/join")
-  @Operation(summary = "Unirse a partida", description = "Une el jugador autenticado a una partida usando invite code", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinMatchResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "Invite code inválido o estado inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinMatchResponse> joinMatch(
-      @Valid @RequestBody final JoinMatchRequest request, @AuthenticationPrincipal final Jwt jwt) {
-
-    LOGGER.info("HTTP joinMatch requested: inviteCode={}", request.inviteCode());
-    final var dto = this.joinMatch.handle(
-        new JoinMatchCommand(jwt.getSubject(), request.inviteCode()));
-    return ResponseEntity.ok(JoinMatchResponse.from(dto));
-  }
-
   @GetMapping("/public")
   @Operation(summary = "Listar partidas publicas", description = "Devuelve partidas publicas esperando jugadores para el usuario autenticado", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
@@ -163,23 +135,6 @@ public class MatchController {
     final var matches = this.getPublicMatches.handle(
         new GetPublicMatchesQuery(jwt.getSubject(), limit, after));
     return ResponseEntity.ok(PublicMatchLobbyCollectionResponse.from(matches, limit, after));
-  }
-
-  @PostMapping("/{matchId}/join-public")
-  @Operation(summary = "Unirse a partida publica", description = "Une al jugador autenticado a una partida publica usando el id", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinMatchResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o invalido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "409", description = "Otro request ocupo el ultimo lugar", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "La partida no es publica o el usuario no puede unirse", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinMatchResponse> joinPublicMatch(
-      @Parameter(description = "ID de la partida publica", example = "match-123") @PathVariable final String matchId,
-      @AuthenticationPrincipal final Jwt jwt) {
-
-    final var dto = this.joinPublicMatch.handle(
-        new JoinPublicMatchCommand(matchId, jwt.getSubject()));
-    return ResponseEntity.ok(JoinMatchResponse.from(dto));
   }
 
   @PostMapping("/{matchId}/start")

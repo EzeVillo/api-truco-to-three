@@ -1,14 +1,17 @@
 package com.villo.truco.infrastructure.http;
 
 import com.villo.truco.application.commands.SendMessageCommand;
+import com.villo.truco.application.commands.SendMessageToParentCommand;
 import com.villo.truco.application.ports.in.GetChatByParentUseCase;
 import com.villo.truco.application.ports.in.GetChatMessagesUseCase;
+import com.villo.truco.application.ports.in.SendMessageToParentUseCase;
 import com.villo.truco.application.ports.in.SendMessageUseCase;
 import com.villo.truco.application.queries.GetChatByParentQuery;
 import com.villo.truco.application.queries.GetChatMessagesQuery;
 import com.villo.truco.infrastructure.http.dto.request.SendMessageRequest;
 import com.villo.truco.infrastructure.http.dto.response.ChatMessagesResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
+import com.villo.truco.infrastructure.http.dto.response.SendMessageToParentResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,13 +43,16 @@ public class ChatController {
   private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
 
   private final SendMessageUseCase sendMessage;
+  private final SendMessageToParentUseCase sendMessageToParent;
   private final GetChatMessagesUseCase getChatMessages;
   private final GetChatByParentUseCase getChatByParent;
 
   public ChatController(final SendMessageUseCase sendMessage,
+      final SendMessageToParentUseCase sendMessageToParent,
       final GetChatMessagesUseCase getChatMessages, final GetChatByParentUseCase getChatByParent) {
 
     this.sendMessage = Objects.requireNonNull(sendMessage);
+    this.sendMessageToParent = Objects.requireNonNull(sendMessageToParent);
     this.getChatMessages = Objects.requireNonNull(getChatMessages);
     this.getChatByParent = Objects.requireNonNull(getChatByParent);
   }
@@ -80,14 +87,35 @@ public class ChatController {
     return ResponseEntity.ok(ChatMessagesResponse.from(dto));
   }
 
+  @PostMapping("/by-parent/{parentType}/{parentId}/messages")
+  @Operation(summary = "Enviar mensaje por recurso padre", description = "Envía un mensaje al chat de un recurso. Para FRIENDSHIP, crea el chat si es el primer mensaje.", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "Mensaje enviado", content = @Content(schema = @Schema(implementation = SendMessageToParentResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Chat o recurso no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "No se pudo enviar el mensaje", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<SendMessageToParentResponse> sendMessageToParent(
+      @Parameter(description = "Tipo: MATCH, LEAGUE, CUP o FRIENDSHIP") @PathVariable final String parentType,
+      @Parameter(description = "ID del recurso padre") @PathVariable final String parentId,
+      @Valid @RequestBody final SendMessageRequest request,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    LOGGER.info("HTTP sendMessageToParent requested: parentType={}, parentId={}", parentType,
+        parentId);
+    final var chatId = this.sendMessageToParent.handle(
+        new SendMessageToParentCommand(parentType, parentId, jwt.getSubject(), request.content()));
+    return ResponseEntity.created(URI.create("/api/chats/" + chatId.value()))
+        .body(new SendMessageToParentResponse(chatId.value().toString()));
+  }
+
   @GetMapping("/by-parent/{parentType}/{parentId}")
-  @Operation(summary = "Buscar chat por recurso padre", description = "Busca el chat asociado a un match, league o cup. Los matches contra bot no tienen chat asociado y responden 404.", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Buscar chat por recurso padre", description = "Busca el chat asociado a un match, league, cup o friendship. Retorna 404 si el chat aún no existe (para FRIENDSHIP, se crea al enviar el primer mensaje).", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Chat encontrado", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<ChatMessagesResponse> getChatByParent(
-      @Parameter(description = "Tipo: MATCH, LEAGUE o CUP") @PathVariable final String parentType,
+      @Parameter(description = "Tipo: MATCH, LEAGUE, CUP o FRIENDSHIP") @PathVariable final String parentType,
       @Parameter(description = "ID del recurso padre") @PathVariable final String parentId,
       @AuthenticationPrincipal final Jwt jwt) {
 

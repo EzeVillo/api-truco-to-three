@@ -13,7 +13,7 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -35,7 +35,7 @@ class PublicCupLobbyEventTranslatorTest {
     final var creator = PlayerId.generate();
     final var joiner = PlayerId.generate();
     final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PUBLIC);
-    cup.joinPublic(joiner);
+    cup.join(joiner);
 
     final var queryRepository = repositoryReturning(cup);
     final var published = new ArrayList<ApplicationEvent>();
@@ -62,9 +62,9 @@ class PublicCupLobbyEventTranslatorTest {
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PUBLIC);
-    cup.joinPublic(p2);
-    cup.joinPublic(p3);
-    cup.joinPublic(p4);
+    cup.join(p2);
+    cup.join(p3);
+    cup.join(p4);
 
     final var queryRepository = repositoryReturning(cup);
     final var published = new ArrayList<ApplicationEvent>();
@@ -90,7 +90,7 @@ class PublicCupLobbyEventTranslatorTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }

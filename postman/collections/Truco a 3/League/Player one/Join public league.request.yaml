@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{URL_BASE_TRUCO_HTTP}}/leagues/{{leagueId}}/join-public"
-method: POST
-order: 1100

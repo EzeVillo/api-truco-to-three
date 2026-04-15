@@ -7,7 +7,7 @@ import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
-import com.villo.truco.domain.model.match.exceptions.InvalidInviteCodeException;
+import com.villo.truco.domain.model.match.exceptions.InvalidJoinCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
 import com.villo.truco.domain.model.match.exceptions.MatchNotFullException;
 import com.villo.truco.domain.model.match.exceptions.NotYourTurnException;
@@ -26,7 +26,7 @@ import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -151,7 +151,7 @@ class MatchTest {
     void createsMatchWithCustomRules() {
 
       final var match = Match.create(playerOne, new MatchRules(1), Visibility.PRIVATE);
-      match.join(playerTwo, match.getInviteCode());
+      match.join(playerTwo, match.getJoinCode());
       match.startMatch(playerOne);
       match.startMatch(playerTwo);
 
@@ -173,7 +173,7 @@ class MatchTest {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
           Visibility.PRIVATE);
-      match.join(playerTwo, match.getInviteCode());
+      match.join(playerTwo, match.getJoinCode());
 
       assertThat(match.getCurrentTurn()).isNull();
     }
@@ -184,7 +184,7 @@ class MatchTest {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
           Visibility.PRIVATE);
-      match.join(playerTwo, match.getInviteCode());
+      match.join(playerTwo, match.getJoinCode());
 
       assertThat(match.getStatus()).isEqualTo(MatchStatus.READY);
     }
@@ -195,19 +195,19 @@ class MatchTest {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
           Visibility.PRIVATE);
-      assertThatThrownBy(() -> match.join(playerOne, match.getInviteCode())).isInstanceOf(
+      assertThatThrownBy(() -> match.join(playerOne, match.getJoinCode())).isInstanceOf(
           SamePlayerMatchException.class);
     }
 
     @Test
-    @DisplayName("falla si el inviteCode no coincide con el esperado")
-    void failsIfWrongInviteCode() {
+    @DisplayName("falla si el joinCode no coincide con el esperado")
+    void failsIfWrongJoinCode() {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
           Visibility.PRIVATE);
 
-      assertThatThrownBy(() -> match.join(playerTwo, InviteCode.generate())).isInstanceOf(
-          InvalidInviteCodeException.class);
+      assertThatThrownBy(() -> match.join(playerTwo, JoinCode.generate())).isInstanceOf(
+          InvalidJoinCodeException.class);
     }
 
   }
@@ -233,7 +233,7 @@ class MatchTest {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
           Visibility.PRIVATE);
-      match.join(playerTwo, match.getInviteCode());
+      match.join(playerTwo, match.getJoinCode());
       match.startMatch(playerOne);
 
       assertThat(match.getStatus()).isNotEqualTo(MatchStatus.IN_PROGRESS);
@@ -267,7 +267,7 @@ class MatchTest {
 
       final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
           Visibility.PRIVATE);
-      match.join(playerTwo, match.getInviteCode());
+      match.join(playerTwo, match.getJoinCode());
       match.startMatch(playerOne);
       match.startMatch(playerOne);
 

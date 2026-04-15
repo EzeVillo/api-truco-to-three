@@ -36,7 +36,7 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
   }
 
   @Override
-  public void handle() {
+  public Void handle(final Void unused) {
 
     final var cutoff = Instant.now().minus(this.idleTimeout);
     final List<MatchId> idleMatchIds = this.matchQueryRepository.findIdleMatchIds(cutoff);
@@ -52,6 +52,7 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
         LOGGER.error("Failed to process idle match: matchId={}", matchId, e);
       }
     }
+    return null;
   }
 
   private void processIdleMatch(final MatchId matchId) {

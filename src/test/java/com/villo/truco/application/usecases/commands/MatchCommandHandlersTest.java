@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.villo.truco.application.commands.CallEnvidoCommand;
 import com.villo.truco.application.commands.CallTrucoCommand;
 import com.villo.truco.application.commands.FoldCommand;
-import com.villo.truco.application.commands.JoinMatchCommand;
-import com.villo.truco.application.commands.JoinPublicMatchCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
@@ -18,27 +16,21 @@ import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
-import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
-import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
-import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
-import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
-import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.domain.shared.valueobjects.Visibility;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +57,7 @@ class MatchCommandHandlersTest {
       }
 
       @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -108,7 +100,7 @@ class MatchCommandHandlersTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -157,7 +149,7 @@ class MatchCommandHandlersTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -236,7 +228,7 @@ class MatchCommandHandlersTest {
       }
 
       @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.of(match);
       }
@@ -272,148 +264,6 @@ class MatchCommandHandlersTest {
       }
     };
     return new MatchResolver(queryRepository);
-  }
-
-  @Test
-  @DisplayName("JoinMatchCommandHandler une jugador y persiste")
-  void joinMatchHandlerJoinsAndSaves() {
-
-    final var p1 = PlayerId.generate();
-    final var p2 = PlayerId.generate();
-    final var match = Match.create(p1, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
-        Visibility.PRIVATE);
-
-    final MatchQueryRepository queryRepository = new MatchQueryRepository() {
-      @Override
-      public Optional<Match> findById(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
-
-        return Optional.of(match);
-      }
-
-      @Override
-      public boolean hasActiveMatch(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public boolean hasUnfinishedMatch(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      @Override
-      public List<Match> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-
-    final var saved = new AtomicReference<Match>();
-    final MatchRepository repo = saved::set;
-    final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final MatchEventNotifier notifier = publishedEvents::addAll;
-
-    final var handler = new JoinMatchCommandHandler(new MatchResolver(queryRepository), repo,
-        notifier, availableChecker());
-    final var result = handler.handle(new JoinMatchCommand(p2, match.getInviteCode()));
-
-    assertThat(result.matchId()).isEqualTo(match.getId().value().toString());
-    assertThat(saved.get()).isSameAs(match);
-    assertThat(match.getPlayerTwo()).isEqualTo(p2);
-    assertThat(match.getDomainEvents()).isEmpty();
-    assertThat(publishedEvents).isNotEmpty();
-  }
-
-  @Test
-  @DisplayName("JoinPublicMatchCommandHandler une jugador, arranca y persiste")
-  void joinPublicMatchHandlerStartsMatchWhenFull() {
-
-    final var p1 = PlayerId.generate();
-    final var p2 = PlayerId.generate();
-    final var match = Match.create(p1, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
-        Visibility.PUBLIC);
-
-    final MatchQueryRepository queryRepository = new MatchQueryRepository() {
-      @Override
-      public Optional<Match> findById(final MatchId matchId) {
-
-        return Optional.of(match);
-      }
-
-      @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public boolean hasActiveMatch(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public boolean hasUnfinishedMatch(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      @Override
-      public List<Match> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-
-    final var saved = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new JoinPublicMatchCommandHandler(new MatchResolver(queryRepository),
-        saved::set, publishedEvents::addAll, availableChecker());
-
-    final var result = handler.handle(new JoinPublicMatchCommand(match.getId(), p2));
-
-    assertThat(result.matchId()).isEqualTo(match.getId().value().toString());
-    assertThat(saved.get()).isSameAs(match);
-    assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
-    assertThat(match.isReadyPlayerOne()).isTrue();
-    assertThat(match.isReadyPlayerTwo()).isTrue();
-    assertThat(match.getCurrentTurn()).isNotNull();
-    assertThat(
-        publishedEvents.stream().filter(GameStartedEvent.class::isInstance).count()).isEqualTo(1);
-    assertThat(
-        publishedEvents.stream().filter(PlayerReadyEvent.class::isInstance).count()).isZero();
-    assertThat(publishedEvents).isNotEmpty();
   }
 
   @Test

@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"gamesToPlay\": 5,\r
+
+    \  \"visibility\": \"PRIVATE\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"matchId\", response.matchId);\r
+
+      pm.environment.set(\"inviteCode\", response.inviteCode);\r
+
+      pm.environment.set(\"parentType\", \"MATCH\");\r
+
+      pm.environment.set(\"parentId\", response.matchId);"
+    language: text/javascript
+examples: .resources/Create match.resources/examples
+order: 12000

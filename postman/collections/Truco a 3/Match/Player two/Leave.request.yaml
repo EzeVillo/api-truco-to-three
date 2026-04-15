@@ -2,4 +2,4 @@ $kind: http-request
 name: Leave
 url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/leave"
 method: POST
-order: 1148041985792561
+order: 13000

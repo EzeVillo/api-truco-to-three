@@ -1,0 +1,5 @@
+$kind: http-request
+name: Cancel friendship request
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendship-requests/LuzVillo/cancel"
+method: POST
+order: 4503599224930310

@@ -13,8 +13,11 @@ import com.villo.truco.application.eventhandlers.ChatMatchForfeitedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatMatchGameStartedEventHandler;
 import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
+import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicLeagueLobbyEventTranslator;
@@ -61,6 +64,9 @@ public class EventNotifierConfiguration {
   private final SpectatorCleanupOnMatchEndEventHandler spectatorCleanupOnMatchEndEventHandler;
   private final SpectatorAutoKickOnLeagueMatchActivatedEventHandler spectatorAutoKickOnLeagueHandler;
   private final SpectatorAutoKickOnCupMatchActivatedEventHandler spectatorAutoKickOnCupHandler;
+  private final MatchInvitationExpirationEventTranslator matchInvitationExpirationEventTranslator;
+  private final CupInvitationExpirationEventTranslator cupInvitationExpirationEventTranslator;
+  private final LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator;
 
   public EventNotifierConfiguration(
       final ChatNotificationEventTranslator chatNotificationEventTranslator,
@@ -76,7 +82,10 @@ public class EventNotifierConfiguration {
       final SpectatorNotificationEventTranslator spectatorNotificationEventTranslator,
       final SpectatorCleanupOnMatchEndEventHandler spectatorCleanupOnMatchEndEventHandler,
       final SpectatorAutoKickOnLeagueMatchActivatedEventHandler spectatorAutoKickOnLeagueHandler,
-      final SpectatorAutoKickOnCupMatchActivatedEventHandler spectatorAutoKickOnCupHandler) {
+      final SpectatorAutoKickOnCupMatchActivatedEventHandler spectatorAutoKickOnCupHandler,
+      final MatchInvitationExpirationEventTranslator matchInvitationExpirationEventTranslator,
+      final CupInvitationExpirationEventTranslator cupInvitationExpirationEventTranslator,
+      final LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator) {
 
     this.chatNotificationEventTranslator = chatNotificationEventTranslator;
     this.matchNotificationEventTranslator = matchNotificationEventTranslator;
@@ -94,6 +103,9 @@ public class EventNotifierConfiguration {
     this.spectatorCleanupOnMatchEndEventHandler = spectatorCleanupOnMatchEndEventHandler;
     this.spectatorAutoKickOnLeagueHandler = spectatorAutoKickOnLeagueHandler;
     this.spectatorAutoKickOnCupHandler = spectatorAutoKickOnCupHandler;
+    this.matchInvitationExpirationEventTranslator = matchInvitationExpirationEventTranslator;
+    this.cupInvitationExpirationEventTranslator = cupInvitationExpirationEventTranslator;
+    this.leagueInvitationExpirationEventTranslator = leagueInvitationExpirationEventTranslator;
   }
 
   @Bean
@@ -176,7 +188,7 @@ public class EventNotifierConfiguration {
         this.competitionDomainEventTranslator, this.botDomainEventTranslator,
         this.chatMatchGameStartedHandler(chatEventNotifier()), this.chatMatchFinishedHandler(),
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
-        this.spectatorCleanupOnMatchEndEventHandler);
+        this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator);
     return new MatchDomainEventDispatcher(handlers);
   }
 
@@ -186,7 +198,7 @@ public class EventNotifierConfiguration {
     final List<CupDomainEventHandler<?>> handlers = List.of(this.cupNotificationEventTranslator,
         this.publicCupLobbyEventTranslator, this.chatCupStartedHandler(chatEventNotifier()),
         this.chatCupFinishedHandler(), this.chatCupCancelledHandler(),
-        this.spectatorAutoKickOnCupHandler);
+        this.spectatorAutoKickOnCupHandler, this.cupInvitationExpirationEventTranslator);
     return new CompositeCupEventNotifier(handlers);
   }
 
@@ -196,7 +208,8 @@ public class EventNotifierConfiguration {
     final List<LeagueDomainEventHandler<?>> handlers = List.of(
         this.leagueNotificationEventTranslator, this.publicLeagueLobbyEventTranslator,
         this.chatLeagueStartedHandler(chatEventNotifier()), this.chatLeagueFinishedHandler(),
-        this.chatLeagueCancelledHandler(), this.spectatorAutoKickOnLeagueHandler);
+        this.chatLeagueCancelledHandler(), this.spectatorAutoKickOnLeagueHandler,
+        this.leagueInvitationExpirationEventTranslator);
     return new CompositeLeagueEventNotifier(handlers);
   }
 

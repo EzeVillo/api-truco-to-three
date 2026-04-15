@@ -1,11 +1,9 @@
 package com.villo.truco.domain.model.cup;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.cup.events.CupStartedEvent;
 import com.villo.truco.domain.model.cup.events.PublicCupLobbyOpenedEvent;
-import com.villo.truco.domain.model.cup.exceptions.PrivateCupVisibilityAccessException;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -17,16 +15,16 @@ import org.junit.jupiter.api.Test;
 class CupVisibilityTest {
 
   @Test
-  @DisplayName("publica no genera invite code y privada si")
-  void publicDoesNotGenerateInviteCode() {
+  @DisplayName("publica y privada generan join code")
+  void bothVisibilitiesGenerateJoinCode() {
 
     final var creator = PlayerId.generate();
 
     final var publicCup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PUBLIC);
     final var privateCup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PRIVATE);
 
-    assertThat(publicCup.getInviteCode()).isNull();
-    assertThat(privateCup.getInviteCode()).isNotNull();
+    assertThat(publicCup.getJoinCode()).isNotNull();
+    assertThat(privateCup.getJoinCode()).isNotNull();
     assertThat(
         publicCup.getCupDomainEvents().stream().filter(PublicCupLobbyOpenedEvent.class::isInstance)
             .count()).isEqualTo(1);
@@ -35,13 +33,23 @@ class CupVisibilityTest {
   }
 
   @Test
-  @DisplayName("joinPublic rechaza copas privadas")
-  void joinPublicRejectsPrivateCups() {
+  @DisplayName("join unificado completa cup privada y la deja esperando inicio manual")
+  void joinKeepsPrivateCupManualFlowWhenFull() {
 
-    final var cup = Cup.create(PlayerId.generate(), 4, GamesToPlay.of(3), Visibility.PRIVATE);
+    final var creator = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var p4 = PlayerId.generate();
+    final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PRIVATE);
 
-    assertThatThrownBy(() -> cup.joinPublic(PlayerId.generate())).isInstanceOf(
-        PrivateCupVisibilityAccessException.class);
+    assertThat(cup.join(p2)).isEmpty();
+    assertThat(cup.join(p3)).isEmpty();
+
+    final var pairings = cup.join(p4);
+
+    assertThat(cup.getStatus()).isEqualTo(CupStatus.WAITING_FOR_START);
+    assertThat(pairings).isEmpty();
+    assertThat(cup.getBouts()).isEmpty();
   }
 
   @Test
@@ -54,9 +62,9 @@ class CupVisibilityTest {
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(creator, 4, GamesToPlay.of(3), Visibility.PUBLIC);
 
-    final var firstJoin = cup.joinPublic(p2);
-    final var secondJoin = cup.joinPublic(p3);
-    final var pairings = cup.joinPublic(p4);
+    final var firstJoin = cup.join(p2);
+    final var secondJoin = cup.join(p3);
+    final var pairings = cup.join(p4);
 
     assertThat(cup.getStatus()).isEqualTo(CupStatus.IN_PROGRESS);
     assertThat(firstJoin).isEmpty();
@@ -75,12 +83,12 @@ class CupVisibilityTest {
 
     assertThat(cup.isPublicLobbyOpen()).isTrue();
 
-    cup.joinPublic(PlayerId.generate());
+    cup.join(PlayerId.generate());
 
     assertThat(cup.isPublicLobbyOpen()).isTrue();
 
-    cup.joinPublic(PlayerId.generate());
-    cup.joinPublic(PlayerId.generate());
+    cup.join(PlayerId.generate());
+    cup.join(PlayerId.generate());
 
     assertThat(cup.isPublicLobbyOpen()).isFalse();
   }

@@ -1,0 +1,5 @@
+$kind: http-request
+name: Decline friendship request
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendship-requests/EzeVillo/decline"
+method: POST
+order: 4502876301520704

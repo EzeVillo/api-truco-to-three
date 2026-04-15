@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity, UUID> {
 
-  Optional<MatchJpaEntity> findByInviteCode(String inviteCode);
+  Optional<MatchJpaEntity> findByJoinCode(String joinCode);
 
   @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MatchJpaEntity m "
       + "WHERE m.status = 'IN_PROGRESS' AND (m.playerOne = :playerId OR m.playerTwo = :playerId)")

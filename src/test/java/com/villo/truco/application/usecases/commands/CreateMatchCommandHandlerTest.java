@@ -22,7 +22,7 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -45,7 +45,7 @@ class CreateMatchCommandHandlerTest {
     }
 
     @Override
-    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+    public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
       return Optional.empty();
     }
@@ -90,7 +90,7 @@ class CreateMatchCommandHandlerTest {
     }
 
     @Override
-    public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+    public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
       return Optional.empty();
     }
@@ -141,7 +141,7 @@ class CreateMatchCommandHandlerTest {
     }
 
     @Override
-    public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+    public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
       return Optional.empty();
     }
@@ -227,7 +227,7 @@ class CreateMatchCommandHandlerTest {
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getId()).isNotNull();
-    assertThat(savedMatch.get().getInviteCode()).isNotNull();
+    assertThat(savedMatch.get().getJoinCode()).isNotNull();
   }
 
   @Test
@@ -279,7 +279,7 @@ class CreateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }

@@ -14,7 +14,7 @@ public final class MatchRehydrator {
         snapshot.currentRound() != null ? rehydrateRound(snapshot.currentRound()) : null;
 
     return Match.reconstruct(snapshot.id(), snapshot.playerOne(), snapshot.playerTwo(),
-        snapshot.inviteCode(), snapshot.rules(), snapshot.visibility(), snapshot.status(),
+        snapshot.joinCode(), snapshot.rules(), snapshot.visibility(), snapshot.status(),
         snapshot.gamesWonPlayerOne(), snapshot.gamesWonPlayerTwo(), snapshot.gameNumber(),
         snapshot.scorePlayerOne(), snapshot.scorePlayerTwo(), snapshot.roundNumber(),
         snapshot.readyPlayerOne(), snapshot.readyPlayerTwo(), snapshot.firstManoOfGame(),

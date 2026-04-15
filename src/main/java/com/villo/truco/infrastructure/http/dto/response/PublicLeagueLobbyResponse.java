@@ -11,13 +11,14 @@ public record PublicLeagueLobbyResponse(
     @Schema(description = "Cupo total de jugadores", example = "4") int totalSlots,
     @Schema(description = "Cupo actualmente ocupado", example = "2") int occupiedSlots,
     @Schema(description = "Estado actual", example = "WAITING_FOR_PLAYERS") String status,
+    @Schema(description = "Join code compartible de la liga", example = "ABCD1234") String joinCode,
     @Schema(description = "Links accionables del lobby") PublicLobbyItemLinksResponse _links) {
 
   public static PublicLeagueLobbyResponse from(final PublicLeagueLobbyDTO dto) {
 
     return new PublicLeagueLobbyResponse(dto.leagueId(), dto.host(), dto.gamesToPlay(),
-        dto.totalSlots(), dto.occupiedSlots(), dto.status(),
-        PublicLobbyLinkFactory.itemLinks("/api/leagues", dto.leagueId()));
+        dto.totalSlots(), dto.occupiedSlots(), dto.status(), dto.joinCode(),
+        PublicLobbyLinkFactory.itemLinks(dto.joinCode()));
   }
 
 }

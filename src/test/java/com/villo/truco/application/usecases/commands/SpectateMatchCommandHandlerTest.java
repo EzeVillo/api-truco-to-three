@@ -27,7 +27,7 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -63,7 +63,7 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -111,7 +111,7 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -160,7 +160,7 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -172,7 +172,7 @@ class SpectateMatchCommandHandlerTest {
           final var league = League.create(participants[0], participants.length, GamesToPlay.of(3),
               Visibility.PRIVATE);
           for (int i = 1; i < participants.length; i++) {
-            league.join(participants[i], league.getInviteCode());
+            league.join(participants[i]);
           }
           return Optional.of(league);
         }
@@ -222,7 +222,7 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -276,7 +276,7 @@ class SpectateMatchCommandHandlerTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<Cup> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }

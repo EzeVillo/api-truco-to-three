@@ -35,8 +35,7 @@ public final class CreateLeagueCommandHandler implements CreateLeagueUseCase {
     this.leagueEventNotifier.publishDomainEvents(league.getLeagueDomainEvents());
     league.clearDomainEvents();
 
-    return new CreateLeagueDTO(league.getId().value().toString(),
-        league.getInviteCode() != null ? league.getInviteCode().value() : null,
+    return new CreateLeagueDTO(league.getId().value().toString(), league.getJoinCode().value(),
         league.getVisibility().name());
   }
 

@@ -71,27 +71,26 @@ Enviar siempre UUID valido en:
 - `playerId` en auth, claims y referencias tecnicas donde aplique
 
 En respuestas REST de lectura y payloads WebSocket orientados a UI, los actores visibles se
-devuelven como `displayName` en lugar de `playerId`.
+devuelven con identificadores publicos orientados a presentacion (`username` o `displayName`,
+segun el contrato) en lugar de `playerId`.
 
 ### 1.5 Salas publicas y privadas
 
 `matches`, `leagues` y `cups` aceptan `visibility: PUBLIC | PRIVATE` en creacion.
 
 - `PRIVATE`:
-    - devuelve `inviteCode`
+    - devuelve `joinCode`
     - no aparece en lobby
-    - se entra por `POST /api/matches/join`, `POST /api/leagues/join`, `POST /api/cups/join`
+    - se entra por `POST /api/join/{joinCode}`
 - `PUBLIC`:
-    - no devuelve `inviteCode`
+    - tambien devuelve `joinCode`
     - aparece en lobby
-    - se entra por id con:
-        - `POST /api/matches/{matchId}/join-public`
-        - `POST /api/leagues/{leagueId}/join-public`
-        - `POST /api/cups/{cupId}/join-public`
+    - se entra por el mismo `POST /api/join/{joinCode}`
 - listados de lobby:
     - `GET /api/matches/public`
     - `GET /api/leagues/public`
     - `GET /api/cups/public`
+    - cada item expone `_links.join.href = /api/join/{joinCode}`
 - autostart:
     - una partida publica pasa a `IN_PROGRESS` al entrar el segundo jugador
     - una liga/copa publica arranca automaticamente al completarse el cupo y crea/linkea los
@@ -128,7 +127,8 @@ HTTP status usados:
 
 Caso comun de `409`:
 
-- en `join-public`, otro request ocupo el ultimo lugar antes del retry final
+- en `POST /api/join/{joinCode}`, otro request ocupo el ultimo lugar antes del retry final de un
+  recurso publico
 
 Casos comunes de `400`:
 
@@ -215,7 +215,7 @@ Response `200`:
 
 Errores:
 
-- `401` si las credenciales son invalidas (username no existe o contraseña incorrecta)
+- `401` si las credenciales son invalidas (username no existe o contraseÃƒÂ±a incorrecta)
 
 - `400` si el body es invalido o no cumple las reglas de validacion del request
 
@@ -316,7 +316,7 @@ Response `200`:
 ```json
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
-  "inviteCode": "ABC123",
+  "joinCode": "ABC123",
   "visibility": "PRIVATE"
 }
 ```
@@ -326,30 +326,29 @@ Si `visibility` es `PUBLIC`, la respuesta es:
 ```json
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
-  "inviteCode": null,
+  "joinCode": "PUB12345",
   "visibility": "PUBLIC"
 }
 ```
 
 ### 4.2 Unirse a partida
 
-`POST /api/matches/join`
-
-Request:
-
-```json
-{
-  "inviteCode": "ABC123"
-}
-```
+`POST /api/join/{joinCode}`
 
 Response `200`:
 
 ```json
 {
-  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
+  "targetType": "MATCH",
+  "targetId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
 }
 ```
+
+Reglas:
+
+- aplica tanto a matches `PUBLIC` como `PRIVATE`
+- en `PUBLIC`, el segundo jugador entra, queda ready implícito y el match pasa a `IN_PROGRESS`
+- en `PRIVATE`, el segundo jugador entra y el match queda en `READY`
 
 ### 4.3 Listar partidas publicas
 
@@ -377,8 +376,8 @@ Response `200`:
       "occupiedSlots": 1,
       "status": "WAITING_FOR_PLAYERS",
       "_links": {
-        "joinPublic": {
-          "href": "/api/matches/8b9c5936-9a1f-45ec-a587-24306689f6f7/join-public"
+        "join": {
+          "href": "/api/join/ABC12345"
         }
       }
     }
@@ -400,19 +399,11 @@ Response `400`:
 - `limit > 100`
 - `after` invalido o mal formado
 
-### 4.4 Unirse a partida publica
-
-`POST /api/matches/{matchId}/join-public`
+### 4.4 Join desde lobby publico
 
 Auth: Bearer requerido.
 
-Response `200`:
-
-```json
-{
-  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
-}
-```
+El FE debe usar el `href` provisto en `_links.join` y ejecutar `POST /api/join/{joinCode}`.
 
 ### 4.5 Iniciar partida
 
@@ -754,7 +745,7 @@ Response `200`:
 ```json
 {
   "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "inviteCode": "ABCD1234",
+  "joinCode": "ABCD1234",
   "visibility": "PRIVATE"
 }
 ```
@@ -764,30 +755,29 @@ Si `visibility` es `PUBLIC`, la respuesta es:
 ```json
 {
   "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "inviteCode": null,
+  "joinCode": "PUBL1234",
   "visibility": "PUBLIC"
 }
 ```
 
 ### 5.2 Unirse a liga
 
-`POST /api/leagues/join`
-
-Request:
-
-```json
-{
-  "inviteCode": "ABCD1234"
-}
-```
+`POST /api/join/{joinCode}`
 
 Response `200`:
 
 ```json
 {
-  "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "targetType": "LEAGUE",
+  "targetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
+
+Reglas:
+
+- aplica tanto a ligas `PUBLIC` como `PRIVATE`
+- en `PUBLIC`, al completar el cupo la liga pasa a `IN_PROGRESS` y crea/activa fixtures y matches
+- en `PRIVATE`, al completar el cupo queda en `WAITING_FOR_START`
 
 ### 5.3 Listar ligas publicas
 
@@ -815,8 +805,8 @@ Response `200`:
       "occupiedSlots": 2,
       "status": "WAITING_FOR_PLAYERS",
       "_links": {
-        "joinPublic": {
-          "href": "/api/leagues/a1b2c3d4-e5f6-7890-abcd-ef1234567890/join-public"
+        "join": {
+          "href": "/api/join/ABCD1234"
         }
       }
     }
@@ -832,19 +822,11 @@ Response `200`:
 }
 ```
 
-### 5.4 Unirse a liga publica
-
-`POST /api/leagues/{leagueId}/join-public`
+### 5.4 Join desde lobby publico
 
 Auth: Bearer requerido.
 
-Response `200`:
-
-```json
-{
-  "leagueId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
+El FE debe usar el `href` provisto en `_links.join` y ejecutar `POST /api/join/{joinCode}`.
 
 ### 5.5 Salir de liga
 
@@ -903,7 +885,7 @@ Response `200`:
 ```json
 {
   "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "inviteCode": "ABCD1234",
+  "joinCode": "ABCD1234",
   "visibility": "PRIVATE"
 }
 ```
@@ -913,38 +895,37 @@ Si `visibility` es `PUBLIC`, la respuesta es:
 ```json
 {
   "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "inviteCode": null,
+  "joinCode": "CUP12345",
   "visibility": "PUBLIC"
 }
 ```
 
 ### 6.2 Unirse a copa
 
-`POST /api/cups/join`
+`POST /api/join/{joinCode}`
 
 Auth: Bearer requerido.
-
-Request:
-
-```json
-{
-  "inviteCode": "ABCD1234"
-}
-```
 
 Response `200`:
 
 ```json
 {
-  "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "targetType": "CUP",
+  "targetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
 
 Errores:
 
-- `404` si no existe una copa con ese código de invitación
+- `404` si no existe un recurso con ese `joinCode`
 - `422` si la copa no está en estado `WAITING_FOR_PLAYERS`, ya está llena o el jugador ya está en
   ella
+
+Reglas:
+
+- aplica tanto a copas `PUBLIC` como `PRIVATE`
+- en `PUBLIC`, al completar el cupo la copa pasa a `IN_PROGRESS` y crea/activa bouts y matches
+- en `PRIVATE`, al completar el cupo queda en `WAITING_FOR_START`
 
 ### 6.3 Listar copas publicas
 
@@ -972,8 +953,8 @@ Response `200`:
       "occupiedSlots": 5,
       "status": "WAITING_FOR_PLAYERS",
       "_links": {
-        "joinPublic": {
-          "href": "/api/cups/a1b2c3d4-e5f6-7890-abcd-ef1234567890/join-public"
+        "join": {
+          "href": "/api/join/CUP12345"
         }
       }
     }
@@ -991,17 +972,9 @@ Response `200`:
 
 ### 6.4 Unirse a copa publica
 
-`POST /api/cups/{cupId}/join-public`
-
 Auth: Bearer requerido.
 
-Response `200`:
-
-```json
-{
-  "cupId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
+El FE debe usar el `href` provisto en `_links.join` y ejecutar `POST /api/join/{joinCode}`.
 
 ### 6.5 Salir de copa
 
@@ -1125,17 +1098,21 @@ El campo `roundName` es informativo según la distancia a la final:
 
 El bracket avanza automáticamente via eventos internos:
 
-1. Cuando un match de copa termina → el ganador avanza al siguiente bout
-2. Cuando un jugador abandona un match de copa → se registra como forfeit; el rival avanza
+1. Cuando un match de copa termina -> el ganador avanza al siguiente bout
+2. Cuando un jugador abandona un match de copa -> se registra como forfeit; el rival avanza
    automáticamente
-3. Si el rival ya había forfeiteado → el bout se resuelve sin crear match (cascade forfeit)
-4. Al llegar a la final y resolverse → la copa pasa a `FINISHED` con el `champion`
+3. Si el rival ya había forfeiteado -> el bout se resuelve sin crear match (cascade forfeit)
+4. Al llegar a la final y resolverse -> la copa pasa a `FINISHED` con el `champion`
 
 El FE no necesita llamar ningún endpoint adicional para el avance: solo suscribirse a los eventos
 WebSocket del match activo y consultar `GET /api/cups/{cupId}` para ver el estado actualizado del
 bracket.
 
 ## 7. API REST - Chat
+
+Ademas del chat de `MATCH`, `LEAGUE` y `CUP`, existe `FRIENDSHIP` como DM efimero entre amigos
+aceptados. Ese chat vive solo en memoria: si la app reinicia, el historial se pierde y se recrea
+vacio al volver a abrirlo.
 
 Chat en tiempo real asociado a un match, liga o copa. Se crea automáticamente al iniciar el recurso
 padre y se elimina al finalizar o cancelarse.
@@ -1213,16 +1190,254 @@ Auth: Bearer requerido.
 
 Path params:
 
-- `parentType`: `MATCH`, `LEAGUE` o `CUP`
-- `parentId`: UUID del match, liga o copa
+- `parentType`: `MATCH`, `LEAGUE`, `CUP` o `FRIENDSHIP`
+- `parentId`: UUID del match, liga, copa o amistad
 
 Response `200`: misma estructura que 7.2.
 
 Errores:
 
-- `400` si `parentType` no coincide exactamente con `MATCH`, `LEAGUE` o `CUP`
+- `400` si `parentType` no coincide exactamente con `MATCH`, `LEAGUE`, `CUP` o `FRIENDSHIP`
 - `404` si no existe chat para ese recurso
 - `422` si el jugador no pertenece al chat
+
+Regla especial para `FRIENDSHIP`:
+
+- si la amistad existe, esta `ACCEPTED` y el jugador autenticado participa, el backend crea el chat
+  lazily la primera vez que se consulta (no persiste entre reinicios)
+
+### 7.4 Enviar mensaje por recurso padre
+
+`POST /api/chats/by-parent/{parentType}/{parentId}/messages`
+
+Auth: Bearer requerido.
+
+Path params:
+
+- `parentType`: `MATCH`, `LEAGUE`, `CUP` o `FRIENDSHIP`
+- `parentId`: UUID del match, liga, copa o amistad
+
+Request:
+
+```json
+{
+  "content": "Buena mano!"
+}
+```
+
+Response `201`:
+
+```json
+{
+  "chatId": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+}
+```
+
+El `chatId` retornado permite al cliente navegar directamente al chat sin un GET extra. Para
+`FRIENDSHIP`, el chat se crea lazily en el primer mensaje; para `MATCH`, `LEAGUE` y `CUP`, el chat
+ya existe y se retorna su ID.
+
+Errores:
+
+- `404` si el chat no existe (para `MATCH`/`LEAGUE`/`CUP`) o la amistad no aceptada (para
+  `FRIENDSHIP`)
+- `422` si el jugador no pertenece al chat, el mensaje esta vacio, excede 500 caracteres, o viola
+  el rate limit (2 segundos)
+
+## 7.5 API REST - Social
+
+La capa social agrega amistades e invitaciones rapidas entre usuarios registrados. Los guests
+quedan fuera de estas capacidades.
+
+En todo el contrato publico social, el identificador del otro usuario es siempre `username`.
+`friendshipId` sigue existiendo solo a nivel interno de dominio y persistencia; no se expone por
+REST ni por WebSocket.
+
+### 7.4.1 Solicitar amistad
+
+`POST /api/social/friendship-requests`
+
+Request:
+
+```json
+{
+  "username": "martina"
+}
+```
+
+Response `204`: sin body.
+
+### 7.4.2 Aceptar amistad
+
+`POST /api/social/friendship-requests/{username}/accept`
+
+Response `204`: sin body.
+
+### 7.4.3 Rechazar amistad
+
+`POST /api/social/friendship-requests/{username}/decline`
+
+Response `204`: sin body.
+
+### 7.4.4 Cancelar solicitud de amistad
+
+`POST /api/social/friendship-requests/{username}/cancel`
+
+Response `204`: sin body.
+
+Solo puede llamarlo el requester (quien envió la solicitud). El addressee recibe una notificación
+WebSocket `FRIEND_REQUEST_CANCELLED`.
+
+### 7.4.4b Eliminar amigo
+
+`DELETE /api/social/friendships/{username}`
+
+Response `204`: sin body.
+
+Cualquiera de los dos jugadores puede eliminar una amistad `ACCEPTED`. Ambos reciben una
+notificacion WebSocket `FRIENDSHIP_REMOVED`. Una vez eliminada, es posible re-enviar una solicitud
+de amistad al mismo usuario.
+
+Errores:
+
+- `404` si la amistad no existe
+- `422` si la amistad no en estado `ACCEPTED`
+
+### 7.4.5 Listar amigos
+
+`GET /api/social/friendships`
+
+Response `200`:
+
+```json
+[
+  {
+    "friendUsername": "martina"
+  }
+]
+```
+
+### 7.4.6 Listar solicitudes recibidas
+
+`GET /api/social/friendship-requests/incoming`
+
+Response `200`:
+
+```json
+[
+  {
+    "requesterUsername": "juancho"
+  }
+]
+```
+
+### 7.4.7 Crear invitacion social
+
+`POST /api/social/invitations`
+
+Request:
+
+```json
+{
+  "recipientUsername": "martina",
+  "targetType": "MATCH",
+  "targetId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
+}
+```
+
+Reglas:
+
+- `targetType`: `MATCH`, `LEAGUE` o `CUP`
+- solo se puede invitar a amistades `ACCEPTED`
+- el destinatario debe estar libre: sin match sin finalizar ni torneos activos/pendientes
+- solo puede existir una invitacion `PENDING` por amigo y recurso
+- el recurso debe seguir admitiendo `join` y tener `joinCode`
+
+Response `200`:
+
+```json
+{
+  "invitationId": "c21f5f0a-0a0a-41cc-9c63-3e04b0ff8b4f",
+  "expiresAt": 1775304600000
+}
+```
+
+### 7.4.7 Aceptar invitacion social
+
+`POST /api/social/invitations/{id}/accept`
+
+Response `204`: sin body.
+
+Semantica:
+
+- el backend hace `join` directo sobre el recurso destino
+- si el recurso ya no admite join, la invitacion pasa a `EXPIRED` y responde error
+
+### 7.4.8 Rechazar invitacion social
+
+`POST /api/social/invitations/{id}/decline`
+
+Response `204`: sin body.
+
+### 7.4.9 Listar invitaciones recibidas
+
+`GET /api/social/invitations/incoming`
+
+Devuelve las invitaciones a recurso pendientes recibidas por el jugador autenticado.
+
+Response `200`: arreglo de `IncomingResourceInvitationResponse`.
+
+### 7.4.10 Listar solicitudes de amistad enviadas
+
+`GET /api/social/friendship-requests/outgoing`
+
+Devuelve las solicitudes de amistad pendientes enviadas por el jugador autenticado.
+
+Response `200`:
+
+```json
+[
+  {
+    "addresseeUsername": "martina"
+  }
+]
+```
+
+### 7.4.11 Listar invitaciones enviadas
+
+`GET /api/social/invitations/outgoing`
+
+Devuelve las invitaciones a recurso pendientes enviadas por el jugador autenticado.
+
+Response `200`: arreglo de `OutgoingResourceInvitationResponse`.
+
+### 7.4.12 Cancelar invitacion enviada
+
+`POST /api/social/invitations/{id}/cancel`
+
+Cancela una invitacion pendiente enviada por el jugador autenticado.
+
+- `204` si se cancela correctamente
+- `401` si el token es invalido o esta ausente
+- `404` si la invitacion no existe
+- `422` si no se puede cancelar (ya fue aceptada, rechazada o expirada)
+
+### 7.4.13 Expiracion configurable de invitaciones
+
+Properties operativas:
+
+- `truco.social.invitation-expiration.match`
+- `truco.social.invitation-expiration.league`
+- `truco.social.invitation-expiration.cup`
+
+Defaults en `application.yaml`:
+
+- match: `PT10M`
+- league: `PT30M`
+- cup: `PT30M`
+
+El backend corre un scheduler que expira invitaciones `PENDING` por tiempo o cuando el recurso deja
+de admitir join.
 
 ## 8. Enums y valores permitidos
 
@@ -1240,6 +1455,8 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
     - `QUIERO`, `NO_QUIERO`
 - `RespondTrucoRequest.response`:
     - `QUIERO`, `NO_QUIERO`, `QUIERO_Y_ME_VOY_AL_MAZO`
+- `CreateResourceInvitationHttpRequest.targetType`:
+    - `MATCH`, `LEAGUE`, `CUP`
 
 ### 8.2 Estados en respuestas
 
@@ -1251,6 +1468,22 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
     - `TRUCO`, `RETRUCO`, `VALE_CUATRO` (o `null`)
 - `AvailableActionResponse.type`:
     - `PLAY_CARD`, `CALL_TRUCO`, `CALL_ENVIDO`, `RESPOND_TRUCO`, `RESPOND_ENVIDO`, `FOLD`
+- `FriendSummaryResponse`:
+    - expone `{ friendUsername }`
+- `IncomingFriendshipRequestResponse`:
+    - expone `{ requesterUsername }`
+- `OutgoingFriendshipRequestResponse`:
+    - expone `{ addresseeUsername }`
+- `IncomingResourceInvitationResponse`:
+    - expone `{ invitationId, senderUsername, targetType, targetId, status, expiresAt }`
+- `OutgoingResourceInvitationResponse`:
+    - expone `{ invitationId, recipientUsername, targetType, targetId, status, expiresAt }`
+- `IncomingResourceInvitationResponse.status` / `OutgoingResourceInvitationResponse.status`:
+    - `PENDING`, `ACCEPTED`, `DECLINED`, `EXPIRED`, `CANCELLED`
+- `IncomingResourceInvitationResponse.targetType` / `OutgoingResourceInvitationResponse.targetType`:
+    - `MATCH`, `LEAGUE`, `CUP`
+- `ChatParentType`:
+    - `MATCH`, `LEAGUE`, `CUP`, `FRIENDSHIP`
 
 ## 9. WebSocket / STOMP
 
@@ -1279,11 +1512,12 @@ El token debe contener `sub` (playerId).
 
 Suscripciones permitidas por interceptor:
 
-- `/user/queue/match` — eventos de match
-- `/user/queue/match-spectate` — alta y eventos de espectador
-- `/user/queue/league` — eventos de liga
-- `/user/queue/cup` — eventos de copa
-- `/user/queue/chat` — eventos de chat en tiempo real
+- `/user/queue/match` - eventos de match
+- `/user/queue/match-spectate` - alta y eventos de espectador
+- `/user/queue/league` - eventos de liga
+- `/user/queue/cup` - eventos de copa
+- `/user/queue/chat` - eventos de chat en tiempo real
+- `/user/queue/social` - eventos de amistades e invitaciones
 
 - `/topic/public-match-lobby` - stream compartido del lobby publico de matches
 - `/topic/public-cup-lobby` - stream compartido del lobby publico de copas
@@ -1353,6 +1587,22 @@ Cada tipo de recurso tiene su propia estructura de evento:
 }
 ```
 
+**Social** (`/user/queue/social`):
+
+```json
+{
+  "eventType": "RESOURCE_INVITATION_RECEIVED",
+  "timestamp": 1772768158123,
+  "payload": {
+    "invitationId": "c21f5f0a-0a0a-41cc-9c63-3e04b0ff8b4f",
+    "senderUsername": "juancho",
+    "targetType": "MATCH",
+    "targetId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+    "expiresAt": 1775304600000
+  }
+}
+```
+
 **Spectate** (`/user/queue/match-spectate`):
 
 ```json
@@ -1403,7 +1653,7 @@ evento, no dentro del `payload`.
 Excepcion: los eventos de lobby publico no llevan `matchId`/`leagueId`/`cupId` top-level; el id va
 dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 
-### 9.5 eventType posibles — Match (`/user/queue/match`, 2 jugadores del partido)
+### 9.5 eventType posibles - Match (`/user/queue/match`, 2 jugadores del partido)
 
 - `AVAILABLE_ACTIONS_UPDATED`
 - `CARD_PLAYED`
@@ -1430,42 +1680,55 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `HAND_CHANGED`
 - `SPECTATOR_COUNT_CHANGED`
 
-### 9.5b eventType posibles — Liga (`/user/queue/league`, todos los participantes de la liga)
+### 9.5b eventType posibles - Liga (`/user/queue/league`, todos los participantes de la liga)
 
-- `LEAGUE_PLAYER_JOINED` — un jugador se unió a la liga
-- `LEAGUE_PLAYER_LEFT` — un jugador no-creador abandonó la liga
-- `LEAGUE_CANCELLED` — la liga fue cancelada (creador abandona o timeout)
-- `LEAGUE_STARTED` — la liga inició y se generaron los fixtures
-- `LEAGUE_FIXTURE_ACTIVATED` — un fixture cambió de estado a PENDING
-- `LEAGUE_MATCH_ACTIVATED` — un partido de liga fue creado y está listo
-- `LEAGUE_ADVANCED` — un resultado fue registrado en la liga
-- `LEAGUE_PLAYER_FORFEITED` — un jugador ha sido declarado forfeit
-- `LEAGUE_FINISHED` — la liga terminó
+- `LEAGUE_PLAYER_JOINED` - un jugador se unió a la liga
+- `LEAGUE_PLAYER_LEFT` - un jugador no-creador abandonó la liga
+- `LEAGUE_CANCELLED` - la liga fue cancelada (creador abandona o timeout)
+- `LEAGUE_STARTED` - la liga inició y se generaron los fixtures
+- `LEAGUE_FIXTURE_ACTIVATED` - un fixture cambió de estado a PENDING
+- `LEAGUE_MATCH_ACTIVATED` - un partido de liga fue creado y está listo
+- `LEAGUE_ADVANCED` - un resultado fue registrado en la liga
+- `LEAGUE_PLAYER_FORFEITED` - un jugador ha sido declarado forfeit
+- `LEAGUE_FINISHED` - la liga terminó
 
-### 9.5c eventType posibles — Copa (`/user/queue/cup`, todos los participantes de la copa)
+### 9.5c eventType posibles - Copa (`/user/queue/cup`, todos los participantes de la copa)
 
-- `CUP_PLAYER_JOINED` — un jugador se unió a la copa
-- `CUP_PLAYER_LEFT` — un jugador no-creador abandonó la copa
-- `CUP_CANCELLED` — la copa fue cancelada
-- `CUP_STARTED` — la copa inició y se generó el bracket
-- `CUP_BOUT_ACTIVATED` — un bout del bracket pasó a estado PENDING
-- `CUP_MATCH_ACTIVATED` — un partido de copa fue creado y está listo
-- `CUP_ADVANCED` — un resultado fue registrado y el bracket avanzó
-- `CUP_PLAYER_FORFEITED` — un jugador fue declarado forfeit
-- `CUP_FINISHED` — la copa terminó con un campeón
+- `CUP_PLAYER_JOINED` - un jugador se unió a la copa
+- `CUP_PLAYER_LEFT` - un jugador no-creador abandonó la copa
+- `CUP_CANCELLED` - la copa fue cancelada
+- `CUP_STARTED` - la copa inició y se generó el bracket
+- `CUP_BOUT_ACTIVATED` - un bout del bracket pasó a estado PENDING
+- `CUP_MATCH_ACTIVATED` - un partido de copa fue creado y está listo
+- `CUP_ADVANCED` - un resultado fue registrado y el bracket avanzó
+- `CUP_PLAYER_FORFEITED` - un jugador fue declarado forfeit
+- `CUP_FINISHED` - la copa terminó con un campeón
 
-### 9.5d eventType posibles — Chat (`/user/queue/chat`, participantes del chat)
+### 9.5d eventType posibles - Chat (`/user/queue/chat`, participantes del chat)
 
-- `CHAT_CREATED` — chat creado automáticamente al iniciar match/liga/copa
-- `MESSAGE_SENT` — un participante envió un mensaje
+- `CHAT_CREATED` - chat creado automáticamente al iniciar match/liga/copa
+- `MESSAGE_SENT` - un participante envió un mensaje
 
-### 9.5e eventType posibles — Spectate (
+### 9.5e eventType posibles - Social (`/user/queue/social`, usuarios registrados)
+
+- `FRIEND_REQUEST_RECEIVED` - el usuario recibió una solicitud de amistad
+- `FRIEND_REQUEST_ACCEPTED` - el destinatario aceptó la solicitud enviada por el usuario
+- `RESOURCE_INVITATION_RECEIVED` - el usuario recibió una invitación social a match/liga/copa
+- `RESOURCE_INVITATION_ACCEPTED` - el destinatario aceptó una invitación enviada por el usuario
+- `RESOURCE_INVITATION_CANCELLED` - el remitente cancela una invitacion pendiente y la recibe el
+  destinatario
+- `FRIENDSHIP_REMOVED` - alguno de los dos jugadores elimino la amistad (ambos lo reciben)
+- `RESOURCE_INVITATION_DECLINED` - el destinatario rechazó una invitación enviada por el usuario
+- `RESOURCE_INVITATION_EXPIRED` - una invitación pendiente expiró por tiempo o por recurso no
+  joinable
+
+### 9.5f eventType posibles - Spectate (
 
 `/user/queue/match-spectate`, espectadores activos del match)
 
-- `SPECTATE_STATE` — snapshot inicial enviado al completar la suscripcion
-- `SPECTATE_ERROR` — error al intentar registrarse como espectador
-- `SPECTATOR_COUNT_CHANGED` — cambia la cantidad de espectadores del match
+- `SPECTATE_STATE` - snapshot inicial enviado al completar la suscripcion
+- `SPECTATE_ERROR` - error al intentar registrarse como espectador
+- `SPECTATOR_COUNT_CHANGED` - cambia la cantidad de espectadores del match
 - ademas se reenvian los eventos publicos del match que no estan atados a un asiento concreto
 
 No se reenvian al espectador los eventos privados por asiento:
@@ -1473,7 +1736,7 @@ No se reenvian al espectador los eventos privados por asiento:
 - `PLAYER_HAND_UPDATED`
 - `AVAILABLE_ACTIONS_UPDATED`
 
-### 9.5f eventType posibles - Lobby publico (`/topic/public-*`)
+### 9.5g eventType posibles - Lobby publico (`/topic/public-*`)
 
 - `PUBLIC_MATCH_LOBBY_UPSERT` - snapshot o actualizacion de un match que sigue abierto en lobby
 - `PUBLIC_MATCH_LOBBY_REMOVED` - remocion de un match que salio del lobby
@@ -1520,7 +1783,7 @@ No se reenvian al espectador los eventos privados por asiento:
     - `{}`
 - `MATCH_PLAYER_LEFT`:
     - el segundo jugador salió antes de que la partida comenzara; vuelve a `WAITING_FOR_PLAYERS`
-    - `{ leaverSeat }` — siempre `PLAYER_TWO`
+    - `{ leaverSeat }` - siempre `PLAYER_TWO`
 - `FOLDED`:
     - `{ seat }`
 - `MATCH_FORFEITED`:
@@ -1539,16 +1802,40 @@ No se reenvian al espectador los eventos privados por asiento:
 - `HAND_CHANGED`:
     - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
       `payload: {}`.
+- `FRIEND_REQUEST_RECEIVED`:
+    - `{ requesterUsername, addresseeUsername }` - `status` omitido (siempre PENDING por
+      tipo de evento)
+- `FRIEND_REQUEST_ACCEPTED`:
+    - `{ requesterUsername, addresseeUsername }` - `status` omitido (siempre ACCEPTED por tipo de
+      evento)
+- `FRIEND_REQUEST_DECLINED`:
+    - `{ requesterUsername, addresseeUsername }` - se envía al **requester** cuando el
+      addressee rechaza la solicitud
+- `FRIEND_REQUEST_CANCELLED`:
+    - `{ requesterUsername, addresseeUsername }` - se envía al **addressee** cuando el
+      requester cancela la solicitud pendiente
+- `FRIENDSHIP_REMOVED`:
+    - `{ requesterUsername, addresseeUsername, removedByUsername }`
+- `RESOURCE_INVITATION_RECEIVED`:
+    - `{ invitationId, senderUsername, targetType, targetId, expiresAt }`
+- `RESOURCE_INVITATION_ACCEPTED`:
+    - `{ invitationId, recipientUsername, targetType, targetId }`
+- `RESOURCE_INVITATION_CANCELLED`:
+    - `{ invitationId, senderUsername, targetType, targetId }`
+- `RESOURCE_INVITATION_DECLINED`:
+    - `{ invitationId, recipientUsername, targetType, targetId }`
+- `RESOURCE_INVITATION_EXPIRED`:
+    - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
 - `LEAGUE_MATCH_ACTIVATED`:
-    - `{ leagueId, matchId }` — se emite a todos los participantes de la liga cuando un partido
+    - `{ leagueId, matchId }` - se emite a todos los participantes de la liga cuando un partido
       es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
 - `CUP_MATCH_ACTIVATED`:
-    - `{ cupId, matchId }` — se emite a todos los participantes de la copa cuando un partido de
+    - `{ cupId, matchId }` - se emite a todos los participantes de la copa cuando un partido de
       bracket es activado.
 - `LEAGUE_PLAYER_JOINED` / `CUP_PLAYER_JOINED`:
-    - `{ leagueId/cupId, player }` — `player` contiene `displayName`
+    - `{ leagueId/cupId, player }` - `player` contiene `displayName`
 - `LEAGUE_PLAYER_LEFT` / `CUP_PLAYER_LEFT`:
-    - `{ leagueId/cupId, player }` — `player` contiene `displayName`
+    - `{ leagueId/cupId, player }` - `player` contiene `displayName`
 - `LEAGUE_CANCELLED` / `CUP_CANCELLED`:
     - `{ leagueId/cupId }`
 - `LEAGUE_STARTED` / `CUP_STARTED`:
@@ -1558,17 +1845,17 @@ No se reenvian al espectador los eventos privados por asiento:
 - `CUP_BOUT_ACTIVATED`:
     - `{ cupId, boutId }`
 - `LEAGUE_ADVANCED`:
-    - `{ leagueId, matchId, winner }` — `winner` contiene `displayName`; `matchId` puede ser `null`
+    - `{ leagueId, matchId, winner }` - `winner` contiene `displayName`; `matchId` puede ser `null`
       cuando el avance es automático
       (por ejemplo, forfeit del oponente)
 - `CUP_ADVANCED`:
-    - `{ cupId, matchId, winner }` — `winner` contiene `displayName`; `matchId` puede ser `null`
+    - `{ cupId, matchId, winner }` - `winner` contiene `displayName`; `matchId` puede ser `null`
       cuando el avance es automático
       (por ejemplo, bye o forfeit del oponente)
 - `LEAGUE_PLAYER_FORFEITED`:
-    - `{ leagueId, forfeiter }` — `forfeiter` contiene `displayName`
+    - `{ leagueId, forfeiter }` - `forfeiter` contiene `displayName`
 - `CUP_PLAYER_FORFEITED`:
-    - `{ cupId, forfeiter }` — `forfeiter` contiene `displayName`
+    - `{ cupId, forfeiter }` - `forfeiter` contiene `displayName`
 - `LEAGUE_FINISHED`:
     - `{ leagueId, leaders: [displayName, ...] }`
 - `CUP_FINISHED`:
@@ -1729,6 +2016,8 @@ Errores:
   `/topic/public-league-lobby`.
 - El snapshot inicial del lobby se obtiene por REST (`GET /api/*/public`); los topics publicos
   solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
+- Las novedades sociales llegan por `/user/queue/social`; no reemplazan el flujo existente de
+  `joinCode`, solo agregan targeting y UX mas rapida entre amigos.
 - El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al
   crear/unirse/navegar a un match, liga o copa.
 - El backend no suprime eventos del lobby segun `playerId`; si el creador o participante no debe
@@ -1748,9 +2037,11 @@ Errores:
   El FE puede consultar `GET /api/cups/{cupId}` para ver el estado completo del bracket.
 - El **chat** se crea automáticamente al iniciar un match, liga o copa. Se elimina al finalizar
   o cancelarse el recurso padre. Para obtener el chat, usar
-  `GET /api/chats/by-parent/{MATCH|LEAGUE|CUP}/{parentId}`. Los eventos de chat llegan por
-  `/user/queue/chat`. El chat tiene un buffer circular de 50 mensajes y rate limit de 2 segundos
-  entre mensajes del mismo jugador.
+  `GET /api/chats/by-parent/{MATCH|LEAGUE|CUP|FRIENDSHIP}/{parentId}`. Los eventos de chat llegan
+  por `/user/queue/chat`. El chat tiene un buffer circular de 50 mensajes y rate limit de 2
+  segundos entre mensajes del mismo jugador.
+- El DM de `FRIENDSHIP` es efimero: no persiste mensajes ni metadata. Se crea lazily la primera vez
+  que se consulta y se pierde al reiniciar la aplicacion.
 
 ### 11.1 Reconexión WebSocket
 
@@ -1761,10 +2052,10 @@ Flujo recomendado para reconectar tras una desconexión:
 3. **Bufferar** los eventos entrantes sin procesarlos todavía
 4. Hacer `GET` del estado actual:
 
-- Match: `GET /api/matches/{matchId}`
-- Liga: `GET /api/leagues/{leagueId}`
-- Copa: `GET /api/cups/{cupId}`
-- Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
+    - Match: `GET /api/matches/{matchId}`
+    - Liga: `GET /api/leagues/{leagueId}`
+    - Copa: `GET /api/cups/{cupId}`
+    - Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
 
 5. Aplicar el estado del GET como base autoritativa
 6. Descartar eventos bufferados con `timestamp` anterior al GET; aplicar los posteriores

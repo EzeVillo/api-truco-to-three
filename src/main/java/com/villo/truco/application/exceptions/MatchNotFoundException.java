@@ -1,6 +1,6 @@
 package com.villo.truco.application.exceptions;
 
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 
 public final class MatchNotFoundException extends ApplicationException {
@@ -10,9 +10,9 @@ public final class MatchNotFoundException extends ApplicationException {
     super(ApplicationStatus.NOT_FOUND, "Match not found: " + matchId);
   }
 
-  public MatchNotFoundException(final InviteCode inviteCode) {
+  public MatchNotFoundException(final JoinCode joinCode) {
 
-    super(ApplicationStatus.NOT_FOUND, "Match not found for invite code: " + inviteCode.value());
+    super(ApplicationStatus.NOT_FOUND, "Match not found for join code: " + joinCode.value());
   }
 
 }

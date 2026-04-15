@@ -3,7 +3,7 @@ package com.villo.truco.application.usecases.commands;
 import com.villo.truco.application.exceptions.MatchNotFoundException;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.MatchQueryRepository;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import java.util.Objects;
 
@@ -22,10 +22,10 @@ public final class MatchResolver {
         .orElseThrow(() -> new MatchNotFoundException(matchId));
   }
 
-  public Match resolve(final InviteCode inviteCode) {
+  public Match resolve(final JoinCode joinCode) {
 
-    return this.matchQueryRepository.findByInviteCode(inviteCode)
-        .orElseThrow(() -> new MatchNotFoundException(inviteCode));
+    return this.matchQueryRepository.findByJoinCode(joinCode)
+        .orElseThrow(() -> new MatchNotFoundException(joinCode));
   }
 
 }

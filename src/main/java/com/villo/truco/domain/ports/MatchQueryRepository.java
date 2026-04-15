@@ -3,7 +3,7 @@ package com.villo.truco.domain.ports;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
@@ -14,7 +14,7 @@ public interface MatchQueryRepository {
 
   Optional<Match> findById(MatchId matchId);
 
-  Optional<Match> findByInviteCode(InviteCode inviteCode);
+  Optional<Match> findByJoinCode(JoinCode joinCode);
 
   boolean hasActiveMatch(PlayerId playerId);
 

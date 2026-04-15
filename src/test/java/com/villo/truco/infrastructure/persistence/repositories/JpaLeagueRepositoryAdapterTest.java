@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
+import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
 import com.villo.truco.infrastructure.persistence.mappers.LeagueMapper;
@@ -26,7 +27,8 @@ class JpaLeagueRepositoryAdapterTest {
   void findByIdDelegates() {
 
     final var springRepo = mock(SpringDataLeagueRepository.class);
-    final var adapter = new JpaLeagueRepositoryAdapter(springRepo, mock(LeagueMapper.class));
+    final var adapter = new JpaLeagueRepositoryAdapter(springRepo, mock(LeagueMapper.class),
+        mock(JoinCodeRegistryRepository.class));
 
     adapter.findById(LeagueId.generate());
 
@@ -38,7 +40,8 @@ class JpaLeagueRepositoryAdapterTest {
   void findPublicWaitingCursorDelegates() {
 
     final var springRepo = mock(SpringDataLeagueRepository.class);
-    final var adapter = new JpaLeagueRepositoryAdapter(springRepo, mock(LeagueMapper.class));
+    final var adapter = new JpaLeagueRepositoryAdapter(springRepo, mock(LeagueMapper.class),
+        mock(JoinCodeRegistryRepository.class));
     final var instant = Instant.parse("2026-04-03T12:30:00Z");
     final var id = UUID.fromString("33333333-3333-3333-3333-333333333333");
     final var cursor = new PublicLobbyCursor(instant, id).encode();
@@ -56,7 +59,8 @@ class JpaLeagueRepositoryAdapterTest {
   void findPublicWaitingWithoutCursorUsesInitialPageQuery() {
 
     final var springRepo = mock(SpringDataLeagueRepository.class);
-    final var adapter = new JpaLeagueRepositoryAdapter(springRepo, mock(LeagueMapper.class));
+    final var adapter = new JpaLeagueRepositoryAdapter(springRepo, mock(LeagueMapper.class),
+        mock(JoinCodeRegistryRepository.class));
 
     when(springRepo.findInitialPublicWaitingPage(any())).thenReturn(List.of());
 

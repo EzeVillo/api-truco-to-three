@@ -15,7 +15,9 @@ scripts:
               "Player two": {
                   accessToken: "accessTokenPlayerTwo",
                   accessTokenExpiresAt: "accessTokenPlayerTwoExpiresAt",
-                  reauthRequest: "Auth > Player two > Use guest"
+                  refreshTokenVariable: "refreshTokenPlayerTwo",
+                  refreshTokenExpiresAt: "refreshTokenPlayerTwoExpiresAt",
+                  reauthRequest: "Auth > Player two > Login user"
               },
               "Player three": {
                   accessToken: "accessTokenPlayerThree",

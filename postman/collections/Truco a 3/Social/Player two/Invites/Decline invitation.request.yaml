@@ -1,0 +1,5 @@
+$kind: http-request
+name: Decline invitation
+url: "{{URL_BASE_TRUCO_HTTP}}/social/invitations/{{invitationId}}/decline"
+method: POST
+order: 4464691014301137

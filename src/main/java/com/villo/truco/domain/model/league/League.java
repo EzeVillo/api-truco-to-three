@@ -12,7 +12,6 @@ import com.villo.truco.domain.model.league.events.LeaguePlayerLeftEvent;
 import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
 import com.villo.truco.domain.model.league.events.PublicLeagueLobbyOpenedEvent;
 import com.villo.truco.domain.model.league.exceptions.FixtureAlreadyResolvedException;
-import com.villo.truco.domain.model.league.exceptions.InvalidLeagueInviteCodeException;
 import com.villo.truco.domain.model.league.exceptions.InvalidLeaguePlayersException;
 import com.villo.truco.domain.model.league.exceptions.LeagueFullException;
 import com.villo.truco.domain.model.league.exceptions.LeagueNotReadyException;
@@ -31,7 +30,7 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.AggregateBase;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -53,13 +52,13 @@ public final class League extends AggregateBase<LeagueId> {
   private final int numberOfPlayers;
   private final GamesToPlay gamesToPlay;
   private final Visibility visibility;
-  private final InviteCode inviteCode;
+  private final JoinCode joinCode;
   private LeagueStatus status;
 
   private League(final LeagueId id, final List<PlayerId> participants, final List<Fixture> fixtures,
       final Map<PlayerId, Integer> winsByPlayer, final LeagueStatus status,
       final int numberOfPlayers, final GamesToPlay gamesToPlay, final Visibility visibility,
-      final InviteCode inviteCode) {
+      final JoinCode joinCode) {
 
     super(id);
     this.participants = participants;
@@ -69,7 +68,7 @@ public final class League extends AggregateBase<LeagueId> {
     this.numberOfPlayers = numberOfPlayers;
     this.gamesToPlay = gamesToPlay;
     this.visibility = visibility;
-    this.inviteCode = inviteCode;
+    this.joinCode = joinCode;
   }
 
   public static League create(final PlayerId creatorId, final int numberOfPlayers,
@@ -88,7 +87,7 @@ public final class League extends AggregateBase<LeagueId> {
 
     final var league = new League(LeagueId.generate(), participants, new ArrayList<>(),
         new LinkedHashMap<>(), LeagueStatus.WAITING_FOR_PLAYERS, numberOfPlayers, gamesToPlay,
-        visibility, visibility == Visibility.PRIVATE ? InviteCode.generate() : null);
+        visibility, JoinCode.generate());
     if (visibility == Visibility.PUBLIC) {
       league.addDomainEvent(new PublicLeagueLobbyOpenedEvent(league.getId(), creatorId));
     }
@@ -101,10 +100,10 @@ public final class League extends AggregateBase<LeagueId> {
   static League reconstruct(final LeagueId id, final List<PlayerId> participants,
       final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
       final LeagueStatus status, final int numberOfPlayers, final GamesToPlay gamesToPlay,
-      final Visibility visibility, final InviteCode inviteCode) {
+      final Visibility visibility, final JoinCode joinCode) {
 
     return new League(id, participants, fixtures, winsByPlayer, status, numberOfPlayers,
-        gamesToPlay, visibility, inviteCode);
+        gamesToPlay, visibility, joinCode);
   }
 
   private static List<Fixture> generateRoundRobinFixtures(final List<PlayerId> participants) {
@@ -165,17 +164,25 @@ public final class League extends AggregateBase<LeagueId> {
     return this.startInternal();
   }
 
-  public void join(final PlayerId playerId, final InviteCode inviteCode) {
+  public List<FixtureActivation> join(final PlayerId playerId) {
 
     Objects.requireNonNull(playerId, "PlayerId cannot be null");
-    Objects.requireNonNull(inviteCode, "InviteCode cannot be null");
+
+    if (this.visibility == Visibility.PUBLIC) {
+      return this.joinPublic(playerId);
+    }
+
+    return this.joinPrivate(playerId);
+  }
+
+  private List<FixtureActivation> joinPrivate(final PlayerId playerId) {
+
+    if (this.visibility != Visibility.PRIVATE) {
+      throw new PrivateLeagueVisibilityAccessException();
+    }
 
     if (this.status != LeagueStatus.WAITING_FOR_PLAYERS) {
       throw new LeagueNotWaitingException();
-    }
-
-    if (!this.inviteCode.equals(inviteCode)) {
-      throw new InvalidLeagueInviteCodeException();
     }
 
     if (this.participants.contains(playerId)) {
@@ -196,15 +203,11 @@ public final class League extends AggregateBase<LeagueId> {
       this.status = LeagueStatus.WAITING_FOR_START;
       LOGGER.info("League ready: leagueId={}, participants={}", this.id, this.participants.size());
     }
+
+    return List.of();
   }
 
-  public List<FixtureActivation> joinPublic(final PlayerId playerId) {
-
-    Objects.requireNonNull(playerId, "PlayerId cannot be null");
-
-    if (this.visibility != Visibility.PUBLIC) {
-      throw new PrivateLeagueVisibilityAccessException();
-    }
+  private List<FixtureActivation> joinPublic(final PlayerId playerId) {
 
     if (this.status != LeagueStatus.WAITING_FOR_PLAYERS) {
       throw new PublicLeagueLobbyUnavailableException();
@@ -416,9 +419,9 @@ public final class League extends AggregateBase<LeagueId> {
     return this.status;
   }
 
-  public InviteCode getInviteCode() {
+  public JoinCode getJoinCode() {
 
-    return this.inviteCode;
+    return this.joinCode;
   }
 
   public GamesToPlay getGamesToPlay() {

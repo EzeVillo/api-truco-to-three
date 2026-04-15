@@ -10,6 +10,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,15 +20,26 @@ class DefaultPublicActorResolverTest {
   private static UserQueryRepository userQueryRepositoryWith(
       final Map<PlayerId, String> usernamesById) {
 
-    return playerIds -> {
-      final var result = new java.util.LinkedHashMap<PlayerId, String>();
-      for (final var playerId : playerIds) {
-        final var username = usernamesById.get(playerId);
-        if (username != null) {
-          result.put(playerId, username);
+    return new UserQueryRepository() {
+      @Override
+      public Map<PlayerId, String> findUsernamesByIds(final Set<PlayerId> playerIds) {
+
+        final var result = new java.util.LinkedHashMap<PlayerId, String>();
+        for (final var playerId : playerIds) {
+          final var username = usernamesById.get(playerId);
+          if (username != null) {
+            result.put(playerId, username);
+          }
         }
+        return result;
       }
-      return result;
+
+      @Override
+      public Optional<PlayerId> findUserIdByUsername(final String username) {
+
+        return usernamesById.entrySet().stream().filter(entry -> entry.getValue().equals(username))
+            .map(Map.Entry::getKey).findFirst();
+      }
     };
   }
 

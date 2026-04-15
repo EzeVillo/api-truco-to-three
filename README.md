@@ -14,6 +14,7 @@ games.
 - lobby publico para partidas, ligas y copas
 - spectating de matches de ligas y copas
 - chat por recurso
+- amistades, invitaciones rapidas y DM efimero entre amigos
 - autenticacion con access token corto para usuarios y refresh token rotado
 - REST + WebSocket/STOMP
 - persistencia con PostgreSQL + Flyway
@@ -43,17 +44,17 @@ games.
   register/login con access token corto + refresh token rotado y acceso guest con access token
   largo.
 - Match:
-  crear salas `PUBLIC` o `PRIVATE`, join privado por `inviteCode`, lobby publico por `id`,
+  crear salas `PUBLIC` o `PRIVATE`, join compartido por `joinCode`, lobby publico por coleccion,
   autostart al llenarse, iniciar privado manual, jugar carta, cantar/responder truco,
   cantar/responder envido, fold, abandono, consulta de estado del jugador y consulta de estado
   para espectador registrado.
 - Bots:
   catalogo de personalidades y creacion de match listo para jugar.
 - League:
-  creacion `PUBLIC` o `PRIVATE`, join privado por `inviteCode`, lobby publico por `id`,
+  creacion `PUBLIC` o `PRIVATE`, join compartido por `joinCode`, lobby publico por coleccion,
   autostart publico al completarse, leave, start privado, tabla, fixture y avance automatico.
 - Cup:
-  creacion `PUBLIC` o `PRIVATE`, join privado por `inviteCode`, lobby publico por `id`,
+  creacion `PUBLIC` o `PRIVATE`, join compartido por `joinCode`, lobby publico por coleccion,
   autostart publico al completarse, leave, start privado, bracket, avance automatico y
   resolucion por forfeit.
 - Spectators:
@@ -61,8 +62,15 @@ games.
   espectador no expone cartas privadas ni acciones disponibles.
 - Chat:
   lectura, envio de mensajes, limite de 50 mensajes y rate limit de 2 segundos por jugador.
+- Social:
+  solicitudes de amistad por username exacto, invitaciones rapidas a `MATCH`/`LEAGUE`/`CUP` entre
+  amigos aceptados y DM efimero por `FRIENDSHIP`. El envio de invitaciones valida que el
+  destinatario no este ocupado en otra partida o torneo. La API separa `friendship-requests`
+  (pendientes) de `friendships` (amistades aceptadas) y expone jugadores por `username`, no por
+  `PlayerId`. `friendshipId` queda solo como identidad interna del agregado y no forma parte del
+  contrato publico REST/WebSocket.
 - Tiempo real:
-  eventos privados por jugador para match, league, cup y chat, mas canal de spectate para
+  eventos privados por jugador para match, league, cup, chat y social, mas canal de spectate para
   snapshots y eventos publicos del match.
 
 ## Arquitectura
@@ -157,6 +165,12 @@ Valores por defecto definidos en `application.yaml`:
 - `TRUCO_GUEST_ACCESS_TOKEN_EXPIRATION_SECONDS=604800`
 - `TRUCO_REFRESH_TOKEN_EXPIRATION_SECONDS=2592000`
 
+Properties sociales por defecto:
+
+- `truco.social.invitation-expiration.match=PT10M`
+- `truco.social.invitation-expiration.league=PT30M`
+- `truco.social.invitation-expiration.cup=PT30M`
+
 ### Autenticacion
 
 - `POST /api/auth/register` y `POST /api/auth/login` devuelven:
@@ -228,7 +242,8 @@ Contrato de errores relevante:
 
 - los enums recibidos como `String` son case-sensitive; si se envia un valor fuera del contrato, la
   API responde `400` con `InvalidEnumValueException` y lista de valores permitidos
-- `join-public` devuelve `409` si otro request ocupó el ultimo lugar antes del retry final
+- `POST /api/join/{joinCode}` devuelve `409` si otro request ocupó el ultimo lugar antes del retry
+  final sobre un recurso publico
 
 Recursos REST principales:
 
@@ -237,19 +252,22 @@ Recursos REST principales:
 - `/api/leagues`
 - `/api/cups`
 - `/api/chats`
+- `/api/social`
 - `/api/bots`
 
 ## Salas Publicas y Privadas
 
 - `PRIVATE`:
-  mantiene el flujo historico; persiste `inviteCode`, no aparece en lobby y se entra por
-  `POST /api/*/join`.
+  persiste `joinCode`, no aparece en lobby y al completar cupo conserva el inicio manual.
 - `PUBLIC`:
-  no devuelve `inviteCode`, aparece en lobby y se entra por `POST /api/*/{id}/join-public`.
+  tambien devuelve `joinCode`, aparece en lobby y al completar cupo autoinicia.
+- Join unificado:
+  tanto `PUBLIC` como `PRIVATE` se comparten y se resuelven por `POST /api/join/{joinCode}`.
 - Lobby publico:
   `GET /api/matches/public`, `GET /api/leagues/public`, `GET /api/cups/public`.
   Usa `limit` y `after` para paginacion cursor-based; `limit` default `20`, maximo `100`.
-  Responde `items` + `_links.self`/`_links.next`; no hay `last`, `prev` ni totales.
+  Responde `items` + `_links.self`/`_links.next`; cada item expone `_links.join` con el endpoint
+  global; no hay `last`, `prev` ni totales.
 - Auto-start publico:
   una partida publica pasa a `IN_PROGRESS` al entrar el segundo jugador.
   una liga/copa publica inicia el torneo y crea/linkea los matches hijos al completarse el cupo.
@@ -263,7 +281,7 @@ WebSocket/STOMP:
 - endpoint SockJS: `/ws-sockjs`
 - colas por usuario:
   `/user/queue/match`, `/user/queue/match-spectate`, `/user/queue/league`, `/user/queue/cup`,
-  `/user/queue/chat`
+  `/user/queue/chat`, `/user/queue/social`
 - topics publicos de lobby:
   `/topic/public-match-lobby`, `/topic/public-league-lobby`, `/topic/public-cup-lobby`
   solo emiten deltas `UPSERT`/`REMOVED`; el snapshot inicial del lobby se obtiene via REST.
@@ -303,3 +321,4 @@ Workflows actuales en `.github/workflows`:
 
 - El `README` busca dar contexto rapido del sistema.
 - El detalle de contratos REST, WS, enums y errores esta en `docs/CONTRATOS_API.md`.
+- El DM de `FRIENDSHIP` es efimero: no persiste historial y se recrea vacio tras reiniciar la app.

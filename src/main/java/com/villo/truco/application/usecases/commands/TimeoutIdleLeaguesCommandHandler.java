@@ -36,7 +36,7 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
   }
 
   @Override
-  public void handle() {
+  public Void handle(final Void unused) {
 
     final var cutoff = Instant.now().minus(this.idleTimeout);
     final List<LeagueId> idleLeagueIds = this.leagueQueryRepository.findIdleLeagueIds(cutoff);
@@ -52,6 +52,7 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
         LOGGER.error("Failed to process idle league: leagueId={}", leagueId, e);
       }
     }
+    return null;
   }
 
   private void processIdleLeague(final LeagueId leagueId) {

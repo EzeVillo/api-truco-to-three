@@ -25,8 +25,8 @@ public class MatchJpaEntity {
   @Column(name = "player_two")
   private UUID playerTwo;
 
-  @Column(name = "invite_code")
-  private String inviteCode;
+  @Column(name = "join_code", nullable = false)
+  private String joinCode;
 
   @Column(nullable = false)
   private String visibility;
@@ -120,14 +120,14 @@ public class MatchJpaEntity {
     this.playerTwo = playerTwo;
   }
 
-  public String getInviteCode() {
+  public String getJoinCode() {
 
-    return inviteCode;
+    return joinCode;
   }
 
-  public void setInviteCode(String inviteCode) {
+  public void setJoinCode(String joinCode) {
 
-    this.inviteCode = inviteCode;
+    this.joinCode = joinCode;
   }
 
   public String getStatus() {

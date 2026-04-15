@@ -1,0 +1,26 @@
+$kind: http-request
+name: Logout session
+url: "{{URL_BASE_TRUCO_HTTP}}/auth/logout"
+method: DELETE
+body:
+  type: json
+  content: "{\r
+
+    \  \"refreshToken\": \"{{refreshTokenPlayerTwo}}\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "if (pm.response.code === 204) {\r
+
+      \    pm.environment.unset(\"accessTokenPlayerTwo\");\r
+
+      \    pm.environment.unset(\"refreshTokenPlayerTwo\");\r
+
+      \    pm.environment.unset(\"accessTokenPlayerTwoExpiresAt\");\r
+
+      \    pm.environment.unset(\"refreshTokenPlayerTwoExpiresAt\");\r
+
+      }"
+    language: text/javascript
+order: 2858

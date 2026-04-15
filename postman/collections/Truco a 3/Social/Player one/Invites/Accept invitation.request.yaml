@@ -1,0 +1,5 @@
+$kind: http-request
+name: Accept invitation
+url: "{{URL_BASE_TRUCO_HTTP}}/social/invitations/{{invitationId}}/accept"
+method: POST
+order: 1902697861761187

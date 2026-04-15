@@ -1,0 +1,5 @@
+$kind: http-request
+name: Accept friendship request
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendship-requests/LuzVillo/accept"
+method: POST
+order: 4244134144818999

@@ -11,7 +11,7 @@ import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -38,8 +38,8 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     return league;
   }
 
@@ -49,8 +49,8 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     league.start(p1);
     league.forfeitPlayer(p2);
     league.forfeitPlayer(p3);
@@ -69,7 +69,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -191,7 +191,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
+      public Optional<League> findByJoinCode(final JoinCode joinCode) {
 
         return Optional.empty();
       }

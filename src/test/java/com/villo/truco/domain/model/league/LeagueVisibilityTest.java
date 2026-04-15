@@ -1,11 +1,9 @@
 package com.villo.truco.domain.model.league;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
 import com.villo.truco.domain.model.league.events.PublicLeagueLobbyOpenedEvent;
-import com.villo.truco.domain.model.league.exceptions.PrivateLeagueVisibilityAccessException;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -17,16 +15,16 @@ import org.junit.jupiter.api.Test;
 class LeagueVisibilityTest {
 
   @Test
-  @DisplayName("publica no genera invite code y privada si")
-  void publicDoesNotGenerateInviteCode() {
+  @DisplayName("publica y privada generan join code")
+  void bothVisibilitiesGenerateJoinCode() {
 
     final var creator = PlayerId.generate();
 
     final var publicLeague = League.create(creator, 3, GamesToPlay.of(3), Visibility.PUBLIC);
     final var privateLeague = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
 
-    assertThat(publicLeague.getInviteCode()).isNull();
-    assertThat(privateLeague.getInviteCode()).isNotNull();
+    assertThat(publicLeague.getJoinCode()).isNotNull();
+    assertThat(privateLeague.getJoinCode()).isNotNull();
     assertThat(publicLeague.getLeagueDomainEvents().stream()
         .filter(PublicLeagueLobbyOpenedEvent.class::isInstance).count()).isEqualTo(1);
     assertThat(privateLeague.getLeagueDomainEvents().stream()
@@ -34,13 +32,21 @@ class LeagueVisibilityTest {
   }
 
   @Test
-  @DisplayName("joinPublic rechaza ligas privadas")
-  void joinPublicRejectsPrivateLeagues() {
+  @DisplayName("join unificado completa liga privada y la deja esperando inicio manual")
+  void joinKeepsPrivateLeagueManualFlowWhenFull() {
 
-    final var league = League.create(PlayerId.generate(), 3, GamesToPlay.of(3), Visibility.PRIVATE);
+    final var creator = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var p3 = PlayerId.generate();
+    final var league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PRIVATE);
 
-    assertThatThrownBy(() -> league.joinPublic(PlayerId.generate())).isInstanceOf(
-        PrivateLeagueVisibilityAccessException.class);
+    assertThat(league.join(p2)).isEmpty();
+
+    final var activations = league.join(p3);
+
+    assertThat(league.getStatus()).isEqualTo(LeagueStatus.WAITING_FOR_START);
+    assertThat(activations).isEmpty();
+    assertThat(league.getFixtures()).isEmpty();
   }
 
   @Test
@@ -52,8 +58,8 @@ class LeagueVisibilityTest {
     final var p3 = PlayerId.generate();
     final var league = League.create(creator, 3, GamesToPlay.of(3), Visibility.PUBLIC);
 
-    final var firstJoin = league.joinPublic(p2);
-    final var activations = league.joinPublic(p3);
+    final var firstJoin = league.join(p2);
+    final var activations = league.join(p3);
 
     assertThat(league.getStatus()).isEqualTo(LeagueStatus.IN_PROGRESS);
     assertThat(firstJoin).isEmpty();
@@ -71,11 +77,11 @@ class LeagueVisibilityTest {
 
     assertThat(league.isPublicLobbyOpen()).isTrue();
 
-    league.joinPublic(PlayerId.generate());
+    league.join(PlayerId.generate());
 
     assertThat(league.isPublicLobbyOpen()).isTrue();
 
-    league.joinPublic(PlayerId.generate());
+    league.join(PlayerId.generate());
 
     assertThat(league.isPublicLobbyOpen()).isFalse();
   }

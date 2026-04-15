@@ -25,7 +25,7 @@ import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
@@ -86,9 +86,9 @@ class StartMatchCommandHandlerConcurrencyTest {
     }
 
     @Override
-    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
+    public Optional<Match> findByJoinCode(final JoinCode joinCode) {
 
-      return store.values().stream().filter(m -> m.getInviteCode().equals(inviteCode)).findFirst();
+      return store.values().stream().filter(m -> m.getJoinCode().equals(joinCode)).findFirst();
     }
 
     @Override
@@ -155,8 +155,8 @@ class StartMatchCommandHandlerConcurrencyTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(
-          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+      public Optional<League> findByJoinCode(
+          com.villo.truco.domain.shared.valueobjects.JoinCode c) {
 
         return Optional.empty();
       }
@@ -205,8 +205,7 @@ class StartMatchCommandHandlerConcurrencyTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(
-          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
+      public Optional<Cup> findByJoinCode(com.villo.truco.domain.shared.valueobjects.JoinCode c) {
 
         return Optional.empty();
       }

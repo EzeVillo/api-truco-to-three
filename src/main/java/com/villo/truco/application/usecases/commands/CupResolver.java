@@ -4,7 +4,7 @@ import com.villo.truco.application.exceptions.CupNotFoundException;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.ports.CupQueryRepository;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import java.util.Objects;
 
 public final class CupResolver {
@@ -22,10 +22,10 @@ public final class CupResolver {
         .orElseThrow(() -> new CupNotFoundException(cupId));
   }
 
-  public Cup resolve(final InviteCode inviteCode) {
+  public Cup resolve(final JoinCode joinCode) {
 
-    return this.cupQueryRepository.findByInviteCode(inviteCode)
-        .orElseThrow(() -> new CupNotFoundException(inviteCode));
+    return this.cupQueryRepository.findByJoinCode(joinCode)
+        .orElseThrow(() -> new CupNotFoundException(joinCode));
   }
 
 }

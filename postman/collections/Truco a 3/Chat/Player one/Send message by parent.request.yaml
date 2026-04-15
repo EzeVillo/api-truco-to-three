@@ -1,0 +1,14 @@
+$kind: http-request
+name: Send message by parent
+url: "{{URL_BASE_TRUCO_HTTP}}/api/chats/by-parent/{{parentType}}/{{parentId}}/m\
+  essages"
+method: POST
+scripts:
+  - type: beforeRequest
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"chatId\", response.chatId);"
+    language: text/javascript
+order: 2809268455605352

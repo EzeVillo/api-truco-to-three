@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get invitations
+url: "{{URL_BASE_TRUCO_HTTP}}/social/invitations/incoming"
+method: GET
+order: 3490002576913276

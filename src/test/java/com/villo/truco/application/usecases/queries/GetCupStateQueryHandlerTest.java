@@ -12,7 +12,7 @@ import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -35,9 +35,9 @@ class GetCupStateQueryHandlerTest {
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(player, 4, GamesToPlay.of(3), Visibility.PRIVATE);
-    cup.join(p2, cup.getInviteCode());
-    cup.join(p3, cup.getInviteCode());
-    cup.join(p4, cup.getInviteCode());
+    cup.join(p2);
+    cup.join(p3);
+    cup.join(p4);
 
     final var handler = new GetCupStateQueryHandler(new CupResolver(new CupQueryRepository() {
       @Override
@@ -47,7 +47,7 @@ class GetCupStateQueryHandlerTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(InviteCode inviteCode) {
+      public Optional<Cup> findByJoinCode(JoinCode joinCode) {
 
         return Optional.empty();
       }
@@ -110,7 +110,7 @@ class GetCupStateQueryHandlerTest {
       }
 
       @Override
-      public Optional<Cup> findByInviteCode(InviteCode inviteCode) {
+      public Optional<Cup> findByJoinCode(JoinCode joinCode) {
 
         return Optional.empty();
       }

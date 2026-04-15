@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface SpringDataCupRepository extends JpaRepository<CupJpaEntity, UUID> {
 
-  Optional<CupJpaEntity> findByInviteCode(String inviteCode);
+  Optional<CupJpaEntity> findByJoinCode(String joinCode);
 
   @Query("SELECT c FROM CupJpaEntity c JOIN c.bouts b WHERE b.matchId = :matchId")
   Optional<CupJpaEntity> findByMatchId(@Param("matchId") UUID matchId);

@@ -20,7 +20,7 @@ scripts:
 
       pm.environment.set(\"cupId\", response.cupId);\r
 
-      pm.environment.set(\"cupInviteCode\", response.inviteCode);\r
+      pm.environment.set(\"joinCode\", response.joinCode);\r
 
       pm.environment.set(\"parentType\", \"CUP\");\r
 

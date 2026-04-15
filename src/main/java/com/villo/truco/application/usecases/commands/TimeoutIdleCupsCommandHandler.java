@@ -35,7 +35,7 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
   }
 
   @Override
-  public void handle() {
+  public Void handle(final Void unused) {
 
     final var cutoff = Instant.now().minus(this.idleTimeout);
     final List<CupId> idleCupIds = this.cupQueryRepository.findIdleCupIds(cutoff);
@@ -51,6 +51,7 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
         LOGGER.error("Failed to process idle cup: cupId={}", cupId, e);
       }
     }
+    return null;
   }
 
   private void processIdleCup(final CupId cupId) {

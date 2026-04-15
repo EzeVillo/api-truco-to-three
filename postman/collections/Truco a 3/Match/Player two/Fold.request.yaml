@@ -1,4 +1,4 @@
 $kind: http-request
 url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/fold"
 method: POST
-order: 9000
+order: 10000

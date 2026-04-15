@@ -1,0 +1,5 @@
+$kind: http-request
+name: Remove friendship
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendships/LuzVillo"
+method: DELETE
+order: 4503599166584838

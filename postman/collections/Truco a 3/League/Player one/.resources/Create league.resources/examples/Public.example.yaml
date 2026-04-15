@@ -20,7 +20,7 @@ response:
     - key: vary
       value: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
     - key: x-request-id
-      value: 08b274e6-2cd2-4099-8526-6a51f3615650
+      value: 4b069a04-6756-42f6-af16-ceb8e5fa4087
     - key: x-content-type-options
       value: nosniff
     - key: x-xss-protection
@@ -36,15 +36,15 @@ response:
     - key: content-type
       value: application/json
     - key: content-length
-      value: "91"
+      value: "95"
     - key: date
-      value: Fri, 03 Apr 2026 23:34:15 GMT
+      value: Wed, 15 Apr 2026 01:40:05 GMT
     - key: keep-alive
       value: timeout=60
     - key: connection
       value: keep-alive
   body:
     type: json
-    content: '{"leagueId":"7701e8ce-4fdc-4853-9bc7-c183f2d91866","inviteCode":null,"visibility":"PUBLIC"}'
-order: 2931911975371004
+    content: '{"leagueId":"fbfc25aa-3829-4a50-a94d-220ea1d7e58e","joinCode":"KGVKZL2R","visibility":"PUBLIC"}'
+order: 1531237354828475
 name: Public
