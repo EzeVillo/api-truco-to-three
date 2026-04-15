@@ -1,7 +1,7 @@
 package com.villo.truco.social.infrastructure.persistence.repositories;
 
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.social.domain.model.invitation.ResourceInvitation;
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationId;
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationTargetType;

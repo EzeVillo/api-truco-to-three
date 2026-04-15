@@ -40,15 +40,13 @@ public class LeagueUseCaseConfiguration {
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
-  private final UseCasePipeline transactionalPipeline;
 
   public LeagueUseCaseConfiguration(final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository, final MatchRepository matchRepository,
       @Lazy final LeagueEventNotifier leagueEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final PublicActorResolver publicActorResolver,
-      @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
-      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
+      @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.leagueQueryRepository = leagueQueryRepository;
     this.leagueRepository = leagueRepository;
@@ -57,7 +55,6 @@ public class LeagueUseCaseConfiguration {
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
-    this.transactionalPipeline = transactionalPipeline;
   }
 
   @Bean
@@ -71,7 +68,7 @@ public class LeagueUseCaseConfiguration {
 
     final var handler = new CreateLeagueCommandHandler(this.leagueRepository,
         this.leagueEventNotifier, this.playerAvailabilityChecker);
-    return this.transactionalPipeline.wrap(handler)::handle;
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean

@@ -7,8 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.social.domain.model.friendship.Friendship;
 import com.villo.truco.social.infrastructure.persistence.entities.FriendshipJpaEntity;
 import com.villo.truco.social.infrastructure.persistence.mappers.FriendshipMapper;

@@ -40,15 +40,13 @@ public class CupUseCaseConfiguration {
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
-  private final UseCasePipeline transactionalPipeline;
 
   public CupUseCaseConfiguration(final CupQueryRepository cupQueryRepository,
       final CupRepository cupRepository, final MatchRepository matchRepository,
       @Lazy final CupEventNotifier cupEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final PublicActorResolver publicActorResolver,
-      @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
-      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
+      @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.cupQueryRepository = cupQueryRepository;
     this.cupRepository = cupRepository;
@@ -57,7 +55,6 @@ public class CupUseCaseConfiguration {
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
-    this.transactionalPipeline = transactionalPipeline;
   }
 
   @Bean
@@ -71,7 +68,7 @@ public class CupUseCaseConfiguration {
 
     final var handler = new CreateCupCommandHandler(this.cupRepository, this.cupEventNotifier,
         this.playerAvailabilityChecker);
-    return this.transactionalPipeline.wrap(handler)::handle;
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean

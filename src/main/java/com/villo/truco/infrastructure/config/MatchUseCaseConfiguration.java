@@ -46,7 +46,6 @@ public class MatchUseCaseConfiguration {
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final PublicActorResolver publicActorResolver;
   private final UseCasePipeline retryTransactionalPipeline;
-  private final UseCasePipeline transactionalPipeline;
   private final CupQueryRepository cupQueryRepository;
   private final LeagueQueryRepository leagueQueryRepository;
 
@@ -55,7 +54,6 @@ public class MatchUseCaseConfiguration {
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
-      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline,
       final CupQueryRepository cupQueryRepository,
       final LeagueQueryRepository leagueQueryRepository) {
 
@@ -65,7 +63,6 @@ public class MatchUseCaseConfiguration {
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.publicActorResolver = publicActorResolver;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
-    this.transactionalPipeline = transactionalPipeline;
     this.cupQueryRepository = cupQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;
   }
@@ -81,7 +78,7 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new CreateMatchCommandHandler(this.matchRepository, this.matchEventNotifier,
         this.playerAvailabilityChecker);
-    return this.transactionalPipeline.wrap(handler)::handle;
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
   @Bean

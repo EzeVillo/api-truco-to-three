@@ -26,8 +26,8 @@ class MatchUseCaseConfigurationTest {
     final var configuration = new MatchUseCaseConfiguration(mock(MatchQueryRepository.class),
         mock(MatchRepository.class), mock(MatchEventNotifier.class),
         availabilityConfiguration.playerAvailabilityChecker(), mock(PublicActorResolver.class),
-        new UseCasePipeline(List.of()), new UseCasePipeline(List.of()),
-        mock(CupQueryRepository.class), mock(LeagueQueryRepository.class));
+        new UseCasePipeline(List.of()), mock(CupQueryRepository.class),
+        mock(LeagueQueryRepository.class));
 
     assertThat(configuration.matchResolver()).isNotNull();
     assertThat(configuration.getMatchStateQueryHandler()).isNotNull();

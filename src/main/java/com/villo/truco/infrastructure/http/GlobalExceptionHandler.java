@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.villo.truco.application.exceptions.ApplicationException;
 import com.villo.truco.application.exceptions.ApplicationStatus;
+import com.villo.truco.application.exceptions.JoinCodeRegistryConflictException;
 import com.villo.truco.auth.domain.model.auth.exceptions.InvalidUserSessionRefreshException;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
+import com.villo.truco.infrastructure.persistence.exceptions.JoinCodeRegistryCollisionInfrastructureException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -92,6 +94,14 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
         new ErrorResponse(ex.getClass().getSimpleName(), ex.getMessage(), Instant.now(),
             MDC.get(REQUEST_ID_KEY)));
+  }
+
+  @ExceptionHandler(JoinCodeRegistryCollisionInfrastructureException.class)
+  public ResponseEntity<ErrorResponse> handleJoinCodeRegistryCollision(
+      final JoinCodeRegistryCollisionInfrastructureException ex) {
+
+    LOGGER.warn("Join code registry collision detected: {}", ex.getMessage(), ex);
+    return this.handleApplicationException(new JoinCodeRegistryConflictException());
   }
 
   @ExceptionHandler(DomainException.class)

@@ -1,12 +1,13 @@
-package com.villo.truco.domain.shared.exceptions;
+package com.villo.truco.infrastructure.persistence.exceptions;
 
+import com.villo.truco.domain.shared.exceptions.RetriableException;
 import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import java.util.UUID;
 
-public final class JoinCodeRegistryCollisionException extends RuntimeException {
+public final class JoinCodeRegistryCollisionInfrastructureException extends RetriableException {
 
-  public JoinCodeRegistryCollisionException(final JoinCode joinCode,
+  public JoinCodeRegistryCollisionInfrastructureException(final JoinCode joinCode,
       final JoinTargetType existingTargetType, final UUID existingTargetId,
       final JoinTargetType attemptedTargetType, final UUID attemptedTargetId) {
 

@@ -132,6 +132,9 @@ Caso comun de `409`:
 
 - en `POST /api/join/{joinCode}`, otro request ocupo el ultimo lugar antes del retry final de un
   recurso publico
+- en `POST /api/matches`, `POST /api/leagues` y `POST /api/cups`, el backend puede responder
+  `409` con `JoinCodeRegistryConflictException` si se agotan los reintentos internos por colision
+  del `joinCode` generado con otro recurso
 
 Casos comunes de `400`:
 

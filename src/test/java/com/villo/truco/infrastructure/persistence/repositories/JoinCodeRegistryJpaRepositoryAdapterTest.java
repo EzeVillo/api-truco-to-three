@@ -7,10 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.domain.shared.JoinCodeRegistration;
-import com.villo.truco.domain.shared.exceptions.JoinCodeRegistryCollisionException;
 import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.infrastructure.persistence.entities.JoinCodeRegistryJpaEntity;
+import com.villo.truco.infrastructure.persistence.exceptions.JoinCodeRegistryCollisionInfrastructureException;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataJoinCodeRegistryRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -75,7 +75,7 @@ class JoinCodeRegistryJpaRepositoryAdapterTest {
     when(springRepository.findById("ABCD1234")).thenReturn(Optional.of(entity));
 
     assertThatThrownBy(() -> adapter.save(registration)).isInstanceOf(
-        JoinCodeRegistryCollisionException.class);
+        JoinCodeRegistryCollisionInfrastructureException.class);
   }
 
 }

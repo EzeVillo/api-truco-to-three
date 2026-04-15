@@ -244,6 +244,9 @@ Contrato de errores relevante:
   API responde `400` con `InvalidEnumValueException` y lista de valores permitidos
 - `POST /api/join/{joinCode}` devuelve `409` si otro request ocupó el ultimo lugar antes del retry
   final sobre un recurso publico
+- `POST /api/matches`, `POST /api/leagues` y `POST /api/cups` pueden devolver `409` con
+  `JoinCodeRegistryConflictException` si se agotan los reintentos internos por colision del
+  `joinCode` generado con otro recurso
 
 Recursos REST principales:
 

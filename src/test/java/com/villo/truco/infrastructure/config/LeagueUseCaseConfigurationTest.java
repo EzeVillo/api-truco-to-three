@@ -26,8 +26,7 @@ class LeagueUseCaseConfigurationTest {
     final var configuration = new LeagueUseCaseConfiguration(mock(LeagueQueryRepository.class),
         mock(com.villo.truco.domain.ports.LeagueRepository.class), mock(MatchRepository.class),
         mock(LeagueEventNotifier.class), availabilityConfiguration.playerAvailabilityChecker(),
-        mock(PublicActorResolver.class), new UseCasePipeline(List.of()),
-        new UseCasePipeline(List.of()));
+        mock(PublicActorResolver.class), new UseCasePipeline(List.of()));
 
     assertThat(configuration.leagueResolver()).isNotNull();
     assertThat(configuration.getLeagueStateQueryHandler()).isNotNull();

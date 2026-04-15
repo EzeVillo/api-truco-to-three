@@ -3,10 +3,10 @@ package com.villo.truco.infrastructure.persistence.repositories;
 import com.villo.truco.domain.ports.JoinCodeRegistryQueryRepository;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.shared.JoinCodeRegistration;
-import com.villo.truco.domain.shared.exceptions.JoinCodeRegistryCollisionException;
 import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.infrastructure.persistence.entities.JoinCodeRegistryJpaEntity;
+import com.villo.truco.infrastructure.persistence.exceptions.JoinCodeRegistryCollisionInfrastructureException;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataJoinCodeRegistryRepository;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,8 +46,9 @@ public class JoinCodeRegistryJpaRepositoryAdapter implements JoinCodeRegistryRep
       return;
     }
 
-    throw new JoinCodeRegistryCollisionException(registration.joinCode(), existing.targetType(),
-        existing.targetId(), registration.targetType(), registration.targetId());
+    throw new JoinCodeRegistryCollisionInfrastructureException(registration.joinCode(),
+        existing.targetType(), existing.targetId(), registration.targetType(),
+        registration.targetId());
   }
 
   @Override
