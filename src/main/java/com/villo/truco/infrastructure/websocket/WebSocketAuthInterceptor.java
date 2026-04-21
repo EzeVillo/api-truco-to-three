@@ -21,7 +21,8 @@ public final class WebSocketAuthInterceptor implements ChannelInterceptor {
   private static final String TOKEN_HEADER = "Authorization";
   private static final Set<String> ALLOWED_DESTINATIONS = Set.of("/user/queue/match",
       "/user/queue/league", "/user/queue/cup", "/user/queue/chat", "/user/queue/social",
-      "/user/queue/match-spectate", "/topic/public-match-lobby", "/topic/public-cup-lobby",
+      "/user/queue/profile", "/user/queue/match-spectate", "/topic/public-match-lobby",
+      "/topic/public-cup-lobby",
       "/topic/public-league-lobby");
   private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
 

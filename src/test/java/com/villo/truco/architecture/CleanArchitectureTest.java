@@ -30,6 +30,16 @@ class CleanArchitectureTest {
       .whereLayer("AuthInfrastructure").mayNotBeAccessedByAnyLayer();
 
   @ArchTest
+  static final ArchRule profile_layered_architecture_must_be_respected = layeredArchitecture().consideringOnlyDependenciesInLayers()
+      .layer("ProfileDomain").definedBy("com.villo.truco.profile.domain..")
+      .layer("ProfileApplication").definedBy("com.villo.truco.profile.application..")
+      .layer("ProfileInfrastructure").definedBy("com.villo.truco.profile.infrastructure..")
+      .whereLayer("ProfileDomain").mayOnlyBeAccessedByLayers("ProfileApplication",
+          "ProfileInfrastructure").whereLayer("ProfileApplication")
+      .mayOnlyBeAccessedByLayers("ProfileInfrastructure").whereLayer("ProfileInfrastructure")
+      .mayNotBeAccessedByAnyLayer();
+
+  @ArchTest
   static final ArchRule truco_domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
       .that().resideInAPackage("com.villo.truco.domain..").should().dependOnClassesThat()
       .resideInAnyPackage("com.villo.truco.application..", "com.villo.truco.infrastructure..",
@@ -42,6 +52,12 @@ class CleanArchitectureTest {
           "com.villo.truco.auth.infrastructure..", "org.springframework..");
 
   @ArchTest
+  static final ArchRule profile_domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.profile.domain..").should().dependOnClassesThat()
+      .resideInAnyPackage("com.villo.truco.profile.application..",
+          "com.villo.truco.profile.infrastructure..", "org.springframework..");
+
+  @ArchTest
   static final ArchRule truco_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
       .that().resideInAPackage("com.villo.truco.application..").should().dependOnClassesThat()
       .resideInAnyPackage("org.springframework..");
@@ -50,6 +66,11 @@ class CleanArchitectureTest {
   static final ArchRule auth_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
       .that().resideInAPackage("com.villo.truco.auth.application..").should().dependOnClassesThat()
       .resideInAnyPackage("org.springframework..");
+
+  @ArchTest
+  static final ArchRule profile_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.profile.application..").should()
+      .dependOnClassesThat().resideInAnyPackage("org.springframework..");
 
   @ArchTest
   static final ArchRule application_and_infrastructure_must_not_depend_on_chat_message_entity = ArchRuleDefinition.noClasses()
