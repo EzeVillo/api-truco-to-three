@@ -1524,6 +1524,7 @@ Suscripciones permitidas por interceptor:
 - `/user/queue/cup` - eventos de copa
 - `/user/queue/chat` - eventos de chat en tiempo real
 - `/user/queue/social` - eventos de amistades e invitaciones
+- `/user/queue/profile` - eventos de logros del perfil
 
 - `/topic/public-match-lobby` - stream compartido del lobby publico de matches
 - `/topic/public-cup-lobby` - stream compartido del lobby publico de copas
@@ -1605,6 +1606,21 @@ Cada tipo de recurso tiene su propia estructura de evento:
     "targetType": "MATCH",
     "targetId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
     "expiresAt": 1775304600000
+  }
+}
+```
+
+**Profile** (`/user/queue/profile`):
+
+```json
+{
+  "eventType": "ACHIEVEMENT_UNLOCKED",
+  "timestamp": 1772768158123,
+  "payload": {
+    "achievementCode": "WIN_RETRUCO_FROM_0_0_TO_3",
+    "unlockedAt": 1772768158123,
+    "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+    "gameNumber": 1
   }
 }
 ```
@@ -1728,7 +1744,17 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `RESOURCE_INVITATION_EXPIRED` - una invitación pendiente expiró por tiempo o por recurso no
   joinable
 
-### 9.5f eventType posibles - Spectate (
+### 9.5f eventType posibles - Profile (`/user/queue/profile`, usuarios registrados)
+
+- `ACHIEVEMENT_UNLOCKED` - logro desbloqueado para el usuario autenticado
+
+Reglas:
+
+- solo se evalúa en matches `human vs human`
+- las partidas contra bots no generan tracking ni unlocks
+- no existe endpoint REST de perfil en esta iteración; el contrato expuesto es solo WebSocket
+
+### 9.5g eventType posibles - Spectate (
 
 `/user/queue/match-spectate`, espectadores activos del match)
 
@@ -1742,7 +1768,7 @@ No se reenvian al espectador los eventos privados por asiento:
 - `PLAYER_HAND_UPDATED`
 - `AVAILABLE_ACTIONS_UPDATED`
 
-### 9.5g eventType posibles - Lobby publico (`/topic/public-*`)
+### 9.5h eventType posibles - Lobby publico (`/topic/public-*`)
 
 - `PUBLIC_MATCH_LOBBY_UPSERT` - snapshot o actualizacion de un match que sigue abierto en lobby
 - `PUBLIC_MATCH_LOBBY_REMOVED` - remocion de un match que salio del lobby
@@ -1832,6 +1858,8 @@ No se reenvian al espectador los eventos privados por asiento:
     - `{ invitationId, recipientUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_EXPIRED`:
     - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
+- `ACHIEVEMENT_UNLOCKED`:
+    - `{ achievementCode, unlockedAt, matchId, gameNumber }`
 - `LEAGUE_MATCH_ACTIVATED`:
     - `{ leagueId, matchId }` - se emite a todos los participantes de la liga cuando un partido
       es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
@@ -2024,6 +2052,10 @@ Errores:
   solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
 - Las novedades sociales llegan por `/user/queue/social`; no reemplazan el flujo existente de
   `joinCode`, solo agregan targeting y UX mas rapida entre amigos.
+- Los logros llegan por `/user/queue/profile` con evento `ACHIEVEMENT_UNLOCKED` y payload
+  `{ achievementCode, unlockedAt, matchId, gameNumber }`.
+- El tracking de logros aplica solo a matches `human vs human`; partidas contra bots no generan
+  unlocks.
 - El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al
   crear/unirse/navegar a un match, liga o copa.
 - El backend no suprime eventos del lobby segun `playerId`; si el creador o participante no debe
