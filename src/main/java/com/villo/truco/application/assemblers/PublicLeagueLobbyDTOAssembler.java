@@ -36,7 +36,8 @@ public final class PublicLeagueLobbyDTOAssembler {
 
     return new PublicLeagueLobbyDTO(league.getId().value().toString(),
         actorNames.get(league.getCreator()), league.getGamesToPlay().value(),
-        league.getNumberOfPlayers(), league.getParticipants().size(), league.getStatus().name());
+        league.getNumberOfPlayers(), league.getParticipants().size(), league.getStatus().name(),
+        league.getJoinCode().value());
   }
 
 }

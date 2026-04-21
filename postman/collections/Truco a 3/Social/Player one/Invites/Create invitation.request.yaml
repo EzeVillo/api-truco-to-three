@@ -1,0 +1,65 @@
+$kind: http-request
+name: Create invitation
+url: "{{URL_BASE_TRUCO_HTTP}}/social/invitations"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"recipientUsername\": \"LuzVillo\",\r
+
+    \  \"targetType\": \"{{parentType}}\",\r
+
+    \  \"targetId\": \"{{targetId}}\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"invitationId\", response.invitationId);"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const parentType = pm.environment.get(\"parentType\");\r
+
+      \r
+
+      let targetId;\r
+
+      \r
+
+      switch (parentType) {\r
+
+      \    case \"MATCH\":\r
+
+      \        targetId = pm.environment.get(\"matchId\");\r
+
+      \        break;\r
+
+      \    case \"LEAGUE\":\r
+
+      \        targetId = pm.environment.get(\"leagueId\");\r
+
+      \        break;\r
+
+      \    case \"CUP\":\r
+
+      \        targetId = pm.environment.get(\"cupId\");\r
+
+      \        break;\r
+
+      \    default:\r
+
+      \        console.warn(\"parentType no reconocido:\", parentType);\r
+
+      \        targetId = \"\";\r
+
+      }\r
+
+      \r
+
+      pm.variables.set(\"targetId\", targetId);"
+    language: text/javascript
+order: 1776041331240

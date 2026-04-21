@@ -23,8 +23,8 @@ class LeagueCancelTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     return league;
   }
 
@@ -34,8 +34,8 @@ class LeagueCancelTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     league.start(p1);
     return league;
   }

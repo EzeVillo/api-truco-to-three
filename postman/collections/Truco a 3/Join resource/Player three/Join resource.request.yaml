@@ -1,0 +1,5 @@
+$kind: http-request
+name: Join resource
+url: "{{URL_BASE_TRUCO_HTTP}}/join/{{joinCode}}"
+method: POST
+order: 1776216860679

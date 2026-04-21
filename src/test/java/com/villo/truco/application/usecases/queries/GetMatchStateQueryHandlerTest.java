@@ -11,7 +11,6 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.support.TestPublicActorResolver;
@@ -44,12 +43,6 @@ class GetMatchStateQueryHandlerTest {
       public Optional<Match> findById(final MatchId matchId) {
 
         return Optional.of(match);
-      }
-
-      @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
-
-        return Optional.empty();
       }
 
       @Override

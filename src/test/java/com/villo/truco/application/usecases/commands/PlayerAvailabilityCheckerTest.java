@@ -21,7 +21,6 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -59,12 +58,6 @@ class PlayerAvailabilityCheckerTest {
 
       @Override
       public Optional<League> findById(final LeagueId leagueId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
         return Optional.empty();
       }
@@ -109,12 +102,6 @@ class PlayerAvailabilityCheckerTest {
 
       @Override
       public Optional<Cup> findById(final CupId cupId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
         return Optional.empty();
       }
@@ -209,8 +196,8 @@ class PlayerAvailabilityCheckerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     league.start(p1);
 
     final var checker = checker(false, Optional.of(league), Optional.empty());
@@ -227,8 +214,8 @@ class PlayerAvailabilityCheckerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     league.start(p1);
     league.forfeitPlayer(p1);
 
@@ -246,9 +233,9 @@ class PlayerAvailabilityCheckerTest {
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
-    cup.join(p2, cup.getInviteCode());
-    cup.join(p3, cup.getInviteCode());
-    cup.join(p4, cup.getInviteCode());
+    cup.join(p2);
+    cup.join(p3);
+    cup.join(p4);
     cup.start(p1);
 
     final var checker = checker(false, Optional.empty(), Optional.of(cup));
@@ -266,9 +253,9 @@ class PlayerAvailabilityCheckerTest {
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
-    cup.join(p2, cup.getInviteCode());
-    cup.join(p3, cup.getInviteCode());
-    cup.join(p4, cup.getInviteCode());
+    cup.join(p2);
+    cup.join(p3);
+    cup.join(p4);
     cup.start(p1);
     cup.forfeitPlayer(p1);
 
@@ -285,8 +272,8 @@ class PlayerAvailabilityCheckerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     league.start(p1);
 
     final var checker = checker(true, Optional.of(league), Optional.empty());
@@ -351,8 +338,8 @@ class PlayerAvailabilityCheckerTest {
     final var p2 = PlayerId.generate();
     final var p3 = PlayerId.generate();
     final var league = League.create(p1, 3, GamesToPlay.of(3), Visibility.PRIVATE);
-    league.join(p2, league.getInviteCode());
-    league.join(p3, league.getInviteCode());
+    league.join(p2);
+    league.join(p3);
     league.start(p1);
 
     final var checker = checker(false, false, Optional.of(league), Optional.empty(),
@@ -380,12 +367,6 @@ class PlayerAvailabilityCheckerTest {
 
     @Override
     public Optional<Match> findById(final MatchId matchId) {
-
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
 
       return Optional.empty();
     }

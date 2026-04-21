@@ -1,0 +1,12 @@
+$kind: http-request
+name: Friendship request
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendship-requests"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"username\": \"EzeVillo\"\r
+
+    }"
+order: 4162505019212727

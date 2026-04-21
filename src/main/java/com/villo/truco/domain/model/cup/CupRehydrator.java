@@ -19,7 +19,7 @@ public final class CupRehydrator {
 
     return Cup.reconstruct(snapshot.id(), new ArrayList<>(snapshot.participants()), bouts,
         new java.util.HashSet<>(snapshot.forfeitedPlayers()), snapshot.numberOfPlayers(),
-        snapshot.gamesToPlay(), snapshot.visibility(), snapshot.inviteCode(), snapshot.status(),
+        snapshot.gamesToPlay(), snapshot.visibility(), snapshot.joinCode(), snapshot.status(),
         snapshot.champion());
   }
 

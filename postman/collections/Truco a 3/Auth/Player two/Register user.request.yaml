@@ -1,0 +1,37 @@
+$kind: http-request
+name: Register user
+url: "{{URL_BASE_TRUCO_HTTP}}/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"username\": \"LuzVillo\",\r
+
+    \  \"password\": \"Clave1!\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "if (pm.response.code === 200) {\r
+
+      \    const now = Date.now();\r
+
+      \    const response = pm.response.json();\r
+
+      \r
+
+      \    pm.environment.set(\"accessTokenPlayerTwo\", response.accessToken);\r
+
+      \    pm.environment.set(\"refreshTokenPlayerTwo\",
+      response.refreshToken);\r
+
+      \    pm.environment.set(\"accessTokenPlayerTwoExpiresAt\", String(now +
+      (response.accessTokenExpiresIn * 1000)));\r
+
+      \    pm.environment.set(\"refreshTokenPlayerTwoExpiresAt\", String(now +
+      (response.refreshTokenExpiresIn * 1000)));\r
+
+      }"
+    language: text/javascript
+order: 2234

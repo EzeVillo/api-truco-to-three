@@ -17,7 +17,7 @@ class CupPlayerAvailabilityTest {
 
     final var cup = Cup.create(players[0], players.length, GamesToPlay.of(3), Visibility.PRIVATE);
     for (int i = 1; i < players.length; i++) {
-      cup.join(players[i], cup.getInviteCode());
+      cup.join(players[i]);
     }
     cup.start(players[0]);
     return cup;

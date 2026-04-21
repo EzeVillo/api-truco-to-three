@@ -16,11 +16,10 @@ final class PublicLobbyLinkFactory {
         : new LinkResponse(collectionHref(collectionPath, limit, nextCursor)));
   }
 
-  static PublicLobbyItemLinksResponse itemLinks(final String resourcePath,
-      final String resourceId) {
+  static PublicLobbyItemLinksResponse itemLinks(final String joinCode) {
 
     return new PublicLobbyItemLinksResponse(
-        new LinkResponse(Objects.requireNonNull(resourcePath) + "/" + resourceId + "/join-public"));
+        new LinkResponse("/api/join/" + Objects.requireNonNull(joinCode)));
   }
 
   private static String collectionHref(final String collectionPath, final int limit,

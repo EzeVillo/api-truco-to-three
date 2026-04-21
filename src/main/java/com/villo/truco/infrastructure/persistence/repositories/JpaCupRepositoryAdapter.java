@@ -4,14 +4,16 @@ import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
+import com.villo.truco.domain.shared.JoinCodeRegistration;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.entities.CupJpaEntity;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.infrastructure.persistence.mappers.CupMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataCupRepository;
 import java.time.Instant;
@@ -28,12 +30,14 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
 
   private final SpringDataCupRepository springDataRepo;
   private final CupMapper mapper;
+  private final JoinCodeRegistryRepository joinCodeRegistryRepository;
 
   public JpaCupRepositoryAdapter(final SpringDataCupRepository springDataRepo,
-      final CupMapper mapper) {
+      final CupMapper mapper, final JoinCodeRegistryRepository joinCodeRegistryRepository) {
 
     this.springDataRepo = springDataRepo;
     this.mapper = mapper;
+    this.joinCodeRegistryRepository = joinCodeRegistryRepository;
   }
 
   private static PublicLobbyCursor decodeCursor(final String encodedCursor) {
@@ -53,6 +57,8 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
     try {
       final var entity = this.mapper.toEntity(cup);
       this.springDataRepo.saveAndFlush(entity);
+      this.joinCodeRegistryRepository.save(
+          new JoinCodeRegistration(cup.getJoinCode(), JoinTargetType.CUP, cup.getId().value()));
       cup.setVersion(entity.getVersion());
     } catch (final ObjectOptimisticLockingFailureException e) {
       throw new StaleAggregateException("Cup " + cup.getId() + " was modified concurrently", e);
@@ -63,12 +69,6 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
   public Optional<Cup> findById(final CupId cupId) {
 
     return this.springDataRepo.findById(cupId.value()).map(this.mapper::toDomain);
-  }
-
-  @Override
-  public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
-
-    return this.springDataRepo.findByInviteCode(inviteCode.value()).map(this.mapper::toDomain);
   }
 
   @Override

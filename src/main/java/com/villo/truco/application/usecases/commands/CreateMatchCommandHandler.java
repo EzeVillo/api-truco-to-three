@@ -36,8 +36,7 @@ public final class CreateMatchCommandHandler implements CreateMatchUseCase {
     this.matchEventNotifier.publishDomainEvents(match.getMatchDomainEvents());
     match.clearDomainEvents();
 
-    return new CreateMatchDTO(match.getId().value().toString(),
-        match.getInviteCode() != null ? match.getInviteCode().value() : null,
+    return new CreateMatchDTO(match.getId().value().toString(), match.getJoinCode().value(),
         match.getVisibility().name());
   }
 

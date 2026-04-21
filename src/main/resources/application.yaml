@@ -22,6 +22,12 @@ truco:
     delay-ms: 200
   observability:
     scheduler-heartbeat-max-age-ms: 180000
+  social:
+    invitation-expiration:
+      match: PT10M
+      league: PT30M
+      cup: PT30M
+    invitation-expiration-check-interval-ms: 60000
   match:
     idle-timeout-seconds: 300
     timeout-check-interval-ms: 30000

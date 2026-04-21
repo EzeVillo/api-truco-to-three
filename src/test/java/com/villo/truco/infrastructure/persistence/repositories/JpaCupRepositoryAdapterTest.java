@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
 import com.villo.truco.infrastructure.persistence.mappers.CupMapper;
@@ -25,7 +26,8 @@ class JpaCupRepositoryAdapterTest {
   void findByIdDelegates() {
 
     final var springRepo = mock(SpringDataCupRepository.class);
-    final var adapter = new JpaCupRepositoryAdapter(springRepo, mock(CupMapper.class));
+    final var adapter = new JpaCupRepositoryAdapter(springRepo, mock(CupMapper.class),
+        mock(JoinCodeRegistryRepository.class));
 
     adapter.findById(com.villo.truco.domain.model.cup.valueobjects.CupId.generate());
 
@@ -37,7 +39,8 @@ class JpaCupRepositoryAdapterTest {
   void findPublicWaitingCursorDelegates() {
 
     final var springRepo = mock(SpringDataCupRepository.class);
-    final var adapter = new JpaCupRepositoryAdapter(springRepo, mock(CupMapper.class));
+    final var adapter = new JpaCupRepositoryAdapter(springRepo, mock(CupMapper.class),
+        mock(JoinCodeRegistryRepository.class));
     final var instant = Instant.parse("2026-04-03T12:30:00Z");
     final var id = UUID.fromString("44444444-4444-4444-4444-444444444444");
     final var cursor = new PublicLobbyCursor(instant, id).encode();
@@ -55,7 +58,8 @@ class JpaCupRepositoryAdapterTest {
   void findPublicWaitingWithoutCursorUsesInitialPageQuery() {
 
     final var springRepo = mock(SpringDataCupRepository.class);
-    final var adapter = new JpaCupRepositoryAdapter(springRepo, mock(CupMapper.class));
+    final var adapter = new JpaCupRepositoryAdapter(springRepo, mock(CupMapper.class),
+        mock(JoinCodeRegistryRepository.class));
 
     when(springRepo.findInitialPublicWaitingPage(any())).thenReturn(List.of());
 

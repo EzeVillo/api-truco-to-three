@@ -24,9 +24,9 @@ class CupCancelTest {
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
-    cup.join(p2, cup.getInviteCode());
-    cup.join(p3, cup.getInviteCode());
-    cup.join(p4, cup.getInviteCode());
+    cup.join(p2);
+    cup.join(p3);
+    cup.join(p4);
     return cup;
   }
 
@@ -37,9 +37,9 @@ class CupCancelTest {
     final var p3 = PlayerId.generate();
     final var p4 = PlayerId.generate();
     final var cup = Cup.create(p1, 4, GamesToPlay.of(3), Visibility.PRIVATE);
-    cup.join(p2, cup.getInviteCode());
-    cup.join(p3, cup.getInviteCode());
-    cup.join(p4, cup.getInviteCode());
+    cup.join(p2);
+    cup.join(p3);
+    cup.join(p4);
     cup.start(p1);
     return cup;
   }

@@ -21,13 +21,12 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import java.time.Duration;
@@ -83,12 +82,6 @@ class StartMatchCommandHandlerConcurrencyTest {
           return copy;
         }
       });
-    }
-
-    @Override
-    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
-
-      return store.values().stream().filter(m -> m.getInviteCode().equals(inviteCode)).findFirst();
     }
 
     @Override
@@ -155,13 +148,6 @@ class StartMatchCommandHandlerConcurrencyTest {
       }
 
       @Override
-      public Optional<League> findByInviteCode(
-          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
-
-        return Optional.empty();
-      }
-
-      @Override
       public Optional<League> findByMatchId(MatchId id) {
 
         return Optional.empty();
@@ -200,13 +186,6 @@ class StartMatchCommandHandlerConcurrencyTest {
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
       public Optional<Cup> findById(CupId id) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByInviteCode(
-          com.villo.truco.domain.shared.valueobjects.InviteCode c) {
 
         return Optional.empty();
       }

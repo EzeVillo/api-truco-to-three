@@ -1,12 +1,10 @@
 package com.villo.truco.domain.model.match;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.PlayerReadyEvent;
 import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
-import com.villo.truco.domain.model.match.exceptions.PrivateMatchVisibilityAccessException;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -19,8 +17,8 @@ import org.junit.jupiter.api.Test;
 class MatchVisibilityTest {
 
   @Test
-  @DisplayName("publico no genera invite code y privado si")
-  void publicDoesNotGenerateInviteCode() {
+  @DisplayName("publico y privado generan join code")
+  void bothVisibilitiesGenerateJoinCode() {
 
     final var player = PlayerId.generate();
 
@@ -29,8 +27,8 @@ class MatchVisibilityTest {
     final var privateMatch = Match.create(player, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
         Visibility.PRIVATE);
 
-    assertThat(publicMatch.getInviteCode()).isNull();
-    assertThat(privateMatch.getInviteCode()).isNotNull();
+    assertThat(publicMatch.getJoinCode()).isNotNull();
+    assertThat(privateMatch.getJoinCode()).isNotNull();
     assertThat(publicMatch.getMatchDomainEvents().stream()
         .filter(PublicMatchLobbyOpenedEvent.class::isInstance).count()).isEqualTo(1);
     assertThat(privateMatch.getMatchDomainEvents().stream()
@@ -38,14 +36,17 @@ class MatchVisibilityTest {
   }
 
   @Test
-  @DisplayName("joinPublic rechaza partidas privadas")
-  void joinPublicRejectsPrivateMatches() {
+  @DisplayName("join unificado deja el match privado en ready")
+  void joinKeepsPrivateMatchManualFlow() {
 
     final var match = Match.create(PlayerId.generate(),
         MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE);
 
-    assertThatThrownBy(() -> match.joinPublic(PlayerId.generate())).isInstanceOf(
-        PrivateMatchVisibilityAccessException.class);
+    match.join(PlayerId.generate());
+
+    assertThat(match.getStatus()).isEqualTo(MatchStatus.READY);
+    assertThat(match.isReadyPlayerOne()).isFalse();
+    assertThat(match.isReadyPlayerTwo()).isFalse();
   }
 
   @Test
@@ -57,7 +58,7 @@ class MatchVisibilityTest {
     final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
         Visibility.PUBLIC);
 
-    match.joinPublic(playerTwo);
+    match.join(playerTwo);
 
     assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
     assertThat(match.isReadyPlayerOne()).isTrue();
@@ -78,7 +79,7 @@ class MatchVisibilityTest {
 
     assertThat(match.isPublicLobbyOpen()).isTrue();
 
-    match.joinPublic(PlayerId.generate());
+    match.join(PlayerId.generate());
 
     assertThat(match.isPublicLobbyOpen()).isFalse();
   }

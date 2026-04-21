@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get friendships
+url: "{{URL_BASE_TRUCO_HTTP}}/social/friendships"
+method: GET
+order: 3495591124461447

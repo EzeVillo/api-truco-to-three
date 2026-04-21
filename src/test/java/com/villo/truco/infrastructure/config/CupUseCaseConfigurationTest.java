@@ -26,8 +26,7 @@ class CupUseCaseConfigurationTest {
     final var configuration = new CupUseCaseConfiguration(mock(CupQueryRepository.class),
         mock(com.villo.truco.domain.ports.CupRepository.class), mock(MatchRepository.class),
         mock(CupEventNotifier.class), availabilityConfiguration.playerAvailabilityChecker(),
-        mock(PublicActorResolver.class), new UseCasePipeline(List.of()),
-        new UseCasePipeline(List.of()));
+        mock(PublicActorResolver.class), new UseCasePipeline(List.of()));
 
     assertThat(configuration.cupResolver()).isNotNull();
     assertThat(configuration.getCupStateQueryHandler()).isNotNull();

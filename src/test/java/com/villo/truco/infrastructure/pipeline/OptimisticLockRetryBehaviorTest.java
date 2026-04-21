@@ -3,8 +3,12 @@ package com.villo.truco.infrastructure.pipeline;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
+import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
+import com.villo.truco.infrastructure.persistence.exceptions.JoinCodeRegistryCollisionInfrastructureException;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +18,13 @@ class OptimisticLockRetryBehaviorTest {
 
   private final OptimisticLockRetryBehavior behavior = new OptimisticLockRetryBehavior(3,
       Duration.ZERO);
+
+  private static JoinCodeRegistryCollisionInfrastructureException collision() {
+
+    return new JoinCodeRegistryCollisionInfrastructureException(JoinCode.of("ABCD1234"),
+        JoinTargetType.MATCH, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+        JoinTargetType.CUP, UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+  }
 
   @Test
   @DisplayName("éxito sin retry devuelve resultado directo")
@@ -51,6 +62,37 @@ class OptimisticLockRetryBehaviorTest {
       attempts.incrementAndGet();
       throw new StaleAggregateException("stale", null);
     })).isInstanceOf(StaleAggregateException.class);
+
+    assertThat(attempts.get()).isEqualTo(3);
+  }
+
+  @Test
+  @DisplayName("retry exitoso tras colision de join code")
+  void retriesOnJoinCodeCollision() {
+
+    final var attempts = new AtomicInteger(0);
+
+    final var result = behavior.handle("cmd", () -> {
+      if (attempts.incrementAndGet() < 3) {
+        throw collision();
+      }
+      return "recovered";
+    });
+
+    assertThat(result).isEqualTo("recovered");
+    assertThat(attempts.get()).isEqualTo(3);
+  }
+
+  @Test
+  @DisplayName("lanza colision de join code tras agotar reintentos")
+  void throwsJoinCodeCollisionAfterMaxRetries() {
+
+    final var attempts = new AtomicInteger(0);
+
+    assertThatThrownBy(() -> behavior.handle("cmd", () -> {
+      attempts.incrementAndGet();
+      throw collision();
+    })).isInstanceOf(JoinCodeRegistryCollisionInfrastructureException.class);
 
     assertThat(attempts.get()).isEqualTo(3);
   }

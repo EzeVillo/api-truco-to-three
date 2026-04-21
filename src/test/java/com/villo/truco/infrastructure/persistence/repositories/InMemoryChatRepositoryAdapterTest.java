@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.chat.Chat;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.support.TestTransactionRunner;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;

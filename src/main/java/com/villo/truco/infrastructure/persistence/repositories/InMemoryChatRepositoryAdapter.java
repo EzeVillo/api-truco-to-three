@@ -7,7 +7,7 @@ import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.infrastructure.persistence.inmemory.AbstractTransactionalInMemoryRepository;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;

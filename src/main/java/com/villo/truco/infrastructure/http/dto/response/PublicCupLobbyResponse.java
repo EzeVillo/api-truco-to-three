@@ -11,13 +11,14 @@ public record PublicCupLobbyResponse(
     @Schema(description = "Cupo total de jugadores", example = "8") int totalSlots,
     @Schema(description = "Cupo actualmente ocupado", example = "5") int occupiedSlots,
     @Schema(description = "Estado actual", example = "WAITING_FOR_PLAYERS") String status,
+    @Schema(description = "Join code compartible de la copa", example = "ABCD1234") String joinCode,
     @Schema(description = "Links accionables del lobby") PublicLobbyItemLinksResponse _links) {
 
   public static PublicCupLobbyResponse from(final PublicCupLobbyDTO dto) {
 
     return new PublicCupLobbyResponse(dto.cupId(), dto.host(), dto.gamesToPlay(), dto.totalSlots(),
-        dto.occupiedSlots(), dto.status(),
-        PublicLobbyLinkFactory.itemLinks("/api/cups", dto.cupId()));
+        dto.occupiedSlots(), dto.status(), dto.joinCode(),
+        PublicLobbyLinkFactory.itemLinks(dto.joinCode()));
   }
 
 }

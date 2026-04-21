@@ -21,7 +21,13 @@ values:
   - key: accessTokenPlayerTwo
     value: ''
     enabled: true
+  - key: refreshTokenPlayerTwo
+    value: ''
+    enabled: true
   - key: accessTokenPlayerTwoExpiresAt
+    value: ''
+    enabled: true
+  - key: refreshTokenPlayerTwoExpiresAt
     value: ''
     enabled: true
   - key: accessTokenPlayerThree
@@ -42,19 +48,19 @@ values:
   - key: accessTokenPlayerFiveExpiresAt
     value: ''
     enabled: true
-  - key: inviteCode
+  - key: accessTokenPlayerSix
+    value: ''
+    enabled: true
+  - key: accessTokenPlayerSixExpiresAt
+    value: ''
+    enabled: true
+  - key: joinCode
     value: ''
     enabled: true
   - key: leagueId
     value: ''
     enabled: true
-  - key: leagueInviteCode
-    value: ''
-    enabled: true
   - key: cupId
-    value: ''
-    enabled: true
-  - key: cupInviteCode
     value: ''
     enabled: true
   - key: parentType
@@ -63,9 +69,9 @@ values:
   - key: parentId
     value: ''
     enabled: true
-  - key: accessTokenPlayerSix
+  - key: invitationId
     value: ''
     enabled: true
-  - key: accessTokenPlayerSixExpiresAt
+  - key: targetId
     value: ''
     enabled: true

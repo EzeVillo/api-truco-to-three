@@ -35,7 +35,8 @@ public final class PublicMatchLobbyDTOAssembler {
 
     return new PublicMatchLobbyDTO(match.getId().value().toString(),
         actorNames.get(match.getPlayerOne()), match.getGamesToPlay(), 2,
-        match.getPlayerTwo() == null ? 1 : 2, match.getStatus().name());
+        match.getPlayerTwo() == null ? 1 : 2, match.getStatus().name(),
+        match.getJoinCode().value());
   }
 
 }

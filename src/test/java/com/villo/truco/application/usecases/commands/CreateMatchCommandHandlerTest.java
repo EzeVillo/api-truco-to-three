@@ -22,7 +22,6 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -40,12 +39,6 @@ class CreateMatchCommandHandlerTest {
 
     @Override
     public Optional<Match> findById(final MatchId matchId) {
-
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
 
       return Optional.empty();
     }
@@ -85,12 +78,6 @@ class CreateMatchCommandHandlerTest {
 
     @Override
     public Optional<League> findById(final LeagueId leagueId) {
-
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<League> findByInviteCode(final InviteCode inviteCode) {
 
       return Optional.empty();
     }
@@ -136,12 +123,6 @@ class CreateMatchCommandHandlerTest {
 
     @Override
     public Optional<Cup> findById(final CupId cupId) {
-
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<Cup> findByInviteCode(final InviteCode inviteCode) {
 
       return Optional.empty();
     }
@@ -227,7 +208,7 @@ class CreateMatchCommandHandlerTest {
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getId()).isNotNull();
-    assertThat(savedMatch.get().getInviteCode()).isNotNull();
+    assertThat(savedMatch.get().getJoinCode()).isNotNull();
   }
 
   @Test
@@ -274,12 +255,6 @@ class CreateMatchCommandHandlerTest {
 
       @Override
       public Optional<Match> findById(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
 
         return Optional.empty();
       }

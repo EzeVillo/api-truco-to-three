@@ -4,10 +4,13 @@ import com.villo.truco.application.eventhandlers.ChatEventMapper;
 import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
 import com.villo.truco.application.eventhandlers.CupEventMapper;
+import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueEventMapper;
+import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchEventMapper;
+import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchRecipientResolver;
 import com.villo.truco.application.ports.PublicActorResolver;
@@ -202,6 +205,27 @@ public class ApplicationEventConfiguration {
       final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
 
     return new LeagueNotificationEventTranslator(leagueEventMapper(publicActorResolver), publisher);
+  }
+
+  @Bean
+  MatchInvitationExpirationEventTranslator matchInvitationExpirationEventTranslator(
+      final ApplicationEventPublisher publisher) {
+
+    return new MatchInvitationExpirationEventTranslator(publisher);
+  }
+
+  @Bean
+  CupInvitationExpirationEventTranslator cupInvitationExpirationEventTranslator(
+      final ApplicationEventPublisher publisher) {
+
+    return new CupInvitationExpirationEventTranslator(publisher);
+  }
+
+  @Bean
+  LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator(
+      final ApplicationEventPublisher publisher) {
+
+    return new LeagueInvitationExpirationEventTranslator(publisher);
   }
 
   @Bean

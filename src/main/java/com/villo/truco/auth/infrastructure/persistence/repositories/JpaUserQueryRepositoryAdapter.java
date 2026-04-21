@@ -5,6 +5,7 @@ import com.villo.truco.auth.infrastructure.persistence.repositories.spring.Sprin
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,13 @@ public class JpaUserQueryRepositoryAdapter implements UserQueryRepository {
     this.springDataUserRepository.findByIdIn(playerIds.stream().map(PlayerId::value).toList())
         .forEach(row -> usernamesById.put(new PlayerId(row.getId()), row.getUsername()));
     return usernamesById;
+  }
+
+  @Override
+  public Optional<PlayerId> findUserIdByUsername(final String username) {
+
+    return this.springDataUserRepository.findByUsername(username)
+        .map(entity -> new PlayerId(entity.getId()));
   }
 
 }

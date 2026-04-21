@@ -32,8 +32,8 @@ public class CupJpaEntity {
   private int numberOfPlayers;
   @Column(name = "games_to_play", nullable = false)
   private int gamesToPlay;
-  @Column(name = "invite_code")
-  private String inviteCode;
+  @Column(name = "join_code", nullable = false)
+  private String joinCode;
   @Column(nullable = false)
   private String visibility;
   @Column(nullable = false)
@@ -91,14 +91,14 @@ public class CupJpaEntity {
     this.gamesToPlay = gamesToPlay;
   }
 
-  public String getInviteCode() {
+  public String getJoinCode() {
 
-    return inviteCode;
+    return joinCode;
   }
 
-  public void setInviteCode(String inviteCode) {
+  public void setJoinCode(String joinCode) {
 
-    this.inviteCode = inviteCode;
+    this.joinCode = joinCode;
   }
 
   public String getVisibility() {

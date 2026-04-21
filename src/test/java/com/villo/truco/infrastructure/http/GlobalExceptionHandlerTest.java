@@ -6,9 +6,14 @@ import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.exceptions.ApplicationException;
 import com.villo.truco.application.exceptions.ApplicationStatus;
+import com.villo.truco.application.exceptions.JoinCodeRegistryConflictException;
 import com.villo.truco.auth.domain.model.auth.exceptions.InvalidUserSessionRefreshException;
 import com.villo.truco.domain.shared.DomainException;
+import com.villo.truco.domain.shared.valueobjects.JoinCode;
+import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
+import com.villo.truco.infrastructure.persistence.exceptions.JoinCodeRegistryCollisionInfrastructureException;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -98,6 +103,22 @@ class GlobalExceptionHandlerTest {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody()).isNotNull();
     assertThat(response.getBody().errorCode()).isEqualTo("InvalidUserSessionRefreshException");
+  }
+
+  @Test
+  @DisplayName("JoinCodeRegistryCollisionInfrastructureException -> 409")
+  void joinCodeRegistryCollisionInfrastructureException() {
+
+    final var ex = new JoinCodeRegistryCollisionInfrastructureException(JoinCode.of("ABCD1234"),
+        JoinTargetType.MATCH, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+        JoinTargetType.CUP, UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+
+    final var response = handler.handleJoinCodeRegistryCollision(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().errorCode()).isEqualTo(
+        JoinCodeRegistryConflictException.class.getSimpleName());
   }
 
   @Test

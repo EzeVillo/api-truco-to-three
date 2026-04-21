@@ -1,7 +1,7 @@
 package com.villo.truco.infrastructure.pipeline;
 
 import com.villo.truco.application.ports.in.PipelineBehavior;
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.domain.shared.exceptions.RetriableException;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -27,8 +27,9 @@ public final class OptimisticLockRetryBehavior implements PipelineBehavior {
     for (int attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         return next.get();
-      } catch (final StaleAggregateException e) {
-        LOGGER.warn("Optimistic locking conflict on attempt {}/{}", attempt, this.maxRetries);
+      } catch (final RetriableException e) {
+        LOGGER.warn("Retriable exception {} on attempt {}/{}", e.getClass().getSimpleName(),
+            attempt, this.maxRetries);
         if (attempt == this.maxRetries) {
           throw e;
         }

@@ -35,7 +35,7 @@ public final class PublicCupLobbyDTOAssembler {
 
     return new PublicCupLobbyDTO(cup.getId().value().toString(), actorNames.get(cup.getCreator()),
         cup.getGamesToPlay().value(), cup.getNumberOfPlayers(), cup.getParticipants().size(),
-        cup.getStatus().name());
+        cup.getStatus().name(), cup.getJoinCode().value());
   }
 
 }

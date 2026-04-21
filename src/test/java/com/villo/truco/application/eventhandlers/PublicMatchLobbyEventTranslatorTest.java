@@ -13,7 +13,6 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -57,7 +56,7 @@ class PublicMatchLobbyEventTranslatorTest {
     final var joiner = PlayerId.generate();
     final var match = Match.create(creator, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
         Visibility.PUBLIC);
-    match.joinPublic(joiner);
+    match.join(joiner);
 
     final var queryRepository = repositoryReturning(match);
     final var published = new ArrayList<ApplicationEvent>();
@@ -80,12 +79,6 @@ class PublicMatchLobbyEventTranslatorTest {
       public Optional<Match> findById(final MatchId matchId) {
 
         return Optional.of(match);
-      }
-
-      @Override
-      public Optional<Match> findByInviteCode(final InviteCode inviteCode) {
-
-        return Optional.empty();
       }
 
       @Override

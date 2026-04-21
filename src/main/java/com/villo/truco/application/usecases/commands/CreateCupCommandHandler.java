@@ -35,8 +35,7 @@ public final class CreateCupCommandHandler implements CreateCupUseCase {
     this.cupEventNotifier.publishDomainEvents(cup.getCupDomainEvents());
     cup.clearDomainEvents();
 
-    return new CreateCupDTO(cup.getId().value().toString(),
-        cup.getInviteCode() != null ? cup.getInviteCode().value() : null,
+    return new CreateCupDTO(cup.getId().value().toString(), cup.getJoinCode().value(),
         cup.getVisibility().name());
   }
 

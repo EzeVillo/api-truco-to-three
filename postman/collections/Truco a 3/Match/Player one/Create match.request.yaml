@@ -18,7 +18,7 @@ scripts:
 
       pm.environment.set(\"matchId\", response.matchId);\r
 
-      pm.environment.set(\"inviteCode\", response.inviteCode);\r
+      pm.environment.set(\"joinCode\", response.joinCode);\r
 
       pm.environment.set(\"parentType\", \"MATCH\");\r
 

@@ -6,8 +6,11 @@ import static org.mockito.Mockito.mock;
 import com.villo.truco.application.eventhandlers.BotDomainEventTranslator;
 import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
+import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicLeagueLobbyEventTranslator;
@@ -37,7 +40,10 @@ class EventNotifierConfigurationTest {
         mock(SpectatorNotificationEventTranslator.class),
         mock(SpectatorCleanupOnMatchEndEventHandler.class),
         mock(SpectatorAutoKickOnLeagueMatchActivatedEventHandler.class),
-        mock(SpectatorAutoKickOnCupMatchActivatedEventHandler.class));
+        mock(SpectatorAutoKickOnCupMatchActivatedEventHandler.class),
+        mock(MatchInvitationExpirationEventTranslator.class),
+        mock(CupInvitationExpirationEventTranslator.class),
+        mock(LeagueInvitationExpirationEventTranslator.class));
     final var chatEventNotifier = mock(ChatEventNotifier.class);
 
     assertThat(configuration.chatEventNotifier()).isNotNull();

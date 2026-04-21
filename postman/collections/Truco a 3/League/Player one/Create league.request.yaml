@@ -20,7 +20,7 @@ scripts:
 
       pm.environment.set(\"leagueId\", response.leagueId);\r
 
-      pm.environment.set(\"leagueInviteCode\", response.inviteCode);\r
+      pm.environment.set(\"joinCode\", response.joinCode);\r
 
       pm.environment.set(\"parentType\", \"LEAGUE\");\r
 

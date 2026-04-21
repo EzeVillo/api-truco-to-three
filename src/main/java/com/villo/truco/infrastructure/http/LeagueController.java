@@ -1,24 +1,18 @@
 package com.villo.truco.infrastructure.http;
 
 import com.villo.truco.application.commands.CreateLeagueCommand;
-import com.villo.truco.application.commands.JoinLeagueCommand;
-import com.villo.truco.application.commands.JoinPublicLeagueCommand;
 import com.villo.truco.application.commands.LeaveLeagueCommand;
 import com.villo.truco.application.commands.StartLeagueCommand;
 import com.villo.truco.application.ports.in.CreateLeagueUseCase;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
 import com.villo.truco.application.ports.in.GetPublicLeaguesUseCase;
-import com.villo.truco.application.ports.in.JoinLeagueUseCase;
-import com.villo.truco.application.ports.in.JoinPublicLeagueUseCase;
 import com.villo.truco.application.ports.in.LeaveLeagueUseCase;
 import com.villo.truco.application.ports.in.StartLeagueUseCase;
 import com.villo.truco.application.queries.GetLeagueStateQuery;
 import com.villo.truco.application.queries.GetPublicLeaguesQuery;
 import com.villo.truco.infrastructure.http.dto.request.CreateLeagueRequest;
-import com.villo.truco.infrastructure.http.dto.request.JoinLeagueRequest;
 import com.villo.truco.infrastructure.http.dto.response.CreateLeagueResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
-import com.villo.truco.infrastructure.http.dto.response.JoinLeagueResponse;
 import com.villo.truco.infrastructure.http.dto.response.LeagueStateResponse;
 import com.villo.truco.infrastructure.http.dto.response.PublicLeagueLobbyCollectionResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,21 +46,16 @@ public class LeagueController {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeagueController.class);
 
   private final CreateLeagueUseCase createLeague;
-  private final JoinLeagueUseCase joinLeague;
-  private final JoinPublicLeagueUseCase joinPublicLeague;
   private final LeaveLeagueUseCase leaveLeague;
   private final StartLeagueUseCase startLeague;
   private final GetLeagueStateUseCase getLeagueState;
   private final GetPublicLeaguesUseCase getPublicLeagues;
 
   public LeagueController(final CreateLeagueUseCase createLeague,
-      final JoinLeagueUseCase joinLeague, final JoinPublicLeagueUseCase joinPublicLeague,
       final LeaveLeagueUseCase leaveLeague, final StartLeagueUseCase startLeague,
       final GetLeagueStateUseCase getLeagueState, final GetPublicLeaguesUseCase getPublicLeagues) {
 
     this.createLeague = Objects.requireNonNull(createLeague);
-    this.joinLeague = Objects.requireNonNull(joinLeague);
-    this.joinPublicLeague = Objects.requireNonNull(joinPublicLeague);
     this.leaveLeague = Objects.requireNonNull(leaveLeague);
     this.startLeague = Objects.requireNonNull(startLeague);
     this.getLeagueState = Objects.requireNonNull(getLeagueState);
@@ -94,25 +83,6 @@ public class LeagueController {
     return ResponseEntity.ok(CreateLeagueResponse.from(dto));
   }
 
-  @PostMapping("/join")
-  @Operation(summary = "Unirse a liga", description = "Une el jugador autenticado al liga usando el código de invitación", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinLeagueResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "Liga no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "Código inválido o estado inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinLeagueResponse> joinLeague(
-      @Valid @RequestBody final JoinLeagueRequest request, @AuthenticationPrincipal final Jwt jwt) {
-
-    LOGGER.info("HTTP joinLeague requested: inviteCode={}", request.inviteCode());
-
-    final var dto = this.joinLeague.handle(
-        new JoinLeagueCommand(jwt.getSubject(), request.inviteCode()));
-
-    return ResponseEntity.ok(JoinLeagueResponse.from(dto));
-  }
-
   @GetMapping("/public")
   @Operation(summary = "Listar ligas publicas", description = "Devuelve ligas publicas esperando jugadores para el usuario autenticado", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
@@ -128,23 +98,6 @@ public class LeagueController {
     final var leagues = this.getPublicLeagues.handle(
         new GetPublicLeaguesQuery(jwt.getSubject(), limit, after));
     return ResponseEntity.ok(PublicLeagueLobbyCollectionResponse.from(leagues, limit, after));
-  }
-
-  @PostMapping("/{leagueId}/join-public")
-  @Operation(summary = "Unirse a liga publica", description = "Une al jugador autenticado a una liga publica usando el id", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Jugador unido correctamente", content = @Content(schema = @Schema(implementation = JoinLeagueResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o invalido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "Liga no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "409", description = "Otro request ocupo el ultimo lugar", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "La liga no es publica o el usuario no puede unirse", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<JoinLeagueResponse> joinPublicLeague(
-      @Parameter(description = "ID de la liga publica", example = "league-123") @PathVariable final String leagueId,
-      @AuthenticationPrincipal final Jwt jwt) {
-
-    final var dto = this.joinPublicLeague.handle(
-        new JoinPublicLeagueCommand(leagueId, jwt.getSubject()));
-    return ResponseEntity.ok(JoinLeagueResponse.from(dto));
   }
 
   @PostMapping("/{leagueId}/leave")

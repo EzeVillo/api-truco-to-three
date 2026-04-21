@@ -2,16 +2,18 @@ package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
+import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
-import com.villo.truco.domain.shared.exceptions.StaleAggregateException;
+import com.villo.truco.domain.shared.JoinCodeRegistration;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.pagination.PublicLobbyCursor;
-import com.villo.truco.domain.shared.valueobjects.InviteCode;
+import com.villo.truco.domain.shared.valueobjects.JoinTargetType;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.entities.LeagueJpaEntity;
+import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.infrastructure.persistence.mappers.LeagueMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataLeagueRepository;
 import java.time.Instant;
@@ -28,12 +30,14 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
 
   private final SpringDataLeagueRepository springDataRepo;
   private final LeagueMapper mapper;
+  private final JoinCodeRegistryRepository joinCodeRegistryRepository;
 
   public JpaLeagueRepositoryAdapter(final SpringDataLeagueRepository springDataRepo,
-      final LeagueMapper mapper) {
+      final LeagueMapper mapper, final JoinCodeRegistryRepository joinCodeRegistryRepository) {
 
     this.springDataRepo = springDataRepo;
     this.mapper = mapper;
+    this.joinCodeRegistryRepository = joinCodeRegistryRepository;
   }
 
   private static PublicLobbyCursor decodeCursor(final String encodedCursor) {
@@ -53,6 +57,9 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
     try {
       final var entity = this.mapper.toEntity(league);
       this.springDataRepo.saveAndFlush(entity);
+      this.joinCodeRegistryRepository.save(
+          new JoinCodeRegistration(league.getJoinCode(), JoinTargetType.LEAGUE,
+              league.getId().value()));
       league.setVersion(entity.getVersion());
     } catch (final ObjectOptimisticLockingFailureException e) {
       throw new StaleAggregateException("League " + league.getId() + " was modified concurrently",
@@ -64,12 +71,6 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   public Optional<League> findById(final LeagueId leagueId) {
 
     return this.springDataRepo.findById(leagueId.value()).map(this.mapper::toDomain);
-  }
-
-  @Override
-  public Optional<League> findByInviteCode(final InviteCode inviteCode) {
-
-    return this.springDataRepo.findByInviteCode(inviteCode.value()).map(this.mapper::toDomain);
   }
 
   @Override
