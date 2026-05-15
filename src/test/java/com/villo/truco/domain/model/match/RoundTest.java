@@ -828,6 +828,31 @@ class RoundTest {
     assertThat(roundAfterTie.getAvailableActions(this.pie)).isNotEmpty();
   }
 
+  @Test
+  @DisplayName("gana primera + parda segunda cierra la ronda y emite RoundEndedEvent con el ganador correcto")
+  void shouldCloseRoundWhenFirstHandWonAndSecondIsTied() {
+
+    final var cardValue4Mano = Card.of(Suit.ORO, 4);
+    final var cardValue4Pie = Card.of(Suit.COPA, 4);
+
+    final var manoHand = Hand.reconstruct(HandId.generate(), List.of(cardValue4Mano));
+    final var pieHand = Hand.reconstruct(HandId.generate(), List.of(cardValue4Pie));
+    final var firstHandWonByMano = new Round.PlayedHand(Card.of(Suit.ESPADA, 7),
+        Card.of(Suit.ORO, 6), this.mano);
+
+    final var round = Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano, this.pie,
+        manoHand, pieHand, List.of(firstHandWonByMano), List.of(), RoundStatus.PLAYING, this.mano,
+        null, null);
+
+    round.playCard(this.mano, cardValue4Mano);
+    round.playCard(this.pie, cardValue4Pie);
+
+    assertThat(round.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(round.getRoundWinner()).contains(this.mano);
+    assertThat(round.getAvailableActions(this.mano)).isEmpty();
+    assertThat(round.getAvailableActions(this.pie)).isEmpty();
+  }
+
   private Round createRoundWithTrucoInProgressAndResponderHasNoCards() {
 
     final var callerCard = Card.of(Suit.ESPADA, 1);

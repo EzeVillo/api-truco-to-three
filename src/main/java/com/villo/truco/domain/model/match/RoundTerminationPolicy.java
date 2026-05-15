@@ -30,17 +30,18 @@ final class RoundTerminationPolicy {
       return Optional.of(playerTwo);
     }
 
-    if (handWinners.size() == 3) {
-      return Optional.of(mano);
-    }
+    final var firstNonTie = handWinners.stream().filter(Objects::nonNull).findFirst();
 
     if (handWinners.size() == 2) {
-      final var firstHandWinner = handWinners.get(0);
-      final var secondHandWinner = handWinners.get(1);
-
-      if (firstHandWinner == null && secondHandWinner != null) {
-        return Optional.of(secondHandWinner);
+      final var hasOneTie = handWinners.stream().anyMatch(Objects::isNull);
+      if (firstNonTie.isPresent() && hasOneTie) {
+        return firstNonTie;
       }
+      return Optional.empty();
+    }
+
+    if (handWinners.size() == 3) {
+      return Optional.of(firstNonTie.orElse(mano));
     }
 
     return Optional.empty();
