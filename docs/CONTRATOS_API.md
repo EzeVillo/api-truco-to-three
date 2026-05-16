@@ -1464,7 +1464,6 @@ payload para el propio perfil o para el de otro jugador.
 
 ```json
 {
-  "username": "juancho",
   "achievements": [
     {
       "achievementCode": "WIN_RETRUCO_FROM_0_0_TO_3",

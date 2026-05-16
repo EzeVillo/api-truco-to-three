@@ -34,7 +34,7 @@ public class ProfileController {
   }
 
   @GetMapping("/{username}")
-  @Operation(summary = "Obtener perfil de jugador", description = "Devuelve el username, logros desbloqueados y estadísticas agregadas del jugador indicado. Accesible para cualquier usuario autenticado.", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Obtener perfil de jugador", description = "Devuelve los logros desbloqueados y estadísticas agregadas del jugador indicado. Accesible para cualquier usuario autenticado.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Perfil del jugador", content = @Content(schema = @Schema(implementation = PlayerProfileResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),

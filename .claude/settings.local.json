@@ -96,7 +96,10 @@
       "Bash(powershell *)",
       "Bash(./gradlew compileJava compileTestJava -q)",
       "Bash(xxd)",
-      "Bash(./gradlew compileJava --quiet)"
+      "Bash(./gradlew compileJava --quiet)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20)",
+      "Bash(Format-Table FullName)"
     ]
   }
 }

@@ -39,7 +39,6 @@ class GetPlayerProfileQueryHandlerTest {
 
     final var dto = handler.handle(new GetPlayerProfileQuery("juancho"));
 
-    assertThat(dto.username()).isEqualTo("juancho");
     assertThat(dto.achievements()).isEmpty();
     assertThat(dto.stats().matchesPlayed()).isEqualTo(0);
     assertThat(dto.stats().winRate()).isEqualTo(0);

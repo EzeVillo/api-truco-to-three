@@ -42,7 +42,7 @@ public final class GetPlayerProfileQueryHandler implements GetPlayerProfileUseCa
     final var statsDTO = new PlayerStatsDTO(stats.matchesPlayed(), stats.matchesWon(),
         stats.matchesLost(), stats.winRate());
 
-    return new PlayerProfileDTO(query.username(), achievements, statsDTO);
+    return new PlayerProfileDTO(achievements, statsDTO);
   }
 
 }
