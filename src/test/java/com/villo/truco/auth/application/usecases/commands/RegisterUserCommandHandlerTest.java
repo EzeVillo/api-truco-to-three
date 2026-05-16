@@ -155,6 +155,53 @@ class RegisterUserCommandHandlerTest {
   }
 
   @Test
+  @DisplayName("falla si el username ya existe con diferente casing")
+  void failsIfUsernameTakenWithDifferentCasing() {
+
+    final Map<String, User> store = new HashMap<>();
+    store.put("juancho", UserRehydrator.rehydrate(
+        new UserSnapshot(PlayerId.generate(), new Username("juancho"),
+            new HashedPassword("hashed"))));
+
+    final UserRepository repository = new UserRepository() {
+
+      @Override
+      public void saveEnsuringUsernameAvailable(final User user) {
+
+        store.put(user.username().normalized(), user);
+      }
+
+      @Override
+      public Optional<User> findById(final PlayerId playerId) {
+
+        return store.values().stream().filter(user -> user.getId().equals(playerId)).findFirst();
+      }
+
+      @Override
+      public Optional<User> findByUsername(final Username username) {
+
+        return Optional.ofNullable(store.get(username.normalized()));
+      }
+
+      @Override
+      public boolean existsByUsername(final Username username) {
+
+        return store.containsKey(username.normalized());
+      }
+    };
+
+    final var issuer = new UserSessionIssuer(AuthTestFixtures.stubAccessTokenIssuer(),
+        AuthTestFixtures.constantRefreshTokenProvider("refresh-value"),
+        new AuthTestFixtures.InMemoryUserSessionRepository(), AuthTestFixtures.fixedClock());
+    final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
+        new UsernameAvailabilityPolicy(repository), noopNotifier());
+
+    assertThatThrownBy(
+        () -> handler.handle(new RegisterUserCommand("JUANCHO", "other1!"))).isInstanceOf(
+        UsernameUnavailableException.class);
+  }
+
+  @Test
   @DisplayName("falla si la password no cumple la politica de registro")
   void failsIfPasswordDoesNotMeetPolicy() {
 

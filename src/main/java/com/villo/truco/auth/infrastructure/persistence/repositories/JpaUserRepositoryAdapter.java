@@ -54,14 +54,14 @@ public class JpaUserRepositoryAdapter implements UserRepository {
   @Override
   public Optional<User> findByUsername(final Username username) {
 
-    return this.springDataRepo.findByUsername(username.value()).map(this.mapper::toSnapshot)
-        .map(UserRehydrator::rehydrate);
+    return this.springDataRepo.findByUsernameIgnoreCase(username.value())
+        .map(this.mapper::toSnapshot).map(UserRehydrator::rehydrate);
   }
 
   @Override
   public boolean existsByUsername(final Username username) {
 
-    return this.springDataRepo.existsByUsername(username.value());
+    return this.springDataRepo.existsByUsernameIgnoreCase(username.value());
   }
 
   private boolean isUsernameUniqueConstraintViolation(final Throwable throwable) {

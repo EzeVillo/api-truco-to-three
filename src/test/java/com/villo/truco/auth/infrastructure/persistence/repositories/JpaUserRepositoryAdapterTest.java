@@ -25,7 +25,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 class JpaUserRepositoryAdapterTest {
 
   @Test
-  @DisplayName("delega existsByUsername y findByUsername")
+  @DisplayName("delega existsByUsername y findByUsername con IgnoreCase")
   void delegatesQueries() {
 
     final var springRepo = mock(SpringDataUserRepository.class);
@@ -34,8 +34,8 @@ class JpaUserRepositoryAdapterTest {
     adapter.existsByUsername(new Username("user"));
     adapter.findByUsername(new Username("user"));
 
-    verify(springRepo).existsByUsername("user");
-    verify(springRepo).findByUsername("user");
+    verify(springRepo).existsByUsernameIgnoreCase("user");
+    verify(springRepo).findByUsernameIgnoreCase("user");
   }
 
   @Test

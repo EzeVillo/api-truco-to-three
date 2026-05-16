@@ -9,10 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, UUID> {
 
-  Optional<UserJpaEntity> findByUsername(String username);
+  Optional<UserJpaEntity> findByUsernameIgnoreCase(String username);
 
   List<UserUsernameProjection> findByIdIn(Collection<UUID> ids);
 
-  boolean existsByUsername(String username);
+  boolean existsByUsernameIgnoreCase(String username);
 
 }

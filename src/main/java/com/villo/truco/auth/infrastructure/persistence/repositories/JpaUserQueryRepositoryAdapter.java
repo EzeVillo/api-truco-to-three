@@ -37,7 +37,7 @@ public class JpaUserQueryRepositoryAdapter implements UserQueryRepository {
   @Override
   public Optional<PlayerId> findUserIdByUsername(final String username) {
 
-    return this.springDataUserRepository.findByUsername(username)
+    return this.springDataUserRepository.findByUsernameIgnoreCase(username)
         .map(entity -> new PlayerId(entity.getId()));
   }
 

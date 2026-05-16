@@ -17,6 +17,38 @@ import org.junit.jupiter.api.Test;
 class UserTest {
 
   @Test
+  @DisplayName("Username preserva el casing original en value()")
+  void usernamePreservesOriginalCasing() {
+
+    assertThat(new Username("Pepe").value()).isEqualTo("Pepe");
+    assertThat(new Username("PEPE").value()).isEqualTo("PEPE");
+  }
+
+  @Test
+  @DisplayName("Username.normalized() devuelve lowercase")
+  void usernameNormalizedIsLowercase() {
+
+    assertThat(new Username("Pepe").normalized()).isEqualTo("pepe");
+    assertThat(new Username("PEPE123").normalized()).isEqualTo("pepe123");
+  }
+
+  @Test
+  @DisplayName("Username.equals ignora diferencias de caso")
+  void usernameEqualityIsCaseInsensitive() {
+
+    assertThat(new Username("Pepe")).isEqualTo(new Username("PEPE"));
+    assertThat(new Username("pepe")).isEqualTo(new Username("Pepe"));
+    assertThat(new Username("ABC")).isNotEqualTo(new Username("XYZ"));
+  }
+
+  @Test
+  @DisplayName("Username.hashCode es consistente con equals case-insensitive")
+  void usernameHashCodeConsistentWithEquals() {
+
+    assertThat(new Username("Pepe").hashCode()).isEqualTo(new Username("PEPE").hashCode());
+  }
+
+  @Test
   @DisplayName("rechaza usernames con menos de 3 letras")
   void rejectsUsernameWithLessThanThreeLetters() {
 

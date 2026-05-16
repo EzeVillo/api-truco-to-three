@@ -12,7 +12,7 @@ import java.util.UUID;
     @UniqueConstraint(name = UserJpaEntity.USERNAME_UNIQUE_CONSTRAINT, columnNames = "username")})
 public class UserJpaEntity {
 
-  public static final String USERNAME_UNIQUE_CONSTRAINT = "uk_users_username";
+  public static final String USERNAME_UNIQUE_CONSTRAINT = "uk_users_username_ci";
 
   @Id
   private UUID id;

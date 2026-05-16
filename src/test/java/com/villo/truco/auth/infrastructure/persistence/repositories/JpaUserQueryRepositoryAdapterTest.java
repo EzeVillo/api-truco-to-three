@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class JpaUserQueryRepositoryAdapterTest {
 
   @Test
-  @DisplayName("resuelve userId exacto por username")
+  @DisplayName("resuelve userId por username ignorando mayusculas")
   void findsUserIdByUsername() {
 
     final var springRepo = mock(SpringDataUserRepository.class);
@@ -26,11 +26,11 @@ class JpaUserQueryRepositoryAdapterTest {
     final var userId = UUID.fromString("11111111-1111-1111-1111-111111111111");
     final var entity = new UserJpaEntity();
     entity.setId(userId);
-    entity.setUsername("juancho");
+    entity.setUsername("Juancho");
 
-    when(springRepo.findByUsername("juancho")).thenReturn(Optional.of(entity));
+    when(springRepo.findByUsernameIgnoreCase("Juancho")).thenReturn(Optional.of(entity));
 
-    assertThat(adapter.findUserIdByUsername("juancho")).contains(new PlayerId(userId));
+    assertThat(adapter.findUserIdByUsername("Juancho")).contains(new PlayerId(userId));
   }
 
   @Test
