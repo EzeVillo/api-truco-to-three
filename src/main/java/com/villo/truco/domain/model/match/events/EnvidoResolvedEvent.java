@@ -10,15 +10,17 @@ public final class EnvidoResolvedEvent extends DomainEventBase {
   private final PlayerSeat winnerSeat;
   private final Integer pointsMano;
   private final Integer pointsPie;
+  private final boolean manoWon;
 
   public EnvidoResolvedEvent(final EnvidoResponse response, final PlayerSeat winnerSeat,
-      final Integer pointsMano, final Integer pointsPie) {
+      final Integer pointsMano, final Integer pointsPie, final boolean manoWon) {
 
     super("ENVIDO_RESOLVED");
     this.response = response;
     this.winnerSeat = winnerSeat;
     this.pointsMano = pointsMano;
     this.pointsPie = pointsPie;
+    this.manoWon = manoWon;
   }
 
   public EnvidoResponse getResponse() {
@@ -39,6 +41,11 @@ public final class EnvidoResolvedEvent extends DomainEventBase {
   public Integer getPointsPie() {
 
     return this.pointsPie;
+  }
+
+  public boolean isManoWon() {
+
+    return this.manoWon;
   }
 
 }

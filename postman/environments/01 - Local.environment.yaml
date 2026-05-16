@@ -1,77 +1,77 @@
 name: 01 - Local
 values:
   - key: URL_BASE_TRUCO_HTTP
+    enabled: true
     value: 'localhost:8080/api'
-    enabled: true
   - key: matchId
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerOne
-    value: ''
     enabled: true
+    value: ''
   - key: refreshTokenPlayerOne
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerOneExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: refreshTokenPlayerOneExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerTwo
-    value: ''
     enabled: true
+    value: ''
   - key: refreshTokenPlayerTwo
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerTwoExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: refreshTokenPlayerTwoExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerThree
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerThreeExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerFour
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerFourExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerFive
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerFiveExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerSix
-    value: ''
     enabled: true
+    value: ''
   - key: accessTokenPlayerSixExpiresAt
-    value: ''
     enabled: true
+    value: ''
   - key: joinCode
-    value: ''
     enabled: true
+    value: ''
   - key: leagueId
-    value: ''
     enabled: true
+    value: ''
   - key: cupId
-    value: ''
     enabled: true
+    value: ''
   - key: parentType
-    value: ''
     enabled: true
+    value: ''
   - key: parentId
-    value: ''
     enabled: true
+    value: ''
   - key: invitationId
-    value: ''
     enabled: true
+    value: ''
   - key: targetId
-    value: ''
     enabled: true
+    value: ''

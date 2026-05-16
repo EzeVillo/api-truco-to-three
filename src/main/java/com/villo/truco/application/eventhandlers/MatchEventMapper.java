@@ -87,7 +87,7 @@ public final class MatchEventMapper {
     if (event.getPointsMano() != null) {
       map.put("pointsMano", event.getPointsMano());
     }
-    if (event.getPointsPie() != null) {
+    if (event.getPointsPie() != null && !event.isManoWon()) {
       map.put("pointsPie", event.getPointsPie());
     }
     return map;

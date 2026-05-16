@@ -186,6 +186,23 @@ class WebSocketAuthInterceptorTest {
   }
 
   @Test
+  void shouldAllowSubscribeToProfileQueueWhenAuthenticated() {
+
+    final var decoder = mock(JwtDecoder.class);
+    final var interceptor = new WebSocketAuthInterceptor(decoder);
+
+    final var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+    final var attrs = new java.util.HashMap<String, Object>();
+    attrs.put("authenticatedPlayer", UUID.randomUUID().toString());
+    accessor.setSessionAttributes(attrs);
+    accessor.setDestination("/user/queue/profile");
+
+    final Message<byte[]> message = MessageBuilderSupport.build(accessor);
+
+    assertDoesNotThrow(() -> interceptor.preSend(message, null));
+  }
+
+  @Test
   void shouldAllowSubscribeToPublicMatchLobbyTopicWhenAuthenticated() {
 
     final var decoder = mock(JwtDecoder.class);

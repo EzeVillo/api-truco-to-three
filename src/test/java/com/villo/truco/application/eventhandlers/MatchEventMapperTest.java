@@ -3,12 +3,14 @@ package com.villo.truco.application.eventhandlers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
+import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
+import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.cards.valueobjects.Suit;
@@ -101,6 +103,37 @@ class MatchEventMapperTest {
     assertThat(payload).containsEntry("winnerSeat", "PLAYER_ONE")
         .containsEntry("loserSeat", "PLAYER_TWO").containsEntry("gamesWonPlayerOne", 3)
         .containsEntry("gamesWonPlayerTwo", 1);
+  }
+
+  @Test
+  @DisplayName("EnvidoResolvedEvent mano gana → pointsPie ausente del payload")
+  void envidoResolvedManoWonHidesPointsPie() {
+
+    final var payload = mapper.map(
+        new EnvidoResolvedEvent(EnvidoResponse.QUIERO, PlayerSeat.PLAYER_ONE, 33, 20, true));
+
+    assertThat(payload).containsEntry("pointsMano", 33).doesNotContainKey("pointsPie");
+  }
+
+  @Test
+  @DisplayName("EnvidoResolvedEvent pie gana → ambos puntos en payload")
+  void envidoResolvedPieWonExposesBothPoints() {
+
+    final var payload = mapper.map(
+        new EnvidoResolvedEvent(EnvidoResponse.QUIERO, PlayerSeat.PLAYER_TWO, 20, 33, false));
+
+    assertThat(payload).containsEntry("pointsMano", 20).containsEntry("pointsPie", 33);
+  }
+
+  @Test
+  @DisplayName("EnvidoResolvedEvent NO_QUIERO → sin pointsMano ni pointsPie")
+  void envidoResolvedNoQuieroHidesBothPoints() {
+
+    final var payload = mapper.map(
+        new EnvidoResolvedEvent(EnvidoResponse.NO_QUIERO, PlayerSeat.PLAYER_ONE, null, null,
+            false));
+
+    assertThat(payload).doesNotContainKey("pointsMano").doesNotContainKey("pointsPie");
   }
 
   @Test
