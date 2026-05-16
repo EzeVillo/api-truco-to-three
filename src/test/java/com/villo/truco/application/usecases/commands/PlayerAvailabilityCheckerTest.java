@@ -2,30 +2,24 @@ package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.ports.BotRegistry;
-import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.exceptions.PlayerAlreadyInWaitingCupException;
 import com.villo.truco.domain.model.cup.exceptions.PlayerBusyInCupException;
-import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
-import com.villo.truco.domain.model.league.valueobjects.LeagueId;
-import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
-import com.villo.truco.domain.shared.pagination.CursorPageQuery;
-import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
-import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
-import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,9 +28,10 @@ import org.junit.jupiter.api.Test;
 class PlayerAvailabilityCheckerTest {
 
   private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
-      final Optional<League> league, final Optional<Cup> cup) {
+      final Optional<League> inProgressLeague, final Optional<Cup> inProgressCup) {
 
-    return checker(hasUnfinishedMatch, false, league, Optional.empty(), cup, Optional.empty());
+    return checker(hasUnfinishedMatch, false, inProgressLeague, Optional.empty(), inProgressCup,
+        Optional.empty());
   }
 
   private static PlayerAvailabilityChecker checker(final boolean hasUnfinishedMatch,
@@ -52,121 +47,20 @@ class PlayerAvailabilityCheckerTest {
       final Optional<League> waitingLeague, final Optional<Cup> inProgressCup,
       final Optional<Cup> waitingCup) {
 
-    final MatchQueryRepository matchRepo = new StubMatchQueryRepository(hasUnfinishedMatch,
-        hasActiveMatch);
-    final LeagueQueryRepository leagueRepo = new LeagueQueryRepository() {
+    final var matchRepo = mock(MatchQueryRepository.class);
+    when(matchRepo.hasUnfinishedMatch(any())).thenReturn(hasUnfinishedMatch);
+    when(matchRepo.hasActiveMatch(any())).thenReturn(hasActiveMatch);
 
-      @Override
-      public Optional<League> findById(final LeagueId leagueId) {
+    final var leagueRepo = mock(LeagueQueryRepository.class);
+    when(leagueRepo.findInProgressByPlayer(any())).thenReturn(inProgressLeague);
+    when(leagueRepo.findWaitingByPlayer(any())).thenReturn(waitingLeague);
 
-        return Optional.empty();
-      }
+    final var cupRepo = mock(CupQueryRepository.class);
+    when(cupRepo.findInProgressByPlayer(any())).thenReturn(inProgressCup);
+    when(cupRepo.findWaitingByPlayer(any())).thenReturn(waitingCup);
 
-      @Override
-      public Optional<League> findByMatchId(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
-
-        return inProgressLeague;
-      }
-
-      @Override
-      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
-
-        return waitingLeague;
-      }
-
-      @Override
-      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      @Override
-      public List<League> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-    final CupQueryRepository cupRepo = new CupQueryRepository() {
-
-      @Override
-      public Optional<Cup> findById(final CupId cupId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByMatchId(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
-
-        return inProgressCup;
-      }
-
-      @Override
-      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
-
-        return waitingCup;
-      }
-
-      @Override
-      public List<CupId> findIdleCupIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      private List<Cup> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-    final BotRegistry noBotRegistry = new BotRegistry() {
-
-      @Override
-      public boolean isBot(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public Optional<BotProfile> getProfile(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<BotProfile> getAll() {
-
-        return List.of();
-      }
-
-      @Override
-      public void register(final BotProfile profile) {
-
-      }
-    };
-    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, noBotRegistry);
+    final var botRegistry = mock(BotRegistry.class);
+    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry);
   }
 
   @Test
@@ -360,47 +254,6 @@ class PlayerAvailabilityCheckerTest {
 
     assertThatThrownBy(() -> checker.ensureCanStartMatch(creator)).isInstanceOf(
         PlayerAlreadyInWaitingLeagueException.class);
-  }
-
-  private record StubMatchQueryRepository(boolean unfinished, boolean activeMatch) implements
-      MatchQueryRepository {
-
-    @Override
-    public Optional<Match> findById(final MatchId matchId) {
-
-      return Optional.empty();
-    }
-
-    @Override
-    public boolean hasActiveMatch(final PlayerId playerId) {
-
-      return this.activeMatch;
-    }
-
-    @Override
-    public boolean hasUnfinishedMatch(final PlayerId playerId) {
-
-      return this.unfinished;
-    }
-
-    @Override
-    public List<MatchId> findIdleMatchIds(final Instant idleSince) {
-
-      return List.of();
-    }
-
-    @Override
-    public List<Match> findPublicWaiting() {
-
-      return List.of();
-    }
-
-    @Override
-    public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-      return new CursorPageResult<>(findPublicWaiting(), null);
-    }
-
   }
 
 }

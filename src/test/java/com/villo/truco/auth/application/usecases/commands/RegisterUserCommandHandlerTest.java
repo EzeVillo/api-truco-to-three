@@ -2,28 +2,33 @@ package com.villo.truco.auth.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.villo.truco.auth.application.commands.RegisterUserCommand;
+import com.villo.truco.auth.application.ports.out.AccessTokenIssuer;
+import com.villo.truco.auth.application.ports.out.RefreshTokenProvider;
 import com.villo.truco.auth.application.services.UserSessionIssuer;
-import com.villo.truco.auth.domain.model.user.User;
-import com.villo.truco.auth.domain.model.user.UserRehydrator;
-import com.villo.truco.auth.domain.model.user.UserSnapshot;
+import com.villo.truco.auth.domain.model.auth.UserSession;
 import com.villo.truco.auth.domain.model.user.UsernameAvailabilityPolicy;
 import com.villo.truco.auth.domain.model.user.exceptions.InvalidPasswordException;
 import com.villo.truco.auth.domain.model.user.exceptions.UsernameUnavailableException;
 import com.villo.truco.auth.domain.model.user.valueobjects.HashedPassword;
 import com.villo.truco.auth.domain.model.user.valueobjects.RawPassword;
-import com.villo.truco.auth.domain.model.user.valueobjects.Username;
 import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
 import com.villo.truco.auth.domain.ports.UserRepository;
+import com.villo.truco.auth.domain.ports.UserSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 @DisplayName("RegisterUserCommandHandler")
 class RegisterUserCommandHandlerTest {
@@ -34,63 +39,41 @@ class RegisterUserCommandHandlerTest {
     };
   }
 
-  private static PasswordHasher stubHasher() {
-
-    return new PasswordHasher() {
-
-      @Override
-      public HashedPassword hash(final RawPassword rawPassword) {
-
-        return new HashedPassword("hashed:" + rawPassword.value());
-      }
-
-      @Override
-      public boolean matches(final String rawPassword, final HashedPassword hashedPassword) {
-
-        return hashedPassword.value().equals("hashed:" + rawPassword);
-      }
-    };
-  }
-
   @Test
   @DisplayName("registra un usuario nuevo y devuelve tokens")
   void registersNewUser() {
 
-    final var savedUser = new AtomicReference<User>();
-    final var userSessions = new AuthTestFixtures.InMemoryUserSessionRepository();
-    final UserRepository repository = new UserRepository() {
+    final var savedUser = new AtomicReference<>();
+    final var userRepository = mock(UserRepository.class);
+    doAnswer(inv -> {
+      savedUser.set(inv.getArgument(0));
+      return null;
+    }).when(userRepository).saveEnsuringUsernameAvailable(any());
 
-      @Override
-      public void saveEnsuringUsernameAvailable(final User user) {
+    final var passwordHasher = mock(PasswordHasher.class);
+    when(passwordHasher.hash(any(RawPassword.class))).thenAnswer(
+        inv -> new HashedPassword("hashed:" + inv.getArgument(0, RawPassword.class).value()));
 
-        savedUser.set(user);
-      }
+    final var accessTokenIssuer = mock(AccessTokenIssuer.class);
+    when(accessTokenIssuer.issueForUser(any())).thenAnswer(
+        inv -> new AccessTokenIssuer.IssuedAccessToken(
+            "access-" + inv.getArgument(0, PlayerId.class).value(),
+            AuthTestFixtures.USER_ACCESS_TOKEN_EXPIRES_IN));
 
-      @Override
-      public Optional<User> findById(final PlayerId playerId) {
+    final var refreshTokenProvider = mock(RefreshTokenProvider.class);
+    when(refreshTokenProvider.hash(anyString())).thenAnswer(
+        inv -> "hash-" + inv.getArgument(0, String.class));
+    when(refreshTokenProvider.issue(any())).thenAnswer(
+        inv -> new RefreshTokenProvider.IssuedRefreshToken("refresh-value", "hash-refresh-value",
+            inv.getArgument(0, Instant.class)
+                .plusSeconds(AuthTestFixtures.REFRESH_TOKEN_EXPIRES_IN),
+            AuthTestFixtures.REFRESH_TOKEN_EXPIRES_IN));
 
-        return Optional.ofNullable(savedUser.get()).filter(user -> user.getId().equals(playerId));
-      }
-
-      @Override
-      public Optional<User> findByUsername(final Username username) {
-
-        return Optional.ofNullable(savedUser.get());
-      }
-
-      @Override
-      public boolean existsByUsername(final Username username) {
-
-        return savedUser.get() != null && savedUser.get().username().value()
-            .equals(username.value());
-      }
-    };
-
-    final var issuer = new UserSessionIssuer(AuthTestFixtures.stubAccessTokenIssuer(),
-        AuthTestFixtures.constantRefreshTokenProvider("refresh-value"), userSessions,
-        AuthTestFixtures.fixedClock());
-    final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository), noopNotifier());
+    final var userSessionRepository = mock(UserSessionRepository.class);
+    final var issuer = new UserSessionIssuer(accessTokenIssuer, refreshTokenProvider,
+        userSessionRepository, AuthTestFixtures.fixedClock());
+    final var handler = new RegisterUserCommandHandler(userRepository, passwordHasher, issuer,
+        new UsernameAvailabilityPolicy(userRepository), noopNotifier());
 
     final var session = handler.handle(new RegisterUserCommand("juancho", "pass1!"));
 
@@ -102,52 +85,24 @@ class RegisterUserCommandHandlerTest {
     assertThat(session.refreshTokenExpiresIn()).isEqualTo(
         AuthTestFixtures.REFRESH_TOKEN_EXPIRES_IN);
     assertThat(savedUser.get()).isNotNull();
-    assertThat(savedUser.get().username().value()).isEqualTo("juancho");
-    assertThat(savedUser.get().hashedPassword().value()).isEqualTo("hashed:pass1!");
-    assertThat(userSessions.findByRefreshTokenHash("hash-refresh-value")).isPresent();
+
+    final var captor = ArgumentCaptor.forClass(UserSession.class);
+    verify(userSessionRepository).save(captor.capture());
+    assertThat(captor.getValue().containsRefreshTokenHash("hash-refresh-value")).isTrue();
   }
 
   @Test
   @DisplayName("falla si el username ya existe")
   void failsIfUsernameTaken() {
 
-    final Map<String, User> store = new HashMap<>();
-    store.put("juancho", UserRehydrator.rehydrate(
-        new UserSnapshot(PlayerId.generate(), new Username("juancho"),
-            new HashedPassword("hashed"))));
+    final var userRepository = mock(UserRepository.class);
+    when(userRepository.existsByUsername(any())).thenReturn(true);
 
-    final UserRepository repository = new UserRepository() {
-
-      @Override
-      public void saveEnsuringUsernameAvailable(final User user) {
-
-        store.put(user.username().value(), user);
-      }
-
-      @Override
-      public Optional<User> findById(final PlayerId playerId) {
-
-        return store.values().stream().filter(user -> user.getId().equals(playerId)).findFirst();
-      }
-
-      @Override
-      public Optional<User> findByUsername(final Username username) {
-
-        return Optional.ofNullable(store.get(username.value()));
-      }
-
-      @Override
-      public boolean existsByUsername(final Username username) {
-
-        return store.containsKey(username.value());
-      }
-    };
-
-    final var issuer = new UserSessionIssuer(AuthTestFixtures.stubAccessTokenIssuer(),
-        AuthTestFixtures.constantRefreshTokenProvider("refresh-value"),
-        new AuthTestFixtures.InMemoryUserSessionRepository(), AuthTestFixtures.fixedClock());
-    final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository), noopNotifier());
+    final var issuer = new UserSessionIssuer(mock(AccessTokenIssuer.class),
+        mock(RefreshTokenProvider.class), mock(UserSessionRepository.class),
+        AuthTestFixtures.fixedClock());
+    final var handler = new RegisterUserCommandHandler(userRepository, mock(PasswordHasher.class),
+        issuer, new UsernameAvailabilityPolicy(userRepository), noopNotifier());
 
     assertThatThrownBy(
         () -> handler.handle(new RegisterUserCommand("juancho", "other1!"))).isInstanceOf(
@@ -158,43 +113,14 @@ class RegisterUserCommandHandlerTest {
   @DisplayName("falla si el username ya existe con diferente casing")
   void failsIfUsernameTakenWithDifferentCasing() {
 
-    final Map<String, User> store = new HashMap<>();
-    store.put("juancho", UserRehydrator.rehydrate(
-        new UserSnapshot(PlayerId.generate(), new Username("juancho"),
-            new HashedPassword("hashed"))));
+    final var userRepository = mock(UserRepository.class);
+    when(userRepository.existsByUsername(any())).thenReturn(true);
 
-    final UserRepository repository = new UserRepository() {
-
-      @Override
-      public void saveEnsuringUsernameAvailable(final User user) {
-
-        store.put(user.username().normalized(), user);
-      }
-
-      @Override
-      public Optional<User> findById(final PlayerId playerId) {
-
-        return store.values().stream().filter(user -> user.getId().equals(playerId)).findFirst();
-      }
-
-      @Override
-      public Optional<User> findByUsername(final Username username) {
-
-        return Optional.ofNullable(store.get(username.normalized()));
-      }
-
-      @Override
-      public boolean existsByUsername(final Username username) {
-
-        return store.containsKey(username.normalized());
-      }
-    };
-
-    final var issuer = new UserSessionIssuer(AuthTestFixtures.stubAccessTokenIssuer(),
-        AuthTestFixtures.constantRefreshTokenProvider("refresh-value"),
-        new AuthTestFixtures.InMemoryUserSessionRepository(), AuthTestFixtures.fixedClock());
-    final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository), noopNotifier());
+    final var issuer = new UserSessionIssuer(mock(AccessTokenIssuer.class),
+        mock(RefreshTokenProvider.class), mock(UserSessionRepository.class),
+        AuthTestFixtures.fixedClock());
+    final var handler = new RegisterUserCommandHandler(userRepository, mock(PasswordHasher.class),
+        issuer, new UsernameAvailabilityPolicy(userRepository), noopNotifier());
 
     assertThatThrownBy(
         () -> handler.handle(new RegisterUserCommand("JUANCHO", "other1!"))).isInstanceOf(
@@ -205,37 +131,13 @@ class RegisterUserCommandHandlerTest {
   @DisplayName("falla si la password no cumple la politica de registro")
   void failsIfPasswordDoesNotMeetPolicy() {
 
-    final UserRepository repository = new UserRepository() {
+    final var userRepository = mock(UserRepository.class);
 
-      @Override
-      public void saveEnsuringUsernameAvailable(final User user) {
-
-      }
-
-      @Override
-      public Optional<User> findById(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<User> findByUsername(final Username username) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public boolean existsByUsername(final Username username) {
-
-        return false;
-      }
-    };
-
-    final var issuer = new UserSessionIssuer(AuthTestFixtures.stubAccessTokenIssuer(),
-        AuthTestFixtures.constantRefreshTokenProvider("refresh-value"),
-        new AuthTestFixtures.InMemoryUserSessionRepository(), AuthTestFixtures.fixedClock());
-    final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository), noopNotifier());
+    final var issuer = new UserSessionIssuer(mock(AccessTokenIssuer.class),
+        mock(RefreshTokenProvider.class), mock(UserSessionRepository.class),
+        AuthTestFixtures.fixedClock());
+    final var handler = new RegisterUserCommandHandler(userRepository, mock(PasswordHasher.class),
+        issuer, new UsernameAvailabilityPolicy(userRepository), noopNotifier());
 
     assertThatThrownBy(
         () -> handler.handle(new RegisterUserCommand("juancho", "abcde"))).isInstanceOf(

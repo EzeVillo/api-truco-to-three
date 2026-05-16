@@ -1,8 +1,12 @@
 package com.villo.truco.profile.application.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.auth.domain.ports.UserQueryRepository;
@@ -17,14 +21,10 @@ import com.villo.truco.profile.domain.model.AchievementCode;
 import com.villo.truco.profile.domain.model.AchievementPolicy;
 import com.villo.truco.profile.domain.model.MatchAchievementTracker;
 import com.villo.truco.profile.domain.model.PlayerProfile;
-import com.villo.truco.profile.domain.model.events.AchievementUnlocked;
 import com.villo.truco.profile.domain.ports.MatchAchievementTrackerRepository;
 import com.villo.truco.profile.domain.ports.PlayerProfileRepository;
 import com.villo.truco.profile.domain.ports.ProfileEventNotifier;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
@@ -38,9 +38,27 @@ class ProfileAchievementTrackingServiceTest {
   void processesEventSequenceAndResetsTrackerOnGameStarted() {
 
     final var userQueryRepository = mock(UserQueryRepository.class);
-    final var trackerRepository = new InMemoryMatchAchievementTrackerRepository();
-    final var profileRepository = new InMemoryPlayerProfileRepository();
-    final var profileEventNotifier = new CapturingProfileEventNotifier();
+    final var trackerRepository = mock(MatchAchievementTrackerRepository.class);
+    final var profileRepository = mock(PlayerProfileRepository.class);
+    final var profileEventNotifier = mock(ProfileEventNotifier.class);
+
+    final var trackerStore = new HashMap<MatchId, MatchAchievementTracker>();
+    doAnswer(inv -> {
+      trackerStore.put(inv.getArgument(0, MatchAchievementTracker.class).getId(),
+          inv.getArgument(0));
+      return null;
+    }).when(trackerRepository).save(any());
+    when(trackerRepository.findByMatchId(any())).thenAnswer(
+        inv -> Optional.ofNullable(trackerStore.get(inv.getArgument(0, MatchId.class))));
+
+    final var profileStore = new HashMap<PlayerId, PlayerProfile>();
+    doAnswer(inv -> {
+      profileStore.put(inv.getArgument(0, PlayerProfile.class).getId(), inv.getArgument(0));
+      return null;
+    }).when(profileRepository).save(any());
+    when(profileRepository.findByPlayerId(any())).thenAnswer(
+        inv -> Optional.ofNullable(profileStore.get(inv.getArgument(0, PlayerId.class))));
+
     final var service = new ProfileAchievementTrackingService(userQueryRepository,
         trackerRepository, profileRepository, new AchievementPolicy(), profileEventNotifier);
     final var matchId = MatchId.generate();
@@ -70,7 +88,7 @@ class ProfileAchievementTrackingServiceTest {
     final var playerProfile = profileRepository.findByPlayerId(playerOne).orElseThrow();
     assertThat(playerProfile.hasUnlocked(
         AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND)).isTrue();
-    assertThat(profileEventNotifier.events).hasSize(1);
+    verify(profileEventNotifier).publishDomainEvents(anyList());
 
     service.handle(new GameStartedEvent(matchId, playerOne, playerTwo, 2));
 
@@ -86,9 +104,27 @@ class ProfileAchievementTrackingServiceTest {
   void sameSequenceAgainstBotUnlocksAchievements() {
 
     final var userQueryRepository = mock(UserQueryRepository.class);
-    final var trackerRepository = new InMemoryMatchAchievementTrackerRepository();
-    final var profileRepository = new InMemoryPlayerProfileRepository();
-    final var profileEventNotifier = new CapturingProfileEventNotifier();
+    final var trackerRepository = mock(MatchAchievementTrackerRepository.class);
+    final var profileRepository = mock(PlayerProfileRepository.class);
+    final var profileEventNotifier = mock(ProfileEventNotifier.class);
+
+    final var trackerStore = new HashMap<MatchId, MatchAchievementTracker>();
+    doAnswer(inv -> {
+      trackerStore.put(inv.getArgument(0, MatchAchievementTracker.class).getId(),
+          inv.getArgument(0));
+      return null;
+    }).when(trackerRepository).save(any());
+    when(trackerRepository.findByMatchId(any())).thenAnswer(
+        inv -> Optional.ofNullable(trackerStore.get(inv.getArgument(0, MatchId.class))));
+
+    final var profileStore = new HashMap<PlayerId, PlayerProfile>();
+    doAnswer(inv -> {
+      profileStore.put(inv.getArgument(0, PlayerProfile.class).getId(), inv.getArgument(0));
+      return null;
+    }).when(profileRepository).save(any());
+    when(profileRepository.findByPlayerId(any())).thenAnswer(
+        inv -> Optional.ofNullable(profileStore.get(inv.getArgument(0, PlayerId.class))));
+
     final var service = new ProfileAchievementTrackingService(userQueryRepository,
         trackerRepository, profileRepository, new AchievementPolicy(), profileEventNotifier);
     final var matchId = MatchId.generate();
@@ -116,56 +152,7 @@ class ProfileAchievementTrackingServiceTest {
     final var profile = profileRepository.findByPlayerId(playerOne).orElseThrow();
     assertThat(
         profile.hasUnlocked(AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND)).isTrue();
-    assertThat(profileEventNotifier.events).isNotEmpty();
-  }
-
-  private static final class InMemoryPlayerProfileRepository implements PlayerProfileRepository {
-
-    private final Map<PlayerId, PlayerProfile> byId = new HashMap<>();
-
-    @Override
-    public void save(final PlayerProfile profile) {
-
-      this.byId.put(profile.getId(), profile);
-    }
-
-    @Override
-    public Optional<PlayerProfile> findByPlayerId(final PlayerId playerId) {
-
-      return Optional.ofNullable(this.byId.get(playerId));
-    }
-
-  }
-
-  private static final class InMemoryMatchAchievementTrackerRepository implements
-      MatchAchievementTrackerRepository {
-
-    private final Map<MatchId, MatchAchievementTracker> byId = new HashMap<>();
-
-    @Override
-    public void save(final MatchAchievementTracker tracker) {
-
-      this.byId.put(tracker.getId(), tracker);
-    }
-
-    @Override
-    public Optional<MatchAchievementTracker> findByMatchId(final MatchId matchId) {
-
-      return Optional.ofNullable(this.byId.get(matchId));
-    }
-
-  }
-
-  private static final class CapturingProfileEventNotifier implements ProfileEventNotifier {
-
-    private final List<AchievementUnlocked> events = new ArrayList<>();
-
-    @Override
-    public void publishDomainEvents(final List<? extends AchievementUnlocked> events) {
-
-      this.events.addAll(events);
-    }
-
+    verify(profileEventNotifier).publishDomainEvents(anyList());
   }
 
 }
