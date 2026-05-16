@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import com.villo.truco.auth.application.ports.out.AccessTokenIssuer;
 import com.villo.truco.auth.application.ports.out.RefreshTokenProvider;
+import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
 import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.auth.domain.ports.UserSessionRepository;
@@ -21,7 +22,7 @@ class AuthUseCaseConfigurationTest {
     final var configuration = new AuthUseCaseConfiguration(mock(UserRepository.class),
         mock(UserSessionRepository.class), mock(PasswordHasher.class),
         mock(AccessTokenIssuer.class), mock(RefreshTokenProvider.class), mock(Clock.class),
-        new UseCasePipeline(List.of()));
+        new UseCasePipeline(List.of()), mock(AuthEventNotifier.class));
 
     assertThat(configuration.userSessionIssuer()).isNotNull();
     assertThat(configuration.registerUserCommandHandler()).isNotNull();

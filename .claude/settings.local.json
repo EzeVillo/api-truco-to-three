@@ -79,7 +79,24 @@
       "Bash(export TMP=\"C:\\\\Temp\")",
       "Bash(git status:*)",
       "Bash(mvn compile:*)",
-      "Bash(./mvnw compile:*)"
+      "Bash(./mvnw compile:*)",
+      "PowerShell(cmd /c \"dir /s /b C:\\\\Users\\\\ezevi_30ey2ks\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\" 2>&1)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\\\\.claude\\\\commands\")",
+      "Bash(Out-Null)",
+      "Bash(Move-Item \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\\\\.claude\\\\skills\\\\arch-review.md\" \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\\\\.claude\\\\commands\\\\arch-review.md\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\\\\.claude\\\\skills\" -Recurse -Force)",
+      "Bash(cmd /c \"gradlew.bat compileTestJava 2>&1\")",
+      "PowerShell(cd \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\"; $env:GRADLE_OPTS=\"-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider\"; .\\\\gradlew.bat compileTestJava --no-daemon 2>&1 | Select-Object -Last 25)",
+      "Bash(GRADLE_OPTS=\"-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider\" ./gradlew.bat compileTestJava)",
+      "Bash(JAVA_OPTS=\"-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider\" GRADLE_OPTS=\"-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider\" ./gradlew.bat compileTestJava)",
+      "Bash(java -Djdk.nio.enableUnixDomainSockets=false -Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider -Xmx64m -Xms64m -jar gradle/wrapper/gradle-wrapper.jar test --tests \"com.villo.truco.profile.domain.model.AchievementPolicyTest\")",
+      "PowerShell(cd \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\"; $env:JAVA_OPTS=\"-Djava.net.preferIPv4Stack=true\"; .\\\\gradlew.bat --no-daemon compileTestJava 2>&1 | Select-Object -Last 40)",
+      "PowerShell(Get-Command java)",
+      "PowerShell(java -version 2>&1)",
+      "Bash(powershell *)",
+      "Bash(./gradlew compileJava compileTestJava -q)",
+      "Bash(xxd)",
+      "Bash(./gradlew compileJava --quiet)"
     ]
   }
 }

@@ -1445,6 +1445,59 @@ Defaults en `application.yaml`:
 El backend corre un scheduler que expira invitaciones `PENDING` por tiempo o cuando el recurso deja
 de admitir join.
 
+## 7.5 Perfil de jugador
+
+### 7.5.1 Obtener perfil de jugador
+
+`GET /api/profile/{username}` — requiere Bearer token.
+
+Devuelve el username, logros desbloqueados y estadísticas agregadas del jugador indicado. Mismo
+payload para el propio perfil o para el de otro jugador.
+
+**Path params:**
+
+| Campo      | Tipo     | Descripcion                              |
+|------------|----------|------------------------------------------|
+| `username` | `String` | Username del jugador (ASCII alfanumérico, mínimo 3 letras, case-sensitive) |
+
+**Respuesta 200:**
+
+```json
+{
+  "username": "juancho",
+  "achievements": [
+    {
+      "achievementCode": "WIN_RETRUCO_FROM_0_0_TO_3",
+      "unlockedAt": 1772768158123,
+      "matchId": "550e8400-e29b-41d4-a716-446655440001",
+      "gameNumber": 1
+    }
+  ],
+  "stats": {
+    "matchesPlayed": 42,
+    "matchesWon": 24,
+    "matchesLost": 18,
+    "winRate": 57
+  }
+}
+```
+
+**Errores:**
+
+| Codigo | Descripcion                                        |
+|--------|----------------------------------------------------|
+| 401    | Token ausente o inválido                           |
+| 404    | `username` no corresponde a un usuario registrado  |
+
+**Notas:**
+
+- Los guests no tienen perfil (devuelve 404 si se consulta uno).
+- La búsqueda es case-sensitive: `Juancho` y `juancho` son usernames distintos.
+- Las stats son eventual-consistent: se actualizan después de que el evento
+  `MATCH_FINISHED`, `MATCH_ABANDONED` o `MATCH_FORFEITED` es procesado por el backend.
+- Solo se computan partidas PvP humanas (bots excluidos).
+- El abandono cuenta como derrota para el abandoner y victoria para el rival.
+
 ## 8. Enums y valores permitidos
 
 Estos valores son case-sensitive y deben enviarse exactamente igual, en mayusculas y con guiones
@@ -1524,6 +1577,7 @@ Suscripciones permitidas por interceptor:
 - `/user/queue/cup` - eventos de copa
 - `/user/queue/chat` - eventos de chat en tiempo real
 - `/user/queue/social` - eventos de amistades e invitaciones
+- `/user/queue/profile` - eventos de logros del perfil
 
 - `/topic/public-match-lobby` - stream compartido del lobby publico de matches
 - `/topic/public-cup-lobby` - stream compartido del lobby publico de copas
@@ -1605,6 +1659,21 @@ Cada tipo de recurso tiene su propia estructura de evento:
     "targetType": "MATCH",
     "targetId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
     "expiresAt": 1775304600000
+  }
+}
+```
+
+**Profile** (`/user/queue/profile`):
+
+```json
+{
+  "eventType": "ACHIEVEMENT_UNLOCKED",
+  "timestamp": 1772768158123,
+  "payload": {
+    "achievementCode": "WIN_RETRUCO_FROM_0_0_TO_3",
+    "unlockedAt": 1772768158123,
+    "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+    "gameNumber": 1
   }
 }
 ```
@@ -1728,7 +1797,17 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `RESOURCE_INVITATION_EXPIRED` - una invitación pendiente expiró por tiempo o por recurso no
   joinable
 
-### 9.5f eventType posibles - Spectate (
+### 9.5f eventType posibles - Profile (`/user/queue/profile`, usuarios registrados)
+
+- `ACHIEVEMENT_UNLOCKED` - logro desbloqueado para el usuario autenticado
+
+Reglas:
+
+- solo se evalúa en matches `human vs human`
+- las partidas contra bots no generan tracking ni unlocks
+- el abandono cuenta como derrota para el abandoner y victoria para el rival
+
+### 9.5g eventType posibles - Spectate (
 
 `/user/queue/match-spectate`, espectadores activos del match)
 
@@ -1742,7 +1821,7 @@ No se reenvian al espectador los eventos privados por asiento:
 - `PLAYER_HAND_UPDATED`
 - `AVAILABLE_ACTIONS_UPDATED`
 
-### 9.5g eventType posibles - Lobby publico (`/topic/public-*`)
+### 9.5h eventType posibles - Lobby publico (`/topic/public-*`)
 
 - `PUBLIC_MATCH_LOBBY_UPSERT` - snapshot o actualizacion de un match que sigue abierto en lobby
 - `PUBLIC_MATCH_LOBBY_REMOVED` - remocion de un match que salio del lobby
@@ -1832,6 +1911,8 @@ No se reenvian al espectador los eventos privados por asiento:
     - `{ invitationId, recipientUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_EXPIRED`:
     - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
+- `ACHIEVEMENT_UNLOCKED`:
+    - `{ achievementCode, unlockedAt, matchId, gameNumber }`
 - `LEAGUE_MATCH_ACTIVATED`:
     - `{ leagueId, matchId }` - se emite a todos los participantes de la liga cuando un partido
       es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
@@ -2024,6 +2105,8 @@ Errores:
   solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
 - Las novedades sociales llegan por `/user/queue/social`; no reemplazan el flujo existente de
   `joinCode`, solo agregan targeting y UX mas rapida entre amigos.
+- Los logros llegan por `/user/queue/profile` con evento `ACHIEVEMENT_UNLOCKED` y payload
+  `{ achievementCode, unlockedAt, matchId, gameNumber }`.
 - El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al
   crear/unirse/navegar a un match, liga o copa.
 - El backend no suprime eventos del lobby segun `playerId`; si el creador o participante no debe
@@ -2048,6 +2131,11 @@ Errores:
   segundos entre mensajes del mismo jugador.
 - El DM de `FRIENDSHIP` es efimero: no persiste mensajes ni metadata. Se crea lazily la primera vez
   que se consulta y se pierde al reiniciar la aplicacion.
+- El perfil de jugador se consulta por REST: `GET /api/profile/{username}` devuelve username,
+  logros y stats agregados (sin `playerId` en la respuesta). Las stats son eventual-consistent
+  (se actualizan al recibir `MATCH_FINISHED`/`MATCH_ABANDONED`/`MATCH_FORFEITED`). Los logros
+  en tiempo real siguen llegando por WebSocket (`/user/queue/profile`). Los guests no tienen
+  perfil (404). La búsqueda es case-sensitive.
 
 ### 11.1 Reconexión WebSocket
 

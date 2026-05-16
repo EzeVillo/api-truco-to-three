@@ -15,6 +15,7 @@ games.
 - spectating de matches de ligas y copas
 - chat por recurso
 - amistades, invitaciones rapidas y DM efimero entre amigos
+- sistema de logros por jugador registrado
 - autenticacion con access token corto para usuarios y refresh token rotado
 - REST + WebSocket/STOMP
 - persistencia con PostgreSQL + Flyway
@@ -69,6 +70,14 @@ games.
   (pendientes) de `friendships` (amistades aceptadas) y expone jugadores por `username`, no por
   `PlayerId`. `friendshipId` queda solo como identidad interna del agregado y no forma parte del
   contrato publico REST/WebSocket.
+- Profile:
+  tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
+  interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea
+  automáticamente el perfil del jugador (logros vacíos, stats en cero). El endpoint público
+  `GET /api/profile/{playerId}` expone username, logros desbloqueados y estadísticas agregadas
+  de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate). Las stats se
+  actualizan al recibir los eventos `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`;
+  las partidas contra bots no cuentan.
 - Tiempo real:
   eventos privados por jugador para match, league, cup, chat y social, mas canal de spectate para
   snapshots y eventos publicos del match.
@@ -92,6 +101,7 @@ Agregados principales del dominio:
 - `chat`
 - `bot`
 - `user`
+- `profile`
 
 La restriccion de dependencias se valida con ArchUnit en
 `src/test/java/com/villo/truco/architecture/CleanArchitectureTest.java`.
@@ -257,6 +267,7 @@ Recursos REST principales:
 - `/api/chats`
 - `/api/social`
 - `/api/bots`
+- `/api/profile`
 
 ## Salas Publicas y Privadas
 
@@ -286,7 +297,7 @@ WebSocket/STOMP:
 - endpoint SockJS: `/ws-sockjs`
 - colas por usuario:
   `/user/queue/match`, `/user/queue/match-spectate`, `/user/queue/league`, `/user/queue/cup`,
-  `/user/queue/chat`, `/user/queue/social`
+  `/user/queue/chat`, `/user/queue/social`, `/user/queue/profile`
 - topics publicos de lobby:
   `/topic/public-match-lobby`, `/topic/public-league-lobby`, `/topic/public-cup-lobby`
   solo emiten deltas `UPSERT`/`REMOVED`; el snapshot inicial del lobby se obtiene via REST.

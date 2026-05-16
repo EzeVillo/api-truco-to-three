@@ -361,8 +361,8 @@ final class Round extends EntityBase<RoundId> {
     final var nextTurn = TurnRestorationPolicy.turnAfterEnvidoResolved(this.turnBeforeEnvidoCall);
     this.turnBeforeEnvidoCall = null;
     final boolean manoWon = pointsMano >= pointsPie;
-    this.addDomainEvent(new EnvidoResolvedEvent(EnvidoResponse.QUIERO, winnerSeat, pointsMano,
-        manoWon ? null : pointsPie));
+    this.addDomainEvent(
+        new EnvidoResolvedEvent(EnvidoResponse.QUIERO, winnerSeat, pointsMano, pointsPie, manoWon));
     this.changeTurnTo(nextTurn);
 
     return new EnvidoResult(pointsMano, pointsPie, winner, pointsWon);
@@ -381,7 +381,7 @@ final class Round extends EntityBase<RoundId> {
     this.envidoStateMachine.resolve();
     this.status = RoundStatus.PLAYING;
     this.addDomainEvent(
-        new EnvidoResolvedEvent(EnvidoResponse.NO_QUIERO, this.seatOf(winner), null, null));
+        new EnvidoResolvedEvent(EnvidoResponse.NO_QUIERO, this.seatOf(winner), null, null, false));
     final var nextTurn = TurnRestorationPolicy.turnAfterEnvidoResolved(this.turnBeforeEnvidoCall);
     this.turnBeforeEnvidoCall = null;
     this.changeTurnTo(nextTurn);
