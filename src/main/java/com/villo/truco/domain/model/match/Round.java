@@ -124,7 +124,7 @@ final class Round extends EntityBase<RoundId> {
     if (this.currentHandCards.size() == 2) {
       this.resolveCurrentHand();
     } else if (AnchoDeEspadaImmediateClosurePolicy.shouldCloseRound(this.status, card,
-        this.playedHands.size(), this.firstHandWasTie())) {
+        this.playedHands.size(), this.firstHandWasTie(), this.firstHandWasWonBy(playerId))) {
       this.resolveCurrentHandWithoutOpponentCard(playerId);
     } else {
       this.changeTurnTo(this.getOpponent(playerId));
@@ -409,6 +409,11 @@ final class Round extends EntityBase<RoundId> {
   private boolean firstHandWasTie() {
 
     return this.playedHands.size() == 1 && this.playedHands.getFirst().winner() == null;
+  }
+
+  private boolean firstHandWasWonBy(final PlayerId playerId) {
+
+    return this.playedHands.size() == 1 && playerId.equals(this.playedHands.getFirst().winner());
   }
 
   boolean hasPlayerPlayedInCurrentHand(final PlayerId playerId) {
