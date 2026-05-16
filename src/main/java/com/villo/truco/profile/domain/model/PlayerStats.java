@@ -55,12 +55,12 @@ public final class PlayerStats extends AggregateBase<PlayerId> {
     return this.matchesLost;
   }
 
-  public double winRate() {
+  public int winRate() {
 
     if (this.matchesPlayed == 0) {
-      return 0.0;
+      return 0;
     }
-    return (double) this.matchesWon / this.matchesPlayed;
+    return (int) Math.round((double) this.matchesWon / this.matchesPlayed * 100);
   }
 
   public PlayerStatsSnapshot snapshot() {
