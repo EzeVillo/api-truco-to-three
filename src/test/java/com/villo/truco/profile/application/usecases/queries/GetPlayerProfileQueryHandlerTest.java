@@ -42,7 +42,7 @@ class GetPlayerProfileQueryHandlerTest {
     assertThat(dto.username()).isEqualTo("juancho");
     assertThat(dto.achievements()).isEmpty();
     assertThat(dto.stats().matchesPlayed()).isEqualTo(0);
-    assertThat(dto.stats().winRate()).isEqualTo(0.0);
+    assertThat(dto.stats().winRate()).isEqualTo(0);
   }
 
   @Test

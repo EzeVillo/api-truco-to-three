@@ -1477,7 +1477,7 @@ payload para el propio perfil o para el de otro jugador.
     "matchesPlayed": 42,
     "matchesWon": 24,
     "matchesLost": 18,
-    "winRate": 0.5714
+    "winRate": 57
   }
 }
 ```

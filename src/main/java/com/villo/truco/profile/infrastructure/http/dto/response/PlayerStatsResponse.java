@@ -8,7 +8,7 @@ public record PlayerStatsResponse(
     @Schema(description = "Total de partidas jugadas", example = "42") int matchesPlayed,
     @Schema(description = "Partidas ganadas", example = "27") int matchesWon,
     @Schema(description = "Partidas perdidas", example = "15") int matchesLost,
-    @Schema(description = "Tasa de victorias (0.0 - 1.0)", example = "0.64") double winRate) {
+    @Schema(description = "Porcentaje de victorias (0-100)", example = "64") int winRate) {
 
   public static PlayerStatsResponse from(final PlayerStatsDTO dto) {
 

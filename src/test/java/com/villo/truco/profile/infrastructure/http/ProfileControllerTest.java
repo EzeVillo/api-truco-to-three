@@ -25,7 +25,7 @@ class ProfileControllerTest {
     final var useCase = mock(GetPlayerProfileUseCase.class);
     final var controller = new ProfileController(useCase);
     final var dto = new PlayerProfileDTO("juancho", List.of(),
-        new PlayerStatsDTO(10, 6, 4, 0.6));
+        new PlayerStatsDTO(10, 6, 4, 60));
     when(useCase.handle(any())).thenReturn(dto);
     final var jwt = Jwt.withTokenValue("token").header("alg", "none")
         .subject(UUID.randomUUID().toString()).build();
@@ -37,7 +37,7 @@ class ProfileControllerTest {
     assertThat(response.getBody().username()).isEqualTo("juancho");
     assertThat(response.getBody().stats().matchesPlayed()).isEqualTo(10);
     assertThat(response.getBody().stats().matchesWon()).isEqualTo(6);
-    assertThat(response.getBody().stats().winRate()).isEqualTo(0.6);
+    assertThat(response.getBody().stats().winRate()).isEqualTo(60);
     assertThat(response.getBody().achievements()).isEmpty();
   }
 

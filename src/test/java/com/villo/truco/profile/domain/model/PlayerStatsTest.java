@@ -36,16 +36,16 @@ class PlayerStatsTest {
   }
 
   @Test
-  @DisplayName("winRate devuelve 0.0 cuando matchesPlayed es 0")
+  @DisplayName("winRate devuelve 0 cuando matchesPlayed es 0")
   void winRateIsZeroWhenNoMatches() {
 
     final var stats = PlayerStats.create(PlayerId.generate());
 
-    assertThat(stats.winRate()).isEqualTo(0.0);
+    assertThat(stats.winRate()).isEqualTo(0);
   }
 
   @Test
-  @DisplayName("winRate calcula correctamente la proporcion de victorias")
+  @DisplayName("winRate devuelve el porcentaje de victorias redondeado sin decimales")
   void winRateCalculation() {
 
     final var stats = PlayerStats.create(PlayerId.generate());
@@ -53,7 +53,7 @@ class PlayerStatsTest {
     stats.recordOutcome(MatchOutcome.WON);
     stats.recordOutcome(MatchOutcome.LOST);
 
-    assertThat(stats.winRate()).isEqualTo(2.0 / 3.0);
+    assertThat(stats.winRate()).isEqualTo(67);
   }
 
   @Test
