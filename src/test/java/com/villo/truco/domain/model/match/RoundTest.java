@@ -762,6 +762,33 @@ class RoundTest {
   }
 
   @Test
+  @DisplayName("segunda mano y ancho de espada de quien ganó la primera cierra la ronda")
+  void shouldCloseRoundImmediatelyOnSecondHandWhenAnchoPlayerWonFirstHand() {
+
+    final var anchoDeEspada = Card.of(Suit.ESPADA, 1);
+    final var round = createRoundOnSecondHandAfterManoWon(anchoDeEspada);
+    round.clearDomainEvents();
+
+    round.playCard(this.mano, anchoDeEspada);
+
+    assertThat(round.getStatus()).isEqualTo(RoundStatus.FINISHED);
+    assertThat(round.getCurrentTurn()).isEqualTo(this.mano);
+    assertThat(round.getRoundWinner()).contains(this.mano);
+    assertThat(round.getPlayedHands()).hasSize(2);
+
+    final var resolvedHand = round.getPlayedHands().getLast();
+    assertThat(resolvedHand.cardPlayerOne()).isEqualTo(anchoDeEspada);
+    assertThat(resolvedHand.cardPlayerTwo()).isNull();
+    assertThat(resolvedHand.winner()).isEqualTo(this.mano);
+    assertThat(round.getDomainEvents()).anyMatch(
+        event -> event.getClass().getSimpleName().equals("HandResolvedEvent"));
+    assertThat(round.getDomainEvents()).anyMatch(
+        event -> event.getClass().getSimpleName().equals("RoundEndedEvent"));
+    assertThat(round.getDomainEvents()).noneMatch(
+        event -> event.getClass().getSimpleName().equals("TurnChangedEvent"));
+  }
+
+  @Test
   @DisplayName("tercera mano y ancho de espada del abridor cierra la ronda")
   void shouldCloseRoundImmediatelyOnThirdHandWithAnchoDeEspada() {
 
@@ -890,6 +917,20 @@ class RoundTest {
 
     return Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano, this.pie, manoHand,
         pieHand, List.of(firstHandTie), List.of(), RoundStatus.PLAYING, this.mano, null, null);
+  }
+
+  private Round createRoundOnSecondHandAfterManoWon(final Card openingCard) {
+
+    final var manoHand = Hand.reconstruct(HandId.generate(),
+        List.of(openingCard, Card.of(Suit.ORO, 6)));
+    final var pieHand = Hand.reconstruct(HandId.generate(),
+        List.of(Card.of(Suit.BASTO, 7), Card.of(Suit.COPA, 3)));
+    final var firstHandWonByMano = new Round.PlayedHand(Card.of(Suit.ESPADA, 7),
+        Card.of(Suit.ORO, 4), this.mano);
+
+    return Round.reconstruct(RoundId.generate(), 1, this.mano, this.mano, this.pie, manoHand,
+        pieHand, List.of(firstHandWonByMano), List.of(), RoundStatus.PLAYING, this.mano, null,
+        null);
   }
 
   private Round createRoundOnThirdHand(final Card openingCard) {

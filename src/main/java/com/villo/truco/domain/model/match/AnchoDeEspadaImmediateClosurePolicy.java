@@ -11,13 +11,15 @@ final class AnchoDeEspadaImmediateClosurePolicy {
   }
 
   static boolean shouldCloseRound(final RoundStatus status, final Card playedCard,
-      final int playedHandsCount, final boolean firstHandWasTie) {
+      final int playedHandsCount, final boolean firstHandWasTie,
+      final boolean anchoPlayerWonFirstHand) {
 
     if (status != RoundStatus.PLAYING || !isAnchoDeEspada(playedCard)) {
       return false;
     }
 
-    return playedHandsCount == 2 || (playedHandsCount == 1 && firstHandWasTie);
+    return playedHandsCount == 2 || (playedHandsCount == 1 && (firstHandWasTie
+        || anchoPlayerWonFirstHand));
   }
 
   private static boolean isAnchoDeEspada(final Card card) {
