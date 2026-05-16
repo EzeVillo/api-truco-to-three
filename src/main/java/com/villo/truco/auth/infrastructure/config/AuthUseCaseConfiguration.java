@@ -14,6 +14,7 @@ import com.villo.truco.auth.application.usecases.commands.LogoutUserSessionComma
 import com.villo.truco.auth.application.usecases.commands.RefreshUserSessionCommandHandler;
 import com.villo.truco.auth.application.usecases.commands.RegisterUserCommandHandler;
 import com.villo.truco.auth.domain.model.user.UsernameAvailabilityPolicy;
+import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
 import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.auth.domain.ports.UserSessionRepository;
@@ -33,12 +34,14 @@ public class AuthUseCaseConfiguration {
   private final RefreshTokenProvider refreshTokenProvider;
   private final Clock clock;
   private final UseCasePipeline transactionalPipeline;
+  private final AuthEventNotifier authEventNotifier;
 
   public AuthUseCaseConfiguration(final UserRepository userRepository,
       final UserSessionRepository userSessionRepository, final PasswordHasher passwordHasher,
       final AccessTokenIssuer accessTokenIssuer, final RefreshTokenProvider refreshTokenProvider,
       final Clock clock,
-      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline) {
+      @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline,
+      final AuthEventNotifier authEventNotifier) {
 
     this.userRepository = userRepository;
     this.userSessionRepository = userSessionRepository;
@@ -47,6 +50,7 @@ public class AuthUseCaseConfiguration {
     this.refreshTokenProvider = refreshTokenProvider;
     this.clock = clock;
     this.transactionalPipeline = transactionalPipeline;
+    this.authEventNotifier = authEventNotifier;
   }
 
   @Bean
@@ -60,7 +64,8 @@ public class AuthUseCaseConfiguration {
   RegisterUserUseCase registerUserCommandHandler() {
 
     final var handler = new RegisterUserCommandHandler(this.userRepository, this.passwordHasher,
-        this.userSessionIssuer(), new UsernameAvailabilityPolicy(this.userRepository));
+        this.userSessionIssuer(), new UsernameAvailabilityPolicy(this.userRepository),
+        this.authEventNotifier);
     return this.transactionalPipeline.wrap(handler)::handle;
   }
 

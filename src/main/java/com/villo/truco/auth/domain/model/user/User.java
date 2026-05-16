@@ -1,11 +1,15 @@
 package com.villo.truco.auth.domain.model.user;
 
+import com.villo.truco.auth.domain.model.user.events.AuthDomainEvent;
+import com.villo.truco.auth.domain.model.user.events.UserRegisteredEvent;
 import com.villo.truco.auth.domain.model.user.valueobjects.HashedPassword;
 import com.villo.truco.auth.domain.model.user.valueobjects.RawPassword;
 import com.villo.truco.auth.domain.model.user.valueobjects.Username;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
 import com.villo.truco.domain.shared.AggregateBase;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 
 public final class User extends AggregateBase<PlayerId> {
@@ -28,12 +32,18 @@ public final class User extends AggregateBase<PlayerId> {
       final PasswordHasher passwordHasher) {
 
     this(id, username, passwordHasher.hash(rawPassword));
+    this.addDomainEvent(new UserRegisteredEvent(id, username, Instant.now()));
   }
 
   static User reconstruct(final PlayerId id, final Username username,
       final HashedPassword hashedPassword) {
 
     return new User(id, username, hashedPassword);
+  }
+
+  public List<AuthDomainEvent> getAuthDomainEvents() {
+
+    return getDomainEvents().stream().map(AuthDomainEvent.class::cast).toList();
   }
 
   public Username username() {

@@ -14,6 +14,7 @@ import com.villo.truco.auth.domain.model.user.exceptions.UsernameUnavailableExce
 import com.villo.truco.auth.domain.model.user.valueobjects.HashedPassword;
 import com.villo.truco.auth.domain.model.user.valueobjects.RawPassword;
 import com.villo.truco.auth.domain.model.user.valueobjects.Username;
+import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
 import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -26,6 +27,12 @@ import org.junit.jupiter.api.Test;
 
 @DisplayName("RegisterUserCommandHandler")
 class RegisterUserCommandHandlerTest {
+
+  private static AuthEventNotifier noopNotifier() {
+
+    return events -> {
+    };
+  }
 
   private static PasswordHasher stubHasher() {
 
@@ -83,7 +90,7 @@ class RegisterUserCommandHandlerTest {
         AuthTestFixtures.constantRefreshTokenProvider("refresh-value"), userSessions,
         AuthTestFixtures.fixedClock());
     final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository));
+        new UsernameAvailabilityPolicy(repository), noopNotifier());
 
     final var session = handler.handle(new RegisterUserCommand("juancho", "pass1!"));
 
@@ -140,7 +147,7 @@ class RegisterUserCommandHandlerTest {
         AuthTestFixtures.constantRefreshTokenProvider("refresh-value"),
         new AuthTestFixtures.InMemoryUserSessionRepository(), AuthTestFixtures.fixedClock());
     final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository));
+        new UsernameAvailabilityPolicy(repository), noopNotifier());
 
     assertThatThrownBy(
         () -> handler.handle(new RegisterUserCommand("juancho", "other1!"))).isInstanceOf(
@@ -181,7 +188,7 @@ class RegisterUserCommandHandlerTest {
         AuthTestFixtures.constantRefreshTokenProvider("refresh-value"),
         new AuthTestFixtures.InMemoryUserSessionRepository(), AuthTestFixtures.fixedClock());
     final var handler = new RegisterUserCommandHandler(repository, stubHasher(), issuer,
-        new UsernameAvailabilityPolicy(repository));
+        new UsernameAvailabilityPolicy(repository), noopNotifier());
 
     assertThatThrownBy(
         () -> handler.handle(new RegisterUserCommand("juancho", "abcde"))).isInstanceOf(

@@ -8,6 +8,7 @@ import com.villo.truco.auth.domain.model.user.User;
 import com.villo.truco.auth.domain.model.user.UsernameAvailabilityPolicy;
 import com.villo.truco.auth.domain.model.user.valueobjects.RawPassword;
 import com.villo.truco.auth.domain.model.user.valueobjects.Username;
+import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
 import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -19,15 +20,18 @@ public final class RegisterUserCommandHandler implements RegisterUserUseCase {
   private final PasswordHasher passwordHasher;
   private final UserSessionIssuer userSessionIssuer;
   private final UsernameAvailabilityPolicy usernameAvailabilityPolicy;
+  private final AuthEventNotifier authEventNotifier;
 
   public RegisterUserCommandHandler(final UserRepository userRepository,
       final PasswordHasher passwordHasher, final UserSessionIssuer userSessionIssuer,
-      final UsernameAvailabilityPolicy usernameAvailabilityPolicy) {
+      final UsernameAvailabilityPolicy usernameAvailabilityPolicy,
+      final AuthEventNotifier authEventNotifier) {
 
     this.userRepository = Objects.requireNonNull(userRepository);
     this.passwordHasher = Objects.requireNonNull(passwordHasher);
     this.userSessionIssuer = Objects.requireNonNull(userSessionIssuer);
     this.usernameAvailabilityPolicy = Objects.requireNonNull(usernameAvailabilityPolicy);
+    this.authEventNotifier = Objects.requireNonNull(authEventNotifier);
   }
 
   @Override
@@ -41,6 +45,9 @@ public final class RegisterUserCommandHandler implements RegisterUserUseCase {
         this.passwordHasher);
 
     this.userRepository.saveEnsuringUsernameAvailable(user);
+
+    this.authEventNotifier.publishDomainEvents(user.getAuthDomainEvents());
+    user.clearDomainEvents();
 
     return this.userSessionIssuer.issueFor(playerId);
   }

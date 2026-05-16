@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get profile
+url: "{{URL_BASE_TRUCO_HTTP}}/profile/EzeVillo"
+method: GET
+order: 1778955316491

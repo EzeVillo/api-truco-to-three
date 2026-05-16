@@ -72,7 +72,12 @@ games.
   contrato publico REST/WebSocket.
 - Profile:
   tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
-  interno a `3` puntos y no se procesan en partidas contra bots.
+  interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea
+  automáticamente el perfil del jugador (logros vacíos, stats en cero). El endpoint público
+  `GET /api/profile/{playerId}` expone username, logros desbloqueados y estadísticas agregadas
+  de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate). Las stats se
+  actualizan al recibir los eventos `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`;
+  las partidas contra bots no cuentan.
 - Tiempo real:
   eventos privados por jugador para match, league, cup, chat y social, mas canal de spectate para
   snapshots y eventos publicos del match.
@@ -262,6 +267,7 @@ Recursos REST principales:
 - `/api/chats`
 - `/api/social`
 - `/api/bots`
+- `/api/profile`
 
 ## Salas Publicas y Privadas
 

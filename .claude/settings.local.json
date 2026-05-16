@@ -95,7 +95,8 @@
       "PowerShell(java -version 2>&1)",
       "Bash(powershell *)",
       "Bash(./gradlew compileJava compileTestJava -q)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(./gradlew compileJava --quiet)"
     ]
   }
 }
