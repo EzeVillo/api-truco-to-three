@@ -24,9 +24,9 @@ class RematchNotificationEventTranslatorTest {
 
   private final List<ApplicationEvent> published = new ArrayList<>();
   private final ApplicationEventPublisher publisher = published::add;
+  private final PublicActorResolver publicActorResolver = mock(PublicActorResolver.class);
   private final RematchNotificationEventTranslator translator = new RematchNotificationEventTranslator(
       publisher, publicActorResolver);
-  private final PublicActorResolver publicActorResolver = mock(PublicActorResolver.class);
 
   {
     when(publicActorResolver.resolve(any())).thenReturn("actor");
