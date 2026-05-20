@@ -31,6 +31,10 @@ truco:
   match:
     idle-timeout-seconds: 300
     timeout-check-interval-ms: 30000
+  rematch:
+    duration: PT2M
+    scheduler-delay: PT10S
+    batch-size: 50
   security:
     jwt-secret: ${TRUCO_JWT_SECRET:truco-local-dev-secret-key-32-bytes}
     issuer: ${TRUCO_JWT_ISSUER:truco-api}

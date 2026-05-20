@@ -10,6 +10,7 @@ import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTra
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchFinishedRematchSessionCreator;
 import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
@@ -45,7 +46,7 @@ class EventNotifierConfigurationTest {
         mock(MatchInvitationExpirationEventTranslator.class),
         mock(CupInvitationExpirationEventTranslator.class),
         mock(LeagueInvitationExpirationEventTranslator.class),
-        mock(ProfileMatchDomainEventHandler.class));
+        mock(ProfileMatchDomainEventHandler.class), mock(MatchFinishedRematchSessionCreator.class));
     final var chatEventNotifier = mock(ChatEventNotifier.class);
 
     assertThat(configuration.chatEventNotifier()).isNotNull();

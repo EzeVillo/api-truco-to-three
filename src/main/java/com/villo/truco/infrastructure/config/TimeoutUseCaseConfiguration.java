@@ -1,6 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
-import com.villo.truco.application.ports.TransactionalRunner;
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleCupsUseCase;
 import com.villo.truco.application.ports.in.TimeoutIdleLeaguesUseCase;
 import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
@@ -32,7 +32,7 @@ public class TimeoutUseCaseConfiguration {
   private final CupQueryRepository cupQueryRepository;
   private final CupRepository cupRepository;
   private final CupEventNotifier cupEventNotifier;
-  private final TransactionalRunner transactionalRunner;
+  private final RetryableTransactionalRunner transactionalRunner;
   private final MatchTimeoutProperties matchTimeoutProperties;
   private final LeagueTimeoutProperties leagueTimeoutProperties;
   private final CupTimeoutProperties cupTimeoutProperties;
@@ -42,7 +42,7 @@ public class TimeoutUseCaseConfiguration {
       final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository,
       final LeagueEventNotifier leagueEventNotifier, final CupQueryRepository cupQueryRepository,
       final CupRepository cupRepository, final CupEventNotifier cupEventNotifier,
-      final TransactionalRunner transactionalRunner,
+      final RetryableTransactionalRunner transactionalRunner,
       final MatchTimeoutProperties matchTimeoutProperties,
       final LeagueTimeoutProperties leagueTimeoutProperties,
       final CupTimeoutProperties cupTimeoutProperties) {

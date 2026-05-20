@@ -1,6 +1,6 @@
 package com.villo.truco.application.usecases.commands;
 
-import com.villo.truco.application.ports.TransactionalRunner;
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleLeaguesUseCase;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.ports.LeagueEventNotifier;
@@ -20,13 +20,14 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
 
   private final LeagueQueryRepository leagueQueryRepository;
   private final LeagueRepository leagueRepository;
-  private final TransactionalRunner transactionalRunner;
+  private final RetryableTransactionalRunner transactionalRunner;
   private final Duration idleTimeout;
   private final LeagueEventNotifier leagueEventNotifier;
 
   public TimeoutIdleLeaguesCommandHandler(final LeagueQueryRepository leagueQueryRepository,
-      final LeagueRepository leagueRepository, final TransactionalRunner transactionalRunner,
-      final Duration idleTimeout, final LeagueEventNotifier leagueEventNotifier) {
+      final LeagueRepository leagueRepository,
+      final RetryableTransactionalRunner transactionalRunner, final Duration idleTimeout,
+      final LeagueEventNotifier leagueEventNotifier) {
 
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
     this.leagueRepository = Objects.requireNonNull(leagueRepository);

@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get rematch
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/rematch"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      if (response.resultMatchId !== null && response.resultMatchId !== undefined) {\r
+
+      \    pm.environment.set(\"matchId\", response.resultMatchId);\r
+
+      }\r\n"
+    language: text/javascript
+order: 405

@@ -15,6 +15,7 @@ games.
 - spectating de matches de ligas y copas
 - chat por recurso
 - amistades, invitaciones rapidas y DM efimero entre amigos
+- revancha post-partida en matches casuales
 - sistema de logros por jugador registrado
 - autenticacion con access token corto para usuarios y refresh token rotado
 - REST + WebSocket/STOMP
@@ -38,6 +39,11 @@ games.
 - Copas:
   `4` a `8` jugadores, eliminacion directa con soporte de byes.
 - El chat se crea automaticamente al iniciar un match, liga o copa.
+- Revancha:
+  al terminar un match casual (no perteneciente a liga ni copa), se abre automaticamente una
+  sesion de revancha con TTL configurable. El bot oponente acepta siempre automaticamente y no
+  puede abandonar. Mientras la sesion esta `OPEN`, ambos jugadores quedan ocupados y no pueden
+  crear ni unirse a otra partida, liga, copa ni aceptar invitaciones sociales.
 
 ## Capacidades
 
@@ -78,6 +84,11 @@ games.
   de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate). Las stats se
   actualizan al recibir los eventos `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`;
   las partidas contra bots no cuentan.
+- Rematch:
+  elegir revancha, abandonar sesion, consultar estado. Al confirmar ambos jugadores, el nuevo match
+  arranca automaticamente `IN_PROGRESS` (sin necesidad de llamar a `/start`) con asientos invertidos
+  y el mismo `gamesToWin` que la partida original; el `newMatchId` llega en el payload WS
+  `REMATCH_CONFIRMED`.
 - Tiempo real:
   eventos privados por jugador para match, league, cup, chat y social, mas canal de spectate para
   snapshots y eventos publicos del match.
@@ -102,6 +113,7 @@ Agregados principales del dominio:
 - `bot`
 - `user`
 - `profile`
+- `rematch`
 
 La restriccion de dependencias se valida con ArchUnit en
 `src/test/java/com/villo/truco/architecture/CleanArchitectureTest.java`.
@@ -180,6 +192,12 @@ Properties sociales por defecto:
 - `truco.social.invitation-expiration.match=PT10M`
 - `truco.social.invitation-expiration.league=PT30M`
 - `truco.social.invitation-expiration.cup=PT30M`
+
+Properties de revancha por defecto:
+
+- `truco.rematch.duration=PT2M`
+- `truco.rematch.scheduler-delay=PT10S`
+- `truco.rematch.batch-size=50`
 
 ### Autenticacion
 
@@ -301,6 +319,11 @@ WebSocket/STOMP:
 - topics publicos de lobby:
   `/topic/public-match-lobby`, `/topic/public-league-lobby`, `/topic/public-cup-lobby`
   solo emiten deltas `UPSERT`/`REMOVED`; el snapshot inicial del lobby se obtiene via REST.
+- revancha:
+  los cinco eventos de revancha (`REMATCH_AVAILABLE`, `REMATCH_OPPONENT_WANTS`,
+  `REMATCH_CONFIRMED`, `REMATCH_CLOSED_BY_LEAVE`, `REMATCH_EXPIRED`) viajan en
+  `/user/queue/match` con el `matchId` top-level igual al `originMatchId` (el match que termino).
+  No hay canal separado para revancha.
 - spectate:
   el alta de espectador se registra al suscribirse por STOMP a `/user/queue/match-spectate`
   enviando header nativo `matchId`; la API expone `GET /api/matches/{matchId}/spectate` para leer
@@ -312,6 +335,7 @@ WebSocket/STOMP:
 - health groups:
   `liveness` y `readiness`
 - schedulers de timeout para matches, leagues y cups
+- scheduler de expiracion de sesiones de revancha (`RematchSessionExpirationScheduler`)
 - heartbeat de scheduler incluido en readiness
 - logging con `requestId` en MDC
 

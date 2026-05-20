@@ -2,7 +2,7 @@ package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.villo.truco.application.ports.TransactionalRunner;
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
@@ -110,7 +110,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
     final MatchRepository matchRepository = savedMatch::set;
     final MatchEventNotifier notifier = publishedEvents::addAll;
-    final TransactionalRunner transactionalRunner = Runnable::run;
+    final RetryableTransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleMatchesCommandHandler(queryRepo, matchRepository, notifier,
         transactionalRunner, Duration.ofMinutes(10));

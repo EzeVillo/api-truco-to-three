@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/rematch/leave"
+method: POST
+order: 535767576223174

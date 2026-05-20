@@ -17,6 +17,7 @@ import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchE
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
@@ -60,7 +61,9 @@ class PlayerAvailabilityCheckerTest {
     when(cupRepo.findWaitingByPlayer(any())).thenReturn(waitingCup);
 
     final var botRegistry = mock(BotRegistry.class);
-    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry);
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo);
   }
 
   @Test

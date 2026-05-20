@@ -1,6 +1,6 @@
 package com.villo.truco.application.usecases.commands;
 
-import com.villo.truco.application.ports.TransactionalRunner;
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleCupsUseCase;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.ports.CupEventNotifier;
@@ -19,12 +19,12 @@ public final class TimeoutIdleCupsCommandHandler implements TimeoutIdleCupsUseCa
 
   private final CupQueryRepository cupQueryRepository;
   private final CupRepository cupRepository;
-  private final TransactionalRunner transactionalRunner;
+  private final RetryableTransactionalRunner transactionalRunner;
   private final Duration idleTimeout;
   private final CupEventNotifier cupEventNotifier;
 
   public TimeoutIdleCupsCommandHandler(final CupQueryRepository cupQueryRepository,
-      final CupRepository cupRepository, final TransactionalRunner transactionalRunner,
+      final CupRepository cupRepository, final RetryableTransactionalRunner transactionalRunner,
       final Duration idleTimeout, final CupEventNotifier cupEventNotifier) {
 
     this.cupQueryRepository = Objects.requireNonNull(cupQueryRepository);

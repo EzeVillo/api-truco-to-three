@@ -105,14 +105,21 @@ public final class Match extends AggregateBase<MatchId> {
   public static Match createReady(final PlayerId playerOne, final PlayerId playerTwo,
       final MatchRules rules) {
 
+    return createReady(MatchId.generate(), playerOne, playerTwo, rules);
+  }
+
+  public static Match createReady(final MatchId matchId, final PlayerId playerOne,
+      final PlayerId playerTwo, final MatchRules rules) {
+
+    Objects.requireNonNull(matchId, "MatchId cannot be null");
     Objects.requireNonNull(playerOne, "PlayerOne cannot be null");
     Objects.requireNonNull(playerTwo, "PlayerTwo cannot be null");
     Objects.requireNonNull(rules, "MatchRules cannot be null");
     if (playerOne.equals(playerTwo)) {
       throw new SamePlayerMatchException();
     }
-    final var match = new Match(MatchId.generate(), playerOne, playerTwo, JoinCode.generate(),
-        rules, Visibility.PRIVATE, MatchStatus.READY);
+    final var match = new Match(matchId, playerOne, playerTwo, JoinCode.generate(), rules,
+        Visibility.PRIVATE, MatchStatus.READY);
     LOGGER.info("Ready match created: matchId={}, playerOne={}, playerTwo={}", match.getId(),
         playerOne, playerTwo);
     return match;

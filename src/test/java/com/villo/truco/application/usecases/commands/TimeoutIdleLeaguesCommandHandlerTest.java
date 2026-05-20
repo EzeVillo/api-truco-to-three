@@ -2,7 +2,7 @@ package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.villo.truco.application.ports.TransactionalRunner;
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
@@ -105,7 +105,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     };
 
     final LeagueRepository leagueRepository = savedLeague::set;
-    final TransactionalRunner transactionalRunner = Runnable::run;
+    final RetryableTransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleLeaguesCommandHandler(queryRepo, leagueRepository, transactionalRunner,
         Duration.ofMinutes(10), events -> {

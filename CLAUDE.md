@@ -90,3 +90,9 @@ for local dev):
 | `TRUCO_JWT_SECRET`  | `truco-local-dev-secret-key-32-bytes` | JWT signing key |
 
 Docker Compose starts PostgreSQL on port `5432` and Adminer on `8081`.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan at
+`specs/001-fix-bot-rematch-swap/plan.md`
+<!-- SPECKIT END -->

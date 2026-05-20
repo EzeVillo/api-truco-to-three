@@ -136,6 +136,15 @@ Caso comun de `409`:
   `409` con `JoinCodeRegistryConflictException` si se agotan los reintentos internos por colision
   del `joinCode` generado con otro recurso
 
+Casos comunes de `422` relacionados a disponibilidad del jugador:
+
+- `PlayerAlreadyInMatchException` — el jugador ya tiene un match activo
+- `PlayerAlreadyInLeagueException` — el jugador ya esta en un torneo activo
+- `PlayerHasOpenRematchSessionException` — el jugador tiene una sesion de revancha `OPEN` pendiente.
+  Se devuelve en `POST /api/matches`, `POST /api/leagues`, `POST /api/cups`,
+  `POST /api/matches/bot` y al aceptar una invitacion social (
+  `POST /api/social/invitations/{id}/accept`).
+
 Casos comunes de `400`:
 
 - body faltante o malformado
@@ -718,6 +727,69 @@ Restricciones de negocio:
 - un jugador no puede spectear dos matches al mismo tiempo
 - al terminar el match, o si el espectador pasa a ser jugador activo en una liga/copa, el backend
   lo desregistra automaticamente
+
+### 4.17 Revancha (Rematch)
+
+Solo aplica a matches **casuales** (no pertenecientes a liga ni copa).
+Al terminar un match casual, el backend abre automaticamente una sesion de revancha.
+
+#### 4.17.1 Aceptar revancha
+
+`POST /api/matches/{matchId}/rematch/choose`
+
+El jugador autenticado acepta la revancha. El `matchId` es el de la partida **original** (
+terminada).
+
+Response `204`: sin body.
+
+Errores:
+
+- `401` sin token
+- `404` si no existe sesion de revancha para ese `matchId`
+- `422` en cualquiera de los siguientes casos: sesion no esta en estado `OPEN`, sesion expirada,
+  jugador no es participante de la sesion
+
+#### 4.17.2 Abandonar revancha
+
+`POST /api/matches/{matchId}/rematch/leave`
+
+El jugador autenticado abandona la sesion. El bot no puede ser actor de esta accion.
+
+Response `204`: sin body.
+
+Errores:
+
+- `401` sin token
+- `404` si no existe sesion de revancha para ese `matchId`
+- `422` si la sesion no esta `OPEN`, el jugador no es participante, el bot intenta abandonar
+
+#### 4.17.3 Consultar sesion de revancha
+
+`GET /api/matches/{matchId}/rematch`
+
+Response `200`:
+
+```json
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+  "originMatchId": "550e8400-e29b-41d4-a716-446655440001",
+  "status": "OPEN",
+  "playerOneChoice": "UNDECIDED",
+  "playerTwoChoice": "WANTS_REMATCH",
+  "expiresAt": "2026-05-16T18:00:00Z",
+  "resultMatchId": null
+}
+```
+
+- `expiresAt` es un `Instant` ISO-8601 (distinto de los payloads WS donde se envia `epochMillis`)
+- `resultMatchId` es el UUID de la nueva partida; solo no-null cuando `status == CONFIRMED`
+- Solo los participantes de la sesion pueden consultar su estado
+
+Errores:
+
+- `401` sin token
+- `404` si no existe sesion de revancha para ese `matchId`
+- `422` si el jugador no es participante de la sesion
 
 ## 5. API REST - Leagues
 
@@ -1456,8 +1528,8 @@ payload para el propio perfil o para el de otro jugador.
 
 **Path params:**
 
-| Campo      | Tipo     | Descripcion                              |
-|------------|----------|------------------------------------------|
+| Campo      | Tipo     | Descripcion                                                                |
+|------------|----------|----------------------------------------------------------------------------|
 | `username` | `String` | Username del jugador (ASCII alfanumérico, mínimo 3 letras, case-sensitive) |
 
 **Respuesta 200:**
@@ -1483,10 +1555,10 @@ payload para el propio perfil o para el de otro jugador.
 
 **Errores:**
 
-| Codigo | Descripcion                                        |
-|--------|----------------------------------------------------|
-| 401    | Token ausente o inválido                           |
-| 404    | `username` no corresponde a un usuario registrado  |
+| Codigo | Descripcion                                       |
+|--------|---------------------------------------------------|
+| 401    | Token ausente o inválido                          |
+| 404    | `username` no corresponde a un usuario registrado |
 
 **Notas:**
 
@@ -1542,6 +1614,10 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
     - `MATCH`, `LEAGUE`, `CUP`
 - `ChatParentType`:
     - `MATCH`, `LEAGUE`, `CUP`, `FRIENDSHIP`
+- `RematchSessionResponse.status`:
+    - `OPEN`, `CONFIRMED`, `CLOSED_BY_LEAVE`, `EXPIRED`
+- `RematchSessionResponse.playerOneChoice` / `playerTwoChoice`:
+    - `UNDECIDED`, `WANTS_REMATCH`, `LEFT`
 
 ## 9. WebSocket / STOMP
 
@@ -1753,6 +1829,14 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `HAND_RESOLVED`
 - `HAND_CHANGED`
 - `SPECTATOR_COUNT_CHANGED`
+- `REMATCH_AVAILABLE` - sesion de revancha abierta (se envia al terminar el match casual)
+- `REMATCH_OPPONENT_WANTS` - el oponente eligio revancha
+- `REMATCH_CONFIRMED` - ambos confirmaron; nueva partida lista
+- `REMATCH_CLOSED_BY_LEAVE` - el oponente abandono la sesion
+- `REMATCH_EXPIRED` - la sesion expiro por TTL
+
+Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` top-level igual al
+`originMatchId` de la sesion (el match que termino, no el nuevo).
 
 ### 9.5b eventType posibles - Liga (`/user/queue/league`, todos los participantes de la liga)
 
@@ -1954,6 +2038,25 @@ No se reenvian al espectador los eventos privados por asiento:
     - `{ lobby }` - `lobby` respeta la forma de `GET /api/*/public`
 - `PUBLIC_MATCH_LOBBY_REMOVED` / `PUBLIC_CUP_LOBBY_REMOVED` / `PUBLIC_LEAGUE_LOBBY_REMOVED`:
     - `{ id }`
+- `REMATCH_AVAILABLE`:
+    - `{ sessionId, originMatchId, expiresAt }` — `expiresAt` en `epochMillis`
+    - Destinatarios: jugador 1, jugador 2 (si no es bot)
+- `REMATCH_OPPONENT_WANTS`:
+    - `{ sessionId, originMatchId, actor }` — `actor` es el username/displayName del que aceptó
+    - Destinatario: el otro jugador
+- `REMATCH_CONFIRMED`:
+    - `{ sessionId, originMatchId, newMatchId, newPlayerOne, newPlayerTwo }` — `newMatchId` es UUID
+      string; `newPlayerOne`/`newPlayerTwo` son username/displayName
+    - Destinatarios: ambos jugadores (con asientos invertidos respecto al match original)
+    - El nuevo match ya está `IN_PROGRESS` cuando llega este evento; inmediatamente después llegan
+      `GAME_STARTED`, `ROUND_STARTED`, `TURN_CHANGED`, etc. para el `newMatchId`
+    - No hace falta llamar a `POST /start`; la partida arranca automáticamente
+- `REMATCH_CLOSED_BY_LEAVE`:
+    - `{ sessionId, originMatchId, actor }` — `actor` es el username/displayName del que abandonó
+    - Destinatario: el otro jugador
+- `REMATCH_EXPIRED`:
+    - `{ sessionId, originMatchId }`
+    - Destinatarios: ambos jugadores
 
 ## 9. API REST - Bots
 
@@ -2068,10 +2171,10 @@ misma forma que en una partida normal. El bot actua automaticamente cuando es su
 
 Errores:
 
-| Codigo | Descripcion                                                                 |
-|--------|-----------------------------------------------------------------------------|
-| `404`  | El `botId` no existe en el catalogo de bots                                 |
-| `422`  | `gamesToPlay` invalido (menor a 1) o el jugador ya tiene una partida activa |
+| Codigo | Descripcion                                                                                             |
+|--------|---------------------------------------------------------------------------------------------------------|
+| `404`  | El `botId` no existe en el catalogo de bots                                                             |
+| `422`  | `gamesToPlay` invalido (menor a 1), el jugador ya tiene una partida activa, o tiene una revancha `OPEN` |
 
 ## 10. Flujo de autenticacion recomendado
 
@@ -2164,3 +2267,25 @@ Si el cliente estaba en modo espectador y la conexion se cae:
 
 No asumir que la sesion de spectate sigue viva tras una desconexion: el backend la limpia al
 procesar `UNSUBSCRIBE` o `DISCONNECT`.
+
+### 11.3 Revancha (Rematch)
+
+- La revancha se abre automaticamente solo en matches **casuales** (no de liga ni copa). Despues de
+  un `MATCH_FINISHED` en esos contextos no llega `REMATCH_AVAILABLE`.
+- El evento `REMATCH_AVAILABLE` llega por `/user/queue/match` con el `matchId` de la partida que
+  **termino** (no de la nueva). No hay canal WS separado para revancha.
+- `expiresAt` en los payloads WS de revancha llega en `epochMillis`. En la respuesta REST
+  (`GET /api/matches/{matchId}/rematch`) llega en `ISO-8601`. Prestar atencion al canal para
+  parsear correctamente.
+- Cuando el FE recibe `REMATCH_CONFIRMED`, el `newMatchId` viene directamente en el payload. El
+  nuevo match ya está `IN_PROGRESS`; inmediatamente después llegan los eventos del nuevo match
+  (`GAME_STARTED`, `ROUND_STARTED`, `TURN_CHANGED`, etc.) para ese `newMatchId`. No es necesario
+  llamar a `POST /start` ni a `GET /api/matches/{matchId}/rematch` para obtener el id.
+- Mientras la sesion este `OPEN`, el jugador tiene disponibilidad bloqueada: cualquier intento de
+  crear o unirse a otra partida, liga, copa o aceptar una invitacion social devolvera `422` con
+  `PlayerHasOpenRematchSessionException`. Mostrar mensaje orientativo.
+- Si el bot es oponente, acepta automaticamente al abrirse la sesion (`REMATCH_OPPONENT_WANTS` no
+  se emite). El bot no puede abandonar. El FE puede ignorar el estado `playerTwoChoice` en
+  partidas contra bot.
+- La sesion expira por TTL configurable (por defecto `PT2M`). Tras `REMATCH_EXPIRED` la
+  disponibilidad del jugador se libera automaticamente.

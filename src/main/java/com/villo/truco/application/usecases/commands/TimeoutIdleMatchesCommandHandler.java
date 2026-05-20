@@ -1,6 +1,6 @@
 package com.villo.truco.application.usecases.commands;
 
-import com.villo.truco.application.ports.TransactionalRunner;
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.in.TimeoutIdleMatchesUseCase;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -21,12 +21,12 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
   private final MatchQueryRepository matchQueryRepository;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
-  private final TransactionalRunner transactionalRunner;
+  private final RetryableTransactionalRunner transactionalRunner;
   private final Duration idleTimeout;
 
   public TimeoutIdleMatchesCommandHandler(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final TransactionalRunner transactionalRunner, final Duration idleTimeout) {
+      final RetryableTransactionalRunner transactionalRunner, final Duration idleTimeout) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.matchRepository = Objects.requireNonNull(matchRepository);

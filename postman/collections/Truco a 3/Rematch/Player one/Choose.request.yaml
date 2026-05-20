@@ -1,0 +1,5 @@
+$kind: http-request
+name: Choose
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/{{matchId}}/rematch/choose"
+method: POST
+order: 579

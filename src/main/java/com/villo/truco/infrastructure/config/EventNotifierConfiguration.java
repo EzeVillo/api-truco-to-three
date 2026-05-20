@@ -17,6 +17,7 @@ import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTra
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchFinishedRematchSessionCreator;
 import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
@@ -69,6 +70,7 @@ public class EventNotifierConfiguration {
   private final CupInvitationExpirationEventTranslator cupInvitationExpirationEventTranslator;
   private final LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator;
   private final ProfileMatchDomainEventHandler profileMatchDomainEventHandler;
+  private final MatchFinishedRematchSessionCreator matchFinishedRematchSessionCreator;
 
   public EventNotifierConfiguration(
       final ChatNotificationEventTranslator chatNotificationEventTranslator,
@@ -88,7 +90,8 @@ public class EventNotifierConfiguration {
       final MatchInvitationExpirationEventTranslator matchInvitationExpirationEventTranslator,
       final CupInvitationExpirationEventTranslator cupInvitationExpirationEventTranslator,
       final LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator,
-      final ProfileMatchDomainEventHandler profileMatchDomainEventHandler) {
+      final ProfileMatchDomainEventHandler profileMatchDomainEventHandler,
+      final MatchFinishedRematchSessionCreator matchFinishedRematchSessionCreator) {
 
     this.chatNotificationEventTranslator = chatNotificationEventTranslator;
     this.matchNotificationEventTranslator = matchNotificationEventTranslator;
@@ -110,6 +113,7 @@ public class EventNotifierConfiguration {
     this.cupInvitationExpirationEventTranslator = cupInvitationExpirationEventTranslator;
     this.leagueInvitationExpirationEventTranslator = leagueInvitationExpirationEventTranslator;
     this.profileMatchDomainEventHandler = profileMatchDomainEventHandler;
+    this.matchFinishedRematchSessionCreator = matchFinishedRematchSessionCreator;
   }
 
   @Bean
@@ -193,7 +197,7 @@ public class EventNotifierConfiguration {
         this.chatMatchGameStartedHandler(chatEventNotifier()), this.chatMatchFinishedHandler(),
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
         this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator,
-        this.profileMatchDomainEventHandler);
+        this.profileMatchDomainEventHandler, this.matchFinishedRematchSessionCreator);
     return new MatchDomainEventDispatcher(handlers);
   }
 

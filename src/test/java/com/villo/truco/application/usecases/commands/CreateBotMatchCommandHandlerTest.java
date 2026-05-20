@@ -28,6 +28,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.support.TestPublicActorResolver;
@@ -62,8 +63,10 @@ class CreateBotMatchCommandHandlerTest {
     final var matchRepo = mock(MatchQueryRepository.class);
     final var leagueRepo = mock(LeagueQueryRepository.class);
     final var cupRepo = mock(CupQueryRepository.class);
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
     final var playerAvailabilityChecker = new PlayerAvailabilityChecker(matchRepo, leagueRepo,
-        cupRepo, botRegistry);
+        cupRepo, botRegistry, rematchRepo);
 
     final var chatRepo = mock(ChatRepository.class);
     final var chatQueryRepo = mock(ChatQueryRepository.class);
