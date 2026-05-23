@@ -24,6 +24,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import com.villo.truco.testutil.NoOpRematchSessionRepository;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -201,7 +202,7 @@ class StartMatchCommandHandlerTest {
       }
     };
     final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo,
-        noBotRegistry, NoOpRematchSessionRepository.INSTANCE);
+        noBotRegistry, NoOpRematchSessionRepository.INSTANCE, NoOpQuickMatchQueuePort.INSTANCE);
     return new StartMatchCommandHandler(resolver, matchRepository, notifier, checker);
   }
 

@@ -23,6 +23,7 @@ import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -356,8 +357,9 @@ class CreateResourceInvitationCommandHandlerTest {
 
     return new CreateResourceInvitationCommandHandler(new SocialUserGuard(userQueryRepository),
         new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-            cupQueryRepository, mock(BotRegistry.class), mock(RematchSessionRepository.class)),
-        friendshipQueryRepository, new ResourceInvitationPolicy(resourceInvitationQueryRepository),
+            cupQueryRepository, mock(BotRegistry.class), mock(RematchSessionRepository.class),
+            mock(QuickMatchQueuePort.class)), friendshipQueryRepository,
+        new ResourceInvitationPolicy(resourceInvitationQueryRepository),
         resourceInvitationRepository, events -> {
     }, new InvitationTargetService(matchQueryRepository, leagueQueryRepository, cupQueryRepository),
         new SocialInvitationExpirationPolicy(Duration.ofMinutes(10), Duration.ofMinutes(30),

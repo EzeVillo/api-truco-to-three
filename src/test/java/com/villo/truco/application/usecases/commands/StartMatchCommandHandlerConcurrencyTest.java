@@ -29,6 +29,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateException;
 import com.villo.truco.infrastructure.pipeline.OptimisticLockRetryBehavior;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
+import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import com.villo.truco.testutil.NoOpRematchSessionRepository;
 import java.time.Duration;
 import java.time.Instant;
@@ -252,7 +253,8 @@ class StartMatchCommandHandlerConcurrencyTest {
       }
     };
     final var checker = new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE);
+        cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE,
+        NoOpQuickMatchQueuePort.INSTANCE);
     final var rawHandler = new StartMatchCommandHandler(matchResolver, matchRepository,
         matchEventNotifier, checker);
     handler = pipeline.wrap(rawHandler)::handle;

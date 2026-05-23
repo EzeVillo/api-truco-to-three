@@ -144,6 +144,9 @@ Casos comunes de `422` relacionados a disponibilidad del jugador:
   Se devuelve en `POST /api/matches`, `POST /api/leagues`, `POST /api/cups`,
   `POST /api/matches/bot` y al aceptar una invitacion social (
   `POST /api/social/invitations/{id}/accept`).
+- `PlayerAlreadyInQueueException` — el jugador ya esta en la cola de Quick Match.
+  Se devuelve en `POST /api/matches`, `POST /api/leagues`, `POST /api/cups`,
+  `POST /api/matches/bot`, `POST /api/matches/quick` y al aceptar una invitacion social.
 
 Casos comunes de `400`:
 
@@ -2175,6 +2178,76 @@ Errores:
 |--------|---------------------------------------------------------------------------------------------------------|
 | `404`  | El `botId` no existe en el catalogo de bots                                                             |
 | `422`  | `gamesToPlay` invalido (menor a 1), el jugador ya tiene una partida activa, o tiene una revancha `OPEN` |
+
+### 9.3 Quick Match (emparejamiento automatico)
+
+#### Entrar a la cola
+
+`POST /api/matches/quick`
+
+Requiere Bearer token.
+
+Request:
+
+```json
+{
+  "gamesToPlay": 3
+}
+```
+
+| Campo         | Tipo      | Descripcion                                        |
+|---------------|-----------|----------------------------------------------------|
+| `gamesToPlay` | `integer` | Partidas a ganar para terminar el match (minimo 1) |
+
+Response `200`:
+
+```json
+{
+  "status": "SEARCHING",
+  "matchId": null,
+  "enqueuedAt": "2026-05-20T10:00:00Z"
+}
+```
+
+o si habia oponente esperando:
+
+```json
+{
+  "status": "MATCHED",
+  "matchId": "550e8400-e29b-41d4-a716-446655440000",
+  "enqueuedAt": "2026-05-20T10:00:00Z"
+}
+```
+
+| Campo        | Tipo                    | Descripcion                                       |
+|--------------|-------------------------|---------------------------------------------------|
+| `status`     | `SEARCHING` / `MATCHED` | `SEARCHING`: en cola. `MATCHED`: match creado.    |
+| `matchId`    | `string (UUID)` / null  | ID del match creado; `null` si aun esta buscando. |
+| `enqueuedAt` | `string (ISO-8601)`     | Momento en que el jugador entro a la cola.        |
+
+Si `status = MATCHED`, el jugador tambien recibe el evento WebSocket `GAME_STARTED` en
+`/user/queue/match` con el `matchId`.
+
+La llamada es idempotente: si el jugador ya estaba en cola, devuelve `SEARCHING` con el
+`enqueuedAt` original sin modificar su posicion en la cola.
+
+Errores:
+
+| Codigo | Descripcion                                                                                           |
+|--------|-------------------------------------------------------------------------------------------------------|
+| `422`  | `gamesToPlay` invalido, el jugador ya tiene una partida activa, o tiene una revancha `OPEN` pendiente |
+
+#### Cancelar busqueda
+
+`DELETE /api/matches/quick`
+
+Requiere Bearer token. No tiene body.
+
+Response `204 No Content`.
+
+La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igual.
+
+---
 
 ## 10. Flujo de autenticacion recomendado
 

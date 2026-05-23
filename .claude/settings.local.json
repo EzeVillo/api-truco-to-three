@@ -127,7 +127,13 @@
       "PowerShell(.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1 -Json -ShortName \"fix-bot-rematch-swap\" \"BUG: cuando el jugador juega contra un bot, y hace un rematch, y al bot le toca ser el jugador uno, no acepta de manera automatica, ademas veo que en la primera revancha el bot es el jugador 2 nuevamente, lo cual entiendo que la idea es que se intercambie quien es el 1 y quien es el 2 por cada juego\")",
       "Bash(bash .specify/scripts/bash/setup-plan.sh --json)",
       "Bash(bash .specify/scripts/bash/setup-tasks.sh --json)",
-      "Bash(bash .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks)"
+      "Bash(bash .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks)",
+      "PowerShell(& \"C:\\\\Users\\\\ezevi_30ey2ks\\\\Desktop\\\\Proyectos\\\\api-truco-to-three\\\\.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1\" -Json -ShortName \"quick-match\" \"Quick Match matchmaking system\")",
+      "Bash(./.specify/scripts/bash/check-prerequisites.sh --json --paths-only)",
+      "Bash(./.specify/scripts/bash/check-prerequisites.sh *)",
+      "Bash(./.specify/scripts/bash/setup-plan.sh *)",
+      "Bash(./.specify/scripts/bash/setup-tasks.sh *)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

@@ -44,20 +44,12 @@ Domain → Application → Infrastructure
 - **Infrastructure** (`com.villo.truco.infrastructure`): Spring Boot wiring, JPA entities, REST
   controllers, WebSocket config, security, schedulers, and repository implementations.
 
-Two additional bounded contexts follow the same layered structure internally:
-
-- **Auth** (`com.villo.truco.auth`): User registration, JWT login/refresh/logout.
-- **Social** (`com.villo.truco.social`): Friend requests, resource invitations (match/league/cup),
-  ephemeral direct messages.
-
 ### Key Architectural Rules (enforced by ArchUnit)
 
 - HTTP controllers must depend on **input port interfaces**, never directly on use case
   implementations.
 - Domain aggregates (Match, Bot, etc.) must not import from each other — cross-domain communication
   goes through domain events.
-- Only `BotCard` may import from the shared cards kernel; the Bot domain otherwise has no access to
-  Match domain types.
 
 ### Real-time Communication
 
@@ -91,8 +83,21 @@ for local dev):
 
 Docker Compose starts PostgreSQL on port `5432` and Adminer on `8081`.
 
+## Documentación:
+
+verificá si el cambio propuesto impacta la documentación del proyecto:
+
+- **`README.md`**: ¿agrega o modifica un recurso REST, una capacidad del sistema, un bounded
+  context, una tabla, un enum, un flujo operativo o una regla de negocio? Si sí, listarlo
+  explícitamente en la sección "Documentación a actualizar" del plan.
+
+- **`docs/CONTRATOS_API.md`**: ¿agrega un endpoint REST nuevo, modifica el shape de uno existente,
+  agrega/quita un eventType WebSocket, cambia enums, cambia reglas de negocio expuestas al frontend,
+  o vuelve falsa alguna afirmación existente? Si sí, indicar qué sección debe actualizarse y el
+  cambio concreto.
+
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/001-fix-bot-rematch-swap/plan.md`
+`specs/002-quick-match/plan.md`
 <!-- SPECKIT END -->

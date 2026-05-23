@@ -6,10 +6,12 @@ import com.villo.truco.domain.model.cup.exceptions.PlayerBusyInCupException;
 import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
+import com.villo.truco.domain.model.quickmatch.exceptions.PlayerAlreadyInQueueException;
 import com.villo.truco.domain.model.rematch.exceptions.PlayerHasOpenRematchSessionException;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
@@ -21,17 +23,20 @@ public final class PlayerAvailabilityChecker {
   private final CupQueryRepository cupQueryRepository;
   private final BotRegistry botRegistry;
   private final RematchSessionRepository rematchSessionRepository;
+  private final QuickMatchQueuePort quickMatchQueuePort;
 
   public PlayerAvailabilityChecker(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository, final BotRegistry botRegistry,
-      final RematchSessionRepository rematchSessionRepository) {
+      final RematchSessionRepository rematchSessionRepository,
+      final QuickMatchQueuePort quickMatchQueuePort) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
     this.cupQueryRepository = Objects.requireNonNull(cupQueryRepository);
     this.botRegistry = Objects.requireNonNull(botRegistry);
     this.rematchSessionRepository = Objects.requireNonNull(rematchSessionRepository);
+    this.quickMatchQueuePort = Objects.requireNonNull(quickMatchQueuePort);
   }
 
   public void ensureAvailable(final PlayerId playerId) {
@@ -46,6 +51,10 @@ public final class PlayerAvailabilityChecker {
 
     if (this.rematchSessionRepository.findOpenByPlayer(playerId).isPresent()) {
       throw new PlayerHasOpenRematchSessionException();
+    }
+
+    if (this.quickMatchQueuePort.isPlayerQueued(playerId)) {
+      throw new PlayerAlreadyInQueueException();
     }
 
     this.ensureNoActiveTournaments(playerId);

@@ -84,6 +84,12 @@ games.
   de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate). Las stats se
   actualizan al recibir los eventos `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`;
   las partidas contra bots no cuentan.
+- Quick Match:
+  emparejamiento automatico por `gamesToPlay`. El jugador entra a una cola efimera en memoria; si
+  ya hay un oponente esperando con la misma configuracion, se crea una partida `PRIVATE` que arranca
+  directamente `IN_PROGRESS` y ambos reciben el `matchId` por su canal `/user/queue/match`. Si no
+  hay oponente, el jugador queda en cola indefinidamente hasta cancelar o desconectarse. La
+  desconexion del WebSocket retira al jugador de la cola automaticamente.
 - Rematch:
   elegir revancha, abandonar sesion, consultar estado. Al confirmar ambos jugadores, el nuevo match
   arranca automaticamente `IN_PROGRESS` (sin necesidad de llamar a `/start`) con asientos invertidos
@@ -280,6 +286,7 @@ Recursos REST principales:
 
 - `/api/auth`
 - `/api/matches`
+- `/api/matches/quick` — Quick Match: `POST` para entrar a la cola, `DELETE` para cancelar
 - `/api/leagues`
 - `/api/cups`
 - `/api/chats`

@@ -10,6 +10,7 @@ import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import java.util.List;
@@ -23,7 +24,7 @@ class LeagueUseCaseConfigurationTest {
     final var availabilityConfiguration = new PlayerAvailabilityConfiguration(
         mock(MatchQueryRepository.class), mock(LeagueQueryRepository.class),
         mock(CupQueryRepository.class), mock(BotRegistry.class),
-        mock(RematchSessionRepository.class));
+        mock(RematchSessionRepository.class), mock(QuickMatchQueuePort.class));
 
     final var configuration = new LeagueUseCaseConfiguration(mock(LeagueQueryRepository.class),
         mock(com.villo.truco.domain.ports.LeagueRepository.class), mock(MatchRepository.class),

@@ -30,6 +30,7 @@ import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import com.villo.truco.testutil.NoOpRematchSessionRepository;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -197,7 +198,8 @@ class MatchCommandHandlersTest {
       }
     };
     return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE);
+        cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE,
+        NoOpQuickMatchQueuePort.INSTANCE);
   }
 
   private MatchResolver resolverFor(final Match match) {
