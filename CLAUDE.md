@@ -96,6 +96,17 @@ verificá si el cambio propuesto impacta la documentación del proyecto:
   o vuelve falsa alguna afirmación existente? Si sí, indicar qué sección debe actualizarse y el
   cambio concreto.
 
+## Idioma de Trabajo (Spec Kit)
+
+Todo artefacto generado por los skills de Spec Kit DEBE estar escrito en **español**: specs,
+planes, tareas, checklists, research, data-model, contratos y cualquier otro documento generado.
+Los títulos y descripciones de tests propuestos también en español.
+
+El código fuente (clases, métodos, variables) puede permanecer en inglés según la convención
+existente del proyecto.
+
+Esto está definido como Principio IV en `.specify/memory/constitution.md`.
+
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
