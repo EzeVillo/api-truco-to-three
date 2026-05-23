@@ -7,15 +7,18 @@ import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.in.ChooseRematchUseCase;
+import com.villo.truco.application.ports.in.ExpireRematchSessionUseCase;
 import com.villo.truco.application.ports.in.GetRematchSessionUseCase;
 import com.villo.truco.application.ports.in.LeaveRematchUseCase;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.RematchSessionDomainEventHandler;
 import com.villo.truco.application.usecases.commands.ChooseRematchCommandHandler;
 import com.villo.truco.application.usecases.commands.ExpireDueRematchSessionsCommandHandler;
+import com.villo.truco.application.usecases.commands.ExpireRematchSessionCommandHandler;
 import com.villo.truco.application.usecases.commands.LeaveRematchCommandHandler;
 import com.villo.truco.application.usecases.commands.RematchEligibilityPolicy;
 import com.villo.truco.application.usecases.queries.GetRematchSessionQueryHandler;
+import com.villo.truco.domain.model.rematch.events.RematchSessionDomainEvent;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
@@ -100,11 +103,21 @@ public class RematchConfiguration {
 
   @Bean
   RematchSessionEventNotifier rematchSessionEventNotifier(
-      final RematchSessionConfirmedMatchCreator rematchSessionConfirmedMatchCreator) {
+      final RematchSessionConfirmedMatchCreator rematchSessionConfirmedMatchCreator,
+      final RematchSessionDomainEventHandler<RematchSessionDomainEvent> rematchSessionTimeoutEventHandler) {
 
     final List<RematchSessionDomainEventHandler<?>> handlers = List.of(
-        rematchNotificationEventTranslator(), rematchSessionConfirmedMatchCreator);
+        rematchNotificationEventTranslator(), rematchSessionConfirmedMatchCreator,
+        rematchSessionTimeoutEventHandler);
     return new RematchSessionDomainEventDispatcher(handlers);
+  }
+
+  @Bean
+  ExpireRematchSessionUseCase expireRematchSessionCommandHandler(
+      @Lazy final RematchSessionEventNotifier rematchSessionEventNotifier) {
+
+    return new ExpireRematchSessionCommandHandler(this.rematchSessionRepository,
+        rematchSessionEventNotifier, this.retryableTransactionalRunner, this.clock);
   }
 
   @Bean

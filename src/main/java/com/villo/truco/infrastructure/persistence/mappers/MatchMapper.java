@@ -73,7 +73,7 @@ public class MatchMapper {
         entity.getScorePlayerOne(), entity.getScorePlayerTwo(), entity.getRoundNumber(),
         entity.isReadyPlayerOne(), entity.isReadyPlayerTwo(),
         entity.getFirstManoOfGame() != null ? new PlayerId(entity.getFirstManoOfGame()) : null,
-        roundSnapshot);
+        roundSnapshot, entity.getLastActivityAt());
 
     final var match = MatchRehydrator.rehydrate(snapshot);
     match.setVersion(entity.getVersion());

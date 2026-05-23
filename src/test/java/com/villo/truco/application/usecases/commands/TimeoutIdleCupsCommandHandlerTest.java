@@ -8,18 +8,19 @@ import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
+import com.villo.truco.domain.ports.CupTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -76,27 +77,34 @@ class TimeoutIdleCupsCommandHandlerTest {
       @Override
       public List<CupId> findIdleCupIds(final Instant idleSince) {
 
-        return List.copyOf(cups.keySet());
-      }
-
-      private List<Cup> findPublicWaiting() {
-
         return List.of();
       }
 
       @Override
       public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
 
-        return new CursorPageResult<>(findPublicWaiting(), null);
+        return new CursorPageResult<>(List.of(), null);
       }
     };
 
-    final CupRepository cupRepository = savedCup::set;
+    final CupRepository cupRepository = new CupRepository() {
+      @Override
+      public void save(final Cup cup) {
+
+        savedCup.set(cup);
+      }
+
+      @Override
+      public Stream<CupTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final RetryableTransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleCupsCommandHandler(queryRepo, cupRepository, transactionalRunner,
-        Duration.ofMinutes(10), events -> {
-    });
+        events -> {
+        });
   }
 
   @Test
@@ -107,7 +115,7 @@ class TimeoutIdleCupsCommandHandlerTest {
     final var savedCup = new AtomicReference<Cup>();
     final var handler = handlerFor(Map.of(cup.getId(), cup), savedCup);
 
-    handler.handle();
+    handler.handle(cup.getId());
 
     assertThat(savedCup.get()).isNotNull();
     assertThat(savedCup.get().getStatus()).isEqualTo(CupStatus.CANCELLED);
@@ -121,7 +129,7 @@ class TimeoutIdleCupsCommandHandlerTest {
     final var savedCup = new AtomicReference<Cup>();
     final var handler = handlerFor(Map.of(cup.getId(), cup), savedCup);
 
-    handler.handle();
+    handler.handle(cup.getId());
 
     assertThat(savedCup.get()).isNotNull();
     assertThat(savedCup.get().getStatus()).isEqualTo(CupStatus.CANCELLED);
@@ -136,85 +144,21 @@ class TimeoutIdleCupsCommandHandlerTest {
     final var savedCup = new AtomicReference<Cup>();
     final var handler = handlerFor(Map.of(cup.getId(), cup), savedCup);
 
-    handler.handle();
+    handler.handle(cup.getId());
 
     assertThat(savedCup.get()).isNull();
   }
 
   @Test
-  @DisplayName("lista vacía de idle cups no hace nada")
-  void emptyIdleListDoesNothing() {
+  @DisplayName("cup inexistente es ignorado")
+  void unknownCupIdIsIgnored() {
 
     final var savedCup = new AtomicReference<Cup>();
     final var handler = handlerFor(Map.of(), savedCup);
 
-    handler.handle();
+    handler.handle(CupId.generate());
 
     assertThat(savedCup.get()).isNull();
-  }
-
-  @Test
-  @DisplayName("excepción en una copa no afecta las demás")
-  void exceptionInOneCupDoesNotAffectOthers() {
-
-    final var goodCup = waitingForPlayersCup();
-    final var savedCup = new AtomicReference<Cup>();
-
-    final CupQueryRepository queryRepo = new CupQueryRepository() {
-
-      @Override
-      public Optional<Cup> findById(final CupId cupId) {
-
-        if (cupId.equals(goodCup.getId())) {
-          return Optional.of(goodCup);
-        }
-        throw new RuntimeException("simulated failure");
-      }
-
-      @Override
-      public Optional<Cup> findByMatchId(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<CupId> findIdleCupIds(final Instant idleSince) {
-
-        return List.of(CupId.generate(), goodCup.getId());
-      }
-
-      private List<Cup> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-
-    final var handler = new TimeoutIdleCupsCommandHandler(queryRepo, savedCup::set, Runnable::run,
-        Duration.ofMinutes(10), events -> {
-    });
-
-    handler.handle();
-
-    assertThat(savedCup.get()).isNotNull();
-    assertThat(savedCup.get().getStatus()).isEqualTo(CupStatus.CANCELLED);
   }
 
 }

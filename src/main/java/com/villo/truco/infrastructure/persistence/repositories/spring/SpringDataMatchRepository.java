@@ -23,6 +23,10 @@ public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity,
       + "WHERE m.status NOT IN ('FINISHED', 'CANCELLED') AND m.lastActivityAt < :idleSince")
   List<UUID> findIdleMatchIds(@Param("idleSince") Instant idleSince);
 
+  @Query("SELECT m.id AS id, m.lastActivityAt AS lastActivityAt FROM MatchJpaEntity m "
+      + "WHERE m.status NOT IN ('FINISHED', 'CANCELLED')")
+  List<MatchActivityProjection> findActiveMatchesWithLastActivity();
+
   @Query("SELECT m FROM MatchJpaEntity m "
       + "WHERE m.visibility = 'PUBLIC' AND m.status = 'WAITING_FOR_PLAYERS' "
       + "ORDER BY m.lastActivityAt DESC")

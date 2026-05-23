@@ -35,6 +35,7 @@ import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -58,6 +59,7 @@ public final class Cup extends AggregateBase<CupId> {
   private final JoinCode joinCode;
   private CupStatus status;
   private PlayerId champion;
+  private Instant lastActivityAt;
 
   private Cup(final CupId id, final List<PlayerId> participants, final List<Bout> bouts,
       final Set<PlayerId> forfeitedPlayers, final int numberOfPlayers,
@@ -105,10 +107,12 @@ public final class Cup extends AggregateBase<CupId> {
   static Cup reconstruct(final CupId id, final List<PlayerId> participants, final List<Bout> bouts,
       final Set<PlayerId> forfeitedPlayers, final int numberOfPlayers,
       final GamesToPlay gamesToPlay, final Visibility visibility, final JoinCode joinCode,
-      final CupStatus status, final PlayerId champion) {
+      final CupStatus status, final PlayerId champion, final Instant lastActivityAt) {
 
-    return new Cup(id, participants, bouts, forfeitedPlayers, numberOfPlayers, gamesToPlay,
+    final var cup = new Cup(id, participants, bouts, forfeitedPlayers, numberOfPlayers, gamesToPlay,
         visibility, joinCode, status, champion);
+    cup.lastActivityAt = lastActivityAt;
+    return cup;
   }
 
   private static int nextPowerOfTwo(final int n) {
@@ -525,6 +529,11 @@ public final class Cup extends AggregateBase<CupId> {
   public PlayerId getChampion() {
 
     return this.champion;
+  }
+
+  public Instant getLastActivityAt() {
+
+    return this.lastActivityAt;
   }
 
   public List<BoutView> getBouts() {

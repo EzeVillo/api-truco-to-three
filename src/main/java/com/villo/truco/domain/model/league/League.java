@@ -34,6 +34,7 @@ import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ public final class League extends AggregateBase<LeagueId> {
   private final Visibility visibility;
   private final JoinCode joinCode;
   private LeagueStatus status;
+  private Instant lastActivityAt;
 
   private League(final LeagueId id, final List<PlayerId> participants, final List<Fixture> fixtures,
       final Map<PlayerId, Integer> winsByPlayer, final LeagueStatus status,
@@ -100,10 +102,12 @@ public final class League extends AggregateBase<LeagueId> {
   static League reconstruct(final LeagueId id, final List<PlayerId> participants,
       final List<Fixture> fixtures, final Map<PlayerId, Integer> winsByPlayer,
       final LeagueStatus status, final int numberOfPlayers, final GamesToPlay gamesToPlay,
-      final Visibility visibility, final JoinCode joinCode) {
+      final Visibility visibility, final JoinCode joinCode, final Instant lastActivityAt) {
 
-    return new League(id, participants, fixtures, winsByPlayer, status, numberOfPlayers,
+    final var league = new League(id, participants, fixtures, winsByPlayer, status, numberOfPlayers,
         gamesToPlay, visibility, joinCode);
+    league.lastActivityAt = lastActivityAt;
+    return league;
   }
 
   private static List<Fixture> generateRoundRobinFixtures(final List<PlayerId> participants) {
@@ -417,6 +421,11 @@ public final class League extends AggregateBase<LeagueId> {
   public LeagueStatus getStatus() {
 
     return this.status;
+  }
+
+  public Instant getLastActivityAt() {
+
+    return this.lastActivityAt;
   }
 
   public JoinCode getJoinCode() {

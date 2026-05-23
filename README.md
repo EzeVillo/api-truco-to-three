@@ -20,7 +20,7 @@ games.
 - autenticacion con access token corto para usuarios y refresh token rotado
 - REST + WebSocket/STOMP
 - persistencia con PostgreSQL + Flyway
-- health checks, metricas y schedulers de timeout
+- health checks, metricas y timeouts instantaneos por entidad
 
 ## Reglas de dominio principales
 
@@ -202,7 +202,6 @@ Properties sociales por defecto:
 Properties de revancha por defecto:
 
 - `truco.rematch.duration=PT2M`
-- `truco.rematch.scheduler-delay=PT10S`
 - `truco.rematch.batch-size=50`
 
 ### Autenticacion
@@ -341,9 +340,12 @@ WebSocket/STOMP:
 - Actuator expone `health` y `metrics`
 - health groups:
   `liveness` y `readiness`
-- schedulers de timeout para matches, leagues y cups
-- scheduler de expiracion de sesiones de revancha (`RematchSessionExpirationScheduler`)
-- heartbeat de scheduler incluido en readiness
+- timeouts instantaneos por entidad: cada timeout se programa en el instante exacto de vencimiento
+  via `TimeoutScheduler`; al arrancar, `TimeoutReconciliationRunner` reconcilia el estado contra la
+  BD y reprograma o dispara inmediatamente los pendientes
+- red de seguridad cada 5 min (`TimeoutSafetyNetScheduler`) que reconcilia de nuevo ante caidas
+  no detectadas; no reemplaza el mecanismo principal sino que actua como fallback
+- heartbeat de scheduler incluido en readiness (`/actuator/health/schedulerHeartbeat`)
 - logging con `requestId` en MDC
 
 Health endpoint:

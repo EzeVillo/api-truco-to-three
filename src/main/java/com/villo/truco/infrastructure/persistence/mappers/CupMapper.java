@@ -87,7 +87,8 @@ public class CupMapper {
     final var snapshot = new CupSnapshot(new CupId(entity.getId()), new ArrayList<>(participants),
         bouts, forfeitedPlayers, entity.getNumberOfPlayers(),
         GamesToPlay.of(entity.getGamesToPlay()), Visibility.valueOf(entity.getVisibility()),
-        JoinCode.of(entity.getJoinCode()), CupStatus.valueOf(entity.getStatus()), champion);
+        JoinCode.of(entity.getJoinCode()), CupStatus.valueOf(entity.getStatus()), champion,
+        entity.getLastActivityAt());
 
     final var cup = CupRehydrator.rehydrate(snapshot);
     cup.setVersion(entity.getVersion());

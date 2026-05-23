@@ -11,10 +11,8 @@ class LeagueTimeoutPropertiesTest {
 
     final var properties = new LeagueTimeoutProperties();
     properties.setIdleTimeoutSeconds(33);
-    properties.setTimeoutCheckIntervalMs(44L);
 
     assertThat(properties.getIdleTimeoutSeconds()).isEqualTo(33);
-    assertThat(properties.getTimeoutCheckIntervalMs()).isEqualTo(44L);
   }
 
 }

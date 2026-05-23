@@ -16,8 +16,11 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
+import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.ports.LeagueTimeoutEntry;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -32,11 +35,29 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("League command handlers")
 class LeagueCommandHandlersTest {
+
+  private static LeagueRepository leagueRepoSaving(final AtomicReference<League> ref) {
+
+    return new LeagueRepository() {
+      @Override
+      public void save(final League league) {
+
+        ref.set(league);
+      }
+
+      @Override
+      public Stream<LeagueTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
+  }
 
   private PlayerAvailabilityChecker availableChecker() {
 
@@ -197,8 +218,8 @@ class LeagueCommandHandlersTest {
 
     final var saved = new AtomicReference<League>();
     final var publishedEvents = new ArrayList<LeagueDomainEvent>();
-    final var handler = new CreateLeagueCommandHandler(saved::set, publishedEvents::addAll,
-        availableChecker());
+    final var handler = new CreateLeagueCommandHandler(leagueRepoSaving(saved),
+        publishedEvents::addAll, availableChecker());
     final var creator = PlayerId.generate();
 
     final var result = handler.handle(
@@ -268,7 +289,7 @@ class LeagueCommandHandlersTest {
 
     final var saved = new AtomicReference<League>();
     final var handler = new LeaveLeagueCommandHandler(new LeagueResolver(queryRepository),
-        saved::set, events -> {
+        leagueRepoSaving(saved), events -> {
     });
 
     handler.handle(new LeaveLeagueCommand(league.getId(), leaver));
@@ -333,10 +354,22 @@ class LeagueCommandHandlersTest {
 
     final var leagueSaved = new AtomicReference<League>();
     final var matchSaves = new AtomicInteger();
-    final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
+    final MatchRepository matchRepository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        matchSaves.incrementAndGet();
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
 
     final var handler = new StartLeagueCommandHandler(new LeagueResolver(queryRepository),
-        leagueSaved::set, matchRepository, events -> {
+        leagueRepoSaving(leagueSaved), matchRepository, events -> {
     });
 
     handler.handle(new StartLeagueCommand(league.getId(), p1));

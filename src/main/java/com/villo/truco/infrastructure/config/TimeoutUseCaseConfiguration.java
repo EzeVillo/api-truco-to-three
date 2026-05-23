@@ -16,7 +16,6 @@ import com.villo.truco.domain.ports.LeagueRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
-import java.time.Duration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -33,19 +32,13 @@ public class TimeoutUseCaseConfiguration {
   private final CupRepository cupRepository;
   private final CupEventNotifier cupEventNotifier;
   private final RetryableTransactionalRunner transactionalRunner;
-  private final MatchTimeoutProperties matchTimeoutProperties;
-  private final LeagueTimeoutProperties leagueTimeoutProperties;
-  private final CupTimeoutProperties cupTimeoutProperties;
 
   public TimeoutUseCaseConfiguration(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
       final LeagueQueryRepository leagueQueryRepository, final LeagueRepository leagueRepository,
       final LeagueEventNotifier leagueEventNotifier, final CupQueryRepository cupQueryRepository,
       final CupRepository cupRepository, final CupEventNotifier cupEventNotifier,
-      final RetryableTransactionalRunner transactionalRunner,
-      final MatchTimeoutProperties matchTimeoutProperties,
-      final LeagueTimeoutProperties leagueTimeoutProperties,
-      final CupTimeoutProperties cupTimeoutProperties) {
+      final RetryableTransactionalRunner transactionalRunner) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.matchRepository = matchRepository;
@@ -57,35 +50,27 @@ public class TimeoutUseCaseConfiguration {
     this.cupRepository = cupRepository;
     this.cupEventNotifier = cupEventNotifier;
     this.transactionalRunner = transactionalRunner;
-    this.matchTimeoutProperties = matchTimeoutProperties;
-    this.leagueTimeoutProperties = leagueTimeoutProperties;
-    this.cupTimeoutProperties = cupTimeoutProperties;
   }
 
   @Bean
   TimeoutIdleMatchesUseCase timeoutIdleMatchesCommandHandler() {
 
     return new TimeoutIdleMatchesCommandHandler(this.matchQueryRepository, this.matchRepository,
-        this.matchEventNotifier, this.transactionalRunner,
-        Duration.ofSeconds(this.matchTimeoutProperties.getIdleTimeoutSeconds()));
+        this.matchEventNotifier, this.transactionalRunner);
   }
 
   @Bean
   TimeoutIdleLeaguesUseCase timeoutIdleLeaguesCommandHandler() {
 
     return new TimeoutIdleLeaguesCommandHandler(this.leagueQueryRepository, this.leagueRepository,
-        this.transactionalRunner,
-        Duration.ofSeconds(this.leagueTimeoutProperties.getIdleTimeoutSeconds()),
-        this.leagueEventNotifier);
+        this.transactionalRunner, this.leagueEventNotifier);
   }
 
   @Bean
   TimeoutIdleCupsUseCase timeoutIdleCupsCommandHandler() {
 
     return new TimeoutIdleCupsCommandHandler(this.cupQueryRepository, this.cupRepository,
-        this.transactionalRunner,
-        Duration.ofSeconds(this.cupTimeoutProperties.getIdleTimeoutSeconds()),
-        this.cupEventNotifier);
+        this.transactionalRunner, this.cupEventNotifier);
   }
 
 }

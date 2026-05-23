@@ -16,7 +16,8 @@ public final class LeagueSnapshotExtractor {
 
     return new LeagueSnapshot(league.getId(), List.copyOf(league.getParticipants()), fixtures,
         new LinkedHashMap<>(league.getWinsByPlayer()), league.getNumberOfPlayers(),
-        league.getGamesToPlay(), league.getVisibility(), league.getJoinCode(), league.getStatus());
+        league.getGamesToPlay(), league.getVisibility(), league.getJoinCode(), league.getStatus(),
+        league.getLastActivityAt());
   }
 
   private static FixtureSnapshot extractFixture(final Fixture fixture) {

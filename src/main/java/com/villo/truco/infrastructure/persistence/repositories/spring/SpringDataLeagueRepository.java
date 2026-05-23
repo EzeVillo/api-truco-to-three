@@ -28,6 +28,10 @@ public interface SpringDataLeagueRepository extends JpaRepository<LeagueJpaEntit
       + "AND l.lastActivityAt < :idleSince")
   List<UUID> findIdleLeagueIds(@Param("idleSince") Instant idleSince);
 
+  @Query("SELECT l.id AS id, l.lastActivityAt AS lastActivityAt FROM LeagueJpaEntity l "
+      + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START', 'IN_PROGRESS')")
+  List<LeagueActivityProjection> findActiveLeaguesWithLastActivity();
+
   @Query("SELECT l FROM LeagueJpaEntity l "
       + "WHERE l.visibility = 'PUBLIC' AND l.status = 'WAITING_FOR_PLAYERS' "
       + "ORDER BY l.lastActivityAt DESC")

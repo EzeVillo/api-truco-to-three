@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class MatchTimeoutProperties {
 
   private int idleTimeoutSeconds = 300;
-  private long timeoutCheckIntervalMs = 30000;
 
   public int getIdleTimeoutSeconds() {
 
@@ -16,16 +15,6 @@ public class MatchTimeoutProperties {
   public void setIdleTimeoutSeconds(int idleTimeoutSeconds) {
 
     this.idleTimeoutSeconds = idleTimeoutSeconds;
-  }
-
-  public long getTimeoutCheckIntervalMs() {
-
-    return timeoutCheckIntervalMs;
-  }
-
-  public void setTimeoutCheckIntervalMs(long timeoutCheckIntervalMs) {
-
-    this.timeoutCheckIntervalMs = timeoutCheckIntervalMs;
   }
 
 }

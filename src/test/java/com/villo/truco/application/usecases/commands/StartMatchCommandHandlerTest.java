@@ -18,6 +18,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -88,7 +90,19 @@ class StartMatchCommandHandlerTest {
       }
     };
 
-    final MatchRepository matchRepository = savedMatch::set;
+    final MatchRepository matchRepository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final MatchEventNotifier notifier = publishedEvents::addAll;
     final var resolver = new MatchResolver(queryRepo);
     final LeagueQueryRepository leagueQueryRepo = new LeagueQueryRepository() {

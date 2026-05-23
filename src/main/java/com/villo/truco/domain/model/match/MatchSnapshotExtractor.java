@@ -18,7 +18,7 @@ public final class MatchSnapshotExtractor {
         match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(), match.getGameNumber(),
         match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getRoundNumber(),
         match.isReadyPlayerOne(), match.isReadyPlayerTwo(), match.getFirstManoOfGame(),
-        roundSnapshot);
+        roundSnapshot, null);
   }
 
   private static RoundSnapshot extractRound(final Round round) {

@@ -17,9 +17,12 @@ import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.CupRepository;
+import com.villo.truco.domain.ports.CupTimeoutEntry;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -34,11 +37,46 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("Cup command handlers")
 class CupCommandHandlersTest {
+
+  private static CupRepository cupRepoSaving(final AtomicReference<Cup> ref) {
+
+    return new CupRepository() {
+      @Override
+      public void save(final Cup cup) {
+
+        ref.set(cup);
+      }
+
+      @Override
+      public Stream<CupTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
+  }
+
+  private static MatchRepository matchRepoIncrementing(final AtomicInteger counter) {
+
+    return new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        counter.incrementAndGet();
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
+  }
 
   private PlayerAvailabilityChecker availableChecker() {
 
@@ -199,7 +237,7 @@ class CupCommandHandlersTest {
 
     final var saved = new AtomicReference<Cup>();
     final var publishedEvents = new ArrayList<CupDomainEvent>();
-    final var handler = new CreateCupCommandHandler(saved::set, publishedEvents::addAll,
+    final var handler = new CreateCupCommandHandler(cupRepoSaving(saved), publishedEvents::addAll,
         availableChecker());
     final var creator = PlayerId.generate();
 
@@ -273,10 +311,22 @@ class CupCommandHandlersTest {
 
     final var cupSaved = new AtomicReference<Cup>();
     final var matchSaves = new AtomicInteger();
-    final MatchRepository matchRepository = match -> matchSaves.incrementAndGet();
+    final MatchRepository matchRepository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
 
-    final var handler = new StartCupCommandHandler(new CupResolver(queryRepository), cupSaved::set,
-        matchRepository, events -> {
+        matchSaves.incrementAndGet();
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
+
+    final var handler = new StartCupCommandHandler(new CupResolver(queryRepository),
+        cupRepoSaving(cupSaved), matchRepository, events -> {
     });
 
     handler.handle(new StartCupCommand(cup.getId(), p1));
@@ -351,8 +401,8 @@ class CupCommandHandlersTest {
 
     final var saved = new AtomicReference<Cup>();
     final var createdMatches = new AtomicInteger();
-    final var handler = new AdvanceCupCommandHandler(new CupResolver(queryRepository), saved::set,
-        match -> createdMatches.incrementAndGet(), events -> {
+    final var handler = new AdvanceCupCommandHandler(new CupResolver(queryRepository),
+        cupRepoSaving(saved), matchRepoIncrementing(createdMatches), events -> {
     });
 
     handler.handle(new AdvanceCupCommand(cup.getId(), matchId, firstPending.playerOne()));
@@ -423,8 +473,8 @@ class CupCommandHandlersTest {
 
     final var saved = new AtomicReference<Cup>();
     final var createdMatches = new AtomicInteger();
-    final var handler = new ForfeitCupCommandHandler(new CupResolver(queryRepository), saved::set,
-        match -> createdMatches.incrementAndGet(), events -> {
+    final var handler = new ForfeitCupCommandHandler(new CupResolver(queryRepository),
+        cupRepoSaving(saved), matchRepoIncrementing(createdMatches), events -> {
     });
 
     handler.handle(new ForfeitCupCommand(cup.getId(), p2));

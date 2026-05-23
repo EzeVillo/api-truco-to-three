@@ -28,6 +28,10 @@ public interface SpringDataCupRepository extends JpaRepository<CupJpaEntity, UUI
       + "AND c.lastActivityAt < :idleSince")
   List<UUID> findIdleCupIds(@Param("idleSince") Instant idleSince);
 
+  @Query("SELECT c.id AS id, c.lastActivityAt AS lastActivityAt FROM CupJpaEntity c "
+      + "WHERE c.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START', 'IN_PROGRESS')")
+  List<CupActivityProjection> findActiveCupsWithLastActivity();
+
   @Query("SELECT c FROM CupJpaEntity c "
       + "WHERE c.visibility = 'PUBLIC' AND c.status = 'WAITING_FOR_PLAYERS' "
       + "ORDER BY c.lastActivityAt DESC")

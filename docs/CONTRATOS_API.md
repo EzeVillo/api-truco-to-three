@@ -1517,8 +1517,9 @@ Defaults en `application.yaml`:
 - league: `PT30M`
 - cup: `PT30M`
 
-El backend corre un scheduler que expira invitaciones `PENDING` por tiempo o cuando el recurso deja
-de admitir join.
+El backend programa el timeout de cada invitacion en el instante exacto de `expiresAt`; el evento
+WebSocket `INVITATION_EXPIRED` se emite dentro de los 1000 ms del vencimiento configurado. Las
+invitaciones tambien expiran si el recurso deja de admitir join.
 
 ## 7.5 Perfil de jugador
 

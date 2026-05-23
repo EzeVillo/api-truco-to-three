@@ -109,7 +109,7 @@ class MatchTest {
 
     return Match.reconstruct(MatchId.generate(), this.playerOne, this.playerTwo, null,
         MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE, MatchStatus.IN_PROGRESS,
-        0, 0, 1, 0, 0, 1, true, true, this.playerOne, round);
+        0, 0, 1, 0, 0, 1, true, true, this.playerOne, round, null);
   }
 
   @Nested

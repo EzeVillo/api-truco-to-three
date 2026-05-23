@@ -6,9 +6,6 @@ import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,35 +19,24 @@ public final class TimeoutIdleMatchesCommandHandler implements TimeoutIdleMatche
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
   private final RetryableTransactionalRunner transactionalRunner;
-  private final Duration idleTimeout;
 
   public TimeoutIdleMatchesCommandHandler(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
-      final RetryableTransactionalRunner transactionalRunner, final Duration idleTimeout) {
+      final RetryableTransactionalRunner transactionalRunner) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
     this.transactionalRunner = Objects.requireNonNull(transactionalRunner);
-    this.idleTimeout = Objects.requireNonNull(idleTimeout);
   }
 
   @Override
-  public Void handle(final Void unused) {
+  public Void handle(final MatchId matchId) {
 
-    final var cutoff = Instant.now().minus(this.idleTimeout);
-    final List<MatchId> idleMatchIds = this.matchQueryRepository.findIdleMatchIds(cutoff);
-
-    if (!idleMatchIds.isEmpty()) {
-      LOGGER.info("Found {} idle matches to process", idleMatchIds.size());
-    }
-
-    for (final var matchId : idleMatchIds) {
-      try {
-        this.transactionalRunner.run(() -> this.processIdleMatch(matchId));
-      } catch (final Exception e) {
-        LOGGER.error("Failed to process idle match: matchId={}", matchId, e);
-      }
+    try {
+      this.transactionalRunner.run(() -> this.processIdleMatch(matchId));
+    } catch (final Exception e) {
+      LOGGER.error("Failed to process idle match: matchId={}", matchId, e);
     }
     return null;
   }

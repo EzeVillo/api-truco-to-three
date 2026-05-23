@@ -83,6 +83,13 @@ for local dev):
 
 Docker Compose starts PostgreSQL on port `5432` and Adminer on `8081`.
 
+## Convenciones de Código Java
+
+- **Siempre usar `import` statements** en lugar de nombres completamente calificados (FQCN) inline.
+  Nunca escribir `java.util.stream.Stream<com.villo.truco.domain.ports.Foo>` en el cuerpo del
+  código; agregar el import arriba y usar el nombre corto.
+  Excepción válida: cuando hay colisión de nombres entre dos clases con el mismo simple name.
+
 ## Documentación:
 
 verificá si el cambio propuesto impacta la documentación del proyecto:
@@ -110,5 +117,5 @@ Esto está definido como Principio IV en `.specify/memory/constitution.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/002-quick-match/plan.md`
+`specs/003-instant-timeouts/plan.md`
 <!-- SPECKIT END -->

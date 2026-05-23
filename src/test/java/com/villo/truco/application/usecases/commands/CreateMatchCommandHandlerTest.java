@@ -19,6 +19,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.DomainException;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
@@ -31,6 +32,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -204,7 +206,19 @@ class CreateMatchCommandHandlerTest {
   void createsMatch() {
 
     final var savedMatch = new AtomicReference<Match>();
-    final MatchRepository repository = savedMatch::set;
+    final MatchRepository repository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
         FREE_CHECKER);
 
@@ -221,7 +235,19 @@ class CreateMatchCommandHandlerTest {
   void failsWhenGamesToPlayIsInvalid() {
 
     final var savedMatch = new AtomicReference<Match>();
-    final MatchRepository repository = savedMatch::set;
+    final MatchRepository repository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
         FREE_CHECKER);
 
@@ -237,7 +263,19 @@ class CreateMatchCommandHandlerTest {
   void matchBelongsToCommandPlayer() {
 
     final var savedMatch = new AtomicReference<Match>();
-    final MatchRepository repository = savedMatch::set;
+    final MatchRepository repository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
         FREE_CHECKER);
     final var playerId = PlayerId.generate();
@@ -254,7 +292,19 @@ class CreateMatchCommandHandlerTest {
   void failsWhenPlayerHasUnfinishedMatch() {
 
     final var savedMatch = new AtomicReference<Match>();
-    final MatchRepository repository = savedMatch::set;
+    final MatchRepository repository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
 
     final MatchQueryRepository busyMatchRepo = new MatchQueryRepository() {
 
@@ -313,7 +363,19 @@ class CreateMatchCommandHandlerTest {
 
     final var savedMatch = new AtomicReference<Match>();
     final var publishedEvents = new java.util.ArrayList<MatchDomainEvent>();
-    final MatchRepository repository = savedMatch::set;
+    final MatchRepository repository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final var handler = new CreateMatchCommandHandler(repository, publishedEvents::addAll,
         FREE_CHECKER);
 

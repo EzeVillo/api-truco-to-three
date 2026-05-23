@@ -84,7 +84,8 @@ public class LeagueMapper {
     final var snapshot = new LeagueSnapshot(new LeagueId(entity.getId()),
         new ArrayList<>(participants), fixtures, winsByPlayer, entity.getNumberOfPlayers(),
         GamesToPlay.of(entity.getGamesToPlay()), Visibility.valueOf(entity.getVisibility()),
-        JoinCode.of(entity.getJoinCode()), LeagueStatus.valueOf(entity.getStatus()));
+        JoinCode.of(entity.getJoinCode()), LeagueStatus.valueOf(entity.getStatus()),
+        entity.getLastActivityAt());
 
     final var league = LeagueRehydrator.rehydrate(snapshot);
     league.setVersion(entity.getVersion());

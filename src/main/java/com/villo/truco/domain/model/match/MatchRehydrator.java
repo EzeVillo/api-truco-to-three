@@ -18,7 +18,7 @@ public final class MatchRehydrator {
         snapshot.gamesWonPlayerOne(), snapshot.gamesWonPlayerTwo(), snapshot.gameNumber(),
         snapshot.scorePlayerOne(), snapshot.scorePlayerTwo(), snapshot.roundNumber(),
         snapshot.readyPlayerOne(), snapshot.readyPlayerTwo(), snapshot.firstManoOfGame(),
-        currentRound);
+        currentRound, snapshot.lastActivityAt());
   }
 
   private static Round rehydrateRound(final RoundSnapshot roundSnapshot) {

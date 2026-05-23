@@ -1,10 +1,7 @@
 package com.villo.truco.application.ports.in;
 
-public interface TimeoutIdleMatchesUseCase extends UseCase<Void, Void> {
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 
-  default void handle() {
-
-    this.handle(null);
-  }
+public interface TimeoutIdleMatchesUseCase extends UseCase<MatchId, Void> {
 
 }

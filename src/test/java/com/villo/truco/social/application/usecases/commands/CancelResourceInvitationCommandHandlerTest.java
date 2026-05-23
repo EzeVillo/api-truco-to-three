@@ -17,6 +17,7 @@ import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvit
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationStatus;
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationTargetType;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
+import com.villo.truco.testutil.NoOpResourceInvitationRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -50,8 +51,9 @@ class CancelResourceInvitationCommandHandlerTest {
         Map.of(sender, "juancho", recipient, "martina"));
     final var handler = new CancelResourceInvitationCommandHandler(
         new SocialUserGuard(userQueryRepository),
-        new ResourceInvitationResolver(new FixedInvitationQueryRepository(invitation)), saved::set,
-        publishedEvents::set, new SocialViewAssembler(userQueryRepository));
+        new ResourceInvitationResolver(new FixedInvitationQueryRepository(invitation)),
+        new NoOpResourceInvitationRepository(saved::set), publishedEvents::set,
+        new SocialViewAssembler(userQueryRepository));
 
     final var dto = handler.handle(
         new CancelResourceInvitationCommand(invitation.getId().value().toString(),
@@ -82,7 +84,7 @@ class CancelResourceInvitationCommandHandlerTest {
     final var handler = new CancelResourceInvitationCommandHandler(
         new SocialUserGuard(userQueryRepository),
         new ResourceInvitationResolver(new FixedInvitationQueryRepository(invitation)),
-        inv -> saved.set(true), events -> published.set(true),
+        new NoOpResourceInvitationRepository(inv -> saved.set(true)), events -> published.set(true),
         new SocialViewAssembler(userQueryRepository));
 
     assertThatThrownBy(() -> handler.handle(

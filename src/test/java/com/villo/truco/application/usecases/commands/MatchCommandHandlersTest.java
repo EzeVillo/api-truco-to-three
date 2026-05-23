@@ -8,12 +8,6 @@ import com.villo.truco.application.commands.FoldCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
-import com.villo.truco.application.ports.BotRegistry;
-import com.villo.truco.domain.model.bot.BotProfile;
-import com.villo.truco.domain.model.cup.Cup;
-import com.villo.truco.domain.model.cup.valueobjects.CupId;
-import com.villo.truco.domain.model.league.League;
-import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
@@ -21,22 +15,21 @@ import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
-import com.villo.truco.domain.ports.CupQueryRepository;
-import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
-import com.villo.truco.testutil.NoOpRematchSessionRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,158 +41,21 @@ class MatchCommandHandlersTest {
     return onePlayer.equals(match.getPlayerOne()) ? match.getPlayerTwo() : match.getPlayerOne();
   }
 
-  private PlayerAvailabilityChecker availableChecker() {
+  private static MatchRepository repoSaving(final AtomicReference<Match> ref) {
 
-    final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
+    return new MatchRepository() {
       @Override
-      public Optional<Match> findById(final MatchId matchId) {
+      public void save(final Match match) {
 
-        return Optional.empty();
+        ref.set(match);
       }
 
       @Override
-      public boolean hasActiveMatch(final PlayerId playerId) {
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
 
-        return false;
-      }
-
-      @Override
-      public boolean hasUnfinishedMatch(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public List<MatchId> findIdleMatchIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      @Override
-      public List<Match> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
+        return Stream.empty();
       }
     };
-    final LeagueQueryRepository leagueQueryRepository = new LeagueQueryRepository() {
-      @Override
-      public Optional<League> findById(final LeagueId leagueId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findByMatchId(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      @Override
-      public List<League> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-    final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
-      @Override
-      public Optional<Cup> findById(final CupId cupId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findByMatchId(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findInProgressByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<CupId> findIdleCupIds(final Instant idleSince) {
-
-        return List.of();
-      }
-
-      private List<Cup> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-    final BotRegistry noBotRegistry = new BotRegistry() {
-
-      @Override
-      public boolean isBot(final PlayerId playerId) {
-
-        return false;
-      }
-
-      @Override
-      public Optional<BotProfile> getProfile(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<BotProfile> getAll() {
-
-        return List.of();
-      }
-
-      @Override
-      public void register(final BotProfile profile) {
-
-      }
-    };
-    return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE,
-        NoOpQuickMatchQueuePort.INSTANCE);
   }
 
   private MatchResolver resolverFor(final Match match) {
@@ -256,7 +112,7 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new CallTrucoCommandHandler(resolverFor(match), saved::set,
+    final var handler = new CallTrucoCommandHandler(resolverFor(match), repoSaving(saved),
         publishedEvents::addAll);
 
     final var currentTurn = match.getCurrentTurn();
@@ -280,7 +136,7 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new CallEnvidoCommandHandler(resolverFor(match), saved::set,
+    final var handler = new CallEnvidoCommandHandler(resolverFor(match), repoSaving(saved),
         publishedEvents::addAll);
 
     final var currentTurn = match.getCurrentTurn();
@@ -305,7 +161,7 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new PlayCardCommandHandler(resolverFor(match), saved::set,
+    final var handler = new PlayCardCommandHandler(resolverFor(match), repoSaving(saved),
         publishedEvents::addAll);
 
     final var currentTurn = match.getCurrentTurn();
@@ -333,7 +189,7 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new FoldCommandHandler(resolverFor(match), saved::set,
+    final var handler = new FoldCommandHandler(resolverFor(match), repoSaving(saved),
         publishedEvents::addAll);
 
     final var firstTurn = match.getCurrentTurn();
@@ -367,7 +223,7 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new RespondTrucoCommandHandler(resolverFor(match), saved::set,
+    final var handler = new RespondTrucoCommandHandler(resolverFor(match), repoSaving(saved),
         publishedEvents::addAll);
 
     final var returnedId = handler.handle(
@@ -397,7 +253,7 @@ class MatchCommandHandlersTest {
 
     final var saved = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = new RespondEnvidoCommandHandler(resolverFor(match), saved::set,
+    final var handler = new RespondEnvidoCommandHandler(resolverFor(match), repoSaving(saved),
         publishedEvents::addAll);
 
     handler.handle(new RespondEnvidoCommand(match.getId(), responder, EnvidoResponse.QUIERO));

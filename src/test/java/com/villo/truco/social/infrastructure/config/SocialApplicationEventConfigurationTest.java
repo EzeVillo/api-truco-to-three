@@ -5,14 +5,17 @@ import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.application.ports.out.ResourceInvitationDomainEventHandler;
 import com.villo.truco.application.usecases.commands.JoinTargetDispatcher;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.social.domain.model.invitation.events.ResourceInvitationDomainEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 class SocialApplicationEventConfigurationTest {
 
   @Test
+  @SuppressWarnings("unchecked")
   void buildsSocialApplicationEventBeans() {
 
     final var configuration = new SocialApplicationEventConfiguration(
@@ -24,11 +27,15 @@ class SocialApplicationEventConfigurationTest {
     final var joinEventHandler = configuration.resourceInvitationAcceptedJoinEventHandler(
         mock(JoinTargetDispatcher.class));
 
+    final ResourceInvitationDomainEventHandler<ResourceInvitationDomainEvent> timeoutHandler = mock(
+        ResourceInvitationDomainEventHandler.class);
+
     assertThat(configuration.stompSocialNotificationHandler()).isNotNull();
     assertThat(mapper).isNotNull();
     assertThat(translator).isNotNull();
     assertThat(joinEventHandler).isNotNull();
-    assertThat(configuration.socialEventNotifier(translator, joinEventHandler)).isNotNull();
+    assertThat(configuration.socialEventNotifier(translator, joinEventHandler,
+        timeoutHandler)).isNotNull();
   }
 
 }

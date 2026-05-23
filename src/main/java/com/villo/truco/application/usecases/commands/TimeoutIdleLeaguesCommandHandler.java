@@ -6,9 +6,6 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,37 +18,26 @@ public final class TimeoutIdleLeaguesCommandHandler implements TimeoutIdleLeague
   private final LeagueQueryRepository leagueQueryRepository;
   private final LeagueRepository leagueRepository;
   private final RetryableTransactionalRunner transactionalRunner;
-  private final Duration idleTimeout;
   private final LeagueEventNotifier leagueEventNotifier;
 
   public TimeoutIdleLeaguesCommandHandler(final LeagueQueryRepository leagueQueryRepository,
       final LeagueRepository leagueRepository,
-      final RetryableTransactionalRunner transactionalRunner, final Duration idleTimeout,
+      final RetryableTransactionalRunner transactionalRunner,
       final LeagueEventNotifier leagueEventNotifier) {
 
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
     this.leagueRepository = Objects.requireNonNull(leagueRepository);
     this.transactionalRunner = Objects.requireNonNull(transactionalRunner);
-    this.idleTimeout = Objects.requireNonNull(idleTimeout);
     this.leagueEventNotifier = Objects.requireNonNull(leagueEventNotifier);
   }
 
   @Override
-  public Void handle(final Void unused) {
+  public Void handle(final LeagueId leagueId) {
 
-    final var cutoff = Instant.now().minus(this.idleTimeout);
-    final List<LeagueId> idleLeagueIds = this.leagueQueryRepository.findIdleLeagueIds(cutoff);
-
-    if (!idleLeagueIds.isEmpty()) {
-      LOGGER.info("Found {} idle leagues to process", idleLeagueIds.size());
-    }
-
-    for (final var leagueId : idleLeagueIds) {
-      try {
-        this.transactionalRunner.run(() -> this.processIdleLeague(leagueId));
-      } catch (final Exception e) {
-        LOGGER.error("Failed to process idle league: leagueId={}", leagueId, e);
-      }
+    try {
+      this.transactionalRunner.run(() -> this.processIdleLeague(leagueId));
+    } catch (final Exception e) {
+      LOGGER.error("Failed to process idle league: leagueId={}", leagueId, e);
     }
     return null;
   }
