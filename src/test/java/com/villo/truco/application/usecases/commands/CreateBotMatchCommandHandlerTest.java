@@ -28,6 +28,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -36,6 +37,7 @@ import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -79,7 +81,19 @@ class CreateBotMatchCommandHandlerTest {
         .filter(GameStartedEvent.class::isInstance).map(GameStartedEvent.class::cast)
         .forEach(chatHandler::handle);
     final var savedMatch = new AtomicReference<Match>();
-    final MatchRepository matchRepository = savedMatch::set;
+    final MatchRepository matchRepository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final var handler = new CreateBotMatchCommandHandler(matchRepository, matchEventNotifier,
         botRegistry, playerAvailabilityChecker);
 

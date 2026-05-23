@@ -15,6 +15,7 @@ import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvit
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationStatus;
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationTargetType;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
+import com.villo.truco.testutil.NoOpResourceInvitationRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -47,9 +48,9 @@ class AcceptResourceInvitationCommandHandlerTest {
         Map.of(sender, "juancho", recipient, "martina"));
     final var handler = new AcceptResourceInvitationCommandHandler(
         new SocialUserGuard(userQueryRepository),
-        new ResourceInvitationResolver(new FixedInvitationQueryRepository(invitation)), saved::set,
-        events -> {
-        }, new SocialViewAssembler(userQueryRepository));
+        new ResourceInvitationResolver(new FixedInvitationQueryRepository(invitation)),
+        new NoOpResourceInvitationRepository(saved::set), events -> {
+    }, new SocialViewAssembler(userQueryRepository));
 
     final var dto = handler.handle(
         new AcceptResourceInvitationCommand(invitation.getId().value().toString(),
@@ -78,7 +79,7 @@ class AcceptResourceInvitationCommandHandlerTest {
     final var handler = new AcceptResourceInvitationCommandHandler(
         new SocialUserGuard(userQueryRepository),
         new ResourceInvitationResolver(new FixedInvitationQueryRepository(invitation)),
-        inv -> saved.set(true), events -> published.set(true),
+        new NoOpResourceInvitationRepository(inv -> saved.set(true)), events -> published.set(true),
         new SocialViewAssembler(userQueryRepository));
 
     assertThatThrownBy(() -> handler.handle(

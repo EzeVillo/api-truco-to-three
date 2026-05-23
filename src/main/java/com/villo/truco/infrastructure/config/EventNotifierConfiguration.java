@@ -31,6 +31,9 @@ import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
+import com.villo.truco.domain.model.cup.events.CupDomainEvent;
+import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
+import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
@@ -71,6 +74,9 @@ public class EventNotifierConfiguration {
   private final LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator;
   private final ProfileMatchDomainEventHandler profileMatchDomainEventHandler;
   private final MatchFinishedRematchSessionCreator matchFinishedRematchSessionCreator;
+  private final MatchDomainEventHandler<MatchDomainEvent> matchTimeoutEventHandler;
+  private final CupDomainEventHandler<CupDomainEvent> cupTimeoutEventHandler;
+  private final LeagueDomainEventHandler<LeagueDomainEvent> leagueTimeoutEventHandler;
 
   public EventNotifierConfiguration(
       final ChatNotificationEventTranslator chatNotificationEventTranslator,
@@ -91,7 +97,10 @@ public class EventNotifierConfiguration {
       final CupInvitationExpirationEventTranslator cupInvitationExpirationEventTranslator,
       final LeagueInvitationExpirationEventTranslator leagueInvitationExpirationEventTranslator,
       final ProfileMatchDomainEventHandler profileMatchDomainEventHandler,
-      final MatchFinishedRematchSessionCreator matchFinishedRematchSessionCreator) {
+      final MatchFinishedRematchSessionCreator matchFinishedRematchSessionCreator,
+      final MatchDomainEventHandler<MatchDomainEvent> matchTimeoutEventHandler,
+      final CupDomainEventHandler<CupDomainEvent> cupTimeoutEventHandler,
+      final LeagueDomainEventHandler<LeagueDomainEvent> leagueTimeoutEventHandler) {
 
     this.chatNotificationEventTranslator = chatNotificationEventTranslator;
     this.matchNotificationEventTranslator = matchNotificationEventTranslator;
@@ -114,6 +123,9 @@ public class EventNotifierConfiguration {
     this.leagueInvitationExpirationEventTranslator = leagueInvitationExpirationEventTranslator;
     this.profileMatchDomainEventHandler = profileMatchDomainEventHandler;
     this.matchFinishedRematchSessionCreator = matchFinishedRematchSessionCreator;
+    this.matchTimeoutEventHandler = matchTimeoutEventHandler;
+    this.cupTimeoutEventHandler = cupTimeoutEventHandler;
+    this.leagueTimeoutEventHandler = leagueTimeoutEventHandler;
   }
 
   @Bean
@@ -197,7 +209,8 @@ public class EventNotifierConfiguration {
         this.chatMatchGameStartedHandler(chatEventNotifier()), this.chatMatchFinishedHandler(),
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
         this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator,
-        this.profileMatchDomainEventHandler, this.matchFinishedRematchSessionCreator);
+        this.profileMatchDomainEventHandler, this.matchFinishedRematchSessionCreator,
+        this.matchTimeoutEventHandler);
     return new MatchDomainEventDispatcher(handlers);
   }
 
@@ -207,7 +220,8 @@ public class EventNotifierConfiguration {
     final List<CupDomainEventHandler<?>> handlers = List.of(this.cupNotificationEventTranslator,
         this.publicCupLobbyEventTranslator, this.chatCupStartedHandler(chatEventNotifier()),
         this.chatCupFinishedHandler(), this.chatCupCancelledHandler(),
-        this.spectatorAutoKickOnCupHandler, this.cupInvitationExpirationEventTranslator);
+        this.spectatorAutoKickOnCupHandler, this.cupInvitationExpirationEventTranslator,
+        this.cupTimeoutEventHandler);
     return new CompositeCupEventNotifier(handlers);
   }
 
@@ -218,7 +232,7 @@ public class EventNotifierConfiguration {
         this.leagueNotificationEventTranslator, this.publicLeagueLobbyEventTranslator,
         this.chatLeagueStartedHandler(chatEventNotifier()), this.chatLeagueFinishedHandler(),
         this.chatLeagueCancelledHandler(), this.spectatorAutoKickOnLeagueHandler,
-        this.leagueInvitationExpirationEventTranslator);
+        this.leagueInvitationExpirationEventTranslator, this.leagueTimeoutEventHandler);
     return new CompositeLeagueEventNotifier(handlers);
   }
 

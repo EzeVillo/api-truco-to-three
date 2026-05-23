@@ -6,12 +6,14 @@ import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import java.time.Instant;
 
 public record MatchSnapshot(MatchId id, PlayerId playerOne, PlayerId playerTwo, JoinCode joinCode,
                             MatchRules rules, Visibility visibility, MatchStatus status,
                             int gamesWonPlayerOne, int gamesWonPlayerTwo, int gameNumber,
                             int scorePlayerOne, int scorePlayerTwo, int roundNumber,
                             boolean readyPlayerOne, boolean readyPlayerTwo,
-                            PlayerId firstManoOfGame, RoundSnapshot currentRound) {
+                            PlayerId firstManoOfGame, RoundSnapshot currentRound,
+                            Instant lastActivityAt) {
 
 }

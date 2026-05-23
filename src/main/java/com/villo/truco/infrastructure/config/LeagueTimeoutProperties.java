@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class LeagueTimeoutProperties {
 
   private int idleTimeoutSeconds = 600;
-  private long timeoutCheckIntervalMs = 60000;
 
   public int getIdleTimeoutSeconds() {
 
@@ -16,16 +15,6 @@ public class LeagueTimeoutProperties {
   public void setIdleTimeoutSeconds(int idleTimeoutSeconds) {
 
     this.idleTimeoutSeconds = idleTimeoutSeconds;
-  }
-
-  public long getTimeoutCheckIntervalMs() {
-
-    return timeoutCheckIntervalMs;
-  }
-
-  public void setTimeoutCheckIntervalMs(long timeoutCheckIntervalMs) {
-
-    this.timeoutCheckIntervalMs = timeoutCheckIntervalMs;
   }
 
 }

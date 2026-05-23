@@ -1,9 +1,11 @@
 package com.villo.truco.infrastructure.actuator.health;
 
+import com.villo.truco.application.ports.out.timeout.EntityType;
+import com.villo.truco.infrastructure.scheduler.SpringTimeoutScheduler;
+import com.villo.truco.infrastructure.scheduler.TimeoutReconciliationRunner;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
@@ -14,20 +16,17 @@ import org.springframework.stereotype.Component;
 @Component("schedulerHeartbeat")
 public class SchedulerHeartbeatHealthIndicator implements HealthIndicator {
 
-  private static final List<String> REQUIRED_SCHEDULERS = List.of("match-timeout", "league-timeout",
-      "cup-timeout");
-
-  private final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry;
+  private final TimeoutReconciliationRunner reconciliationRunner;
+  private final SpringTimeoutScheduler springTimeoutScheduler;
   private final Duration maxAge;
-  private final Instant startedAt;
 
-  public SchedulerHeartbeatHealthIndicator(
-      final SchedulerHeartbeatRegistry schedulerHeartbeatRegistry,
+  public SchedulerHeartbeatHealthIndicator(final TimeoutReconciliationRunner reconciliationRunner,
+      final SpringTimeoutScheduler springTimeoutScheduler,
       @Value("${truco.observability.scheduler-heartbeat-max-age-ms:180000}") final long maxAgeMs) {
 
-    this.schedulerHeartbeatRegistry = schedulerHeartbeatRegistry;
+    this.reconciliationRunner = reconciliationRunner;
+    this.springTimeoutScheduler = springTimeoutScheduler;
     this.maxAge = Duration.ofMillis(maxAgeMs);
-    this.startedAt = Instant.now();
   }
 
   @Override
@@ -35,35 +34,35 @@ public class SchedulerHeartbeatHealthIndicator implements HealthIndicator {
 
     final Instant now = Instant.now();
     final Map<String, Object> details = new LinkedHashMap<>();
-    final boolean withinStartupGrace =
-        Duration.between(this.startedAt, now).compareTo(this.maxAge) <= 0;
+    boolean healthy = springTimeoutScheduler.isPoolAlive();
 
-    boolean healthy = true;
-    for (final String schedulerName : REQUIRED_SCHEDULERS) {
-      final var lastRun = this.schedulerHeartbeatRegistry.lastSuccessfulRun(schedulerName);
-      if (lastRun.isEmpty()) {
-        if (withinStartupGrace) {
-          details.put(schedulerName, "pending-first-run");
-        } else {
-          healthy = false;
-          details.put(schedulerName, "never-ran");
-        }
-        continue;
-      }
+    if (!healthy) {
+      details.put("scheduler", "pool-terminated");
+    }
 
-      final long ageMs = Duration.between(lastRun.get(), now).toMillis();
-      details.put(schedulerName + "AgeMs", ageMs);
-      if (ageMs > this.maxAge.toMillis()) {
+    final Instant lastReconciliation = reconciliationRunner.getLastReconciliationAt();
+    details.put("lastReconciliationAt", lastReconciliation);
+
+    if (lastReconciliation == null) {
+      details.put("safetyNet", "never-ran");
+    } else {
+      final long safetyNetAgeMs = Duration.between(lastReconciliation, now).toMillis();
+      details.put("safetyNetAgeMs", safetyNetAgeMs);
+      if (safetyNetAgeMs > maxAge.toMillis()) {
         healthy = false;
       }
     }
 
-    details.put("maxAllowedAgeMs", this.maxAge.toMillis());
+    final Map<String, Integer> pendingByType = new LinkedHashMap<>();
+    for (final EntityType type : EntityType.values()) {
+      pendingByType.put(type.name().toLowerCase(), 0);
+    }
+    details.put("pendingByType", pendingByType);
+    details.put("pendingTotal", springTimeoutScheduler.pendingCount());
 
     if (healthy) {
       return Health.up().withDetails(details).build();
     }
-
     return Health.status(Status.OUT_OF_SERVICE).withDetails(details).build();
   }
 

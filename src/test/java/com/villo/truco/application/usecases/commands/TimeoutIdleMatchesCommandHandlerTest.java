@@ -12,19 +12,20 @@ import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -92,7 +93,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
       @Override
       public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
-        return List.copyOf(matches.keySet());
+        return List.of();
       }
 
       @Override
@@ -104,16 +105,28 @@ class TimeoutIdleMatchesCommandHandlerTest {
       @Override
       public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
 
-        return new CursorPageResult<>(findPublicWaiting(), null);
+        return new CursorPageResult<>(List.of(), null);
       }
     };
 
-    final MatchRepository matchRepository = savedMatch::set;
+    final MatchRepository matchRepository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final MatchEventNotifier notifier = publishedEvents::addAll;
     final RetryableTransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleMatchesCommandHandler(queryRepo, matchRepository, notifier,
-        transactionalRunner, Duration.ofMinutes(10));
+        transactionalRunner);
   }
 
   @Test
@@ -125,7 +138,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
-    handler.handle();
+    handler.handle(match.getId());
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getStatus()).isEqualTo(MatchStatus.CANCELLED);
@@ -140,7 +153,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
-    handler.handle();
+    handler.handle(match.getId());
 
     assertThat(publishedEvents).anyMatch(e -> e instanceof MatchCancelledEvent);
   }
@@ -154,7 +167,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
-    handler.handle();
+    handler.handle(match.getId());
 
     assertThat(match.getDomainEvents()).isEmpty();
   }
@@ -168,7 +181,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
-    handler.handle();
+    handler.handle(match.getId());
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getStatus()).isEqualTo(MatchStatus.FINISHED);
@@ -184,11 +197,25 @@ class TimeoutIdleMatchesCommandHandlerTest {
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
-    handler.handle();
+    handler.handle(match.getId());
 
     assertThat(savedMatch.get()).isNotNull();
     assertThat(savedMatch.get().getStatus()).isEqualTo(MatchStatus.FINISHED);
     assertThat(publishedEvents).anyMatch(e -> e instanceof MatchForfeitedEvent);
+  }
+
+  @Test
+  @DisplayName("match inexistente es ignorado")
+  void unknownMatchIdIsIgnored() {
+
+    final var savedMatch = new AtomicReference<Match>();
+    final var publishedEvents = new ArrayList<MatchDomainEvent>();
+    final var handler = handlerFor(Map.of(), savedMatch, publishedEvents);
+
+    handler.handle(MatchId.generate());
+
+    assertThat(savedMatch.get()).isNull();
+    assertThat(publishedEvents).isEmpty();
   }
 
   @Test
@@ -202,21 +229,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
     final var publishedEvents = new ArrayList<MatchDomainEvent>();
     final var handler = handlerFor(Map.of(match.getId(), match), savedMatch, publishedEvents);
 
-    handler.handle();
-
-    assertThat(savedMatch.get()).isNull();
-    assertThat(publishedEvents).isEmpty();
-  }
-
-  @Test
-  @DisplayName("lista vacía de idle matches no hace nada")
-  void emptyIdleListDoesNothing() {
-
-    final var savedMatch = new AtomicReference<Match>();
-    final var publishedEvents = new ArrayList<MatchDomainEvent>();
-    final var handler = handlerFor(Map.of(), savedMatch, publishedEvents);
-
-    handler.handle();
+    handler.handle(match.getId());
 
     assertThat(savedMatch.get()).isNull();
     assertThat(publishedEvents).isEmpty();

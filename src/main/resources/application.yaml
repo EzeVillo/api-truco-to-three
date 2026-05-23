@@ -20,6 +20,10 @@ truco:
   retry:
     max-retries: 3
     delay-ms: 200
+  timeout:
+    scheduler:
+      pool-size: 4
+    safety-net-interval: 300000
   observability:
     scheduler-heartbeat-max-age-ms: 180000
   social:
@@ -27,13 +31,10 @@ truco:
       match: PT10M
       league: PT30M
       cup: PT30M
-    invitation-expiration-check-interval-ms: 60000
   match:
-    idle-timeout-seconds: 300
-    timeout-check-interval-ms: 30000
+    idle-timeout-seconds: 30
   rematch:
     duration: PT2M
-    scheduler-delay: PT10S
     batch-size: 50
   security:
     jwt-secret: ${TRUCO_JWT_SECRET:truco-local-dev-secret-key-32-bytes}

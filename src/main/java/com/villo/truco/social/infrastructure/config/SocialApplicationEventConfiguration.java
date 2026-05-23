@@ -3,6 +3,7 @@ package com.villo.truco.social.infrastructure.config;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.application.ports.out.ResourceInvitationDomainEventHandler;
 import com.villo.truco.application.usecases.commands.JoinTargetDispatcher;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.events.CompositeSocialEventNotifier;
@@ -10,6 +11,7 @@ import com.villo.truco.social.application.eventhandlers.ResourceInvitationAccept
 import com.villo.truco.social.application.eventhandlers.ResourceUnjoinableInvitationExpirationHandler;
 import com.villo.truco.social.application.eventhandlers.SocialEventMapper;
 import com.villo.truco.social.application.eventhandlers.SocialNotificationEventTranslator;
+import com.villo.truco.social.domain.model.invitation.events.ResourceInvitationDomainEvent;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
 import com.villo.truco.social.domain.ports.SocialEventNotifier;
@@ -75,10 +77,12 @@ public class SocialApplicationEventConfiguration {
   @Bean
   SocialEventNotifier socialEventNotifier(
       final SocialNotificationEventTranslator socialNotificationEventTranslator,
-      final ResourceInvitationAcceptedJoinEventHandler resourceInvitationAcceptedJoinEventHandler) {
+      final ResourceInvitationAcceptedJoinEventHandler resourceInvitationAcceptedJoinEventHandler,
+      final ResourceInvitationDomainEventHandler<ResourceInvitationDomainEvent> resourceInvitationTimeoutEventHandler) {
 
     return new CompositeSocialEventNotifier(
-        List.of(socialNotificationEventTranslator, resourceInvitationAcceptedJoinEventHandler));
+        List.of(socialNotificationEventTranslator, resourceInvitationAcceptedJoinEventHandler,
+            resourceInvitationTimeoutEventHandler));
   }
 
 }

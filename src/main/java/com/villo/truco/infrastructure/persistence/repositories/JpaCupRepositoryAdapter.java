@@ -4,6 +4,7 @@ import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
+import com.villo.truco.domain.ports.CupTimeoutEntry;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.shared.JoinCodeRegistration;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
@@ -19,6 +20,7 @@ import com.villo.truco.infrastructure.persistence.repositories.spring.SpringData
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
@@ -93,6 +95,13 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
   public List<CupId> findIdleCupIds(final Instant idleSince) {
 
     return this.springDataRepo.findIdleCupIds(idleSince).stream().map(CupId::new).toList();
+  }
+
+  @Override
+  public Stream<CupTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+    return this.springDataRepo.findActiveCupsWithLastActivity().stream()
+        .map(row -> new CupTimeoutEntry(new CupId(row.getId()), row.getLastActivityAt()));
   }
 
   @Override

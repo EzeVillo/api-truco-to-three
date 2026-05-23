@@ -106,4 +106,10 @@ class CleanArchitectureTest {
       .dependOnClassesThat().resideInAPackage("..domain.cards..")
       .because("only BotCard may depend on the domain.cards shared kernel");
 
+  @ArchTest
+  static final ArchRule domain_must_not_depend_on_timeout_scheduler_package = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.domain..").should().dependOnClassesThat()
+      .resideInAnyPackage("com.villo.truco.infrastructure.scheduler..",
+          "com.villo.truco.application.ports.out.timeout..");
+
 }

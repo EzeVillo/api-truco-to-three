@@ -5,6 +5,7 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.ports.LeagueTimeoutEntry;
 import com.villo.truco.domain.shared.JoinCodeRegistration;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
@@ -19,6 +20,7 @@ import com.villo.truco.infrastructure.persistence.repositories.spring.SpringData
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
@@ -95,6 +97,13 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
     return this.springDataRepo.findIdleLeagueIds(idleSince).stream().map(LeagueId::new).toList();
+  }
+
+  @Override
+  public Stream<LeagueTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+    return this.springDataRepo.findActiveLeaguesWithLastActivity().stream()
+        .map(row -> new LeagueTimeoutEntry(new LeagueId(row.getId()), row.getLastActivityAt()));
   }
 
   @Override

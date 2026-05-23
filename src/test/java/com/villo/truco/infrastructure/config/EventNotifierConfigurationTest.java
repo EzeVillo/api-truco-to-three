@@ -21,6 +21,9 @@ import com.villo.truco.application.eventhandlers.SpectatorAutoKickOnLeagueMatchA
 import com.villo.truco.application.eventhandlers.SpectatorCleanupOnMatchEndEventHandler;
 import com.villo.truco.application.eventhandlers.SpectatorNotificationEventTranslator;
 import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.application.ports.out.CupDomainEventHandler;
+import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
+import com.villo.truco.application.ports.out.MatchDomainEventHandler;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
@@ -46,7 +49,9 @@ class EventNotifierConfigurationTest {
         mock(MatchInvitationExpirationEventTranslator.class),
         mock(CupInvitationExpirationEventTranslator.class),
         mock(LeagueInvitationExpirationEventTranslator.class),
-        mock(ProfileMatchDomainEventHandler.class), mock(MatchFinishedRematchSessionCreator.class));
+        mock(ProfileMatchDomainEventHandler.class), mock(MatchFinishedRematchSessionCreator.class),
+        mock(MatchDomainEventHandler.class), mock(CupDomainEventHandler.class),
+        mock(LeagueDomainEventHandler.class));
     final var chatEventNotifier = mock(ChatEventNotifier.class);
 
     assertThat(configuration.chatEventNotifier()).isNotNull();

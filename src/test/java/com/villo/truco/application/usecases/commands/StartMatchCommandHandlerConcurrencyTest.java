@@ -21,6 +21,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
@@ -44,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
@@ -59,17 +61,27 @@ class StartMatchCommandHandlerConcurrencyTest {
   private final MatchEventNotifier matchEventNotifier = publishedEvents::addAll;
   private final UseCasePipeline pipeline = new UseCasePipeline(
       List.of(new OptimisticLockRetryBehavior(3, Duration.ZERO)));
-  private final MatchRepository matchRepository = match -> {
-    synchronized (store) {
-      final var currentVersion = versions.computeIfAbsent(match.getId(), k -> new AtomicLong(0));
-      if (match.getVersion() != currentVersion.get()) {
-        throw new StaleAggregateException(
-            "Version mismatch: expected " + currentVersion.get() + " but was " + match.getVersion(),
-            null);
+  private final MatchRepository matchRepository = new MatchRepository() {
+    @Override
+    public void save(final Match match) {
+
+      synchronized (store) {
+        final var currentVersion = versions.computeIfAbsent(match.getId(), k -> new AtomicLong(0));
+        if (match.getVersion() != currentVersion.get()) {
+          throw new StaleAggregateException(
+              "Version mismatch: expected " + currentVersion.get() + " but was "
+                  + match.getVersion(), null);
+        }
+        currentVersion.incrementAndGet();
+        match.setVersion(currentVersion.get());
+        store.put(match.getId(), match);
       }
-      currentVersion.incrementAndGet();
-      match.setVersion(currentVersion.get());
-      store.put(match.getId(), match);
+    }
+
+    @Override
+    public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+      return java.util.stream.Stream.empty();
     }
   };
   private final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {

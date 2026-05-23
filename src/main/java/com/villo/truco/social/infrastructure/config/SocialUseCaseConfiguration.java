@@ -1,5 +1,6 @@
 package com.villo.truco.social.infrastructure.config;
 
+import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.auth.domain.ports.UserQueryRepository;
@@ -14,7 +15,7 @@ import com.villo.truco.social.application.ports.in.CancelResourceInvitationUseCa
 import com.villo.truco.social.application.ports.in.CreateResourceInvitationUseCase;
 import com.villo.truco.social.application.ports.in.DeclineFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.DeclineResourceInvitationUseCase;
-import com.villo.truco.social.application.ports.in.ExpirePendingResourceInvitationsUseCase;
+import com.villo.truco.social.application.ports.in.ExpireResourceInvitationUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendsUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendshipRequestsUseCase;
 import com.villo.truco.social.application.ports.in.GetResourceInvitationsUseCase;
@@ -37,7 +38,7 @@ import com.villo.truco.social.application.usecases.commands.CancelResourceInvita
 import com.villo.truco.social.application.usecases.commands.CreateResourceInvitationCommandHandler;
 import com.villo.truco.social.application.usecases.commands.DeclineFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.commands.DeclineResourceInvitationCommandHandler;
-import com.villo.truco.social.application.usecases.commands.ExpirePendingResourceInvitationsCommandHandler;
+import com.villo.truco.social.application.usecases.commands.ExpireResourceInvitationCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RemoveFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RequestFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendsQueryHandler;
@@ -55,6 +56,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 @EnableConfigurationProperties(SocialInvitationExpirationProperties.class)
@@ -69,6 +71,7 @@ public class SocialUseCaseConfiguration {
   private final LeagueQueryRepository leagueQueryRepository;
   private final CupQueryRepository cupQueryRepository;
   private final TransactionalRunner transactionalRunner;
+  private final RetryableTransactionalRunner retryableTransactionalRunner;
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
   private final SocialInvitationExpirationProperties socialInvitationExpirationProperties;
@@ -82,6 +85,7 @@ public class SocialUseCaseConfiguration {
       final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository, final TransactionalRunner transactionalRunner,
+      final RetryableTransactionalRunner retryableTransactionalRunner,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline,
       final SocialInvitationExpirationProperties socialInvitationExpirationProperties,
@@ -96,6 +100,7 @@ public class SocialUseCaseConfiguration {
     this.leagueQueryRepository = leagueQueryRepository;
     this.cupQueryRepository = cupQueryRepository;
     this.transactionalRunner = transactionalRunner;
+    this.retryableTransactionalRunner = retryableTransactionalRunner;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
     this.socialInvitationExpirationProperties = socialInvitationExpirationProperties;
@@ -271,12 +276,12 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
-  ExpirePendingResourceInvitationsUseCase expirePendingResourceInvitationsUseCase(
-      final SocialEventNotifier socialEventNotifier) {
+  ExpireResourceInvitationUseCase expireResourceInvitationUseCase(
+      @Lazy final SocialEventNotifier socialEventNotifier) {
 
-    return new ExpirePendingResourceInvitationsCommandHandler(
-        this.resourceInvitationQueryRepository, this.resourceInvitationRepository,
-        socialEventNotifier, this.transactionalRunner, this.clock);
+    return new ExpireResourceInvitationCommandHandler(this.resourceInvitationQueryRepository,
+        this.resourceInvitationRepository, socialEventNotifier, this.retryableTransactionalRunner,
+        this.clock);
   }
 
 }

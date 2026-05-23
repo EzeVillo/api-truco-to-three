@@ -11,10 +11,8 @@ class MatchTimeoutPropertiesTest {
 
     final var properties = new MatchTimeoutProperties();
     properties.setIdleTimeoutSeconds(55);
-    properties.setTimeoutCheckIntervalMs(66L);
 
     assertThat(properties.getIdleTimeoutSeconds()).isEqualTo(55);
-    assertThat(properties.getTimeoutCheckIntervalMs()).isEqualTo(66L);
   }
 
 }

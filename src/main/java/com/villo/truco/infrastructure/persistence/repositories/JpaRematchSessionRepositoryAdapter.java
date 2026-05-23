@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.persistence.repositories;
 import com.villo.truco.domain.model.rematch.RematchSession;
 import com.villo.truco.domain.model.rematch.valueobjects.RematchSessionId;
 import com.villo.truco.domain.ports.RematchSessionRepository;
+import com.villo.truco.domain.ports.RematchSessionTimeoutEntry;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.mappers.RematchSessionMapper;
@@ -10,6 +11,7 @@ import com.villo.truco.infrastructure.persistence.repositories.spring.SpringData
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +53,14 @@ public class JpaRematchSessionRepositoryAdapter implements RematchSessionReposit
 
     return springDataRepo.findExpiredCandidates(now, PageRequest.of(0, batchSize)).stream()
         .map(mapper::toDomain).toList();
+  }
+
+  @Override
+  public Stream<RematchSessionTimeoutEntry> findActiveWithExpiration() {
+
+    return this.springDataRepo.findOpenSessionsWithExpiration().stream().map(
+        row -> new RematchSessionTimeoutEntry(new RematchSessionId(row.getId()),
+            row.getExpiresAt()));
   }
 
   @Override

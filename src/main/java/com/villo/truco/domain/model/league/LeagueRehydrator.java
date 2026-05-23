@@ -19,7 +19,8 @@ public final class LeagueRehydrator {
 
     return League.reconstruct(snapshot.id(), new ArrayList<>(snapshot.participants()), fixtures,
         new LinkedHashMap<>(snapshot.winsByPlayer()), snapshot.status(), snapshot.numberOfPlayers(),
-        snapshot.gamesToPlay(), snapshot.visibility(), snapshot.joinCode());
+        snapshot.gamesToPlay(), snapshot.visibility(), snapshot.joinCode(),
+        snapshot.lastActivityAt());
   }
 
 }

@@ -7,11 +7,13 @@ import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvit
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationTargetType;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
+import com.villo.truco.social.domain.ports.ResourceInvitationTimeoutEntry;
 import com.villo.truco.social.infrastructure.persistence.mappers.ResourceInvitationMapper;
 import com.villo.truco.social.infrastructure.persistence.repositories.spring.SpringDataResourceInvitationRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,14 @@ public class JpaResourceInvitationRepositoryAdapter implements ResourceInvitatio
 
     this.springDataResourceInvitationRepository = springDataResourceInvitationRepository;
     this.resourceInvitationMapper = resourceInvitationMapper;
+  }
+
+  @Override
+  public Stream<ResourceInvitationTimeoutEntry> findActiveWithExpiration() {
+
+    return this.springDataResourceInvitationRepository.findByStatusOrderByExpiresAtAsc("PENDING")
+        .stream().map(e -> new ResourceInvitationTimeoutEntry(new ResourceInvitationId(e.getId()),
+            e.getExpiresAt()));
   }
 
   @Override

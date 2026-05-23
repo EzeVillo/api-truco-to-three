@@ -24,8 +24,7 @@ class TimeoutUseCaseConfigurationTest {
         mock(MatchRepository.class), mock(MatchEventNotifier.class),
         mock(LeagueQueryRepository.class), mock(LeagueRepository.class),
         mock(LeagueEventNotifier.class), mock(CupQueryRepository.class), mock(CupRepository.class),
-        mock(CupEventNotifier.class), mock(RetryableTransactionalRunner.class),
-        new MatchTimeoutProperties(), new LeagueTimeoutProperties(), new CupTimeoutProperties());
+        mock(CupEventNotifier.class), mock(RetryableTransactionalRunner.class));
 
     assertThat(configuration.timeoutIdleMatchesCommandHandler()).isNotNull();
     assertThat(configuration.timeoutIdleLeaguesCommandHandler()).isNotNull();

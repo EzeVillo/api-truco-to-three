@@ -1,10 +1,7 @@
 package com.villo.truco.application.ports.in;
 
-public interface TimeoutIdleLeaguesUseCase extends UseCase<Void, Void> {
+import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 
-  default void handle() {
-
-    this.handle(null);
-  }
+public interface TimeoutIdleLeaguesUseCase extends UseCase<LeagueId, Void> {
 
 }

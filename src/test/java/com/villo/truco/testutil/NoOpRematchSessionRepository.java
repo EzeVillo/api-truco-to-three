@@ -3,11 +3,13 @@ package com.villo.truco.testutil;
 import com.villo.truco.domain.model.rematch.RematchSession;
 import com.villo.truco.domain.model.rematch.valueobjects.RematchSessionId;
 import com.villo.truco.domain.ports.RematchSessionRepository;
+import com.villo.truco.domain.ports.RematchSessionTimeoutEntry;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * No-op RematchSessionRepository for use in tests that don't care about rematch logic.
@@ -42,6 +44,12 @@ public final class NoOpRematchSessionRepository implements RematchSessionReposit
   public List<RematchSession> findExpiredCandidates(final Instant now, final int batchSize) {
 
     return List.of();
+  }
+
+  @Override
+  public Stream<RematchSessionTimeoutEntry> findActiveWithExpiration() {
+
+    return Stream.empty();
   }
 
   @Override

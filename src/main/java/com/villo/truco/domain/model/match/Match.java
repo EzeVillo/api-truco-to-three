@@ -35,6 +35,7 @@ import com.villo.truco.domain.shared.valueobjects.JoinCode;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -66,6 +67,8 @@ public final class Match extends AggregateBase<MatchId> {
 
   private boolean readyPlayerOne;
   private boolean readyPlayerTwo;
+
+  private Instant lastActivityAt;
 
   private Match(final MatchId id, final PlayerId playerOne, final PlayerId playerTwo,
       final JoinCode joinCode, final MatchRules rules, final Visibility visibility,
@@ -149,7 +152,7 @@ public final class Match extends AggregateBase<MatchId> {
       final MatchStatus status, final int gamesWonPlayerOne, final int gamesWonPlayerTwo,
       final int gameNumber, final int scorePlayerOne, final int scorePlayerTwo,
       final int roundNumber, final boolean readyPlayerOne, final boolean readyPlayerTwo,
-      final PlayerId firstManoOfGame, final Round currentRound) {
+      final PlayerId firstManoOfGame, final Round currentRound, final Instant lastActivityAt) {
 
     final var match = new Match(id, playerOne, playerTwo, joinCode, rules, visibility, status);
     match.gamesWonPlayerOne = gamesWonPlayerOne;
@@ -162,6 +165,7 @@ public final class Match extends AggregateBase<MatchId> {
     match.readyPlayerTwo = readyPlayerTwo;
     match.firstManoOfGame = firstManoOfGame;
     match.currentRound = currentRound;
+    match.lastActivityAt = lastActivityAt;
     return match;
   }
 
@@ -815,6 +819,11 @@ public final class Match extends AggregateBase<MatchId> {
   PlayerId getFirstManoOfGame() {
 
     return this.firstManoOfGame;
+  }
+
+  public Instant getLastActivityAt() {
+
+    return this.lastActivityAt;
   }
 
 }

@@ -23,4 +23,7 @@ public interface SpringDataRematchSessionRepository extends
       + "AND r.expiresAt <= :now ORDER BY r.expiresAt ASC")
   List<RematchSessionJpaEntity> findExpiredCandidates(@Param("now") Instant now, Pageable pageable);
 
+  @Query("SELECT r.id AS id, r.expiresAt AS expiresAt FROM RematchSessionJpaEntity r WHERE r.status = 'OPEN'")
+  List<RematchSessionExpirationProjection> findOpenSessionsWithExpiration();
+
 }

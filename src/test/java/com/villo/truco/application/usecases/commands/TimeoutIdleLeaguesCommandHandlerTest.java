@@ -8,18 +8,19 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
+import com.villo.truco.domain.ports.LeagueTimeoutEntry;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -88,7 +89,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       @Override
       public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
 
-        return List.copyOf(leagues.keySet());
+        return List.of();
       }
 
       @Override
@@ -100,16 +101,28 @@ class TimeoutIdleLeaguesCommandHandlerTest {
       @Override
       public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
 
-        return new CursorPageResult<>(findPublicWaiting(), null);
+        return new CursorPageResult<>(List.of(), null);
       }
     };
 
-    final LeagueRepository leagueRepository = savedLeague::set;
+    final LeagueRepository leagueRepository = new LeagueRepository() {
+      @Override
+      public void save(final League league) {
+
+        savedLeague.set(league);
+      }
+
+      @Override
+      public Stream<LeagueTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
     final RetryableTransactionalRunner transactionalRunner = Runnable::run;
 
     return new TimeoutIdleLeaguesCommandHandler(queryRepo, leagueRepository, transactionalRunner,
-        Duration.ofMinutes(10), events -> {
-    });
+        events -> {
+        });
   }
 
   @Test
@@ -120,7 +133,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var savedLeague = new AtomicReference<League>();
     final var handler = handlerFor(Map.of(league.getId(), league), savedLeague);
 
-    handler.handle();
+    handler.handle(league.getId());
 
     assertThat(savedLeague.get()).isNotNull();
     assertThat(savedLeague.get().getStatus()).isEqualTo(LeagueStatus.CANCELLED);
@@ -134,7 +147,7 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var savedLeague = new AtomicReference<League>();
     final var handler = handlerFor(Map.of(league.getId(), league), savedLeague);
 
-    handler.handle();
+    handler.handle(league.getId());
 
     assertThat(savedLeague.get()).isNotNull();
     assertThat(savedLeague.get().getStatus()).isEqualTo(LeagueStatus.CANCELLED);
@@ -148,86 +161,21 @@ class TimeoutIdleLeaguesCommandHandlerTest {
     final var savedLeague = new AtomicReference<League>();
     final var handler = handlerFor(Map.of(league.getId(), league), savedLeague);
 
-    handler.handle();
+    handler.handle(league.getId());
 
     assertThat(savedLeague.get()).isNull();
   }
 
   @Test
-  @DisplayName("lista vacía de idle leagues no hace nada")
-  void emptyIdleListDoesNothing() {
+  @DisplayName("league inexistente es ignorada")
+  void unknownLeagueIdIsIgnored() {
 
     final var savedLeague = new AtomicReference<League>();
     final var handler = handlerFor(Map.of(), savedLeague);
 
-    handler.handle();
+    handler.handle(LeagueId.generate());
 
     assertThat(savedLeague.get()).isNull();
-  }
-
-  @Test
-  @DisplayName("excepción en una liga no afecta las demás")
-  void exceptionInOneLeagueDoesNotAffectOthers() {
-
-    final var goodLeague = waitingForPlayersLeague();
-    final var savedLeague = new AtomicReference<League>();
-
-    final LeagueQueryRepository queryRepo = new LeagueQueryRepository() {
-
-      @Override
-      public Optional<League> findById(final LeagueId leagueId) {
-
-        if (leagueId.equals(goodLeague.getId())) {
-          return Optional.of(goodLeague);
-        }
-        throw new RuntimeException("simulated failure");
-      }
-
-      @Override
-      public Optional<League> findByMatchId(final MatchId matchId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findInProgressByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<LeagueId> findIdleLeagueIds(final Instant idleSince) {
-
-        return List.of(LeagueId.generate(), goodLeague.getId());
-      }
-
-      @Override
-      public List<League> findPublicWaiting() {
-
-        return List.of();
-      }
-
-      @Override
-      public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
-
-        return new CursorPageResult<>(findPublicWaiting(), null);
-      }
-    };
-
-    final var handler = new TimeoutIdleLeaguesCommandHandler(queryRepo, savedLeague::set,
-        Runnable::run, Duration.ofMinutes(10), events -> {
-    });
-
-    handler.handle();
-
-    assertThat(savedLeague.get()).isNotNull();
-    assertThat(savedLeague.get().getStatus()).isEqualTo(LeagueStatus.CANCELLED);
   }
 
 }

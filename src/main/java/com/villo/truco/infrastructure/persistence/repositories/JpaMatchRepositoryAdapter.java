@@ -4,6 +4,7 @@ import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.MatchTimeoutEntry;
 import com.villo.truco.domain.shared.JoinCodeRegistration;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
@@ -18,6 +19,7 @@ import com.villo.truco.infrastructure.persistence.repositories.spring.SpringData
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
@@ -87,6 +89,13 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
     return this.springDataRepo.findIdleMatchIds(idleSince).stream().map(MatchId::new).toList();
+  }
+
+  @Override
+  public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+    return this.springDataRepo.findActiveMatchesWithLastActivity().stream()
+        .map(row -> new MatchTimeoutEntry(new MatchId(row.getId()), row.getLastActivityAt()));
   }
 
   @Override

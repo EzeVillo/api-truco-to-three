@@ -1,10 +1,7 @@
 package com.villo.truco.application.ports.in;
 
-public interface TimeoutIdleCupsUseCase extends UseCase<Void, Void> {
+import com.villo.truco.domain.model.cup.valueobjects.CupId;
 
-  default void handle() {
-
-    this.handle(null);
-  }
+public interface TimeoutIdleCupsUseCase extends UseCase<CupId, Void> {
 
 }
