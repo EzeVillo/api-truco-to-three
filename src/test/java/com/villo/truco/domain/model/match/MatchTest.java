@@ -1083,4 +1083,65 @@ class MatchTest {
 
   }
 
+  @Nested
+  @DisplayName("quickMatch")
+  class QuickMatch {
+
+    @Test
+    @DisplayName("crea match IN_PROGRESS con visibilidad PRIVATE")
+    void createsInProgressPrivateMatch() {
+
+      final var match = Match.quickMatch(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
+      assertThat(match.getVisibility()).isEqualTo(Visibility.PRIVATE);
+    }
+
+    @Test
+    @DisplayName("ambos jugadores asignados correctamente")
+    void bothPlayersAssigned() {
+
+      final var match = Match.quickMatch(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+
+      assertThat(match.getPlayerOne()).isEqualTo(playerOne);
+      assertThat(match.getPlayerTwo()).isEqualTo(playerTwo);
+    }
+
+    @Test
+    @DisplayName("no aparece en lobby público (isPublicLobbyOpen = false)")
+    void notInPublicLobby() {
+
+      final var match = Match.quickMatch(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+
+      assertThat(match.isPublicLobbyOpen()).isFalse();
+    }
+
+    @Test
+    @DisplayName("produce GameStartedEvent y no PublicMatchLobbyOpenedEvent")
+    void producesGameStartedEventOnly() {
+
+      final var match = Match.quickMatch(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+      final var events = match.getMatchDomainEvents();
+
+      assertThat(events).anyMatch(
+          e -> e instanceof com.villo.truco.domain.model.match.events.GameStartedEvent);
+      assertThat(events).noneMatch(
+          e -> e instanceof com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent);
+    }
+
+    @Test
+    @DisplayName("mismo jugador en ambos slots → SamePlayerMatchException")
+    void samePlayerThrows() {
+
+      assertThatThrownBy(() -> Match.quickMatch(playerOne, playerOne,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3)))).isInstanceOf(
+          SamePlayerMatchException.class);
+    }
+
+  }
+
 }

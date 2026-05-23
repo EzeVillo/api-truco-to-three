@@ -102,6 +102,25 @@ public final class Match extends AggregateBase<MatchId> {
     return match;
   }
 
+  public static Match quickMatch(final PlayerId playerOne, final PlayerId playerTwo,
+      final MatchRules rules) {
+
+    Objects.requireNonNull(playerOne, "PlayerOne cannot be null");
+    Objects.requireNonNull(playerTwo, "PlayerTwo cannot be null");
+    Objects.requireNonNull(rules, "MatchRules cannot be null");
+    if (playerOne.equals(playerTwo)) {
+      throw new SamePlayerMatchException();
+    }
+    final var match = new Match(MatchId.generate(), playerOne, playerTwo, JoinCode.generate(),
+        rules, Visibility.PRIVATE, MatchStatus.WAITING_FOR_PLAYERS);
+    match.readyPlayerOne = true;
+    match.readyPlayerTwo = true;
+    match.startInternal();
+    LOGGER.info("Quick match created: matchId={}, playerOne={}, playerTwo={}", match.getId(),
+        playerOne, playerTwo);
+    return match;
+  }
+
   public static Match createReady(final PlayerId playerOne, final PlayerId playerTwo,
       final MatchRules rules) {
 

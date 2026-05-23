@@ -14,9 +14,11 @@ import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
+import com.villo.truco.domain.model.quickmatch.exceptions.PlayerAlreadyInQueueException;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -63,7 +65,10 @@ class PlayerAvailabilityCheckerTest {
     final var botRegistry = mock(BotRegistry.class);
     final var rematchRepo = mock(RematchSessionRepository.class);
     when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
-    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo);
+    final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
+    when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(false);
+    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
+        quickMatchQueuePort);
   }
 
   @Test
@@ -257,6 +262,40 @@ class PlayerAvailabilityCheckerTest {
 
     assertThatThrownBy(() -> checker.ensureCanStartMatch(creator)).isInstanceOf(
         PlayerAlreadyInWaitingLeagueException.class);
+  }
+
+  @Test
+  @DisplayName("jugador en cola de quick match → PlayerAlreadyInQueueException")
+  void throwsWhenPlayerInQuickMatchQueue() {
+
+    final var matchRepo = mock(MatchQueryRepository.class);
+    when(matchRepo.hasUnfinishedMatch(any())).thenReturn(false);
+    when(matchRepo.hasActiveMatch(any())).thenReturn(false);
+    final var leagueRepo = mock(LeagueQueryRepository.class);
+    when(leagueRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(leagueRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var cupRepo = mock(CupQueryRepository.class);
+    when(cupRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(cupRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var botRegistry = mock(BotRegistry.class);
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
+    when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(true);
+    final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
+        rematchRepo, quickMatchQueuePort);
+
+    assertThatThrownBy(() -> checker.ensureAvailable(PlayerId.generate())).isInstanceOf(
+        PlayerAlreadyInQueueException.class);
+  }
+
+  @Test
+  @DisplayName("jugador libre sin cola → ensureAvailable no lanza excepción")
+  void noQueueEntryDoesNotBlock() {
+
+    final var checker = checker(false, Optional.empty(), Optional.empty());
+
+    assertThatCode(() -> checker.ensureAvailable(PlayerId.generate())).doesNotThrowAnyException();
   }
 
 }

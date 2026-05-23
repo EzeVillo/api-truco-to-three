@@ -1,0 +1,20 @@
+$kind: http-request
+name: Queue quick match
+url: "{{URL_BASE_TRUCO_HTTP}}/matches/quick"
+method: POST
+body:
+  type: json
+  content: "{\r\n  \"gamesToPlay\": 1\r\n}"
+scripts:
+  - type: afterResponse
+    code: "const response = pm.response.json();\r
+
+      \r
+
+      if (response.matchId !== null && response.matchId !== undefined) {\r
+
+      \    pm.environment.set(\"matchId\", response.matchId);\r
+
+      }\r\n"
+    language: text/javascript
+order: 3148
