@@ -234,7 +234,7 @@ class HttpSecurityIntegrationTest {
     final var request = HttpRequest.newBuilder(
             URI.create(this.baseUrl() + "/api/matches/" + matchId + "/join"))
         .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
-        .header("Origin", "http://localhost:5173").header("Access-Control-Request-Method", "POST")
+        .header("Origin", "http://localhost:4200").header("Access-Control-Request-Method", "POST")
         .build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());

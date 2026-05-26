@@ -9,6 +9,7 @@ import com.villo.truco.application.dto.RoundStateDTO;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
+import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -35,9 +36,29 @@ public final class MatchStateDTOAssembler {
     final var matchWinner = Optional.ofNullable(match.getMatchWinner()).map(actorNames::get)
         .orElse(null);
 
-    return new MatchStateDTO(match.getId().value().toString(), match.getStatus().name(),
-        match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getGamesWonPlayerOne(),
-        match.getGamesWonPlayerTwo(), matchWinner, roundState);
+    final var viewerSeat = this.resolveViewerSeat(match, requestingPlayer);
+    final var playerOneUsername = actorNames.get(match.getPlayerOne());
+    final var playerTwoUsername =
+        match.getPlayerTwo() != null ? actorNames.get(match.getPlayerTwo()) : null;
+
+    return new MatchStateDTO(match.getId().value().toString(), match.getStatus().name(), viewerSeat,
+        playerOneUsername, playerTwoUsername, match.getGamesToPlay(), match.getScorePlayerOne(),
+        match.getScorePlayerTwo(), match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(),
+        matchWinner, roundState);
+  }
+
+  private String resolveViewerSeat(final Match match, final PlayerId requestingPlayer) {
+
+    if (requestingPlayer == null) {
+      return null;
+    }
+    if (requestingPlayer.equals(match.getPlayerOne())) {
+      return PlayerSeat.PLAYER_ONE.name();
+    }
+    if (requestingPlayer.equals(match.getPlayerTwo())) {
+      return PlayerSeat.PLAYER_TWO.name();
+    }
+    return null;
   }
 
   private Map<PlayerId, String> resolveActorNames(final Match match) {

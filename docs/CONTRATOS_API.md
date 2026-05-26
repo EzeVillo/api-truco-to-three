@@ -587,6 +587,10 @@ Response `200`:
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "status": "IN_PROGRESS",
+  "viewerSeat": "PLAYER_ONE",
+  "playerOneUsername": "juancho",
+  "playerTwoUsername": "martina",
+  "gamesToPlay": 3,
   "scorePlayerOne": 2,
   "scorePlayerTwo": 1,
   "gamesWonPlayerOne": 1,
@@ -638,6 +642,11 @@ Response `200`:
 }
 ```
 
+- `viewerSeat` indica el asiento del jugador autenticado (`PLAYER_ONE` o `PLAYER_TWO`); `null` si
+  el caller no pertenece al match (no debería suceder en este endpoint, que valida pertenencia)
+- `playerOneUsername` y `playerTwoUsername` son los usernames (o displayName para guests) de cada
+  asiento; `playerTwoUsername` puede ser `null` mientras la partida esté en `WAITING_FOR_PLAYERS`
+- `gamesToPlay` es el formato de la serie (mejor de N): `1`, `3` o `5`
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
   `match`
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
@@ -2159,7 +2168,7 @@ Request:
 
 | Campo         | Tipo            | Descripcion                                        |
 |---------------|-----------------|----------------------------------------------------|
-| `gamesToPlay` | `integer`       | Partidas a ganar para terminar el match (minimo 1) |
+| `gamesToPlay` | `integer`       | Partidas totales de la serie (mejor de N). Valores válidos: `1`, `3`, `5` |
 | `botId`       | `string (UUID)` | ID del bot elegido (obtenido de `GET /api/bots`)   |
 
 Response `200`:
@@ -2178,7 +2187,7 @@ Errores:
 | Codigo | Descripcion                                                                                             |
 |--------|---------------------------------------------------------------------------------------------------------|
 | `404`  | El `botId` no existe en el catalogo de bots                                                             |
-| `422`  | `gamesToPlay` invalido (menor a 1), el jugador ya tiene una partida activa, o tiene una revancha `OPEN` |
+| `422`  | `gamesToPlay` fuera del conjunto `{1, 3, 5}`, el jugador ya tiene una partida activa, tiene una revancha `OPEN`, o ya está en cola |
 
 ### 9.3 Quick Match (emparejamiento automatico)
 
