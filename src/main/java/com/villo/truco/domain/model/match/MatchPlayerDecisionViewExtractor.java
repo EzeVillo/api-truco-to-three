@@ -34,11 +34,12 @@ final class MatchPlayerDecisionViewExtractor {
         isPlayerOne ? currentHandInfo.cardPlayerTwo() : currentHandInfo.cardPlayerOne();
     final var isMano = currentHandInfo.mano() != null && currentHandInfo.mano().equals(playerId);
     final var myCardsRaw = match.getCardsOf(playerId);
+    final var myOriginalCardsRaw = match.getOriginalCardsOf(playerId);
 
     final var gameContext = new MatchPlayerDecisionView.GameContext(
         myCardsRaw.stream().map(MatchPlayerDecisionViewExtractor::toCardView).toList(), myScore,
         rivalScore, rivalCardRaw != null ? toCardView(rivalCardRaw) : null,
-        myCardsRaw.isEmpty() ? 0 : CardEvaluationService.envidoScore(myCardsRaw),
+        myOriginalCardsRaw.isEmpty() ? 0 : CardEvaluationService.envidoScore(myOriginalCardsRaw),
         match.getPlayedHands().size(), isMano, hasAction(availableActions, ActionType.PLAY_CARD),
         hasAction(availableActions, ActionType.FOLD),
         foldWouldGiveGameToBot(match, rivalScore, availableActions),

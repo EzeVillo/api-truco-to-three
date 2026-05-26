@@ -347,9 +347,9 @@ final class Round extends EntityBase<RoundId> {
     }
     this.validateTurn(playerId);
 
-    final var pointsMano = CardEvaluationService.envidoScore(this.getHandOf(this.mano).getCards());
+    final var pointsMano = CardEvaluationService.envidoScore(this.getOriginalCardsOf(this.mano));
     final var pointsPie = CardEvaluationService.envidoScore(
-        this.getHandOf(this.getOpponent(this.mano)).getCards());
+        this.getOriginalCardsOf(this.getOpponent(this.mano)));
 
     final var winner = pointsMano >= pointsPie ? this.mano : this.getOpponent(this.mano);
     final var pointsWon = this.envidoStateMachine.calculateAcceptedPoints(scorePlayerOne,
@@ -477,6 +477,21 @@ final class Round extends EntityBase<RoundId> {
   Hand getHandOf(final PlayerId playerId) {
 
     return playerId.equals(playerOne) ? handPlayerOne : handPlayerTwo;
+  }
+
+  List<Card> getOriginalCardsOf(final PlayerId playerId) {
+
+    final var cards = new ArrayList<>(this.getHandOf(playerId).getCards());
+    this.currentHandCards.stream().filter(cp -> cp.playerId().equals(playerId)).map(CardPlay::card)
+        .forEach(cards::add);
+    final var isMano = playerId.equals(this.mano);
+    for (final var ph : this.playedHands) {
+      final var played = isMano ? ph.cardMano() : ph.cardPie();
+      if (played != null) {
+        cards.add(played);
+      }
+    }
+    return List.copyOf(cards);
   }
 
   private Card getCardPlayedBy(final PlayerId playerId) {

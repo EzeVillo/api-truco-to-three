@@ -3,6 +3,8 @@ package com.villo.truco.domain.model.match;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
+import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
@@ -475,6 +477,45 @@ class MatchTest {
     }
 
     @Test
+    @DisplayName("acceptEnvido calcula puntos sobre las 3 cartas repartidas aunque mano ya haya jugado una")
+    void acceptEnvidoUsesOriginalDealtCards() {
+
+      final var match = matchInProgress();
+      final var mano = match.getCurrentRound().getMano();
+      final var pie = mano.equals(playerOne) ? playerTwo : playerOne;
+      final var originalManoCards = List.copyOf(match.getCardsOf(mano));
+      final var originalPieCards = List.copyOf(match.getCardsOf(pie));
+      final var expectedManoEnvido = CardEvaluationService.envidoScore(originalManoCards);
+      final var expectedPieEnvido = CardEvaluationService.envidoScore(originalPieCards);
+
+      match.playCard(mano, originalManoCards.getFirst());
+      match.callEnvido(pie, EnvidoCall.ENVIDO);
+      match.acceptEnvido(mano);
+
+      assertThat(match.getCardsOf(mano)).hasSize(2);
+      final var event = match.getDomainEvents().stream()
+          .filter(MatchEventEnvelope.class::isInstance).map(MatchEventEnvelope.class::cast)
+          .map(MatchEventEnvelope::getInner).filter(EnvidoResolvedEvent.class::isInstance)
+          .map(EnvidoResolvedEvent.class::cast).findFirst().orElseThrow();
+      assertThat(event.getPointsMano()).isEqualTo(expectedManoEnvido);
+      assertThat(event.getPointsPie()).isEqualTo(expectedPieEnvido);
+    }
+
+    @Test
+    @DisplayName("getOriginalCardsOf devuelve las 3 cartas repartidas aunque se hayan jugado")
+    void originalCardsRemainAvailableAfterPlays() {
+
+      final var match = matchInProgress();
+      final var mano = match.getCurrentRound().getMano();
+      final var originalManoCards = List.copyOf(match.getCardsOf(mano));
+
+      match.playCard(mano, originalManoCards.getFirst());
+
+      assertThat(match.getOriginalCardsOf(mano))
+          .containsExactlyInAnyOrderElementsOf(originalManoCards);
+    }
+
+    @Test
     @DisplayName("el juego puede terminar por envido")
     void gameCanFinishByEnvido() {
 
@@ -520,6 +561,22 @@ class MatchTest {
       assertThat(view.game().myCards()).hasSize(3);
       assertThat(view.game().envidoScore()).isEqualTo(
           CardEvaluationService.envidoScore(match.getCardsOf(playerTwo)));
+    }
+
+    @Test
+    @DisplayName("envidoScore en decision view usa las cartas originales aún tras jugar una carta")
+    void envidoScoreUsesOriginalCardsAfterPlay() {
+
+      final var match = matchInProgress();
+      final var mano = match.getCurrentRound().getMano();
+      final var originalManoCards = List.copyOf(match.getCardsOf(mano));
+      final var expectedEnvido = CardEvaluationService.envidoScore(originalManoCards);
+
+      match.playCard(mano, originalManoCards.getFirst());
+
+      final var view = match.getDecisionViewFor(mano);
+      assertThat(view.game().myCards()).hasSize(2);
+      assertThat(view.game().envidoScore()).isEqualTo(expectedEnvido);
     }
 
     @Test

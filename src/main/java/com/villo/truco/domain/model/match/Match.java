@@ -804,6 +804,14 @@ public final class Match extends AggregateBase<MatchId> {
     return this.currentRound.getHandOf(playerId).getCards();
   }
 
+  public List<Card> getOriginalCardsOf(final PlayerId playerId) {
+
+    if (this.status != MatchStatus.IN_PROGRESS) {
+      return List.of();
+    }
+    return this.currentRound.getOriginalCardsOf(playerId);
+  }
+
   public PlayerId getMatchWinner() {
 
     if (this.status != MatchStatus.FINISHED) {
