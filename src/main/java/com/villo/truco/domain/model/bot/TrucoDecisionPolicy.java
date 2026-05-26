@@ -27,35 +27,21 @@ final class TrucoDecisionPolicy {
       return Optional.empty();
     }
 
-    if (myScore + availableCall.stakeIfRejected() > pointsToWin) {
+    if (myScore + availableCall.stakeIfAccepted() > pointsToWin) {
       return Optional.empty();
     }
 
     final var botWinsIfRejected = TrucoScoreStrategy.botWinsIfRejected(myScore, availableCall,
         pointsToWin);
-    final var botExceedsIfAccepted = TrucoScoreStrategy.botExceedsIfAccepted(myScore, availableCall,
-        pointsToWin);
     final var rivalExceedsIfAccepted = TrucoScoreStrategy.rivalExceedsIfAccepted(rivalScore,
         availableCall, pointsToWin);
 
     if (botWinsIfRejected) {
-      if (!botExceedsIfAccepted) {
-        return Optional.of(availableCall);
-      }
-      if (rivalExceedsIfAccepted && handStrength < 0.4) {
-        return Optional.of(availableCall);
-      }
-      return Optional.empty();
+      return Optional.of(availableCall);
     }
 
     if (rivalExceedsIfAccepted) {
-      if (!botExceedsIfAccepted) {
-        return Optional.of(availableCall);
-      }
-      if (handStrength < 0.4) {
-        return Optional.of(availableCall);
-      }
-      return Optional.empty();
+      return Optional.of(availableCall);
     }
 
     final var bluffBoost = this.personality.mentiroso() / 300.0;
@@ -76,36 +62,21 @@ final class TrucoDecisionPolicy {
       return Optional.empty();
     }
 
-    if (myScore + availableRaise.stakeIfRejected() > pointsToWin) {
+    if (myScore + availableRaise.stakeIfAccepted() > pointsToWin) {
       return Optional.empty();
     }
 
     final var botWinsIfRejected = TrucoScoreStrategy.botWinsIfRejected(myScore, availableRaise,
         pointsToWin);
-    final var botExceedsIfAccepted = TrucoScoreStrategy.botExceedsIfAccepted(myScore,
-        availableRaise, pointsToWin);
     final var rivalExceedsIfAccepted = TrucoScoreStrategy.rivalExceedsIfAccepted(rivalScore,
         availableRaise, pointsToWin);
 
     if (botWinsIfRejected) {
-      if (!botExceedsIfAccepted) {
-        return Optional.of(availableRaise);
-      }
-      if (rivalExceedsIfAccepted && handStrength < 0.4) {
-        return Optional.of(availableRaise);
-      }
-      return Optional.empty();
+      return Optional.of(availableRaise);
     }
 
     if (rivalExceedsIfAccepted) {
-      if (!botExceedsIfAccepted) {
-        return Optional.of(availableRaise);
-      }
-      final double trapProb = 1.0 - handStrength;
-      if (this.random.nextDouble() < trapProb) {
-        return Optional.of(availableRaise);
-      }
-      return Optional.empty();
+      return Optional.of(availableRaise);
     }
 
     final double temerarioFactor = this.personality.temerario() / 100.0;

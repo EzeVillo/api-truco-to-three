@@ -51,11 +51,11 @@ class TrucoDecisionPolicyTest {
   }
 
   @Test
-  void decideCall_rejectionWins_andBothWouldExceed_weakHand_callsAsTrap() {
+  void decideCall_acceptedWouldExceedBot_doesNotCall_becauseRivalCanQYMVAM() {
 
     final var policy = new TrucoDecisionPolicy(AGGRESSIVE, ALWAYS_ZERO);
     final var result = policy.decideCall(TRUCO, 0.1, 2, 2, POINTS_TO_WIN);
-    assertThat(result).contains(TRUCO);
+    assertThat(result).isEmpty();
   }
 
   @Test
@@ -104,10 +104,10 @@ class TrucoDecisionPolicyTest {
   }
 
   @Test
-  void decideRaise_bothDie_weakHand_raisesAsWeakerWillLoseRound() {
+  void decideRaise_acceptedWouldExceedBot_doesNotRaise_becauseRivalCanQYMVAM() {
 
     final var policy = new TrucoDecisionPolicy(AGGRESSIVE, ALWAYS_ZERO);
-    assertThat(policy.decideRaise(TRUCO, 0.1, 2, 2, POINTS_TO_WIN)).contains(TRUCO);
+    assertThat(policy.decideRaise(TRUCO, 0.1, 2, 2, POINTS_TO_WIN)).isEmpty();
   }
 
   @Test
