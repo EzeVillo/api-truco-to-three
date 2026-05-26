@@ -3,6 +3,7 @@ package com.villo.truco.domain.shared;
 public abstract class AggregateBase<T> extends EntityBase<T> {
 
   private long version = 0;
+  private long stateVersion = 0;
 
   protected AggregateBase(T id) {
 
@@ -17,6 +18,21 @@ public abstract class AggregateBase<T> extends EntityBase<T> {
   public void setVersion(long version) {
 
     this.version = version;
+  }
+
+  public long getStateVersion() {
+
+    return stateVersion;
+  }
+
+  public void setStateVersion(long stateVersion) {
+
+    this.stateVersion = stateVersion;
+  }
+
+  protected long nextStateVersion() {
+
+    return ++this.stateVersion;
   }
 
 }

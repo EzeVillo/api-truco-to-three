@@ -596,6 +596,7 @@ Response `200`:
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
+  "stateVersion": 5,
   "roundGame": {
     "status": "IN_PROGRESS",
     "currentTurn": "juancho",
@@ -677,6 +678,7 @@ Response `200`:
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
+  "stateVersion": 5,
   "currentRound": {
     "status": "IN_PROGRESS",
     "currentTurn": "juancho",
@@ -1694,9 +1696,37 @@ Cada tipo de recurso tiene su propia estructura de evento:
       "suit": "ESPADA",
       "number": 1
     }
+  },
+  "stateVersion": 5
+}
+```
+
+- `stateVersion` es un contador monotónicamente creciente por match que se incrementa exactamente en
+  uno por cada evento transicional. El cliente lo usa como cursor para reconciliar snapshot +
+  stream:
+  descarta eventos con `stateVersion <= snapshot.stateVersion`, detecta huecos cuando recibe
+  `stateVersion > ultimo + 1`, y trata duplicados (`stateVersion == ultimo`) como no-op.
+
+**Match derivado** (`/user/queue/match-derived`):
+
+```json
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+  "eventType": "AVAILABLE_ACTIONS_UPDATED",
+  "timestamp": 1772768158123,
+  "payload": {
+    "seat": "PLAYER_ONE",
+    "availableActions": [
+      {
+        "type": "PLAY_CARD"
+      }
+    ]
   }
 }
 ```
+
+- Los eventos derivados **no** llevan `stateVersion` y no deben usarse para detectar huecos en la
+  secuencia transicional.
 
 **Liga** (`/user/queue/league`):
 
@@ -1818,7 +1848,8 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 
 ### 9.5 eventType posibles - Match (`/user/queue/match`, 2 jugadores del partido)
 
-- `AVAILABLE_ACTIONS_UPDATED`
+Eventos transicionales (consumen `stateVersion`):
+
 - `CARD_PLAYED`
 - `TURN_CHANGED`
 - `TRUCO_CALLED`
@@ -1836,10 +1867,10 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `MATCH_PLAYER_LEFT`
 - `FOLDED`
 - `MATCH_FORFEITED`
-- `PLAYER_HAND_UPDATED`
 - `PLAYER_JOINED`
 - `PLAYER_READY`
 - `HAND_RESOLVED`
+- `HAND_DEALT`
 - `HAND_CHANGED`
 - `SPECTATOR_COUNT_CHANGED`
 - `REMATCH_AVAILABLE` - sesion de revancha abierta (se envia al terminar el match casual)
@@ -1847,6 +1878,11 @@ dentro de `payload.lobby` para `UPSERT` o en `payload.id` para `REMOVED`.
 - `REMATCH_CONFIRMED` - ambos confirmaron; nueva partida lista
 - `REMATCH_CLOSED_BY_LEAVE` - el oponente abandono la sesion
 - `REMATCH_EXPIRED` - la sesion expiro por TTL
+
+#### Notificaciones derivadas (`/user/queue/match-derived`, no avanzan `stateVersion`)
+
+- `AVAILABLE_ACTIONS_UPDATED`
+- `PLAYER_HAND_UPDATED`
 
 Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` top-level igual al
 `originMatchId` de la sesion (el match que termino, no el nuevo).
@@ -1930,6 +1966,9 @@ No se reenvian al espectador los eventos privados por asiento:
 
 - `CARD_PLAYED`:
     - `{ seat, card: { suit, number } }`
+- `HAND_DEALT`:
+    - `{ seat, cards: [ { suit, number }, ... ] }`
+    - payload redactado por destinatario: cada jugador ve solo sus propias cartas
 - `HAND_RESOLVED`:
     - `{ cardPlayerOne, cardPlayerTwo, winnerSeat }`
     - en el cierre anticipado puntual por `1 de espada`, la carta del rival puede llegar en `null`
@@ -2166,10 +2205,10 @@ Request:
 }
 ```
 
-| Campo         | Tipo            | Descripcion                                        |
-|---------------|-----------------|----------------------------------------------------|
+| Campo         | Tipo            | Descripcion                                                               |
+|---------------|-----------------|---------------------------------------------------------------------------|
 | `gamesToPlay` | `integer`       | Partidas totales de la serie (mejor de N). Valores válidos: `1`, `3`, `5` |
-| `botId`       | `string (UUID)` | ID del bot elegido (obtenido de `GET /api/bots`)   |
+| `botId`       | `string (UUID)` | ID del bot elegido (obtenido de `GET /api/bots`)                          |
 
 Response `200`:
 
@@ -2184,9 +2223,9 @@ misma forma que en una partida normal. El bot actua automaticamente cuando es su
 
 Errores:
 
-| Codigo | Descripcion                                                                                             |
-|--------|---------------------------------------------------------------------------------------------------------|
-| `404`  | El `botId` no existe en el catalogo de bots                                                             |
+| Codigo | Descripcion                                                                                                                        |
+|--------|------------------------------------------------------------------------------------------------------------------------------------|
+| `404`  | El `botId` no existe en el catalogo de bots                                                                                        |
 | `422`  | `gamesToPlay` fuera del conjunto `{1, 3, 5}`, el jugador ya tiene una partida activa, tiene una revancha `OPEN`, o ya está en cola |
 
 ### 9.3 Quick Match (emparejamiento automatico)

@@ -18,14 +18,16 @@ public record MatchStateResponse(
     @Schema(description = "Juegos ganados por player one", example = "1") int gamesWonPlayerOne,
     @Schema(description = "Juegos ganados por player two", example = "0") int gamesWonPlayerTwo,
     @Schema(description = "Nombre visible del ganador final de la partida, si existe", example = "juancho") String matchWinner,
-    @Schema(description = "Estado de la ronda actual") RoundStateResponse roundGame) {
+    @Schema(description = "Estado de la ronda actual") RoundStateResponse roundGame,
+    @Schema(description = "Version de estado transicional del match", example = "5") long stateVersion) {
 
   public static MatchStateResponse from(final MatchStateDTO dto) {
 
     return new MatchStateResponse(dto.matchId(), dto.status(), dto.viewerSeat(),
         dto.playerOneUsername(), dto.playerTwoUsername(), dto.gamesToPlay(), dto.scorePlayerOne(),
         dto.scorePlayerTwo(), dto.gamesWonPlayerOne(), dto.gamesWonPlayerTwo(), dto.matchWinner(),
-        dto.currentRound() != null ? RoundStateResponse.from(dto.currentRound()) : null);
+        dto.currentRound() != null ? RoundStateResponse.from(dto.currentRound()) : null,
+        dto.stateVersion());
   }
 
 }

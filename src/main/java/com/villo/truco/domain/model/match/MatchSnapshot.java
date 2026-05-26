@@ -14,6 +14,6 @@ public record MatchSnapshot(MatchId id, PlayerId playerOne, PlayerId playerTwo, 
                             int scorePlayerOne, int scorePlayerTwo, int roundNumber,
                             boolean readyPlayerOne, boolean readyPlayerTwo,
                             PlayerId firstManoOfGame, RoundSnapshot currentRound,
-                            Instant lastActivityAt) {
+                            Instant lastActivityAt, long stateVersion) {
 
 }

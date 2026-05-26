@@ -55,6 +55,7 @@ public class MatchMapper {
     entity.setCurrentRound(
         snapshot.currentRound() != null ? toRoundData(snapshot.currentRound()) : null);
     entity.setVersion((int) match.getVersion());
+    entity.setStateVersion(match.getStateVersion());
 
     return entity;
   }
@@ -73,7 +74,7 @@ public class MatchMapper {
         entity.getScorePlayerOne(), entity.getScorePlayerTwo(), entity.getRoundNumber(),
         entity.isReadyPlayerOne(), entity.isReadyPlayerTwo(),
         entity.getFirstManoOfGame() != null ? new PlayerId(entity.getFirstManoOfGame()) : null,
-        roundSnapshot, entity.getLastActivityAt());
+        roundSnapshot, entity.getLastActivityAt(), entity.getStateVersion());
 
     final var match = MatchRehydrator.rehydrate(snapshot);
     match.setVersion(entity.getVersion());

@@ -35,7 +35,8 @@ public final class SpectatorMatchStateDTOAssembler {
 
     return new SpectatorMatchStateDTO(match.getId().value().toString(), match.getStatus().name(),
         match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getGamesWonPlayerOne(),
-        match.getGamesWonPlayerTwo(), matchWinner, roundState, spectatorCount);
+        match.getGamesWonPlayerTwo(), matchWinner, roundState, spectatorCount,
+        match.getStateVersion());
   }
 
   private Map<PlayerId, String> resolveActorNames(final Match match) {

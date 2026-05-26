@@ -82,7 +82,7 @@ final class SpectateSubscribeEventListener {
 
     final var userName = WebSocketUserNaming.userName(playerId);
     final var wsEvent = new MatchWsEvent(state.matchId(), "SPECTATE_STATE",
-        System.currentTimeMillis(), Map.of("matchState", state));
+        System.currentTimeMillis(), Map.of("matchState", state), null);
     this.messagingTemplate.convertAndSendToUser(userName, "/queue/match-spectate", wsEvent);
   }
 
@@ -90,7 +90,7 @@ final class SpectateSubscribeEventListener {
 
     final var userName = WebSocketUserNaming.userName(playerId);
     final var wsEvent = new MatchWsEvent(null, "SPECTATE_ERROR", System.currentTimeMillis(),
-        Map.of("error", errorMessage));
+        Map.of("error", errorMessage), null);
     this.messagingTemplate.convertAndSendToUser(userName, "/queue/match-spectate", wsEvent);
   }
 

@@ -4,6 +4,7 @@ import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
+import com.villo.truco.domain.model.match.events.MatchDerivedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
@@ -152,7 +153,8 @@ public final class Match extends AggregateBase<MatchId> {
       final MatchStatus status, final int gamesWonPlayerOne, final int gamesWonPlayerTwo,
       final int gameNumber, final int scorePlayerOne, final int scorePlayerTwo,
       final int roundNumber, final boolean readyPlayerOne, final boolean readyPlayerTwo,
-      final PlayerId firstManoOfGame, final Round currentRound, final Instant lastActivityAt) {
+      final PlayerId firstManoOfGame, final Round currentRound, final Instant lastActivityAt,
+      final long stateVersion) {
 
     final var match = new Match(id, playerOne, playerTwo, joinCode, rules, visibility, status);
     match.gamesWonPlayerOne = gamesWonPlayerOne;
@@ -166,7 +168,19 @@ public final class Match extends AggregateBase<MatchId> {
     match.firstManoOfGame = firstManoOfGame;
     match.currentRound = currentRound;
     match.lastActivityAt = lastActivityAt;
+    match.setStateVersion(stateVersion);
     return match;
+  }
+
+  private void addTransitionalEvent(final MatchDomainEvent event) {
+
+    event.setStateVersion(this.nextStateVersion());
+    this.addDomainEvent(event);
+  }
+
+  private void addDerivedEvent(final MatchDomainEvent event) {
+
+    this.addDomainEvent(event);
   }
 
   public void join(final PlayerId playerTwo) {
@@ -209,7 +223,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.playerTwo = playerTwo;
     this.status = MatchStatus.READY;
     LOGGER.info("Player joined match: matchId={}, playerTwo={}", this.id, playerTwo);
-    this.addDomainEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
+    this.addTransitionalEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
   }
 
   private void joinPublic(final PlayerId playerTwo) {
@@ -225,7 +239,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.playerTwo = playerTwo;
     this.status = MatchStatus.READY;
     LOGGER.info("Player joined public match: matchId={}, playerTwo={}", this.id, playerTwo);
-    this.addDomainEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
+    this.addTransitionalEvent(new PlayerJoinedEvent(this.id, this.playerOne, this.playerTwo));
 
     this.readyPlayerOne = true;
     this.readyPlayerTwo = true;
@@ -264,7 +278,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.readyPlayerOne = readyState.readyPlayerOne();
     this.readyPlayerTwo = readyState.readyPlayerTwo();
 
-    this.addDomainEvent(
+    this.addTransitionalEvent(
         new PlayerReadyEvent(this.id, this.playerOne, this.playerTwo, this.seatOf(playerId)));
 
     if (readyState.bothReady()) {
@@ -392,14 +406,15 @@ public final class Match extends AggregateBase<MatchId> {
     if (playerId.equals(this.playerOne)) {
       this.status = MatchStatus.CANCELLED;
       LOGGER.info("Match cancelled by creator: matchId={}, creatorId={}", this.id, playerId);
-      this.addDomainEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
+      this.addTransitionalEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
     } else {
       this.playerTwo = null;
       this.readyPlayerOne = false;
       this.readyPlayerTwo = false;
       this.status = MatchStatus.WAITING_FOR_PLAYERS;
       LOGGER.info("Player left match: matchId={}, playerId={}", this.id, playerId);
-      this.addDomainEvent(new MatchPlayerLeftEvent(this.id, this.playerOne, PlayerSeat.PLAYER_TWO));
+      this.addTransitionalEvent(
+          new MatchPlayerLeftEvent(this.id, this.playerOne, PlayerSeat.PLAYER_TWO));
     }
   }
 
@@ -415,7 +430,7 @@ public final class Match extends AggregateBase<MatchId> {
 
     this.status = MatchStatus.CANCELLED;
     LOGGER.info("Match cancelled: matchId={}", this.id);
-    this.addDomainEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
+    this.addTransitionalEvent(new MatchCancelledEvent(this.id, this.playerOne, this.playerTwo));
   }
 
   public void abandon(final PlayerId abandoner) {
@@ -438,7 +453,7 @@ public final class Match extends AggregateBase<MatchId> {
     this.finishAdministrativeWin(winnerSeat);
     LOGGER.info("Match abandoned: matchId={}, abandoner={}, winner={}", this.id, abandoner,
         this.resolvePlayer(winnerSeat));
-    this.addDomainEvent(
+    this.addTransitionalEvent(
         new MatchAbandonedEvent(this.id, this.playerOne, this.playerTwo, winnerSeat, abandonerSeat,
             this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
   }
@@ -500,7 +515,7 @@ public final class Match extends AggregateBase<MatchId> {
     final var winningSeat = this.seatOf(winner);
     this.finishAdministrativeWin(winningSeat);
     LOGGER.info("Match forfeited by timeout: matchId={}, winner={}", this.id, winner);
-    this.addDomainEvent(
+    this.addTransitionalEvent(
         new MatchForfeitedEvent(this.id, this.playerOne, this.playerTwo, winningSeat,
             this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
   }
@@ -543,7 +558,7 @@ public final class Match extends AggregateBase<MatchId> {
 
     LOGGER.info("Game started: matchId={}, gameNumber={}, firstMano={}", this.id, this.gameNumber,
         this.firstManoOfGame);
-    this.addDomainEvent(
+    this.addTransitionalEvent(
         new GameStartedEvent(this.id, this.playerOne, this.playerTwo, this.gameNumber));
     this.startNewRound();
   }
@@ -582,7 +597,7 @@ public final class Match extends AggregateBase<MatchId> {
     LOGGER.info("Score changed: matchId={}, winner={}, points={}, score={} - {}", this.id, winner,
         points, this.scorePlayerOne, this.scorePlayerTwo);
 
-    this.addDomainEvent(
+    this.addTransitionalEvent(
         new ScoreChangedEvent(this.id, this.playerOne, this.playerTwo, this.scorePlayerOne,
             this.scorePlayerTwo));
 
@@ -590,7 +605,7 @@ public final class Match extends AggregateBase<MatchId> {
       this.gamesWonPlayerOne = progression.gamesWonPlayerOne();
       this.gamesWonPlayerTwo = progression.gamesWonPlayerTwo();
 
-      this.addDomainEvent(
+      this.addTransitionalEvent(
           new GameScoreChangedEvent(this.id, this.playerOne, this.playerTwo, this.gamesWonPlayerOne,
               this.gamesWonPlayerTwo));
 
@@ -602,7 +617,7 @@ public final class Match extends AggregateBase<MatchId> {
         this.currentRound = null;
         LOGGER.info("Match finished: matchId={}, winner={}, finalGames={} - {}", this.id,
             progression.gameWinner(), this.gamesWonPlayerOne, this.gamesWonPlayerTwo);
-        this.addDomainEvent(new MatchFinishedEvent(this.id, this.playerOne, this.playerTwo,
+        this.addTransitionalEvent(new MatchFinishedEvent(this.id, this.playerOne, this.playerTwo,
             this.seatOf(progression.gameWinner()), this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
       } else {
         this.startNewGame();
@@ -622,7 +637,13 @@ public final class Match extends AggregateBase<MatchId> {
     if (this.currentRound != null) {
       RoundDomainEventDrain.drainFrom(this.currentRound).stream()
           .map(e -> new MatchEventEnvelope(this.id, this.playerOne, this.playerTwo, e))
-          .forEach(this.domainEvents::add);
+          .forEach(env -> {
+            if (env.getInner() instanceof MatchDerivedEvent) {
+              this.addDerivedEvent(env);
+            } else {
+              this.addTransitionalEvent(env);
+            }
+          });
     }
   }
 

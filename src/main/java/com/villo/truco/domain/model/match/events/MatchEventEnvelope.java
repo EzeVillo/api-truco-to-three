@@ -21,4 +21,16 @@ public final class MatchEventEnvelope extends MatchDomainEvent {
     return this.inner;
   }
 
+  @Override
+  public long getStateVersion() {
+
+    return super.getStateVersion();
+  }
+
+  @Override
+  public void setStateVersion(long stateVersion) {
+
+    super.setStateVersion(stateVersion);
+  }
+
 }

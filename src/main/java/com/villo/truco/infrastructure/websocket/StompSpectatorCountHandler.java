@@ -40,7 +40,7 @@ public final class StompSpectatorCountHandler implements
 
     final var wsEvent = new MatchWsEvent(event.matchId().value().toString(),
         "SPECTATOR_COUNT_CHANGED", System.currentTimeMillis(),
-        Map.of("spectatorCount", event.count()));
+        Map.of("spectatorCount", event.count()), null);
 
     for (final var playerId : event.players()) {
       this.sendEvent(playerId, "/queue/match", wsEvent);

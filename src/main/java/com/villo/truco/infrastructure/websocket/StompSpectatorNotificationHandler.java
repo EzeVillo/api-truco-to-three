@@ -38,7 +38,7 @@ public final class StompSpectatorNotificationHandler implements
     LOGGER.debug("Publishing spectator match event matchId={} type={}", notification.matchId(),
         notification.eventType());
     final var wsEvent = new MatchWsEvent(notification.matchId().value().toString(),
-        notification.eventType(), notification.timestamp(), notification.payload());
+        notification.eventType(), notification.timestamp(), notification.payload(), null);
     for (final var spectatorId : notification.spectatorIds()) {
       this.sendEvent(spectatorId, wsEvent);
     }

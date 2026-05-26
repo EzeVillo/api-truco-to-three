@@ -6,7 +6,7 @@ import com.villo.truco.domain.shared.DomainEventBase;
 import java.util.List;
 
 public final class AvailableActionsUpdatedEvent extends DomainEventBase implements
-    SeatTargetedEvent {
+    SeatTargetedEvent, MatchDerivedEvent {
 
   private final PlayerSeat seat;
   private final List<AvailableAction> availableActions;

@@ -5,7 +5,8 @@ import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import java.util.List;
 
-public final class PlayerHandUpdatedEvent extends DomainEventBase implements SeatTargetedEvent {
+public final class PlayerHandUpdatedEvent extends DomainEventBase implements SeatTargetedEvent,
+    MatchDerivedEvent {
 
   private final PlayerSeat seat;
   private final List<Card> cards;
