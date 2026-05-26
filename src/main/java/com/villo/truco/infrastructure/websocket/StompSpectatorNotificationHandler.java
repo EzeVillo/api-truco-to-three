@@ -4,7 +4,7 @@ import com.villo.truco.application.events.SpectatorMatchEventNotification;
 import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
-import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
+import com.villo.truco.infrastructure.websocket.dto.MatchDerivedWsEvent;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +37,8 @@ public final class StompSpectatorNotificationHandler implements
 
     LOGGER.debug("Publishing spectator match event matchId={} type={}", notification.matchId(),
         notification.eventType());
-    final var wsEvent = new MatchWsEvent(notification.matchId().value().toString(),
-        notification.eventType(), notification.timestamp(), notification.payload(), null);
+    final var wsEvent = new MatchDerivedWsEvent(notification.matchId().value().toString(),
+        notification.eventType(), notification.timestamp(), notification.payload());
     for (final var spectatorId : notification.spectatorIds()) {
       this.sendEvent(spectatorId, wsEvent);
     }

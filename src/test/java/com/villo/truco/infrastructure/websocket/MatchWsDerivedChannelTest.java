@@ -11,6 +11,7 @@ import com.villo.truco.application.events.MatchEventNotification;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.infrastructure.websocket.dto.MatchDerivedWsEvent;
 import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,8 @@ class MatchWsDerivedChannelTest {
   }
 
   @Test
-  @DisplayName("Eventos derivados publican MatchWsEvent con stateVersion null")
-  void derivedEventsHaveNullStateVersion() {
+  @DisplayName("Eventos derivados publican MatchDerivedWsEvent")
+  void derivedEventsPublishMatchDerivedWsEvent() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
     final var handler = new StompMatchNotificationHandler(messaging,
@@ -52,12 +53,12 @@ class MatchWsDerivedChannelTest {
         new MatchEventNotification(matchId, List.of(playerOne), "AVAILABLE_ACTIONS_UPDATED",
             System.currentTimeMillis(), Map.of(), null));
 
-    final var captor = ArgumentCaptor.forClass(MatchWsEvent.class);
+    final var captor = ArgumentCaptor.forClass(MatchDerivedWsEvent.class);
     verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/match-derived"),
         captor.capture());
 
     final var sentEvent = captor.getValue();
-    assertThat(sentEvent.stateVersion()).isNull();
+    assertThat(sentEvent).isInstanceOf(MatchDerivedWsEvent.class);
   }
 
   @Test

@@ -47,7 +47,8 @@
 }
 ```
 
-> El campo `stateVersion` está **ausente** (serializado con `JsonInclude.NON_NULL`).
+> El campo `stateVersion` está **ausente** en los eventos derivados (usan un DTO distinto sin dicho
+> campo).
 
 ## Evento nuevo: `HAND_DEALT`
 

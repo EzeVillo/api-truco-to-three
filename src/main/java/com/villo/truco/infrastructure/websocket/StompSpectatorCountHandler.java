@@ -4,7 +4,7 @@ import com.villo.truco.application.events.SpectatorCountChanged;
 import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
-import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
+import com.villo.truco.infrastructure.websocket.dto.MatchDerivedWsEvent;
 import java.util.Map;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -38,9 +38,9 @@ public final class StompSpectatorCountHandler implements
     LOGGER.debug("Publishing spectator count changed matchId={} count={}", event.matchId(),
         event.count());
 
-    final var wsEvent = new MatchWsEvent(event.matchId().value().toString(),
+    final var wsEvent = new MatchDerivedWsEvent(event.matchId().value().toString(),
         "SPECTATOR_COUNT_CHANGED", System.currentTimeMillis(),
-        Map.of("spectatorCount", event.count()), null);
+        Map.of("spectatorCount", event.count()));
 
     for (final var playerId : event.players()) {
       this.sendEvent(playerId, "/queue/match", wsEvent);
