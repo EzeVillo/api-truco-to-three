@@ -111,6 +111,11 @@ final class EnvidoDecisionPolicy {
       return BotEnvidoResponse.QUIERO;
     }
 
+    final var rivalWinsGameIfBotLoses = rivalScore + ptsIfRivalWins >= pointsToWin;
+    if (rivalWinsGameIfBotLoses) {
+      return BotEnvidoResponse.NO_QUIERO;
+    }
+
     return this.probabilisticResponse(envidoScore);
   }
 
@@ -118,7 +123,7 @@ final class EnvidoDecisionPolicy {
 
     final var scoreFactor = envidoScore / 33.0;
     final var envidosoBoost = this.personality.envidoso() / 100.0;
-    final var acceptProbability = RESPOND_ACCEPT_BASE + envidosoBoost * scoreFactor;
+    final var acceptProbability = scoreFactor * (RESPOND_ACCEPT_BASE + envidosoBoost);
 
     if (this.random.nextDouble() < acceptProbability) {
       return BotEnvidoResponse.QUIERO;

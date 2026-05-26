@@ -140,6 +140,37 @@ class EnvidoDecisionPolicyTest {
   }
 
   @Test
+  void decideResponse_faltaAtZeroZero_noQuieroEvenWithStrongEnvido() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    // falta@0-0 a 3pts: aceptar y perder => rival gana la partida.
+    // Salvo que rechazar también la cierre, nunca aceptar.
+    final var result = policy.decideResponse(30, 0, 0, POINTS_TO_WIN,
+        new PendingEnvidoOutcome(3, 3, 1));
+    assertThat(result).isEqualTo(BotEnvidoResponse.NO_QUIERO);
+  }
+
+  @Test
+  void decideResponse_realEnvidoCostsTheGame_noQuiero() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    // realEnvido a 5pts en 0-2: aceptar y perder => rival llega a 5. Rechazar solo le da 1.
+    final var result = policy.decideResponse(20, 0, 2, POINTS_TO_WIN_FIVE,
+        new PendingEnvidoOutcome(3, 3, 1));
+    assertThat(result).isEqualTo(BotEnvidoResponse.NO_QUIERO);
+  }
+
+  @Test
+  void decideResponse_envidoFarFromGameLoss_allowsProbabilistic() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    // envido simple a 5pts en 0-0: perder no cierra la partida, cae a la rama probabilística.
+    final var result = policy.decideResponse(10, 0, 0, POINTS_TO_WIN_FIVE,
+        new PendingEnvidoOutcome(2, 2, 1));
+    assertThat(result).isEqualTo(BotEnvidoResponse.QUIERO);
+  }
+
+  @Test
   void decideResponse_withoutPendingOutcome_throws() {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
