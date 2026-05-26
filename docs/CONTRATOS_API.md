@@ -1662,6 +1662,7 @@ El token debe contener `sub` (playerId).
 Suscripciones permitidas por interceptor:
 
 - `/user/queue/match` - eventos de match
+- `/user/queue/match-derived` - notificaciones derivadas de match (acciones disponibles, cartas)
 - `/user/queue/match-spectate` - alta y eventos de espectador
 - `/user/queue/league` - eventos de liga
 - `/user/queue/cup` - eventos de copa
