@@ -74,6 +74,9 @@ public class MatchJpaEntity {
   @Version
   private int version;
 
+  @Column(name = "state_version", nullable = false)
+  private long stateVersion;
+
   public MatchJpaEntity() {
 
   }
@@ -278,6 +281,16 @@ public class MatchJpaEntity {
   public void setVersion(int version) {
 
     this.version = version;
+  }
+
+  public long getStateVersion() {
+
+    return stateVersion;
+  }
+
+  public void setStateVersion(long stateVersion) {
+
+    this.stateVersion = stateVersion;
   }
 
 }

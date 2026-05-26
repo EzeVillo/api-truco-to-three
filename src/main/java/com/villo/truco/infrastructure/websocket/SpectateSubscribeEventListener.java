@@ -3,7 +3,7 @@ package com.villo.truco.infrastructure.websocket;
 import com.villo.truco.application.commands.SpectateMatchCommand;
 import com.villo.truco.application.dto.SpectatorMatchStateDTO;
 import com.villo.truco.application.ports.in.SpectateMatchUseCase;
-import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
+import com.villo.truco.infrastructure.websocket.dto.MatchDerivedWsEvent;
 import java.util.Map;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -81,7 +81,7 @@ final class SpectateSubscribeEventListener {
   private void sendInitialState(final String playerId, final SpectatorMatchStateDTO state) {
 
     final var userName = WebSocketUserNaming.userName(playerId);
-    final var wsEvent = new MatchWsEvent(state.matchId(), "SPECTATE_STATE",
+    final var wsEvent = new MatchDerivedWsEvent(state.matchId(), "SPECTATE_STATE",
         System.currentTimeMillis(), Map.of("matchState", state));
     this.messagingTemplate.convertAndSendToUser(userName, "/queue/match-spectate", wsEvent);
   }
@@ -89,7 +89,7 @@ final class SpectateSubscribeEventListener {
   private void sendError(final String playerId, final String errorMessage) {
 
     final var userName = WebSocketUserNaming.userName(playerId);
-    final var wsEvent = new MatchWsEvent(null, "SPECTATE_ERROR", System.currentTimeMillis(),
+    final var wsEvent = new MatchDerivedWsEvent(null, "SPECTATE_ERROR", System.currentTimeMillis(),
         Map.of("error", errorMessage));
     this.messagingTemplate.convertAndSendToUser(userName, "/queue/match-spectate", wsEvent);
   }

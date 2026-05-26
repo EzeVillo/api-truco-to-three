@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public record MatchEventNotification(MatchId matchId, List<PlayerId> recipients, String eventType,
-                                     long timestamp, Map<String, Object> payload) implements
-    ApplicationEvent {
+                                     long timestamp, Map<String, Object> payload,
+                                     Long stateVersion) implements ApplicationEvent {
 
 }

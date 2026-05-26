@@ -5,8 +5,8 @@ import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
 import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
 import com.villo.truco.domain.model.match.events.FoldedEvent;
+import com.villo.truco.domain.model.match.events.HandDealtEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
-import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.RoundEndedEvent;
 import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.events.TrucoCalledEvent;
@@ -33,6 +33,7 @@ import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 final class Round extends EntityBase<RoundId> {
@@ -102,10 +103,9 @@ final class Round extends EntityBase<RoundId> {
   private void emitInitialPrivateState() {
 
     this.addDomainEvent(new RoundStartedEvent(this.roundNumber, this.seatOf(this.mano)));
-    this.addDomainEvent(
-        new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE, this.handPlayerOne.getCards()));
-    this.addDomainEvent(
-        new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_TWO, this.handPlayerTwo.getCards()));
+    this.addDomainEvent(new HandDealtEvent(
+        Map.of(PlayerSeat.PLAYER_ONE, this.handPlayerOne.getCards(), PlayerSeat.PLAYER_TWO,
+            this.handPlayerTwo.getCards())));
     this.emitAvailableActionsUpdates();
   }
 

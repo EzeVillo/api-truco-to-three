@@ -116,7 +116,7 @@ public final class RematchNotificationEventTranslator implements
 
     publisher.publish(
         new MatchEventNotification(event.getOriginMatchId(), recipients, event.getEventType(),
-            event.getTimestamp(), payload));
+            event.getTimestamp(), payload, null));
   }
 
 }

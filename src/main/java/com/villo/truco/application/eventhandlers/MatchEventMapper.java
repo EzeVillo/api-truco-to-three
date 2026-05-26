@@ -7,6 +7,7 @@ import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
 import com.villo.truco.domain.model.match.events.FoldedEvent;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
+import com.villo.truco.domain.model.match.events.HandDealtEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
@@ -141,6 +142,16 @@ public final class MatchEventMapper {
     return Map.of("seat", event.getSeat().name());
   }
 
+  private static Map<String, Object> mapHandDealt(final HandDealtEvent event) {
+
+    final var map = new LinkedHashMap<String, Object>();
+    for (final var entry : event.getSeatToCards().entrySet()) {
+      map.put(entry.getKey().name().toLowerCase(),
+          entry.getValue().stream().map(MatchEventMapper::mapCard).toList());
+    }
+    return map;
+  }
+
   private static Map<String, Object> mapPlayerHandUpdated(final PlayerHandUpdatedEvent event) {
 
     final var map = new LinkedHashMap<String, Object>();
@@ -167,7 +178,7 @@ public final class MatchEventMapper {
     return map;
   }
 
-  private static Map<String, Object> mapCard(final Card card) {
+  static Map<String, Object> mapCard(final Card card) {
 
     if (card == null) {
       return null;
@@ -228,6 +239,7 @@ public final class MatchEventMapper {
       case MatchFinishedEvent e -> mapMatchFinished(e);
       case MatchForfeitedEvent e -> mapMatchForfeited(e);
       case FoldedEvent e -> mapFolded(e);
+      case HandDealtEvent e -> mapHandDealt(e);
       case PlayerHandUpdatedEvent e -> mapPlayerHandUpdated(e);
       case AvailableActionsUpdatedEvent e -> mapAvailableActionsUpdated(e);
       case PlayerJoinedEvent e -> Map.of();

@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.websocket;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -10,18 +11,21 @@ import com.villo.truco.application.events.MatchEventNotification;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.infrastructure.websocket.dto.MatchDerivedWsEvent;
+import com.villo.truco.infrastructure.websocket.dto.MatchWsEvent;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-@DisplayName("StompMatchNotificationHandler")
-class StompMatchEventNotifierTest {
+@DisplayName("Match WS stream version")
+class MatchWsStreamVersionTest {
 
   @Test
-  @DisplayName("envía broadcast a ambos jugadores")
-  void broadcastsToBothPlayers() {
+  @DisplayName("Los eventos transicionales incluyen stateVersion en el WS event")
+  void transitionalEventIncludesStateVersion() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
     final var handler = new StompMatchNotificationHandler(messaging,
@@ -32,14 +36,21 @@ class StompMatchEventNotifierTest {
 
     handler.handle(
         new MatchEventNotification(matchId, List.of(playerOne, playerTwo), "PLAYER_JOINED",
-            System.currentTimeMillis(), Map.of(), 1L));
+            System.currentTimeMillis(), Map.of(), 5L));
 
-    verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/match"), any());
+    final var captor = ArgumentCaptor.forClass(MatchWsEvent.class);
+    verify(messaging, times(2)).convertAndSendToUser(any(), eq("/queue/match"), captor.capture());
+
+    final var sentEvents = captor.getAllValues();
+    assertThat(sentEvents).hasSize(2);
+    for (final var event : sentEvents) {
+      assertThat(event.stateVersion()).isEqualTo(5L);
+    }
   }
 
   @Test
-  @DisplayName("envía eventos derivados a /queue/match-derived sin stateVersion")
-  void sendsDerivedToMatchDerivedWithoutStateVersion() {
+  @DisplayName("Los eventos derivados publican MatchDerivedWsEvent sin stateVersion")
+  void derivedEventPublishesMatchDerivedWsEvent() {
 
     final var messaging = mock(SimpMessagingTemplate.class);
     final var handler = new StompMatchNotificationHandler(messaging,
@@ -51,7 +62,12 @@ class StompMatchEventNotifierTest {
         new MatchEventNotification(matchId, List.of(playerOne), "AVAILABLE_ACTIONS_UPDATED",
             System.currentTimeMillis(), Map.of(), null));
 
-    verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/match-derived"), any());
+    final var captor = ArgumentCaptor.forClass(MatchDerivedWsEvent.class);
+    verify(messaging, times(1)).convertAndSendToUser(any(), eq("/queue/match-derived"),
+        captor.capture());
+
+    final var sentEvent = captor.getValue();
+    assertThat(sentEvent).isInstanceOf(MatchDerivedWsEvent.class);
   }
 
 }

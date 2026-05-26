@@ -15,7 +15,7 @@ class MatchWsEventTest {
   void preservesShape() {
 
     final var event = new MatchWsEvent("match-1", "PLAYER_READY", 123L,
-        Map.of("seat", "PLAYER_ONE"));
+        Map.of("seat", "PLAYER_ONE"), 1L);
 
     assertThat(event.matchId()).isEqualTo("match-1");
     assertThat(event.eventType()).isEqualTo("PLAYER_READY");

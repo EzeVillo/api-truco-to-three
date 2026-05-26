@@ -37,3 +37,13 @@ out/
 
 ### AI ###
 .ai
+
+### Logs and Environment ###
+*.log
+.env*
+
+### OS Files ###
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp

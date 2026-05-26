@@ -1,0 +1,2 @@
+ALTER TABLE matches
+    ADD COLUMN state_version BIGINT NOT NULL DEFAULT 0;

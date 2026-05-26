@@ -44,7 +44,7 @@ public final class MatchStateDTOAssembler {
     return new MatchStateDTO(match.getId().value().toString(), match.getStatus().name(), viewerSeat,
         playerOneUsername, playerTwoUsername, match.getGamesToPlay(), match.getScorePlayerOne(),
         match.getScorePlayerTwo(), match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(),
-        matchWinner, roundState);
+        matchWinner, roundState, match.getStateVersion());
   }
 
   private String resolveViewerSeat(final Match match, final PlayerId requestingPlayer) {

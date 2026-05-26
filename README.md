@@ -98,6 +98,11 @@ games.
 - Tiempo real:
   eventos privados por jugador para match, league, cup, chat y social, mas canal de spectate para
   snapshots y eventos publicos del match.
+    - Los eventos transicionales del match (cambios de estado observables por todos) se entregan por
+      `/user/queue/match` con un campo `stateVersion` monotónicamente creciente.
+    - Las notificaciones derivadas por jugador (mano y acciones disponibles) se entregan por
+      `/user/queue/match-derived` **sin** `stateVersion`, para no contaminar la secuencia
+      transicional.
 
 ## Arquitectura
 

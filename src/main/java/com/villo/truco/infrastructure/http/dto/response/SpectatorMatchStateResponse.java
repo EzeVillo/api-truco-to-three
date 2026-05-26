@@ -13,14 +13,15 @@ public record SpectatorMatchStateResponse(
     @Schema(description = "Juegos ganados por player two", example = "0") int gamesWonPlayerTwo,
     @Schema(description = "ID del ganador final, si existe", example = "juancho") String matchWinner,
     @Schema(description = "Estado de la ronda actual") SpectatorRoundStateResponse currentRound,
-    @Schema(description = "Cantidad de espectadores", example = "3") int spectatorCount) {
+    @Schema(description = "Cantidad de espectadores", example = "3") int spectatorCount,
+    @Schema(description = "Version de estado transicional del match", example = "5") long stateVersion) {
 
   public static SpectatorMatchStateResponse from(final SpectatorMatchStateDTO dto) {
 
     return new SpectatorMatchStateResponse(dto.matchId(), dto.status(), dto.scorePlayerOne(),
         dto.scorePlayerTwo(), dto.gamesWonPlayerOne(), dto.gamesWonPlayerTwo(), dto.matchWinner(),
         dto.currentRound() != null ? SpectatorRoundStateResponse.from(dto.currentRound()) : null,
-        dto.spectatorCount());
+        dto.spectatorCount(), dto.stateVersion());
   }
 
 }
