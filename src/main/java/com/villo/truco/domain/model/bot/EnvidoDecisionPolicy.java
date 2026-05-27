@@ -134,6 +134,12 @@ final class EnvidoDecisionPolicy {
   private CallRiskProfile callRiskProfile(final BotEnvidoCall call, final int envidoScore,
       final int myScore, final int rivalScore, final int pointsToWin) {
 
+    final var botDiesIfRejected =
+        myScore + call.rejectedPointsIfRivalDeclines() > pointsToWin;
+    if (botDiesIfRejected) {
+      return CallRiskProfile.FORBIDDEN;
+    }
+
     final var botDiesIfWins = myScore + call.acceptedPointsIfBotWins() > pointsToWin;
     if (!botDiesIfWins) {
       return CallRiskProfile.SAFE;

@@ -280,6 +280,30 @@ class EnvidoDecisionPolicyTest {
   }
 
   @Test
+  void decideCall_faltaRaiseOverRealEnvido_botDiesIfRejected_skipsCall() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    // Rival cantó real envido. Bot en 1, rival en 2, a 3 puntos.
+    // Si bot escala a falta y rival rechaza, bot suma 3 (real envido) -> 1+3=4 > 3 => pierde el game.
+    final var projectedFaltaRaise = call(1, 2, 3, BotEnvidoLevel.FALTA_ENVIDO);
+    final var result = policy.decideCall(List.of(projectedFaltaRaise), 30, 1, 2, POINTS_TO_WIN,
+        false, false);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void decideCall_faltaRaiseOverEnvido_botDiesIfRejected_skipsCall() {
+
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    // Rival cantó envido. Bot en 2, rival en 0, a 3 puntos.
+    // Si bot escala a falta y rival rechaza, bot suma 2 (envido) -> 2+2=4 > 3 => pierde el game.
+    final var projectedFaltaRaise = call(3, 1, 2, BotEnvidoLevel.FALTA_ENVIDO);
+    final var result = policy.decideCall(List.of(projectedFaltaRaise), 30, 2, 0, POINTS_TO_WIN,
+        false, false);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
   void decideCall_safeOptions_keepAggressiveLevelSelection() {
 
     final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
