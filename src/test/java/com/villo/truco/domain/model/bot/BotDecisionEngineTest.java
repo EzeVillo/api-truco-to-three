@@ -56,7 +56,7 @@ class BotDecisionEngineTest {
   private static BotMatchView playOnly(final List<BotCard> cards) {
 
     final var game = new GameContext(cards, 0, 0, null, 0, 0, false, true, false, false,
-        POINTS_TO_WIN);
+        POINTS_TO_WIN, cards.size());
     final var truco = new TrucoContext(null, List.of(), null);
     final var envido = new EnvidoContext(List.of(), List.of(), List.of(), null);
     return new BotMatchView(game, truco, envido);
@@ -66,7 +66,7 @@ class BotDecisionEngineTest {
       final int rivalScore, final boolean foldWouldGiveGameToBot) {
 
     final var game = new GameContext(cards, myScore, rivalScore, null, 0, 0, false, true, true,
-        foldWouldGiveGameToBot, POINTS_TO_WIN);
+        foldWouldGiveGameToBot, POINTS_TO_WIN, cards.size());
     final var truco = new TrucoContext(null, List.of(), null);
     final var envido = new EnvidoContext(List.of(), List.of(), List.of(), null);
     return new BotMatchView(game, truco, envido);
@@ -88,9 +88,20 @@ class BotDecisionEngineTest {
       final int pointsToWin) {
 
     final var game = new GameContext(cards, myScore, rivalScore, null, 0, handsPlayed, false, false,
-        false, false, pointsToWin);
+        false, false, pointsToWin, cards.size());
     final var truco = new TrucoContext(availableTrucoCall, availableResponses, currentOffer);
     final var envido = new EnvidoContext(availableEnvidoCalls, List.of(), List.of(), null);
+    return new BotMatchView(game, truco, envido);
+  }
+
+  private static BotMatchView guaranteedWinningScenario(final BotCard myLoneCard,
+      final BotCard rivalCard, final int myScore, final int rivalScore, final int rivalCardsInHand,
+      final BotTrucoCall availableCall) {
+
+    final var game = new GameContext(List.of(myLoneCard), myScore, rivalScore, rivalCard, 0, 2,
+        false, true, true, false, POINTS_TO_WIN, rivalCardsInHand);
+    final var truco = new TrucoContext(availableCall, List.of(), null);
+    final var envido = new EnvidoContext(List.of(), List.of(), List.of(), null);
     return new BotMatchView(game, truco, envido);
   }
 
@@ -196,6 +207,50 @@ class BotDecisionEngineTest {
     final var view = withFoldOption(List.of(ANCHO_ESPADA), 0, 2, false);
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.PlayCard.class);
+  }
+
+  @Test
+  void decide_callsGuaranteedWinningTruco_whenBotLosesHandAndRivalCannotEscape() {
+
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var view = guaranteedWinningScenario(CUATRO_COPA, ANCHO_ESPADA, 2, 2, 0, TRUCO_CALL);
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.CallTruco.class);
+    assertThat(((BotAction.CallTruco) action).call()).isEqualTo(TRUCO_CALL);
+  }
+
+  @Test
+  void decide_doesNotCallGuaranteedWinningTruco_whenRivalStillHasCards() {
+
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var view = guaranteedWinningScenario(CUATRO_COPA, ANCHO_ESPADA, 2, 2, 1, TRUCO_CALL);
+    final var action = engine.decide(view);
+    assertThat(action).isNotInstanceOf(BotAction.CallTruco.class);
+  }
+
+  @Test
+  void decide_raisesToRetruco_whenRespondingAndWinIsGuaranteed() {
+
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var game = new GameContext(List.of(CUATRO_COPA), 1, 1, ANCHO_ESPADA, 0, 2, false, false,
+        false, false, POINTS_TO_WIN, 0);
+    final var truco = new TrucoContext(RETRUCO_CALL,
+        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO,
+            BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO), TRUCO_CALL);
+    final var envido = new EnvidoContext(List.of(), List.of(), List.of(), null);
+    final var view = new BotMatchView(game, truco, envido);
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.CallTruco.class);
+    assertThat(((BotAction.CallTruco) action).call()).isEqualTo(RETRUCO_CALL);
+  }
+
+  @Test
+  void decide_doesNotCallGuaranteedWinningTruco_whenBotCanBeatRivalsCard() {
+
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var view = guaranteedWinningScenario(ANCHO_ESPADA, CUATRO_COPA, 2, 2, 0, TRUCO_CALL);
+    final var action = engine.decide(view);
+    assertThat(action).isNotInstanceOf(BotAction.CallTruco.class);
   }
 
   @Test

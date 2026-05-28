@@ -14,7 +14,7 @@ public record MatchPlayerDecisionView(GameContext game, TrucoContext truco, Envi
 
     return new MatchPlayerDecisionView(
         new GameContext(List.of(), myScore, rivalScore, null, 0, 0, false, false, false, false,
-            ScoringPolicy.pointsToWinGame()), new TrucoContext(null, List.of(), null),
+            ScoringPolicy.pointsToWinGame(), 0), new TrucoContext(null, List.of(), null),
         new EnvidoContext(List.of(), List.of(), List.of(), null));
   }
 
@@ -28,7 +28,7 @@ public record MatchPlayerDecisionView(GameContext game, TrucoContext truco, Envi
   public record GameContext(List<CardView> myCards, int myScore, int rivalScore,
                             CardView rivalCardPlayed, int envidoScore, int handsPlayedCount,
                             boolean isMano, boolean canPlayCard, boolean canFold,
-                            boolean foldWouldGiveGameToBot, int pointsToWin) {
+                            boolean foldWouldGiveGameToBot, int pointsToWin, int rivalCardsInHand) {
 
     public GameContext {
 

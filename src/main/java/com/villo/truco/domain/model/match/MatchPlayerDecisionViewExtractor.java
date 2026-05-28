@@ -35,6 +35,8 @@ final class MatchPlayerDecisionViewExtractor {
     final var isMano = currentHandInfo.mano() != null && currentHandInfo.mano().equals(playerId);
     final var myCardsRaw = match.getCardsOf(playerId);
     final var myOriginalCardsRaw = match.getOriginalCardsOf(playerId);
+    final var rivalId = isPlayerOne ? match.getPlayerTwo() : match.getPlayerOne();
+    final var rivalCardsInHand = match.getCardsOf(rivalId).size();
 
     final var gameContext = new MatchPlayerDecisionView.GameContext(
         myCardsRaw.stream().map(MatchPlayerDecisionViewExtractor::toCardView).toList(), myScore,
@@ -43,7 +45,7 @@ final class MatchPlayerDecisionViewExtractor {
         match.getPlayedHands().size(), isMano, hasAction(availableActions, ActionType.PLAY_CARD),
         hasAction(availableActions, ActionType.FOLD),
         foldWouldGiveGameToBot(match, rivalScore, availableActions),
-        ScoringPolicy.pointsToWinGame());
+        ScoringPolicy.pointsToWinGame(), rivalCardsInHand);
 
     final var trucoContext = new MatchPlayerDecisionView.TrucoContext(
         toSingleAvailableTrucoCall(availableActions),
@@ -153,7 +155,6 @@ final class MatchPlayerDecisionViewExtractor {
         > ScoringPolicy.pointsToWinGame();
   }
 
-  @SuppressWarnings("unchecked")
   private static <E extends Enum<E>> E tryParse(final String value, final Class<E> enumClass) {
 
     if (value == null) {

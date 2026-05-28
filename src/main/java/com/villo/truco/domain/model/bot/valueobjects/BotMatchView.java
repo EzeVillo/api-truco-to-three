@@ -7,7 +7,7 @@ public record BotMatchView(GameContext game, TrucoContext truco, EnvidoContext e
   public record GameContext(List<BotCard> myCards, int myScore, int rivalScore,
                             BotCard rivalCardPlayed, int envidoScore, int handsPlayedCount,
                             boolean isMano, boolean canPlayCard, boolean canFold,
-                            boolean foldWouldGiveGameToBot, int pointsToWin) {
+                            boolean foldWouldGiveGameToBot, int pointsToWin, int rivalCardsInHand) {
 
   }
 

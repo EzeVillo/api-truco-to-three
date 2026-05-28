@@ -27,7 +27,7 @@ class MatchToBotACLTest {
     final var rivalCard = Card.of(Suit.BASTO, 7);
     final var view = new MatchPlayerDecisionView(new MatchPlayerDecisionView.GameContext(
         List.of(new MatchPlayerDecisionView.CardView(14, myCard)), 1, 2,
-        new MatchPlayerDecisionView.CardView(4, rivalCard), 27, 1, true, true, false, false, 5),
+        new MatchPlayerDecisionView.CardView(4, rivalCard), 27, 1, true, true, false, false, 5, 1),
         new MatchPlayerDecisionView.TrucoContext(TrucoCall.RETRUCO,
             List.of(TrucoResponse.QUIERO, TrucoResponse.NO_QUIERO), TrucoCall.TRUCO),
         new MatchPlayerDecisionView.EnvidoContext(
@@ -72,7 +72,7 @@ class MatchToBotACLTest {
     final var botCard = MatchToBotACL.translate(new MatchPlayerDecisionView(
             new MatchPlayerDecisionView.GameContext(
                 List.of(new MatchPlayerDecisionView.CardView(6, Card.of(Suit.ORO, 10))), 0, 0, null, 0,
-                0, false, true, false, false, 5),
+                0, false, true, false, false, 5, 3),
             new MatchPlayerDecisionView.TrucoContext(null, List.of(), null),
             new MatchPlayerDecisionView.EnvidoContext(List.of(), List.of(), List.of(), null))).game()
         .myCards().getFirst();
@@ -92,7 +92,7 @@ class MatchToBotACLTest {
 
     final var view = new MatchPlayerDecisionView(
         new MatchPlayerDecisionView.GameContext(List.of(), 1, 1, null, 30, 0, false, true, false,
-            false, 3), new MatchPlayerDecisionView.TrucoContext(null, List.of(), null),
+            false, 3, 3), new MatchPlayerDecisionView.TrucoContext(null, List.of(), null),
         new MatchPlayerDecisionView.EnvidoContext(
             List.of(new MatchPlayerDecisionView.EnvidoOption(EnvidoCall.REAL_ENVIDO, 3, 3)),
             List.of(EnvidoResponse.QUIERO, EnvidoResponse.NO_QUIERO),

@@ -3,6 +3,7 @@ package com.villo.truco.domain.model.bot;
 import com.villo.truco.domain.model.bot.valueobjects.BotAction;
 import com.villo.truco.domain.model.bot.valueobjects.BotMatchView;
 import com.villo.truco.domain.model.bot.valueobjects.BotPersonality;
+import com.villo.truco.domain.model.bot.valueobjects.BotTrucoCall;
 import com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse;
 import java.util.Objects;
 import java.util.Random;
@@ -29,6 +30,23 @@ public final class BotDecisionEngine {
     this.trucoPolicy = new TrucoDecisionPolicy(personality, random);
     this.envidoPolicy = new EnvidoDecisionPolicy(personality, random);
     this.cardPolicy = new CardSelectionPolicy(personality, random);
+  }
+
+  private static boolean isGuaranteedWinningTrucoCall(final BotMatchView.GameContext game,
+      final BotTrucoCall availableCall, final int pointsToWin) {
+
+    if (game.rivalCardPlayed() == null || game.rivalCardsInHand() > 0) {
+      return false;
+    }
+
+    final var rivalRank = game.rivalCardPlayed().trucoRank();
+    final var canBeat = game.myCards().stream().anyMatch(card -> card.trucoRank() > rivalRank);
+    if (canBeat) {
+      return false;
+    }
+
+    return TrucoScoreStrategy.botWinsIfRejected(game.myScore(), availableCall, pointsToWin)
+        && TrucoScoreStrategy.rivalExceedsIfAccepted(game.rivalScore(), availableCall, pointsToWin);
   }
 
   public BotAction decide(final BotMatchView view) {
@@ -71,6 +89,11 @@ public final class BotDecisionEngine {
         return new BotAction.RespondTruco(BotTrucoResponse.QUIERO);
       }
 
+      if (truco.canCall() && isGuaranteedWinningTrucoCall(game, truco.availableCall(),
+          pointsToWin)) {
+        return new BotAction.CallTruco(truco.availableCall());
+      }
+
       if (truco.canCall()) {
         final var raise = this.trucoPolicy.decideRaise(truco.availableCall(), handStrength, myScore,
             rivalScore, pointsToWin);
@@ -103,6 +126,10 @@ public final class BotDecisionEngine {
       if (envidoCall.isPresent()) {
         return new BotAction.CallEnvido(envidoCall.get());
       }
+    }
+
+    if (truco.canCall() && isGuaranteedWinningTrucoCall(game, truco.availableCall(), pointsToWin)) {
+      return new BotAction.CallTruco(truco.availableCall());
     }
 
     if (truco.canCall()) {
