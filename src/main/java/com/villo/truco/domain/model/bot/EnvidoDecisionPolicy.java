@@ -6,6 +6,7 @@ import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoLevel;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoResponse;
 import com.villo.truco.domain.model.bot.valueobjects.BotMatchView;
 import com.villo.truco.domain.model.bot.valueobjects.BotPersonality;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -66,7 +67,10 @@ final class EnvidoDecisionPolicy {
       return Optional.empty();
     }
 
-    return Optional.of(this.pickCallLevel(viableCalls, envidoScore, safeCalls.isEmpty()));
+    if (safeCalls.isEmpty()) {
+      return Optional.of(this.pickLowestLevel(viableCalls));
+    }
+    return this.pickJustifiedLevel(viableCalls, envidoScore);
   }
 
   BotEnvidoResponse decideResponse(final int envidoScore, final int myScore, final int rivalScore,
@@ -179,29 +183,21 @@ final class EnvidoDecisionPolicy {
     return Optional.empty();
   }
 
-  private BotEnvidoCall pickCallLevel(final List<BotEnvidoCall> availableCalls,
-      final int envidoScore, final boolean trapOnlyCalls) {
+  private Optional<BotEnvidoCall> pickJustifiedLevel(final List<BotEnvidoCall> availableCalls,
+      final int envidoScore) {
 
-    if (trapOnlyCalls) {
-      return this.pickLowestLevel(availableCalls);
-    }
-
+    final BotEnvidoLevel maxJustifiedLevel;
     if (envidoScore >= FALTA_ENVIDO_THRESHOLD) {
-      final var falta = availableCalls.stream()
-          .filter(o -> o.level() == BotEnvidoLevel.FALTA_ENVIDO).findFirst();
-      if (falta.isPresent()) {
-        return falta.get();
-      }
+      maxJustifiedLevel = BotEnvidoLevel.FALTA_ENVIDO;
+    } else if (envidoScore >= GOOD_ENVIDO_THRESHOLD) {
+      maxJustifiedLevel = BotEnvidoLevel.REAL_ENVIDO;
+    } else {
+      maxJustifiedLevel = BotEnvidoLevel.ENVIDO;
     }
-    if (envidoScore >= GOOD_ENVIDO_THRESHOLD) {
-      final var realEnvido = availableCalls.stream()
-          .filter(o -> o.level() == BotEnvidoLevel.REAL_ENVIDO).findFirst();
-      if (realEnvido.isPresent()) {
-        return realEnvido.get();
-      }
-    }
-    return availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.ENVIDO).findFirst()
-        .orElse(availableCalls.getFirst());
+
+    return availableCalls.stream()
+        .filter(o -> o.level().ordinal() <= maxJustifiedLevel.ordinal())
+        .max(Comparator.comparingInt(o -> o.level().ordinal()));
   }
 
   private BotEnvidoCall pickLowestLevel(final List<BotEnvidoCall> availableCalls) {

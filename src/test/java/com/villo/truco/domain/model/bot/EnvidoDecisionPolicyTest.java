@@ -312,4 +312,23 @@ class EnvidoDecisionPolicyTest {
     assertThat(result).contains(realEnvido());
   }
 
+  @Test
+  void decideCall_respondingToEnvidoWithLowScore_doesNotEscalateToFalta() {
+
+    // Reproduce el bug del log: bot responde a ENVIDO con envido < 6, a 3 puntos.
+    // En 3 puntos, ENVIDO-ENVIDO (4 pts) y REAL_ENVIDO (5 pts) hacen "morir al bot si gana"
+    // por superar el límite, por lo que el callRiskProfile los marca FORBIDDEN/SUICIDAL_TRAP
+    // y solo deja FALTA_ENVIDO como SAFE (3 pts, no supera). El bot NO debe escalar a falta
+    // con envido bajo: debe devolver empty y dejar que decideResponse decida.
+    final var aggressive = new BotPersonality(100, 1, 100, 100, 50);
+    final var policy = new EnvidoDecisionPolicy(aggressive, ALWAYS_ZERO);
+    final var envidoEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
+    final var realEnvidoRaise = call(5, 5, 2, BotEnvidoLevel.REAL_ENVIDO);
+    final var faltaEnvidoRaise = call(3, 3, 2, BotEnvidoLevel.FALTA_ENVIDO);
+    final var result = policy.decideCall(
+        List.of(envidoEnvidoRaise, realEnvidoRaise, faltaEnvidoRaise), 5, 0, 0, POINTS_TO_WIN,
+        false, false);
+    assertThat(result).isEmpty();
+  }
+
 }
