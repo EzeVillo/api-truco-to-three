@@ -45,14 +45,16 @@ public class ApplicationEventConfiguration {
   private final SimpMessagingTemplate messagingTemplate;
   private final EventNotifierHealthRegistry eventNotifierHealthRegistry;
   private final MeterRegistry meterRegistry;
+  private final long matchIdleTimeoutMillis;
 
   public ApplicationEventConfiguration(final SimpMessagingTemplate messagingTemplate,
       final EventNotifierHealthRegistry eventNotifierHealthRegistry,
-      final MeterRegistry meterRegistry) {
+      final MeterRegistry meterRegistry, final MatchTimeoutProperties matchTimeoutProperties) {
 
     this.messagingTemplate = messagingTemplate;
     this.eventNotifierHealthRegistry = eventNotifierHealthRegistry;
     this.meterRegistry = meterRegistry;
+    this.matchIdleTimeoutMillis = matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L;
   }
 
   @Bean
@@ -150,7 +152,7 @@ public class ApplicationEventConfiguration {
   @Bean
   MatchEventMapper matchEventMapper() {
 
-    return new MatchEventMapper();
+    return new MatchEventMapper(this.matchIdleTimeoutMillis);
   }
 
   @Bean

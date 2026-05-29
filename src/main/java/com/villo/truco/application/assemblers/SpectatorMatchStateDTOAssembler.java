@@ -17,10 +17,13 @@ import java.util.Optional;
 public final class SpectatorMatchStateDTOAssembler {
 
   private final PublicActorResolver publicActorResolver;
+  private final long idleTimeoutMillis;
 
-  public SpectatorMatchStateDTOAssembler(final PublicActorResolver publicActorResolver) {
+  public SpectatorMatchStateDTOAssembler(final PublicActorResolver publicActorResolver,
+      final long idleTimeoutMillis) {
 
     this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
+    this.idleTimeoutMillis = idleTimeoutMillis;
   }
 
   public SpectatorMatchStateDTO toDto(final Match match, final int spectatorCount) {
@@ -76,8 +79,11 @@ public final class SpectatorMatchStateDTOAssembler {
         handInfo.cardPlayerTwo() != null ? CardDTO.from(handInfo.cardPlayerTwo()) : null,
         handInfo.mano() != null ? actorNames.get(handInfo.mano()) : null);
 
+    final var deadline = ActionDeadlineProjection.of(match, this.idleTimeoutMillis);
+
     return new SpectatorRoundStateDTO(match.getStatus().name(), currentTurn, roundStatus,
-        currentTrucoCall, matchWinner, playedHands, currentHand);
+        currentTrucoCall, matchWinner, playedHands, currentHand, deadline.actionDeadline(),
+        deadline.turnDurationMillis(), deadline.actionDeadlineSeat());
   }
 
 }

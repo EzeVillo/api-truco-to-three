@@ -40,7 +40,7 @@ class SpectatorNotificationEventTranslatorTest {
     this.publishedEvents = new ArrayList<>();
 
     this.translator = new SpectatorNotificationEventTranslator(this.repository,
-        new MatchEventMapper(), this.publishedEvents::add);
+        new MatchEventMapper(30_000L), this.publishedEvents::add);
   }
 
   @Test

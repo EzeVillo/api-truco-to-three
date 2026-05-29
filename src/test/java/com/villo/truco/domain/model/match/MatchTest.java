@@ -3,11 +3,14 @@ package com.villo.truco.domain.model.match;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.domain.model.match.events.ActionDeadlineClearedEvent;
+import com.villo.truco.domain.model.match.events.ActionDeadlineSetEvent;
 import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
-import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
+import com.villo.truco.domain.model.match.events.MatchDerivedEvent;
+import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.exceptions.InvalidJoinCodeException;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchStateException;
@@ -75,6 +78,45 @@ class MatchTest {
         match.playCard(loser, match.getCurrentRound().getHandOf(loser).getCards().getFirst());
       }
     }
+  }
+
+  @Test
+  @DisplayName("al iniciar el juego emite ActionDeadlineSetEvent derivado sobre el asiento que debe actuar")
+  void emitsActionDeadlineSetOnGameStart() {
+
+    final var match = matchInProgress();
+
+    final var deadlineEvent = match.getMatchDomainEvents().stream()
+        .filter(e -> e instanceof ActionDeadlineSetEvent).findFirst();
+
+    assertThat(deadlineEvent).isPresent();
+    assertThat(deadlineEvent.get()).isInstanceOf(MatchDerivedEvent.class);
+    assertThat(((ActionDeadlineSetEvent) deadlineEvent.get()).getSeat()).isEqualTo(
+        match.getCurrentTurn().equals(playerOne) ? PlayerSeat.PLAYER_ONE : PlayerSeat.PLAYER_TWO);
+  }
+
+  @Test
+  @DisplayName("el ActionDeadlineSetEvent no consume stateVersion (es derivado)")
+  void actionDeadlineSetDoesNotConsumeStateVersion() {
+
+    final var match = matchInProgress();
+
+    final var deadlineEvent = match.getMatchDomainEvents().stream()
+        .filter(e -> e instanceof ActionDeadlineSetEvent).findFirst().orElseThrow();
+
+    assertThat(deadlineEvent.getStateVersion()).isZero();
+  }
+
+  @Test
+  @DisplayName("al terminar el match emite ActionDeadlineClearedEvent (reloj detenido)")
+  void emitsActionDeadlineClearedOnMatchEnd() {
+
+    final var match = matchInProgress();
+    match.clearDomainEvents();
+
+    match.abandon(playerOne);
+
+    assertThat(match.getMatchDomainEvents()).anyMatch(e -> e instanceof ActionDeadlineClearedEvent);
   }
 
   private void awardPoint(final Match match, final PlayerId scorer, final PlayerId rival) {
@@ -511,8 +553,8 @@ class MatchTest {
 
       match.playCard(mano, originalManoCards.getFirst());
 
-      assertThat(match.getOriginalCardsOf(mano))
-          .containsExactlyInAnyOrderElementsOf(originalManoCards);
+      assertThat(match.getOriginalCardsOf(mano)).containsExactlyInAnyOrderElementsOf(
+          originalManoCards);
     }
 
     @Test

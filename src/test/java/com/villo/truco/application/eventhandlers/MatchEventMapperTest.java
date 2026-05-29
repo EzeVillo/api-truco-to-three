@@ -2,6 +2,8 @@ package com.villo.truco.application.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.villo.truco.domain.model.match.events.ActionDeadlineClearedEvent;
+import com.villo.truco.domain.model.match.events.ActionDeadlineSetEvent;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoResolvedEvent;
 import com.villo.truco.domain.model.match.events.HandResolvedEvent;
@@ -22,7 +24,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("MatchEventMapper")
 class MatchEventMapperTest {
 
-  private final MatchEventMapper mapper = new MatchEventMapper();
+  private final MatchEventMapper mapper = new MatchEventMapper(30_000L);
 
   @Test
   @DisplayName("TurnChangedEvent → payload con seat")
@@ -134,6 +136,35 @@ class MatchEventMapperTest {
             false));
 
     assertThat(payload).doesNotContainKey("pointsMano").doesNotContainKey("pointsPie");
+  }
+
+  @Test
+  @DisplayName("ActionDeadlineSetEvent → payload con seat, actionDeadline (ancla + duración) y turnDurationMillis")
+  void actionDeadlineSetMapsProjection() {
+
+    final var matchId = MatchId.generate();
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+    final var event = new ActionDeadlineSetEvent(matchId, p1, p2, PlayerSeat.PLAYER_ONE);
+
+    final var payload = mapper.map(event);
+
+    assertThat(payload).containsEntry("seat", "PLAYER_ONE")
+        .containsEntry("turnDurationMillis", 30_000L)
+        .containsEntry("actionDeadline", event.getTimestamp() + 30_000L);
+  }
+
+  @Test
+  @DisplayName("ActionDeadlineClearedEvent → payload vacío")
+  void actionDeadlineClearedMapsToEmptyPayload() {
+
+    final var matchId = MatchId.generate();
+    final var p1 = PlayerId.generate();
+    final var p2 = PlayerId.generate();
+
+    final var payload = mapper.map(new ActionDeadlineClearedEvent(matchId, p1, p2));
+
+    assertThat(payload).isEmpty();
   }
 
   @Test

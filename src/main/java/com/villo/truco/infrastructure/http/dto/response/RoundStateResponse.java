@@ -15,7 +15,10 @@ public record RoundStateResponse(
     @Schema(description = "Nombre visible del ganador de la ronda, si existe", example = "juancho") String winner,
     @ArraySchema(schema = @Schema(implementation = AvailableActionResponse.class), arraySchema = @Schema(description = "Acciones permitidas para el jugador")) List<AvailableActionResponse> availableActions,
     @ArraySchema(schema = @Schema(implementation = PlayedHandResponse.class), arraySchema = @Schema(description = "Historial de manos jugadas")) List<PlayedHandResponse> playedHands,
-    @Schema(description = "Estado parcial de la mano actual") CurrentHandResponse currentHand) {
+    @Schema(description = "Estado parcial de la mano actual") CurrentHandResponse currentHand,
+    @Schema(description = "Instante (epochMillis) en que el asiento que debe actuar pierde por timeout; null si no corre reloj", example = "1772768188123") Long actionDeadline,
+    @Schema(description = "Duración total del plazo del turno en milisegundos; null si no corre reloj", example = "30000") Long turnDurationMillis,
+    @Schema(description = "Asiento al que aplica el reloj (PLAYER_ONE | PLAYER_TWO); null si no corre reloj", example = "PLAYER_ONE") String actionDeadlineSeat) {
 
   public static RoundStateResponse from(final RoundStateDTO dto) {
 
@@ -24,7 +27,8 @@ public record RoundStateResponse(
         dto.currentTrucoCall(), dto.winner(),
         dto.availableActions().stream().map(AvailableActionResponse::from).toList(),
         dto.playedHands().stream().map(PlayedHandResponse::from).toList(),
-        dto.currentHand() != null ? CurrentHandResponse.from(dto.currentHand()) : null);
+        dto.currentHand() != null ? CurrentHandResponse.from(dto.currentHand()) : null,
+        dto.actionDeadline(), dto.turnDurationMillis(), dto.actionDeadlineSeat());
   }
 
 }

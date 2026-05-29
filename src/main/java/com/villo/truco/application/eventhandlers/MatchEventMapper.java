@@ -1,5 +1,7 @@
 package com.villo.truco.application.eventhandlers;
 
+import com.villo.truco.domain.model.match.events.ActionDeadlineClearedEvent;
+import com.villo.truco.domain.model.match.events.ActionDeadlineSetEvent;
 import com.villo.truco.domain.model.match.events.AvailableActionsUpdatedEvent;
 import com.villo.truco.domain.model.match.events.CardPlayedEvent;
 import com.villo.truco.domain.model.match.events.EnvidoCalledEvent;
@@ -32,6 +34,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class MatchEventMapper {
+
+  private final long idleTimeoutMillis;
+
+  public MatchEventMapper(final long idleTimeoutMillis) {
+
+    this.idleTimeoutMillis = idleTimeoutMillis;
+  }
 
   private static Map<String, Object> mapCardPlayed(final CardPlayedEvent event) {
 
@@ -217,6 +226,15 @@ public final class MatchEventMapper {
     return Map.of("seat", event.getSeat().name());
   }
 
+  private Map<String, Object> mapActionDeadlineSet(final ActionDeadlineSetEvent event) {
+
+    final var map = new LinkedHashMap<String, Object>();
+    map.put("seat", event.getSeat().name());
+    map.put("actionDeadline", event.getTimestamp() + this.idleTimeoutMillis);
+    map.put("turnDurationMillis", this.idleTimeoutMillis);
+    return map;
+  }
+
   public Map<String, Object> map(final DomainEventBase event) {
 
     return switch (event) {
@@ -244,6 +262,8 @@ public final class MatchEventMapper {
       case AvailableActionsUpdatedEvent e -> mapAvailableActionsUpdated(e);
       case PlayerJoinedEvent e -> Map.of();
       case PlayerReadyEvent e -> mapPlayerReady(e);
+      case ActionDeadlineSetEvent e -> mapActionDeadlineSet(e);
+      case ActionDeadlineClearedEvent e -> Map.of();
       default -> Map.of();
     };
   }

@@ -638,7 +638,10 @@ Response `200`:
       "cardPlayerOne": null,
       "cardPlayerTwo": null,
       "mano": "juancho"
-    }
+    },
+    "actionDeadline": 1772768188123,
+    "turnDurationMillis": 30000,
+    "actionDeadlineSeat": "PLAYER_ONE"
   }
 }
 ```
@@ -653,6 +656,8 @@ Response `200`:
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
 - `myCards` contiene solo las cartas del jugador autenticado
 - `availableActions` refleja las acciones disponibles para el jugador autenticado
+- `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` describen el temporizador de
+  inactividad del turno. Ver §4.18.
 
 Errores:
 
@@ -702,7 +707,10 @@ Response `200`:
       "cardPlayerOne": null,
       "cardPlayerTwo": null,
       "mano": "martina"
-    }
+    },
+    "actionDeadline": 1772768188123,
+    "turnDurationMillis": 30000,
+    "actionDeadlineSeat": "PLAYER_ONE"
   },
   "spectatorCount": 3
 }
@@ -711,6 +719,8 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` se exponen igual que en §4.14, para
+  que el espectador renderice el temporizador del turno sobre el asiento que debe actuar (§4.18)
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
   `match`
 - solo funciona si el jugador ya esta registrado como espectador de ese match
@@ -804,6 +814,34 @@ Errores:
 - `401` sin token
 - `404` si no existe sesion de revancha para ese `matchId`
 - `422` si el jugador no es participante de la sesion
+
+### 4.18 Temporizador de turno (timeout por inactividad)
+
+Mientras la partida está `IN_PROGRESS`, el jugador que debe actuar (jugar carta o responder un
+canto) dispone de un plazo limitado. Si lo agota, el backend declara forfeit administrativo y emite
+`MATCH_FORFEITED` (ver §9.6). El backend es el árbitro: el cliente **no** debe forzar el vencimiento
+por su cuenta, solo representar la cuenta regresiva.
+
+El plazo se expone con tres campos, tanto en el snapshot REST (`roundGame` en §4.14, `currentRound`
+en §4.15) como en los eventos WebSocket `ACTION_DEADLINE_SET` (§9.6):
+
+| Campo                | Tipo                         | Descripción                                                                                                                                                  |
+|----------------------|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `actionDeadline`     | `epochMillis` (absoluto)     | Instante exacto en que el jugador que debe actuar pierde por timeout. Fuente de verdad del restante. `null` si no corre reloj.                               |
+| `turnDurationMillis` | `long` (relativo)            | Duración total del plazo del turno. Sirve como denominador para el progreso del temporizador (anillo/barra).                                                 |
+| `actionDeadlineSeat` | `PLAYER_ONE` \| `PLAYER_TWO` | Asiento que debe actuar y al que aplica el reloj. Puede no coincidir con `currentTurn` cuando hay un canto pendiente de respuesta. `null` si no corre reloj. |
+
+Notas de consumo:
+
+- El plazo aplica a **ambos** asientos: el reloj se renderiza sobre `actionDeadlineSeat`, y tanto
+  los dos jugadores como los espectadores lo ven en el lado correcto.
+- El plazo se reinicia cada vez que cambia el asiento que debe actuar (cambio de turno, canto de
+  truco/envido, respuesta que devuelve el juego al rival, nueva ronda).
+- `actionDeadline` es un instante absoluto en la zona horaria del servidor (epochMillis), igual que
+  `expiresAt` en los WS de revancha e invitaciones. Para neutralizar el desfase de reloj del
+  cliente, calcular un offset servidor↔cliente una sola vez al conectar (a partir del `timestamp`
+  de cualquier evento WS, que también viaja en epochMillis) y aplicar
+  `restante = actionDeadline - (Date.now() + offset)`.
 
 ## 5. API REST - Leagues
 
@@ -1885,6 +1923,17 @@ Eventos transicionales (consumen `stateVersion`):
 - `AVAILABLE_ACTIONS_UPDATED`
 - `PLAYER_HAND_UPDATED`
 
+#### Eventos derivados del temporizador (viajan por `/user/queue/match`, no avanzan `stateVersion`)
+
+- `ACTION_DEADLINE_SET`
+- `ACTION_DEADLINE_CLEARED`
+
+A diferencia de `AVAILABLE_ACTIONS_UPDATED`/`PLAYER_HAND_UPDATED` (que son privados por asiento y
+viajan por `/user/queue/match-derived`), los eventos del temporizador son **públicos**: viajan por
+`/user/queue/match` hacia ambos jugadores y se reenvían a espectadores (§9.5g). **No** llevan
+`stateVersion` (llega `null`); el cliente no debe usarlos para detectar huecos en la secuencia
+transicional. Payloads en §9.6.
+
 Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` top-level igual al
 `originMatchId` de la sesion (el match que termino, no el nuevo).
 
@@ -1948,6 +1997,9 @@ Reglas:
 - `SPECTATE_ERROR` - error al intentar registrarse como espectador
 - `SPECTATOR_COUNT_CHANGED` - cambia la cantidad de espectadores del match
 - ademas se reenvian los eventos publicos del match que no estan atados a un asiento concreto
+- `ACTION_DEADLINE_SET` / `ACTION_DEADLINE_CLEARED` tambien se reenvian: son publicos (indican el
+  asiento que debe actuar via `seat`, no son privados por destinatario), asi el espectador puede
+  renderizar el temporizador del turno
 
 No se reenvian al espectador los eventos privados por asiento:
 
@@ -2010,6 +2062,15 @@ No se reenvian al espectador los eventos privados por asiento:
 - `MATCH_FORFEITED`:
     - forfeit administrativo por AFK/timeout; puede disparar forfeit de competición
     - `{ winnerSeat, loserSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+- `ACTION_DEADLINE_SET`:
+    - `{ seat, actionDeadline, turnDurationMillis }`
+    - `seat` = asiento que debe actuar (`PLAYER_ONE` | `PLAYER_TWO`); `actionDeadline` en
+      `epochMillis` absoluto; `turnDurationMillis` = plazo total del turno
+    - se emite cada vez que se (re)inicia el reloj porque cambió el asiento que debe actuar
+      (cambio de turno, canto de truco/envido, respuesta, nueva ronda). Ver §4.18
+- `ACTION_DEADLINE_CLEARED`:
+    - `{}` - el reloj deja de correr (mano resuelta, esperando animaciones/resolución del servidor,
+      o estado donde ningún asiento debe actuar)
 - `PLAYER_HAND_UPDATED`:
     - `{ seat, cards: [{ suit, number }] }`
 - `AVAILABLE_ACTIONS_UPDATED`:

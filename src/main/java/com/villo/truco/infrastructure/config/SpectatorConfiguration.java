@@ -35,11 +35,13 @@ public class SpectatorConfiguration {
   private final ApplicationEventPublisher eventPublisher;
   private final MatchEventMapper matchEventMapper;
   private final PublicActorResolver publicActorResolver;
+  private final long idleTimeoutMillis;
 
   public SpectatorConfiguration(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository, final ApplicationEventPublisher eventPublisher,
-      final MatchEventMapper matchEventMapper, final PublicActorResolver publicActorResolver) {
+      final MatchEventMapper matchEventMapper, final PublicActorResolver publicActorResolver,
+      final MatchTimeoutProperties matchTimeoutProperties) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;
@@ -47,6 +49,7 @@ public class SpectatorConfiguration {
     this.eventPublisher = eventPublisher;
     this.matchEventMapper = matchEventMapper;
     this.publicActorResolver = publicActorResolver;
+    this.idleTimeoutMillis = matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L;
   }
 
   @Bean
@@ -87,7 +90,7 @@ public class SpectatorConfiguration {
   @Bean
   SpectatorMatchStateDTOAssembler spectatorMatchStateDTOAssembler() {
 
-    return new SpectatorMatchStateDTOAssembler(this.publicActorResolver);
+    return new SpectatorMatchStateDTOAssembler(this.publicActorResolver, this.idleTimeoutMillis);
   }
 
   @Bean

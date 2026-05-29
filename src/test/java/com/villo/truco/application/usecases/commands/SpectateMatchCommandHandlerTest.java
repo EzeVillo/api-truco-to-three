@@ -304,7 +304,8 @@ class SpectateMatchCommandHandlerTest {
     final CompetitionMembershipResolver resolver = (matchId, playerId) -> leagueRepoWithParticipants(
         this.match.getId(), this.playerOne, this.playerTwo, this.spectator).findByMatchId(matchId)
         .map(league -> league.getParticipants().contains(playerId)).orElse(false);
-    final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle());
+    final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
+        30_000L);
     final var countPublisher = new SpectatorCountChangedPublisher(matchRepo, this.repository,
         this.publishedEvents::add);
 
@@ -339,7 +340,7 @@ class SpectateMatchCommandHandlerTest {
         this.publishedEvents::add);
     final var h = new SpectateMatchCommandHandler(emptyMatchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> true), countPublisher,
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle()));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
 
     assertThatThrownBy(
         () -> h.handle(new SpectateMatchCommand(MatchId.generate(), this.spectator))).isInstanceOf(
@@ -356,7 +357,7 @@ class SpectateMatchCommandHandlerTest {
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> true),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle()));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
 
     assertThatThrownBy(
         () -> h.handle(new SpectateMatchCommand(readyMatch.getId(), this.spectator))).isInstanceOf(
@@ -393,7 +394,7 @@ class SpectateMatchCommandHandlerTest {
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> false),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle()));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
 
     assertThatThrownBy(() -> h.handle(
         new SpectateMatchCommand(this.match.getId(), PlayerId.generate()))).isInstanceOf(
