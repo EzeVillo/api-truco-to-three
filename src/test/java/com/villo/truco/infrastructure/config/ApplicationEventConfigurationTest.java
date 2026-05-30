@@ -19,7 +19,8 @@ class ApplicationEventConfigurationTest {
   void applicationEventPublisherIsTransactionalWrapper() {
 
     final var configuration = new ApplicationEventConfiguration(mock(SimpMessagingTemplate.class),
-        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class));
+        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class),
+        mock(MatchTimeoutProperties.class));
 
     final var inProcess = configuration.inProcessApplicationEventPublisher(List.of());
     final var publisher = configuration.applicationEventPublisher(inProcess);
@@ -33,7 +34,8 @@ class ApplicationEventConfigurationTest {
   void buildsChatApplicationEventBeans() {
 
     final var configuration = new ApplicationEventConfiguration(mock(SimpMessagingTemplate.class),
-        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class));
+        mock(EventNotifierHealthRegistry.class), mock(MeterRegistry.class),
+        mock(MatchTimeoutProperties.class));
 
     assertThat(configuration.chatEventMapper(mock(PublicActorResolver.class))).isNotNull();
     assertThat(configuration.stompChatNotificationHandler()).isNotNull();

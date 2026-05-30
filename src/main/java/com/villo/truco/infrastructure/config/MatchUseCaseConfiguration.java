@@ -154,9 +154,11 @@ public class MatchUseCaseConfiguration {
   }
 
   @Bean
-  GetMatchStateUseCase getMatchStateQueryHandler() {
+  GetMatchStateUseCase getMatchStateQueryHandler(
+      final MatchTimeoutProperties matchTimeoutProperties) {
 
-    return new GetMatchStateQueryHandler(this.matchQueryRepository, this.publicActorResolver);
+    return new GetMatchStateQueryHandler(this.matchQueryRepository, this.publicActorResolver,
+        matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L);
   }
 
   @Bean

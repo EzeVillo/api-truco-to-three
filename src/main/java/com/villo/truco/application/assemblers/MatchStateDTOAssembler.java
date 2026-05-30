@@ -19,10 +19,13 @@ import java.util.Optional;
 public final class MatchStateDTOAssembler {
 
   private final PublicActorResolver publicActorResolver;
+  private final long idleTimeoutMillis;
 
-  public MatchStateDTOAssembler(final PublicActorResolver publicActorResolver) {
+  public MatchStateDTOAssembler(final PublicActorResolver publicActorResolver,
+      final long idleTimeoutMillis) {
 
     this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
+    this.idleTimeoutMillis = idleTimeoutMillis;
   }
 
   public MatchStateDTO toDto(final Match match, final PlayerId requestingPlayer) {
@@ -103,8 +106,11 @@ public final class MatchStateDTOAssembler {
         handInfo.cardPlayerTwo() != null ? CardDTO.from(handInfo.cardPlayerTwo()) : null,
         handInfo.mano() != null ? actorNames.get(handInfo.mano()) : null);
 
+    final var deadline = ActionDeadlineProjection.of(match, this.idleTimeoutMillis);
+
     return new RoundStateDTO(match.getStatus().name(), currentTurn, myCards, roundStatus,
-        currentTrucoCall, matchWinner, availableActions, playedHands, currentHand);
+        currentTrucoCall, matchWinner, availableActions, playedHands, currentHand,
+        deadline.actionDeadline(), deadline.turnDurationMillis(), deadline.actionDeadlineSeat());
   }
 
 }

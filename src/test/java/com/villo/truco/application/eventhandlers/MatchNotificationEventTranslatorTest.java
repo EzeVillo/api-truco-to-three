@@ -27,7 +27,7 @@ class MatchNotificationEventTranslatorTest {
   private final List<ApplicationEvent> published = new ArrayList<>();
   private final ApplicationEventPublisher publisher = published::add;
   private final MatchNotificationEventTranslator translator = new MatchNotificationEventTranslator(
-      new MatchEventMapper(), new MatchRecipientResolver(), publisher);
+      new MatchEventMapper(30_000L), new MatchRecipientResolver(), publisher);
 
   @Test
   @DisplayName("evento directo → publica MatchEventNotification con matchId y recipients")

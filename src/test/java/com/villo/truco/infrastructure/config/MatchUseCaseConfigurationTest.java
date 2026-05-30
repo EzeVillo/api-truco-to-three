@@ -33,7 +33,8 @@ class MatchUseCaseConfigurationTest {
         mock(LeagueQueryRepository.class));
 
     assertThat(configuration.matchResolver()).isNotNull();
-    assertThat(configuration.getMatchStateQueryHandler()).isNotNull();
+    assertThat(configuration.getMatchStateQueryHandler(mock(MatchTimeoutProperties.class)))
+        .isNotNull();
   }
 
 }

@@ -1,5 +1,7 @@
 package com.villo.truco.domain.model.match;
 
+import com.villo.truco.domain.model.match.events.ActionDeadlineClearedEvent;
+import com.villo.truco.domain.model.match.events.ActionDeadlineSetEvent;
 import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
@@ -183,6 +185,17 @@ public final class Match extends AggregateBase<MatchId> {
     this.addDomainEvent(event);
   }
 
+  private void refreshActionDeadline() {
+
+    final var currentTurn = this.getCurrentTurn();
+    if (this.status == MatchStatus.IN_PROGRESS && currentTurn != null) {
+      this.addDerivedEvent(new ActionDeadlineSetEvent(this.id, this.playerOne, this.playerTwo,
+          this.seatOf(currentTurn)));
+    } else {
+      this.addDerivedEvent(new ActionDeadlineClearedEvent(this.id, this.playerOne, this.playerTwo));
+    }
+  }
+
   public void join(final PlayerId playerTwo) {
 
     Objects.requireNonNull(playerTwo, "PlayerTwo cannot be null");
@@ -299,6 +312,8 @@ public final class Match extends AggregateBase<MatchId> {
           this.currentRound.getTrucoPointsAtStake());
       this.startNewRoundIfNeeded(newGameStarted);
     });
+
+    this.refreshActionDeadline();
   }
 
   public void callTruco(final PlayerId playerId) {
@@ -308,6 +323,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.currentRound.callTruco(playerId);
     LOGGER.info("Truco called: matchId={}, playerId={}", this.id, playerId);
     this.collectRoundEvents();
+
+    this.refreshActionDeadline();
   }
 
   public void acceptTruco(final PlayerId playerId) {
@@ -317,6 +334,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.currentRound.acceptTruco(playerId);
     LOGGER.info("Truco accepted: matchId={}, playerId={}", this.id, playerId);
     this.collectRoundEvents();
+
+    this.refreshActionDeadline();
   }
 
   public void rejectTruco(final PlayerId playerId) {
@@ -330,6 +349,8 @@ public final class Match extends AggregateBase<MatchId> {
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
     this.startNewRoundIfNeeded(newGameStarted);
+
+    this.refreshActionDeadline();
   }
 
   public void acceptTrucoAndFold(final PlayerId playerId) {
@@ -344,6 +365,8 @@ public final class Match extends AggregateBase<MatchId> {
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
     this.startNewRoundIfNeeded(newGameStarted);
+
+    this.refreshActionDeadline();
   }
 
   public void fold(final PlayerId playerId) {
@@ -357,6 +380,8 @@ public final class Match extends AggregateBase<MatchId> {
 
     final var newGameStarted = this.addGamePoints(result.winner(), result.points());
     this.startNewRoundIfNeeded(newGameStarted);
+
+    this.refreshActionDeadline();
   }
 
   public void callEnvido(final PlayerId playerId, final EnvidoCall call) {
@@ -366,6 +391,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.currentRound.callEnvido(playerId, call);
     LOGGER.info("Envido called: matchId={}, playerId={}, call={}", this.id, playerId, call);
     this.collectRoundEvents();
+
+    this.refreshActionDeadline();
   }
 
   public void acceptEnvido(final PlayerId playerId) {
@@ -379,6 +406,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.pointsWon());
+
+    this.refreshActionDeadline();
   }
 
   public void rejectEnvido(final PlayerId playerId) {
@@ -391,6 +420,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.collectRoundEvents();
 
     this.addGamePoints(result.winner(), result.points());
+
+    this.refreshActionDeadline();
   }
 
   public void leave(final PlayerId playerId) {
@@ -456,6 +487,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.addTransitionalEvent(
         new MatchAbandonedEvent(this.id, this.playerOne, this.playerTwo, winnerSeat, abandonerSeat,
             this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
+
+    this.refreshActionDeadline();
   }
 
   public boolean timeoutForfeit() {
@@ -518,6 +551,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.addTransitionalEvent(
         new MatchForfeitedEvent(this.id, this.playerOne, this.playerTwo, winningSeat,
             this.gamesWonPlayerOne, this.gamesWonPlayerTwo));
+
+    this.refreshActionDeadline();
   }
 
   private void finishAdministrativeWin(final PlayerSeat winningSeat) {
@@ -568,6 +603,8 @@ public final class Match extends AggregateBase<MatchId> {
     this.status = MatchStatus.IN_PROGRESS;
     LOGGER.info("Match moved to IN_PROGRESS: matchId={}", this.id);
     this.startNewGame();
+
+    this.refreshActionDeadline();
   }
 
   private void startNewRound() {

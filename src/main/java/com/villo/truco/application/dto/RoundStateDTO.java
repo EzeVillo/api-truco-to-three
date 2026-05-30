@@ -5,6 +5,8 @@ import java.util.List;
 public record RoundStateDTO(String status, String currentTurn, List<CardDTO> myCards,
                             String roundStatus, String currentTrucoCall, String winner,
                             List<AvailableActionDTO> availableActions,
-                            List<PlayedHandDTO> playedHands, CurrentHandDTO currentHand) {
+                            List<PlayedHandDTO> playedHands, CurrentHandDTO currentHand,
+                            Long actionDeadline, Long turnDurationMillis,
+                            String actionDeadlineSeat) {
 
 }

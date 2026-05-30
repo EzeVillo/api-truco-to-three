@@ -117,5 +117,5 @@ Esto está definido como Principio IV en `.specify/memory/constitution.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/004-match-versioning-snapshot/plan.md`
+`specs/005-turn-deadline-domain/plan.md`
 <!-- SPECKIT END -->

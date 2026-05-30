@@ -84,7 +84,8 @@ class GetSpectateMatchStateQueryHandlerTest {
       }
     };
 
-    final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle());
+    final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
+        30_000L);
     this.handler = new GetSpectateMatchStateQueryHandler(matchRepo, this.repository, assembler);
   }
 

@@ -4,6 +4,8 @@ import java.util.List;
 
 public record SpectatorRoundStateDTO(String status, String currentTurn, String roundStatus,
                                      String currentTrucoCall, String winner,
-                                     List<PlayedHandDTO> playedHands, CurrentHandDTO currentHand) {
+                                     List<PlayedHandDTO> playedHands, CurrentHandDTO currentHand,
+                                     Long actionDeadline, Long turnDurationMillis,
+                                     String actionDeadlineSeat) {
 
 }
