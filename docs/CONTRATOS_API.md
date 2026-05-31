@@ -47,6 +47,7 @@ Segun configuracion de seguridad:
     - `POST /api/auth/refresh`
     - `DELETE /api/auth/logout`
 - Requieren Bearer token:
+    - `GET /api/auth/me`
     - Todo `/api/**` no listado arriba (matches, leagues, etc.)
 
 ### 1.3 Regla de autorizacion en recursos de juego
@@ -194,6 +195,7 @@ Response `200`:
 ```json
 {
   "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "username": "juancho",
   "accessToken": "<jwt>",
   "refreshToken": "<opaque-refresh-token>",
   "accessTokenExpiresIn": 900,
@@ -224,6 +226,7 @@ Response `200`:
 ```json
 {
   "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "username": "juancho",
   "accessToken": "<jwt>",
   "refreshToken": "<opaque-refresh-token>",
   "accessTokenExpiresIn": 900,
@@ -272,6 +275,7 @@ Response `200`:
 ```json
 {
   "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "username": "juancho",
   "accessToken": "<jwt>",
   "refreshToken": "<new-opaque-refresh-token>",
   "accessTokenExpiresIn": 900,
@@ -290,7 +294,42 @@ Errores:
 
 - `401` si el refresh token es invalido, expirado, revocado o rotado
 
-### 3.5 Logout de sesion
+### 3.5 Identidad de sesion actual
+
+`GET /api/auth/me`
+
+Auth: Bearer requerido.
+
+Permite rehidratar la sesion desde un access token valido sin depender de datos persistidos por el
+cliente. El access token sigue teniendo `sub = playerId`; el `username` se resuelve desde el backend
+para usuarios registrados.
+
+Response `200` para usuario registrado:
+
+```json
+{
+  "playerId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "username": "juancho",
+  "tokenUse": "user"
+}
+```
+
+Response `200` para guest:
+
+```json
+{
+  "playerId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "username": null,
+  "tokenUse": "guest"
+}
+```
+
+Errores:
+
+- `401` si falta Bearer token, el token es invalido o expiro
+- `401` si el token es de usuario registrado pero el usuario ya no se puede resolver
+
+### 3.6 Logout de sesion
 
 `DELETE /api/auth/logout`
 
@@ -366,7 +405,7 @@ Reglas:
 
 - aplica tanto a matches `PUBLIC` como `PRIVATE`
 - en `PUBLIC`, el segundo jugador entra, queda ready implícito y el match pasa a `IN_PROGRESS`
-- en `PRIVATE`, el segundo jugador entra y el match queda en `READY`
+- en `PRIVATE`, el segundo jugador entra y el match queda en `READY`, esperando que ambos jugadores confirmen con `POST /api/matches/{matchId}/start`
 
 ### 4.3 Listar partidas publicas
 
@@ -430,6 +469,14 @@ El FE debe usar el `href` provisto en `_links.join` y ejecutar `POST /api/join/{
 Auth: Bearer requerido.
 
 Response `204` sin body.
+
+Comportamiento según visibilidad:
+
+- **`PUBLIC`**: no necesario llamar a este endpoint. El match pasa a `IN_PROGRESS` automáticamente cuando entra el segundo jugador.
+- **`PRIVATE`**: ambos jugadores deben llamar a este endpoint para que el match pase a `IN_PROGRESS`.
+  - Cuando el segundo jugador se une mediante `POST /api/join/{joinCode}`, el match pasa a estado `READY`
+  - Cada jugador que llama a `/start` se marca como "listo" (`PLAYER_READY` event)
+  - Solo cuando ambos jugadores han llamado a `/start`, el match inicia en `IN_PROGRESS`
 
 ### 4.6 Jugar carta
 
@@ -1576,14 +1623,15 @@ invitaciones tambien expiran si el recurso deja de admitir join.
 
 `GET /api/profile/{username}` — requiere Bearer token.
 
-Devuelve el username, logros desbloqueados y estadísticas agregadas del jugador indicado. Mismo
-payload para el propio perfil o para el de otro jugador.
+Devuelve logros desbloqueados y estadisticas agregadas del jugador indicado. El `username`
+identifica el recurso en la ruta, pero no se repite en el body de respuesta. Mismo payload para el
+propio perfil o para el de otro jugador.
 
 **Path params:**
 
 | Campo      | Tipo     | Descripcion                                                                |
 |------------|----------|----------------------------------------------------------------------------|
-| `username` | `String` | Username del jugador (ASCII alfanumérico, mínimo 3 letras, case-sensitive) |
+| Nota       | -        | La busqueda actual del backend es case-insensitive.                         |
 
 **Respuesta 200:**
 
@@ -1616,11 +1664,28 @@ payload para el propio perfil o para el de otro jugador.
 **Notas:**
 
 - Los guests no tienen perfil (devuelve 404 si se consulta uno).
-- La búsqueda es case-sensitive: `Juancho` y `juancho` son usernames distintos.
+- La busqueda actual es case-insensitive.
 - Las stats son eventual-consistent: se actualizan después de que el evento
   `MATCH_FINISHED`, `MATCH_ABANDONED` o `MATCH_FORFEITED` es procesado por el backend.
 - Solo se computan partidas PvP humanas (bots excluidos).
 - El abandono cuenta como derrota para el abandoner y victoria para el rival.
+
+### 7.5.2 Logros disponibles
+
+La siguiente tabla lista todos los `achievementCode` que pueden desbloquearse:
+
+| achievementCode | Descripción |
+|-----------------|-------------|
+| `WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2` | Ganar un match como pie cuando mano se vuela en envido estando 0-0 y en 2-2 |
+| `WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2` | Ganar un match como mano mediante falta envido con 33-33 en score estando 2-2 en games |
+| `WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO` | Ganar un match eliminando al oponente mediante "quiero y me voy al mazo" |
+| `WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA` | Ganar una mano sin oposición teniendo el ancho de espada |
+| `FOLD_BEFORE_ANY_CARD_IS_PLAYED` | Irse al mazo antes de que se juegue alguna carta |
+| `WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO` | Ganar un match 3-0 mediante retruco aceptado |
+| `WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO` | Ganar un match 3-0 mediante real envido o falta envido |
+| `WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND` | Ganar un match desde 2-2 sin cantos en la ronda |
+| `WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0` | Ganar un match eliminando al oponente mediante pérdida de vale cuatro estando 0-0 |
+| `WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS` | Ganar un match eliminando al rival cuando se va al mazo tras aceptar truco sin cartas |
 
 ## 8. Enums y valores permitidos
 
@@ -1644,7 +1709,7 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
 ### 8.2 Estados en respuestas
 
 - `MatchStateResponse.status`:
-    - `WAITING_FOR_PLAYERS`, `IN_PROGRESS`, `FINISHED`
+    - `WAITING_FOR_PLAYERS`, `READY`, `IN_PROGRESS`, `FINISHED`, `CANCELLED`
 - `RoundStateResponse.roundStatus`:
     - `PLAYING`, `ENVIDO_IN_PROGRESS`, `TRUCO_IN_PROGRESS`, `FINISHED`
 - `RoundStateResponse.currentTrucoCall`:
@@ -1671,6 +1736,19 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
     - `OPEN`, `CONFIRMED`, `CLOSED_BY_LEAVE`, `EXPIRED`
 - `RematchSessionResponse.playerOneChoice` / `playerTwoChoice`:
     - `UNDECIDED`, `WANTS_REMATCH`, `LEFT`
+
+### 8.3 Logros (`AchievementCode`)
+
+- `WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2`
+- `WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2`
+- `WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO`
+- `WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA`
+- `FOLD_BEFORE_ANY_CARD_IS_PLAYED`
+- `WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO`
+- `WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO`
+- `WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND`
+- `WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`
+- `WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS`
 
 ## 9. WebSocket / STOMP
 
@@ -2365,11 +2443,13 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
 ### 10.1 Usuarios persistidos
 
 1. El FE llama a `/api/auth/register` o `/api/auth/login`.
-2. Guarda `accessToken` y `refreshToken`.
+2. Guarda `accessToken`, `refreshToken`, `playerId` y `username`.
 3. Usa el `accessToken` como `Bearer` en todos los endpoints protegidos.
 4. Antes de que expire, o al recibir `401`, llama a `/api/auth/refresh` con el `refreshToken`.
-5. Reemplaza ambos tokens por los nuevos valores devueltos.
+5. Reemplaza ambos tokens por los nuevos valores devueltos y actualiza `username` con la respuesta.
 6. Si habia una conexion WebSocket activa, reconecta con el nuevo `accessToken`.
+7. Si el FE recarga y conserva un `accessToken` valido pero no tiene `username`, llama a
+   `GET /api/auth/me` para rehidratar la identidad de sesion.
 
 ### 10.2 Guest
 
@@ -2381,6 +2461,11 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
 ## 11. Notas para FE
 
 - Tratar enums como case-sensitive.
+- `username` en auth es autoritativo en `register`, `login`, `refresh` y `GET /api/auth/me`.
+- No decodificar `username` del access token: el JWT tiene `sub = playerId`, no username.
+- Para rutas de join que requieren auth, conservar `returnTo`/`joinCode` antes de enviar al usuario
+  a login/register. Despues de register no hace falta login adicional porque register ya devuelve la
+  sesion completa.
 - Manejar `204 No Content` en acciones de juego (sin body).
 - Los eventos de liga (`LEAGUE_*`) llegan a **todos los participantes** de la liga, no solo a los
   dos jugadores de cada partido.
@@ -2417,11 +2502,11 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   segundos entre mensajes del mismo jugador.
 - El DM de `FRIENDSHIP` es efimero: no persiste mensajes ni metadata. Se crea lazily la primera vez
   que se consulta y se pierde al reiniciar la aplicacion.
-- El perfil de jugador se consulta por REST: `GET /api/profile/{username}` devuelve username,
-  logros y stats agregados (sin `playerId` en la respuesta). Las stats son eventual-consistent
+- El perfil de jugador se consulta por REST: `GET /api/profile/{username}` devuelve logros y stats
+  agregados, sin repetir `username` ni exponer `playerId` en la respuesta. Las stats son eventual-consistent
   (se actualizan al recibir `MATCH_FINISHED`/`MATCH_ABANDONED`/`MATCH_FORFEITED`). Los logros
   en tiempo real siguen llegando por WebSocket (`/user/queue/profile`). Los guests no tienen
-  perfil (404). La búsqueda es case-sensitive.
+  perfil (404). La busqueda actual es case-insensitive.
 
 ### 11.1 Reconexión WebSocket
 
