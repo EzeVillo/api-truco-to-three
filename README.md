@@ -79,11 +79,11 @@ games.
 - Profile:
   tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
   interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea
-  automáticamente el perfil del jugador (logros vacíos, stats en cero). El endpoint público
-  `GET /api/profile/{playerId}` expone username, logros desbloqueados y estadísticas agregadas
-  de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate). Las stats se
-  actualizan al recibir los eventos `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`;
-  las partidas contra bots no cuentan.
+  automaticamente el perfil del jugador (logros vacios, stats en cero). El endpoint publico
+  `GET /api/profile/{username}` expone logros desbloqueados y estadisticas agregadas
+  de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate), sin repetir
+  `username` ni exponer `playerId` en el body. Las stats se actualizan al recibir los eventos
+  `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`; las partidas contra bots no cuentan.
 - Quick Match:
   emparejamiento automatico por `gamesToPlay`. El jugador entra a una cola efimera en memoria; si
   ya hay un oponente esperando con la misma configuracion, se crea una partida `PRIVATE` que arranca
@@ -212,12 +212,21 @@ Properties de revancha por defecto:
 ### Autenticacion
 
 - `POST /api/auth/register` y `POST /api/auth/login` devuelven:
-  `playerId`, `accessToken`, `refreshToken`, `accessTokenExpiresIn`, `refreshTokenExpiresIn`
-- `POST /api/auth/refresh` rota siempre el refresh token y devuelve un nuevo par de tokens
+  `playerId`, `username`, `accessToken`, `refreshToken`, `accessTokenExpiresIn`,
+  `refreshTokenExpiresIn`
+- `POST /api/auth/refresh` rota siempre el refresh token y devuelve un nuevo par de tokens con
+  `username`
+- `GET /api/auth/me` requiere Bearer token y devuelve `playerId`, `tokenUse` y `username` para
+  usuarios registrados (`username: null` para guest). Sirve para rehidratar la sesion tras recargar.
 - `DELETE /api/auth/logout` revoca solo la sesion asociada al refresh token enviado
 - `POST /api/auth/guest` devuelve solo `playerId`, `accessToken` y `accessTokenExpiresIn`
+- El access token mantiene `sub = playerId`; no contiene `username`
 - WebSocket sigue autenticando solo con `accessToken`; si el FE refresca, reconecta con el token
   nuevo
+- Si el usuario intenta entrar por `joinCode` sin sesion valida, el FE debe conservar el
+  `joinCode`/`returnTo`, enviar a login o register, guardar la sesion devuelta y despues ejecutar
+  `POST /api/join/{joinCode}`. El registro ya devuelve tokens, por lo que no requiere login
+  posterior.
 
 ### Ejecutar la aplicacion
 

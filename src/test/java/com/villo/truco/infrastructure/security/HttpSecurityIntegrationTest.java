@@ -46,6 +46,17 @@ class HttpSecurityIntegrationTest {
   }
 
   @Test
+  void shouldRejectMissingTokenOnCurrentSessionEndpoint() throws Exception {
+
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/me")).GET()
+        .build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(401, response.statusCode());
+  }
+
+  @Test
   void shouldRejectMalformedTokenOnProtectedEndpoint() throws Exception {
 
     final var matchId = UUID.randomUUID().toString();
@@ -99,6 +110,7 @@ class HttpSecurityIntegrationTest {
 
     assertEquals(200, response.statusCode());
     assertTrue(response.body().contains("\"refreshToken\""));
+    assertTrue(response.body().contains("\"username\""));
   }
 
   @Test
@@ -119,6 +131,7 @@ class HttpSecurityIntegrationTest {
 
     assertEquals(200, response.statusCode());
     assertTrue(response.body().contains("\"refreshToken\""));
+    assertTrue(response.body().contains("\"username\""));
   }
 
   @Test
@@ -135,6 +148,7 @@ class HttpSecurityIntegrationTest {
 
     assertEquals(200, refreshResponse.statusCode());
     final var refreshed = this.readJson(refreshResponse.body());
+    assertEquals("refreshableuser", refreshed.get("username"));
     final var rotatedRefreshToken = (String) refreshed.get("refreshToken");
 
     final var replayOld = this.httpClient.send(

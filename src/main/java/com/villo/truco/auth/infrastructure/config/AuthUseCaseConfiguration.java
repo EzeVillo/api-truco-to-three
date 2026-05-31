@@ -1,5 +1,6 @@
 package com.villo.truco.auth.infrastructure.config;
 
+import com.villo.truco.auth.application.ports.in.GetCurrentSessionIdentityUseCase;
 import com.villo.truco.auth.application.ports.in.GuestLoginUseCase;
 import com.villo.truco.auth.application.ports.in.LoginUseCase;
 import com.villo.truco.auth.application.ports.in.LogoutUserSessionUseCase;
@@ -13,9 +14,11 @@ import com.villo.truco.auth.application.usecases.commands.LoginCommandHandler;
 import com.villo.truco.auth.application.usecases.commands.LogoutUserSessionCommandHandler;
 import com.villo.truco.auth.application.usecases.commands.RefreshUserSessionCommandHandler;
 import com.villo.truco.auth.application.usecases.commands.RegisterUserCommandHandler;
+import com.villo.truco.auth.application.usecases.queries.GetCurrentSessionIdentityQueryHandler;
 import com.villo.truco.auth.domain.model.user.UsernameAvailabilityPolicy;
 import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
+import com.villo.truco.auth.domain.ports.UserQueryRepository;
 import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.auth.domain.ports.UserSessionRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
@@ -28,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 public class AuthUseCaseConfiguration {
 
   private final UserRepository userRepository;
+  private final UserQueryRepository userQueryRepository;
   private final UserSessionRepository userSessionRepository;
   private final PasswordHasher passwordHasher;
   private final AccessTokenIssuer accessTokenIssuer;
@@ -37,6 +41,7 @@ public class AuthUseCaseConfiguration {
   private final AuthEventNotifier authEventNotifier;
 
   public AuthUseCaseConfiguration(final UserRepository userRepository,
+      final UserQueryRepository userQueryRepository,
       final UserSessionRepository userSessionRepository, final PasswordHasher passwordHasher,
       final AccessTokenIssuer accessTokenIssuer, final RefreshTokenProvider refreshTokenProvider,
       final Clock clock,
@@ -44,6 +49,7 @@ public class AuthUseCaseConfiguration {
       final AuthEventNotifier authEventNotifier) {
 
     this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
     this.userSessionRepository = userSessionRepository;
     this.passwordHasher = passwordHasher;
     this.accessTokenIssuer = accessTokenIssuer;
@@ -87,7 +93,13 @@ public class AuthUseCaseConfiguration {
   RefreshUserSessionUseCase refreshUserSessionCommandHandler() {
 
     return new RefreshUserSessionCommandHandler(this.userSessionRepository,
-        this.refreshTokenProvider, this.userSessionIssuer());
+        this.refreshTokenProvider, this.userSessionIssuer(), this.userQueryRepository);
+  }
+
+  @Bean
+  GetCurrentSessionIdentityUseCase getCurrentSessionIdentityQueryHandler() {
+
+    return new GetCurrentSessionIdentityQueryHandler(this.userQueryRepository);
   }
 
   @Bean

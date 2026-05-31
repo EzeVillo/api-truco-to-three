@@ -1,0 +1,5 @@
+$kind: http-request
+name: Me
+url: "{{URL_BASE_TRUCO_HTTP}}/auth/me"
+method: GET
+order: 2394333645151747

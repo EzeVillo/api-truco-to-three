@@ -15,6 +15,7 @@ import com.villo.truco.auth.application.services.UserSessionIssuer;
 import com.villo.truco.auth.domain.model.auth.UserSession;
 import com.villo.truco.auth.domain.model.auth.exceptions.InvalidUserSessionRefreshException;
 import com.villo.truco.auth.domain.model.auth.valueobjects.UserSessionId;
+import com.villo.truco.auth.domain.ports.UserQueryRepository;
 import com.villo.truco.auth.domain.ports.UserSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
@@ -69,11 +70,14 @@ class RefreshUserSessionCommandHandlerTest {
 
     final var issuer = new UserSessionIssuer(accessTokenIssuer, refreshTokenProvider, repository,
         AuthTestFixtures.fixedClock());
+    final var userQueryRepository = mock(UserQueryRepository.class);
+    when(userQueryRepository.findUsernameById(playerId)).thenReturn(Optional.of("juancho"));
     final var handler = new RefreshUserSessionCommandHandler(repository, refreshTokenProvider,
-        issuer);
+        issuer, userQueryRepository);
 
     final var refreshed = handler.handle(new RefreshUserSessionCommand("refresh-0"));
 
+    assertThat(refreshed.username()).isEqualTo("juancho");
     assertThat(refreshed.refreshToken()).isEqualTo("refresh-1");
     final var rotatedSession = repository.findByRefreshTokenHash(
         refreshTokenProvider.hash("refresh-0")).orElseThrow();

@@ -109,6 +109,12 @@ class DeclineResourceInvitationCommandHandlerTest {
     }
 
     @Override
+    public Optional<String> findUsernameById(final PlayerId playerId) {
+
+      return Optional.ofNullable(this.usernamesById.get(playerId));
+    }
+
+    @Override
     public Optional<PlayerId> findUserIdByUsername(final String username) {
 
       return this.usernamesById.entrySet().stream()

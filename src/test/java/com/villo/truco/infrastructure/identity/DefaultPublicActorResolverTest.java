@@ -35,6 +35,12 @@ class DefaultPublicActorResolverTest {
       }
 
       @Override
+      public Optional<String> findUsernameById(final PlayerId playerId) {
+
+        return Optional.ofNullable(usernamesById.get(playerId));
+      }
+
+      @Override
       public Optional<PlayerId> findUserIdByUsername(final String username) {
 
         return usernamesById.entrySet().stream().filter(entry -> entry.getValue().equals(username))

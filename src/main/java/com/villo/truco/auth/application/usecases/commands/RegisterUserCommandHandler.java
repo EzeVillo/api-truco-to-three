@@ -49,7 +49,7 @@ public final class RegisterUserCommandHandler implements RegisterUserUseCase {
     this.authEventNotifier.publishDomainEvents(user.getAuthDomainEvents());
     user.clearDomainEvents();
 
-    return this.userSessionIssuer.issueFor(playerId);
+    return this.userSessionIssuer.issueFor(playerId, username.value());
   }
 
 }

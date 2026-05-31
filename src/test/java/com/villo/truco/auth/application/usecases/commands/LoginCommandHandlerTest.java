@@ -87,6 +87,7 @@ class LoginCommandHandlerTest {
     final var session = handler.handle(new LoginCommand(USERNAME, RAW_PASSWORD));
 
     assertThat(session.playerId()).isEqualTo(PLAYER_ID);
+    assertThat(session.username()).isEqualTo(USERNAME);
     assertThat(session.accessToken()).isEqualTo("access-" + PLAYER_ID.value());
     assertThat(session.refreshToken()).isEqualTo("refresh-value");
     assertThat(session.accessTokenExpiresIn()).isEqualTo(
