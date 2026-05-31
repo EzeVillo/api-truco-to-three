@@ -22,7 +22,7 @@ class AchievementPolicyTest {
   private final AchievementPolicy policy = new AchievementPolicy();
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2")
+  @DisplayName("desbloquea WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2")
   void unlocksWinMatchAsPieManoOBustsOnEnvidoAt2_2() {
 
     final var tracker = this.newTracker();
@@ -36,14 +36,14 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2));
+            AchievementCode.WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2));
+            AchievementCode.WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2));
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2")
+  @DisplayName("desbloquea WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2")
   void unlocksWinMatchAsManoViaFaltaEnvidoWith33At2_2() {
 
     final var tracker = this.newTracker();
@@ -57,14 +57,14 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2));
+            AchievementCode.WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2));
+            AchievementCode.WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2));
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO")
+  @DisplayName("desbloquea WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO")
   void unlocksWinMatchBustOpponentViaQuieroYMeVoyAlMazo() {
 
     final var tracker = this.newTracker();
@@ -78,10 +78,10 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO));
+            AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO));
+            AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO));
   }
 
   @Test
@@ -131,7 +131,7 @@ class AchievementPolicyTest {
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO")
+  @DisplayName("desbloquea WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO")
   void unlocksWinMatchThreeZeroViaAcceptedRetruco() {
 
     final var tracker = this.newTracker();
@@ -142,15 +142,15 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO));
   }
 
   @ParameterizedTest(name = "con {0}")
   @EnumSource(value = EnvidoCall.class, names = {"REAL_ENVIDO", "FALTA_ENVIDO"})
-  @DisplayName("desbloquea WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO")
+  @DisplayName("desbloquea WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO")
   void unlocksWinMatchThreeZeroViaRealOrFaltaEnvido(final EnvidoCall call) {
 
     final var tracker = this.newTracker();
@@ -162,14 +162,14 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND")
+  @DisplayName("desbloquea WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND")
   void unlocksWinMatchFrom2_2WithoutCallsInRound() {
 
     final var tracker = this.newTracker();
@@ -181,14 +181,14 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND));
+            AchievementCode.WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND));
+            AchievementCode.WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND));
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0")
+  @DisplayName("desbloquea WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0")
   void unlocksWinMatchBustOpponentViaValeCuatroLossAt0_0() {
 
     final var tracker = this.newTracker();
@@ -199,14 +199,14 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
+            AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
+            AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0 cuando el que dijo QUIERO se pasa")
+  @DisplayName("desbloquea WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0 cuando el que dijo QUIERO se pasa")
   void unlocksWinMatchBustOpponentViaValeCuatroLossAt0_0WhenResponderBusts() {
 
     final var tracker = this.newTracker();
@@ -217,14 +217,14 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
+            AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
+            AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
   }
 
   @Test
-  @DisplayName("no desbloquea WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0 si no iban 0 a 0")
+  @DisplayName("no desbloquea WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0 si no iban 0 a 0")
   void doesNotUnlockWinMatchBustOpponentViaValeCuatroLossAt0_0WhenScoreIsNot0_0() {
 
     final var tracker = this.newTracker();
@@ -234,11 +234,11 @@ class AchievementPolicyTest {
     tracker.onScoreChanged(5, 0);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(d -> d.achievementCode()
-        == AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0);
+        == AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0);
   }
 
   @Test
-  @DisplayName("33 vs 32 no desbloquea WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2")
+  @DisplayName("33 vs 32 no desbloquea WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2")
   void manoWith33PieWith32DoesNotUnlockFaltaEnvidoAt2_2() {
 
     final var tracker = this.newTracker();
@@ -248,7 +248,7 @@ class AchievementPolicyTest {
     tracker.onEnvidoResolved(EnvidoResponse.QUIERO, PlayerSeat.PLAYER_ONE, 33, 32);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(d -> d.achievementCode()
-        == AchievementCode.WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2);
+        == AchievementCode.WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2);
   }
 
   @ParameterizedTest(name = "con {0}")
@@ -263,7 +263,7 @@ class AchievementPolicyTest {
     final var decisions = this.policy.decideUnlocks(tracker);
 
     assertThat(decisions).noneMatch(
-        d -> d.achievementCode() == AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO);
+        d -> d.achievementCode() == AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO);
   }
 
   @Test
@@ -276,7 +276,7 @@ class AchievementPolicyTest {
     tracker.onScoreChanged(4, 0);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(d -> d.achievementCode()
-        == AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0);
+        == AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0);
   }
 
   @Test
@@ -291,7 +291,7 @@ class AchievementPolicyTest {
     final var decisions = this.policy.decideUnlocks(tracker);
 
     assertThat(decisions).noneMatch(
-        d -> d.achievementCode() == AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO);
+        d -> d.achievementCode() == AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO);
   }
 
   @Test
@@ -307,11 +307,11 @@ class AchievementPolicyTest {
     final var decisions = this.policy.decideUnlocks(tracker);
 
     assertThat(decisions).noneMatch(
-        d -> d.achievementCode() == AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND);
+        d -> d.achievementCode() == AchievementCode.WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND);
   }
 
   @Test
-  @DisplayName("desbloquea WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS (TRUCO, score 2-2)")
+  @DisplayName("desbloquea WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS (TRUCO, score 2-2)")
   void unlocksBustRivalViaFoldAfterAcceptedTrucoWithNoCards() {
 
     final var tracker = this.newTracker();
@@ -333,15 +333,15 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
+            AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
+            AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
   }
 
   @ParameterizedTest(name = "con {0}")
   @EnumSource(value = TrucoCall.class, names = {"RETRUCO", "VALE_CUATRO"})
-  @DisplayName("desbloquea WIN_MATCH_BUST_RIVAL_VIA_FOLD con subida de truco")
+  @DisplayName("desbloquea WIN_GAME_BUST_RIVAL_VIA_FOLD con subida de truco")
   void unlocksBustRivalViaFoldAfterAcceptedTrucoWithNoCardsWhenRaising(final TrucoCall call) {
 
     final var tracker = this.newTracker();
@@ -363,10 +363,10 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
+            AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
+            AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
   }
 
   @Test
@@ -383,7 +383,7 @@ class AchievementPolicyTest {
     tracker.onScoreChanged(2, 4);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(d -> d.achievementCode()
-        == AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS);
+        == AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS);
   }
 
   @Test
@@ -405,7 +405,7 @@ class AchievementPolicyTest {
     tracker.onScoreChanged(2, 3);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(d -> d.achievementCode()
-        == AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS);
+        == AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS);
   }
 
   @Test
@@ -427,7 +427,7 @@ class AchievementPolicyTest {
     tracker.onScoreChanged(2, 4);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(d -> d.achievementCode()
-        == AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS);
+        == AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS);
   }
 
   @Test
@@ -439,7 +439,7 @@ class AchievementPolicyTest {
     tracker.onEnvidoResolved(EnvidoResponse.QUIERO, PlayerSeat.PLAYER_TWO, 29, 31);
 
     assertThat(this.policy.decideUnlocks(tracker)).noneMatch(
-        d -> d.achievementCode() == AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO);
+        d -> d.achievementCode() == AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO);
 
     tracker.onScoreChanged(0, 3);
 
@@ -447,10 +447,10 @@ class AchievementPolicyTest {
 
     assertThat(decisions).contains(
         new AchievementUnlockDecision(tracker.getPlayerTwo(),
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
     assertThat(decisions).doesNotContain(
         new AchievementUnlockDecision(tracker.getPlayerOne(),
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
   }
 
   private MatchAchievementTracker newTracker() {

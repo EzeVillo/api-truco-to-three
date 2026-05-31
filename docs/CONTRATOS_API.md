@@ -1674,18 +1674,18 @@ propio perfil o para el de otro jugador.
 
 La siguiente tabla lista todos los `achievementCode` que pueden desbloquearse:
 
-| achievementCode | Descripción |
-|-----------------|-------------|
-| `WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2` | Ganar un match como pie cuando mano se vuela en envido estando 0-0 y en 2-2 |
-| `WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2` | Ganar un match como mano mediante falta envido con 33-33 en score estando 2-2 en games |
-| `WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO` | Ganar un match eliminando al oponente mediante "quiero y me voy al mazo" |
-| `WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA` | Ganar una mano sin oposición teniendo el ancho de espada |
-| `FOLD_BEFORE_ANY_CARD_IS_PLAYED` | Irse al mazo antes de que se juegue alguna carta |
-| `WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO` | Ganar un match 3-0 mediante retruco aceptado |
-| `WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO` | Ganar un match 3-0 mediante real envido o falta envido |
-| `WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND` | Ganar un match desde 2-2 sin cantos en la ronda |
-| `WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0` | Ganar un match eliminando al oponente mediante pérdida de vale cuatro estando 0-0 |
-| `WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS` | Ganar un match eliminando al rival cuando se va al mazo tras aceptar truco sin cartas |
+| achievementCode                                                     | Descripción                                                                                                                                                                                        |
+|---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2`              | Ganar un game siendo pie (segundo jugador) cuando el jugador mano se pasa de 3 con los puntos en el game, con ambos jugadores en 0 tantos de envido (todas figuras) y score 2-2 en el game         |
+| `WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2`               | Ganar un game siendo mano mediante falta envido con empate en 33-33 tantos (el empate se resuelve a favor del mano), con score 2-2 en el game                                                      |
+| `WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO`                | Ganar un game porque el oponente responde "quiero y me voy al mazo" y se pasa de 3 puntos                                                                                                          |
+| `WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA`                         | Ganar una mano por cierre automático al jugar el 1 de espada (ancho de espada), sin que el rival haya jugado carta en esa mano                                                                     |
+| `FOLD_BEFORE_ANY_CARD_IS_PLAYED`                                    | Irse al mazo en una round antes de que ninguno de los dos jugadores haya jugado ninguna carta                                                                                                      |
+| `WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO`                          | Ganar un game 3-0 (rival queda con 0 puntos) desde score 0-0 mediante retruco aceptado                                                                                                             |
+| `WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO`                      | Ganar un game 3-0 (rival queda con 0 puntos) desde score 0-0 mediante un único canto de real envido o falta envido                                                                                 |
+| `WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND`                          | Ganar un game desde score 2-2 en un round donde no se cantó ni envido ni truco                                                                                                                     |
+| `WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`                | Ganar un game porque el oponente pierde el round con vale cuatro aceptado (recibe 4 puntos, se pasa de 3), con score 0-0 en el game                                                                |
+| `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS`   | Ganar un game haciendo que el rival se pase de 3: cantaste truco cuando el rival no tenía cartas, el rival aceptó, y vos te fuiste al mazo dándole los puntos del truco, causando que se pase de 3 |
 
 ## 8. Enums y valores permitidos
 
@@ -1739,16 +1739,16 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
 
 ### 8.3 Logros (`AchievementCode`)
 
-- `WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2`
-- `WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2`
-- `WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO`
+- `WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2`
+- `WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2`
+- `WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO`
 - `WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA`
 - `FOLD_BEFORE_ANY_CARD_IS_PLAYED`
-- `WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO`
-- `WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO`
-- `WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND`
-- `WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`
-- `WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS`
+- `WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO`
+- `WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO`
+- `WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND`
+- `WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`
+- `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS`
 
 ## 9. WebSocket / STOMP
 
