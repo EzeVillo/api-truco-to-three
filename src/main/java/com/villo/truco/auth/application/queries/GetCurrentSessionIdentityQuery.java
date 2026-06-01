@@ -5,6 +5,11 @@ import java.util.Objects;
 
 public record GetCurrentSessionIdentityQuery(PlayerId playerId, String tokenUse) {
 
+  public GetCurrentSessionIdentityQuery(final String playerId, final String tokenUse) {
+
+    this(PlayerId.of(playerId), tokenUse);
+  }
+
   public GetCurrentSessionIdentityQuery {
 
     Objects.requireNonNull(playerId);

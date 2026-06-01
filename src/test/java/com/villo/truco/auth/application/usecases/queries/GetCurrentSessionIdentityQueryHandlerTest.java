@@ -25,7 +25,8 @@ class GetCurrentSessionIdentityQueryHandlerTest {
     when(users.findUsernameById(playerId)).thenReturn(Optional.of("juancho"));
     final var handler = new GetCurrentSessionIdentityQueryHandler(users);
 
-    final var identity = handler.handle(new GetCurrentSessionIdentityQuery(playerId, "user"));
+    final var identity = handler.handle(
+        new GetCurrentSessionIdentityQuery(playerId.value().toString(), "user"));
 
     assertThat(identity.playerId()).isEqualTo(playerId);
     assertThat(identity.username()).isEqualTo("juancho");
@@ -39,7 +40,8 @@ class GetCurrentSessionIdentityQueryHandlerTest {
     final var playerId = PlayerId.generate();
     final var handler = new GetCurrentSessionIdentityQueryHandler(mock(UserQueryRepository.class));
 
-    final var identity = handler.handle(new GetCurrentSessionIdentityQuery(playerId, "guest"));
+    final var identity = handler.handle(
+        new GetCurrentSessionIdentityQuery(playerId.value().toString(), "guest"));
 
     assertThat(identity.playerId()).isEqualTo(playerId);
     assertThat(identity.username()).isNull();
@@ -55,8 +57,8 @@ class GetCurrentSessionIdentityQueryHandlerTest {
     when(users.findUsernameById(playerId)).thenReturn(Optional.empty());
     final var handler = new GetCurrentSessionIdentityQueryHandler(users);
 
-    assertThatThrownBy(
-        () -> handler.handle(new GetCurrentSessionIdentityQuery(playerId, "user"))).isInstanceOf(
+    assertThatThrownBy(() -> handler.handle(
+        new GetCurrentSessionIdentityQuery(playerId.value().toString(), "user"))).isInstanceOf(
         UnauthorizedAccessException.class);
   }
 
@@ -67,8 +69,8 @@ class GetCurrentSessionIdentityQueryHandlerTest {
     final var handler = new GetCurrentSessionIdentityQueryHandler(mock(UserQueryRepository.class));
 
     assertThatThrownBy(() -> handler.handle(
-        new GetCurrentSessionIdentityQuery(PlayerId.generate(), "unknown"))).isInstanceOf(
-        UnauthorizedAccessException.class);
+        new GetCurrentSessionIdentityQuery(PlayerId.generate().value().toString(),
+            "unknown"))).isInstanceOf(UnauthorizedAccessException.class);
   }
 
 }

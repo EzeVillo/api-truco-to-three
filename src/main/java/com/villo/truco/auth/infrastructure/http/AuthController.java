@@ -20,7 +20,6 @@ import com.villo.truco.auth.infrastructure.http.dto.response.GuestLoginResponse;
 import com.villo.truco.auth.infrastructure.http.dto.response.LoginResponse;
 import com.villo.truco.auth.infrastructure.http.dto.response.RefreshUserSessionResponse;
 import com.villo.truco.auth.infrastructure.http.dto.response.RegisterUserResponse;
-import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -116,8 +115,7 @@ public class AuthController {
   public ResponseEntity<CurrentSessionResponse> me(@AuthenticationPrincipal final Jwt jwt) {
 
     final var identity = this.getCurrentSessionIdentity.handle(
-        new GetCurrentSessionIdentityQuery(PlayerId.of(jwt.getSubject()),
-            jwt.getClaimAsString("token_use")));
+        new GetCurrentSessionIdentityQuery(jwt.getSubject(), jwt.getClaimAsString("token_use")));
     return ResponseEntity.ok(CurrentSessionResponse.from(identity));
   }
 
