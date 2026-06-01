@@ -1643,7 +1643,7 @@ propio perfil o para el de otro jugador.
 {
   "achievements": [
     {
-      "achievementCode": "WIN_RETRUCO_FROM_0_0_TO_3",
+      "achievementCode": "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO",
       "unlockedAt": 1772768158123,
       "matchId": "550e8400-e29b-41d4-a716-446655440001",
       "gameNumber": 1
@@ -1690,6 +1690,49 @@ La siguiente tabla lista todos los `achievementCode` que pueden desbloquearse:
 | `WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND`                        | Ganar un game desde score 2-2 en un round donde no se cantó ni envido ni truco                                                                                                                     |
 | `WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`              | Ganar un game porque el oponente pierde el round con vale cuatro aceptado (recibe 4 puntos, se pasa de 3), con score 0-0 en el game                                                                |
 | `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS` | Ganar un game haciendo que el rival se pase de 3: cantaste truco cuando el rival no tenía cartas, el rival aceptó, y vos te fuiste al mazo dándole los puntos del truco, causando que se pase de 3 |
+
+### 7.5.3 Catálogo de logros
+
+`GET /api/achievements` — requiere Bearer token.
+
+Devuelve la lista completa de logros existentes en el juego (sus `achievementCode`). La respuesta es
+idéntica para todos los jugadores e independiente del progreso: **no** indica cuáles están
+desbloqueados (eso lo da el perfil en 7.5.1) ni incluye título/descripción (los resuelve el
+frontend a partir del código). No existen logros ocultos: el catálogo siempre los expone todos.
+
+Pensado para que el frontend conozca qué logros existen sin hardcodear la lista, y arme la grilla
+"todos los logros con marca de desbloqueado" cruzando este catálogo con `GET /api/profile/{username}`
+por `achievementCode`.
+
+**Request:** sin body ni parámetros.
+
+**Respuesta 200:**
+
+```json
+{
+  "achievements": [
+    { "achievementCode": "WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2" },
+    { "achievementCode": "WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2" },
+    { "achievementCode": "WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO" },
+    { "achievementCode": "WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA" },
+    { "achievementCode": "FOLD_BEFORE_ANY_CARD_IS_PLAYED" },
+    { "achievementCode": "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO" },
+    { "achievementCode": "WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO" },
+    { "achievementCode": "WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND" },
+    { "achievementCode": "WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0" },
+    { "achievementCode": "WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS" }
+  ]
+}
+```
+
+Los `achievementCode` posibles son los listados en 7.5.2 / 8.3. El campo se llama igual que en el
+perfil (`achievementCode`) para facilitar el cruce.
+
+**Errores:**
+
+| Codigo | Descripcion              |
+|--------|--------------------------|
+| 401    | Token ausente o inválido |
 
 ## 8. Enums y valores permitidos
 
@@ -1909,7 +1952,7 @@ Cada tipo de recurso tiene su propia estructura de evento:
   "eventType": "ACHIEVEMENT_UNLOCKED",
   "timestamp": 1772768158123,
   "payload": {
-    "achievementCode": "WIN_RETRUCO_FROM_0_0_TO_3",
+    "achievementCode": "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO",
     "unlockedAt": 1772768158123,
     "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
     "gameNumber": 1

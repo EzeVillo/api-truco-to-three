@@ -84,6 +84,10 @@ games.
   de partidas PvP humanas (matchesPlayed, matchesWon, matchesLost, winRate), sin repetir
   `username` ni exponer `playerId` en el body. Las stats se actualizan al recibir los eventos
   `MATCH_FINISHED`, `MATCH_ABANDONED` y `MATCH_FORFEITED`; las partidas contra bots no cuentan.
+  El endpoint `GET /api/achievements` expone el catálogo completo de logros existentes (sus
+  códigos), idéntico para todos e independiente del progreso, para que el frontend sepa qué logros
+  existen sin hardcodear la lista; el título y la descripción de cada logro los resuelve el
+  frontend a partir del código.
 - Quick Match:
   emparejamiento automatico por `gamesToPlay`. El jugador entra a una cola efimera en memoria; si
   ya hay un oponente esperando con la misma configuracion, se crea una partida `PRIVATE` que arranca
@@ -306,6 +310,8 @@ Recursos REST principales:
 - `/api/social`
 - `/api/bots`
 - `/api/profile`
+- `/api/achievements` — catálogo de logros existentes (solo los códigos); el frontend lo cruza con
+  `/api/profile/{username}` para mostrar todos los logros con marca de desbloqueado
 
 ## Salas Publicas y Privadas
 
