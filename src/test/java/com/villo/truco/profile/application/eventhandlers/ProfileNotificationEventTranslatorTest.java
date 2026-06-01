@@ -30,7 +30,7 @@ class ProfileNotificationEventTranslatorTest {
     final var unlockedAt = Instant.parse("2026-04-20T21:30:00Z");
 
     translator.handle(
-        new AchievementUnlocked(playerId, AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO,
+        new AchievementUnlocked(playerId, AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO,
             unlockedAt, matchId, 1));
 
     assertThat(published).hasSize(1);
@@ -38,7 +38,7 @@ class ProfileNotificationEventTranslatorTest {
     assertThat(event.recipients()).isEqualTo(List.of(playerId));
     assertThat(event.eventType()).isEqualTo("ACHIEVEMENT_UNLOCKED");
     assertThat(event.payload()).containsEntry("achievementCode",
-            "WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO")
+            "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO")
         .containsEntry("unlockedAt", unlockedAt.toEpochMilli())
         .containsEntry("matchId", matchId.value().toString()).containsEntry("gameNumber", 1);
   }

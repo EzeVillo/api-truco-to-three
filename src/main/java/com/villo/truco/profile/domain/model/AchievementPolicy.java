@@ -75,13 +75,13 @@ public final class AchievementPolicy {
           && tracker.getLastTrucoResponse() == TrucoResponse.QUIERO
           && tracker.getLastTrucoResponseCall() == TrucoCall.RETRUCO) {
         decisions.add(new AchievementUnlockDecision(winner,
-            AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO));
+            AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO));
       }
 
       if (winnerPreviousScore == 2 && loserPreviousScore == 2 && winnerScore == 3
           && !tracker.isRoundHadCalls()) {
         decisions.add(new AchievementUnlockDecision(winner,
-            AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND));
+            AchievementCode.WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND));
       }
 
       final var calls = tracker.getEnvidoCallsInRound();
@@ -94,13 +94,13 @@ public final class AchievementPolicy {
             && tracker.getLastEnvidoPointsMano() == 33 && tracker.getLastEnvidoPointsPie() != null
             && tracker.getLastEnvidoPointsPie() == 33 && calls.contains(EnvidoCall.FALTA_ENVIDO)) {
           decisions.add(new AchievementUnlockDecision(winner,
-              AchievementCode.WIN_MATCH_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2));
+              AchievementCode.WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2));
         }
 
         if (winnerPreviousScore == 0 && loserPreviousScore == 0 && calls.size() == 1 && (
             calls.contains(EnvidoCall.REAL_ENVIDO) || calls.contains(EnvidoCall.FALTA_ENVIDO))) {
           decisions.add(new AchievementUnlockDecision(winner,
-              AchievementCode.WIN_MATCH_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
+              AchievementCode.WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO));
         }
       }
 
@@ -127,7 +127,7 @@ public final class AchievementPolicy {
         && !calls.contains(EnvidoCall.FALTA_ENVIDO)) {
       decisions.add(
           new AchievementUnlockDecision(tracker.resolvePlayer(tracker.opposite(bustedSeat)),
-              AchievementCode.WIN_MATCH_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2));
+              AchievementCode.WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2));
     }
 
     if (tracker.getLastTrucoResponderSeat() == null) {
@@ -140,7 +140,7 @@ public final class AchievementPolicy {
         && tracker.getLastFoldedSeat() == tracker.getLastTrucoCallerSeat()) {
       decisions.add(
           new AchievementUnlockDecision(tracker.resolvePlayer(tracker.getLastTrucoCallerSeat()),
-              AchievementCode.WIN_MATCH_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
+              AchievementCode.WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS));
     }
 
     final var lastResponse = tracker.getLastTrucoResponse();
@@ -150,7 +150,7 @@ public final class AchievementPolicy {
         && tracker.getPreviousScorePlayerOne() == 0 && tracker.getPreviousScorePlayerTwo() == 0) {
       decisions.add(
           new AchievementUnlockDecision(tracker.resolvePlayer(tracker.opposite(bustedSeat)),
-              AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
+              AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0));
       return;
     }
 
@@ -162,7 +162,7 @@ public final class AchievementPolicy {
 
     if (lastResponse == TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO) {
       decisions.add(new AchievementUnlockDecision(responder,
-          AchievementCode.WIN_MATCH_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO));
+          AchievementCode.WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO));
     }
   }
 

@@ -5,14 +5,17 @@ import com.villo.truco.auth.application.commands.LoginCommand;
 import com.villo.truco.auth.application.commands.LogoutUserSessionCommand;
 import com.villo.truco.auth.application.commands.RefreshUserSessionCommand;
 import com.villo.truco.auth.application.commands.RegisterUserCommand;
+import com.villo.truco.auth.application.ports.in.GetCurrentSessionIdentityUseCase;
 import com.villo.truco.auth.application.ports.in.GuestLoginUseCase;
 import com.villo.truco.auth.application.ports.in.LoginUseCase;
 import com.villo.truco.auth.application.ports.in.LogoutUserSessionUseCase;
 import com.villo.truco.auth.application.ports.in.RefreshUserSessionUseCase;
 import com.villo.truco.auth.application.ports.in.RegisterUserUseCase;
+import com.villo.truco.auth.application.queries.GetCurrentSessionIdentityQuery;
 import com.villo.truco.auth.infrastructure.http.dto.request.LoginRequest;
 import com.villo.truco.auth.infrastructure.http.dto.request.RefreshTokenRequest;
 import com.villo.truco.auth.infrastructure.http.dto.request.RegisterUserRequest;
+import com.villo.truco.auth.infrastructure.http.dto.response.CurrentSessionResponse;
 import com.villo.truco.auth.infrastructure.http.dto.response.GuestLoginResponse;
 import com.villo.truco.auth.infrastructure.http.dto.response.LoginResponse;
 import com.villo.truco.auth.infrastructure.http.dto.response.RefreshUserSessionResponse;
@@ -29,7 +32,10 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,16 +53,19 @@ public class AuthController {
   private final GuestLoginUseCase guestLogin;
   private final RefreshUserSessionUseCase refreshUserSession;
   private final LogoutUserSessionUseCase logoutUserSession;
+  private final GetCurrentSessionIdentityUseCase getCurrentSessionIdentity;
 
   public AuthController(final RegisterUserUseCase registerUser, final LoginUseCase login,
       final GuestLoginUseCase guestLogin, final RefreshUserSessionUseCase refreshUserSession,
-      final LogoutUserSessionUseCase logoutUserSession) {
+      final LogoutUserSessionUseCase logoutUserSession,
+      final GetCurrentSessionIdentityUseCase getCurrentSessionIdentity) {
 
     this.registerUser = Objects.requireNonNull(registerUser);
     this.login = Objects.requireNonNull(login);
     this.guestLogin = Objects.requireNonNull(guestLogin);
     this.refreshUserSession = Objects.requireNonNull(refreshUserSession);
     this.logoutUserSession = Objects.requireNonNull(logoutUserSession);
+    this.getCurrentSessionIdentity = Objects.requireNonNull(getCurrentSessionIdentity);
   }
 
   @PostMapping("/register")
@@ -96,6 +105,18 @@ public class AuthController {
     LOGGER.info("HTTP guest login requested");
     final var session = this.guestLogin.handle(new GuestLoginCommand());
     return ResponseEntity.ok(GuestLoginResponse.from(session));
+  }
+
+  @GetMapping("/me")
+  @Operation(summary = "Identidad de sesion actual", description = "Devuelve playerId, tokenUse y username cuando el token pertenece a un usuario registrado.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Identidad de sesion", content = @Content(schema = @Schema(implementation = CurrentSessionResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente, invalido o usuario no resoluble", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<CurrentSessionResponse> me(@AuthenticationPrincipal final Jwt jwt) {
+
+    final var identity = this.getCurrentSessionIdentity.handle(
+        new GetCurrentSessionIdentityQuery(jwt.getSubject(), jwt.getClaimAsString("token_use")));
+    return ResponseEntity.ok(CurrentSessionResponse.from(identity));
   }
 
   @PostMapping("/refresh")

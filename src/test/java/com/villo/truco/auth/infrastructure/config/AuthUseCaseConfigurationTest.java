@@ -7,6 +7,7 @@ import com.villo.truco.auth.application.ports.out.AccessTokenIssuer;
 import com.villo.truco.auth.application.ports.out.RefreshTokenProvider;
 import com.villo.truco.auth.domain.ports.AuthEventNotifier;
 import com.villo.truco.auth.domain.ports.PasswordHasher;
+import com.villo.truco.auth.domain.ports.UserQueryRepository;
 import com.villo.truco.auth.domain.ports.UserRepository;
 import com.villo.truco.auth.domain.ports.UserSessionRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
@@ -20,9 +21,9 @@ class AuthUseCaseConfigurationTest {
   void buildsAuthBeans() {
 
     final var configuration = new AuthUseCaseConfiguration(mock(UserRepository.class),
-        mock(UserSessionRepository.class), mock(PasswordHasher.class),
-        mock(AccessTokenIssuer.class), mock(RefreshTokenProvider.class), mock(Clock.class),
-        new UseCasePipeline(List.of()), mock(AuthEventNotifier.class));
+        mock(UserQueryRepository.class), mock(UserSessionRepository.class),
+        mock(PasswordHasher.class), mock(AccessTokenIssuer.class), mock(RefreshTokenProvider.class),
+        mock(Clock.class), new UseCasePipeline(List.of()), mock(AuthEventNotifier.class));
 
     assertThat(configuration.userSessionIssuer()).isNotNull();
     assertThat(configuration.registerUserCommandHandler()).isNotNull();
@@ -30,6 +31,7 @@ class AuthUseCaseConfigurationTest {
     assertThat(configuration.guestLoginCommandHandler()).isNotNull();
     assertThat(configuration.refreshUserSessionCommandHandler()).isNotNull();
     assertThat(configuration.logoutUserSessionCommandHandler()).isNotNull();
+    assertThat(configuration.getCurrentSessionIdentityQueryHandler()).isNotNull();
   }
 
 }

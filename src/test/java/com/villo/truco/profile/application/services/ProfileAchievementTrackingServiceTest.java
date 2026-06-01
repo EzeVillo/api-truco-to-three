@@ -87,7 +87,7 @@ class ProfileAchievementTrackingServiceTest {
 
     final var playerProfile = profileRepository.findByPlayerId(playerOne).orElseThrow();
     assertThat(playerProfile.hasUnlocked(
-        AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND)).isTrue();
+        AchievementCode.WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND)).isTrue();
     verify(profileEventNotifier).publishDomainEvents(anyList());
 
     service.handle(new GameStartedEvent(matchId, playerOne, playerTwo, 2));
@@ -151,7 +151,7 @@ class ProfileAchievementTrackingServiceTest {
     assertThat(trackerRepository.findByMatchId(matchId)).isPresent();
     final var profile = profileRepository.findByPlayerId(playerOne).orElseThrow();
     assertThat(
-        profile.hasUnlocked(AchievementCode.WIN_MATCH_FROM_2_2_WITHOUT_CALLS_IN_ROUND)).isTrue();
+        profile.hasUnlocked(AchievementCode.WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND)).isTrue();
     verify(profileEventNotifier).publishDomainEvents(anyList());
   }
 

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Schema(description = "Logro desbloqueado por el jugador")
 public record UnlockedAchievementResponse(
-    @Schema(description = "Código del logro", example = "WIN_MATCH_FIRST") String achievementCode,
+    @Schema(description = "Código del logro", example = "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO") String achievementCode,
     @Schema(description = "Timestamp de desbloqueo en milisegundos epoch", example = "1747353600000") long unlockedAt,
     @Schema(description = "ID de la partida donde se desbloqueó", example = "550e8400-e29b-41d4-a716-446655440001") UUID matchId,
     @Schema(description = "Número de juego dentro de la partida", example = "2") int gameNumber) {

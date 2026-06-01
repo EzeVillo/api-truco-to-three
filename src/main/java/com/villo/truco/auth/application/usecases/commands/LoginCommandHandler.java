@@ -35,7 +35,7 @@ public final class LoginCommandHandler implements LoginUseCase {
       throw new InvalidCredentialsException();
     }
 
-    return this.userSessionIssuer.issueFor(user.getId());
+    return this.userSessionIssuer.issueFor(user.getId(), user.username().value());
   }
 
 }

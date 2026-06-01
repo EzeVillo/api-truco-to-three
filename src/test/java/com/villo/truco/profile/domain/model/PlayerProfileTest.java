@@ -20,9 +20,9 @@ class PlayerProfileTest {
     final var matchId = MatchId.generate();
 
     final var firstUnlock = profile.unlock(
-        AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO, unlockedAt, matchId, 1);
+        AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO, unlockedAt, matchId, 1);
     final var secondUnlock = profile.unlock(
-        AchievementCode.WIN_MATCH_THREE_ZERO_VIA_ACCEPTED_RETRUCO, unlockedAt.plusSeconds(1),
+        AchievementCode.WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO, unlockedAt.plusSeconds(1),
         matchId, 2);
 
     assertThat(firstUnlock).isTrue();

@@ -26,7 +26,7 @@ public final class UserSessionIssuer {
     this.clock = Objects.requireNonNull(clock);
   }
 
-  public UserAuthenticatedSession issueFor(final PlayerId userId) {
+  public UserAuthenticatedSession issueFor(final PlayerId userId, final String username) {
 
     final var issuedAt = this.clock.instant();
     final var refreshToken = this.refreshTokenProvider.issue(issuedAt);
@@ -36,11 +36,11 @@ public final class UserSessionIssuer {
 
     this.userSessionRepository.save(userSession);
 
-    return new UserAuthenticatedSession(userId, accessToken.value(), accessToken.expiresIn(),
-        refreshToken.value(), refreshToken.expiresIn());
+    return new UserAuthenticatedSession(userId, username, accessToken.value(),
+        accessToken.expiresIn(), refreshToken.value(), refreshToken.expiresIn());
   }
 
-  public UserAuthenticatedSession rotate(final UserSession userSession,
+  public UserAuthenticatedSession rotate(final UserSession userSession, final String username,
       final String providedRefreshTokenHash) {
 
     final var issuedAt = this.clock.instant();
@@ -50,7 +50,7 @@ public final class UserSessionIssuer {
     this.userSessionRepository.save(userSession);
     final var accessToken = this.accessTokenIssuer.issueForUser(userSession.userId());
 
-    return new UserAuthenticatedSession(userSession.userId(), accessToken.value(),
+    return new UserAuthenticatedSession(userSession.userId(), username, accessToken.value(),
         accessToken.expiresIn(), refreshToken.value(), refreshToken.expiresIn());
   }
 

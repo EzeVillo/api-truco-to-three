@@ -9,6 +9,8 @@ public interface UserQueryRepository {
 
   Map<PlayerId, String> findUsernamesByIds(Set<PlayerId> playerIds);
 
+  Optional<String> findUsernameById(PlayerId playerId);
+
   Optional<PlayerId> findUserIdByUsername(String username);
 
 }

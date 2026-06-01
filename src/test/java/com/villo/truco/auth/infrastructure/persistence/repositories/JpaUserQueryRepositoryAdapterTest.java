@@ -34,6 +34,23 @@ class JpaUserQueryRepositoryAdapterTest {
   }
 
   @Test
+  @DisplayName("resuelve username por playerId")
+  void findsUsernameById() {
+
+    final var springRepo = mock(SpringDataUserRepository.class);
+    final var adapter = new JpaUserQueryRepositoryAdapter(springRepo);
+    final var userId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    final var playerId = new PlayerId(userId);
+    final var entity = new UserJpaEntity();
+    entity.setId(userId);
+    entity.setUsername("juancho");
+
+    when(springRepo.findById(userId)).thenReturn(Optional.of(entity));
+
+    assertThat(adapter.findUsernameById(playerId)).contains("juancho");
+  }
+
+  @Test
   @DisplayName("devuelve usernames por ids")
   void findsUsernamesByIds() {
 

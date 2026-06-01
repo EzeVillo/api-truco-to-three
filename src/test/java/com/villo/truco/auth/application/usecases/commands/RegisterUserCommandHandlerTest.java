@@ -78,6 +78,7 @@ class RegisterUserCommandHandlerTest {
     final var session = handler.handle(new RegisterUserCommand("juancho", "pass1!"));
 
     assertThat(session.playerId()).isNotNull();
+    assertThat(session.username()).isEqualTo("juancho");
     assertThat(session.accessToken()).startsWith("access-");
     assertThat(session.refreshToken()).isEqualTo("refresh-value");
     assertThat(session.accessTokenExpiresIn()).isEqualTo(

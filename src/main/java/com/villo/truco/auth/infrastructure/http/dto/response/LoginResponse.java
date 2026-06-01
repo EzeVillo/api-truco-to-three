@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Respuesta al hacer login")
 public record LoginResponse(
     @Schema(description = "ID del jugador", example = "550e8400-e29b-41d4-a716-446655440000") String playerId,
+    @Schema(description = "Username del jugador registrado", example = "juancho") String username,
     @Schema(description = "JWT Bearer para endpoints protegidos", example = "eyJhbGciOi...") String accessToken,
     @Schema(description = "Refresh token opaco", example = "7H5Q3v2...") String refreshToken,
     @Schema(description = "Segundos hasta expiracion del access token", example = "900") long accessTokenExpiresIn,
@@ -13,8 +14,9 @@ public record LoginResponse(
 
   public static LoginResponse from(final UserAuthenticatedSession session) {
 
-    return new LoginResponse(session.playerId().value().toString(), session.accessToken(),
-        session.refreshToken(), session.accessTokenExpiresIn(), session.refreshTokenExpiresIn());
+    return new LoginResponse(session.playerId().value().toString(), session.username(),
+        session.accessToken(), session.refreshToken(), session.accessTokenExpiresIn(),
+        session.refreshTokenExpiresIn());
   }
 
 }
