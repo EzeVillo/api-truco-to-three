@@ -6,6 +6,8 @@ import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import com.villo.truco.profile.application.eventhandlers.ProfileUserRegisteredEventHandler;
 import com.villo.truco.profile.application.services.ProfileAchievementTrackingService;
 import com.villo.truco.profile.application.services.ProfilePlayerStatsTrackingService;
+import com.villo.truco.profile.application.usecases.queries.GetAchievementCatalogQueryHandler;
+import com.villo.truco.profile.application.usecases.queries.GetAchievementCatalogUseCase;
 import com.villo.truco.profile.application.usecases.queries.GetPlayerProfileQueryHandler;
 import com.villo.truco.profile.application.usecases.queries.GetPlayerProfileUseCase;
 import com.villo.truco.profile.domain.model.AchievementPolicy;
@@ -93,6 +95,12 @@ public class ProfileUseCaseConfiguration {
     final var handler = new GetPlayerProfileQueryHandler(this.userQueryRepository,
         this.playerProfileRepository, this.playerStatsRepository);
     return this.transactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  GetAchievementCatalogUseCase getAchievementCatalogUseCase() {
+
+    return new GetAchievementCatalogQueryHandler();
   }
 
 }
