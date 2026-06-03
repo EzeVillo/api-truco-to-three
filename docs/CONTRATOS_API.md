@@ -1029,7 +1029,152 @@ Response `204` sin body.
 
 `GET /api/leagues/{leagueId}`
 
-Response `200`: estado completo, tabla y fixtures del liga.
+Auth: Bearer requerido. Solo los participantes de la liga pueden consultarla.
+
+Devuelve el estado completo de la liga: estado general, tabla de posiciones,
+ganador(es) y el calendario completo por jornadas (fixtures). Es la fuente única
+para renderizar la pantalla de liga (sala de espera, tabla de posiciones y
+fixtures).
+
+Response `200`:
+
+```json
+{
+  "leagueId": "league-123",
+  "status": "IN_PROGRESS",
+  "standings": [
+    {
+      "player": "juancho",
+      "wins": 3
+    },
+    {
+      "player": "martina",
+      "wins": 2
+    },
+    {
+      "player": "pedro",
+      "wins": 0
+    }
+  ],
+  "winners": [],
+  "matchdays": [
+    {
+      "matchdayNumber": 1,
+      "fixtures": [
+        {
+          "fixtureId": "fixture-1",
+          "matchdayNumber": 1,
+          "playerOne": "juancho",
+          "playerTwo": "martina",
+          "matchId": "match-abc",
+          "winner": "juancho",
+          "status": "FINISHED"
+        },
+        {
+          "fixtureId": "fixture-2",
+          "matchdayNumber": 1,
+          "playerOne": "pedro",
+          "playerTwo": null,
+          "matchId": null,
+          "winner": null,
+          "status": "LIBRE"
+        }
+      ]
+    },
+    {
+      "matchdayNumber": 2,
+      "fixtures": [
+        {
+          "fixtureId": "fixture-3",
+          "matchdayNumber": 2,
+          "playerOne": "juancho",
+          "playerTwo": "pedro",
+          "matchId": "match-def",
+          "winner": null,
+          "status": "PENDING"
+        },
+        {
+          "fixtureId": "fixture-4",
+          "matchdayNumber": 2,
+          "playerOne": "martina",
+          "playerTwo": null,
+          "matchId": null,
+          "winner": null,
+          "status": "LIBRE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Campos de nivel raíz:
+
+| Campo       | Tipo            | Descripción                                             |
+|-------------|-----------------|---------------------------------------------------------|
+| `leagueId`  | `string`        | ID de la liga.                                          |
+| `status`    | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.          |
+| `standings` | `array`         | Tabla de posiciones, ordenada por `wins` descendente.   |
+| `winners`   | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo. |
+| `matchdays` | `array`         | Calendario completo, una entrada por jornada.           |
+
+Estados de liga (`status`):
+
+| Valor                 | Significado                                                   |
+|-----------------------|---------------------------------------------------------------|
+| `WAITING_FOR_PLAYERS` | Aún faltan jugadores para completar el cupo (sala de espera). |
+| `WAITING_FOR_START`   | Cupo completo; el creador todavía no inició la liga.          |
+| `IN_PROGRESS`         | Liga en curso; se están jugando las jornadas.                 |
+| `FINISHED`            | Liga terminada; `winners` contiene al/los campeón(es).        |
+| `CANCELLED`           | Liga cancelada.                                               |
+
+Nota sobre `winners`: refleja al/los líder(es) actual(es) según la tabla. Mientras
+la liga está `IN_PROGRESS` puede venir vacío (sin partidos resueltos) o contener
+empates. Una vez `FINISHED`, contiene al/los campeón(es) (puede haber más de uno
+en caso de empate).
+
+Cada item de `standings` (`LeagueStandingResponse`):
+
+| Campo    | Tipo     | Descripción                 |
+|----------|----------|-----------------------------|
+| `player` | `string` | Nombre visible del jugador. |
+| `wins`   | `int`    | Cantidad de victorias.      |
+
+Cada item de `matchdays` (`LeagueMatchdayResponse`):
+
+| Campo            | Tipo    | Descripción                  |
+|------------------|---------|------------------------------|
+| `matchdayNumber` | `int`   | Número de jornada (1-based). |
+| `fixtures`       | `array` | Partidos de esa jornada.     |
+
+Cada item de `fixtures` (`LeagueFixtureResponse`):
+
+| Campo            | Tipo            | Nullable | Descripción                                                          |
+|------------------|-----------------|----------|----------------------------------------------------------------------|
+| `fixtureId`      | `string`        | No       | ID del fixture.                                                      |
+| `matchdayNumber` | `int`           | No       | Número de jornada al que pertenece.                                  |
+| `playerOne`      | `string`        | No       | Nombre visible del jugador local.                                    |
+| `playerTwo`      | `string`        | Sí       | Nombre visible del rival. `null` cuando el fixture es `LIBRE` (bye). |
+| `matchId`        | `string`        | Sí       | ID de la partida asociada. `null` hasta que la jornada se activa.    |
+| `winner`         | `string`        | Sí       | Nombre visible del ganador. `null` hasta que el fixture termina.     |
+| `status`         | `string` (enum) | No       | Estado del fixture. Ver tabla de estados abajo.                      |
+
+Estados de fixture (`status`):
+
+| Valor       | Significado                                                                            |
+|-------------|----------------------------------------------------------------------------------------|
+| `SCHEDULED` | Fixture programado; la jornada todavía no se activó (`matchId` aún `null`).            |
+| `PENDING`   | Jornada activa; la partida está en juego (`matchId` ya presente, `winner` aún `null`). |
+| `FINISHED`  | Fixture resuelto; `winner` contiene al ganador.                                        |
+| `LIBRE`     | Bye: el jugador descansa esta jornada. `playerTwo`, `matchId` y `winner` son `null`.   |
+
+Errores:
+
+| Código | Causa                              |
+|--------|------------------------------------|
+| `401`  | Token ausente o inválido.          |
+| `404`  | Liga no encontrada.                |
+| `422`  | El jugador no pertenece a la liga. |
 
 ## 6. API REST - Copas
 
@@ -1701,7 +1846,7 @@ desbloqueados (eso lo da el perfil en 7.5.1) ni incluye título/descripción (lo
 frontend a partir del código). No existen logros ocultos: el catálogo siempre los expone todos.
 
 Pensado para que el frontend conozca qué logros existen sin hardcodear la lista, y arme la grilla
-"todos los logros con marca de desbloqueado" cruzando este catálogo con `GET /api/profile/{username}`
+"todos los logros con marca de desbloqueado" cruzando este catálogo con`GET /api/profile/{username}`
 por `achievementCode`.
 
 **Request:** sin body ni parámetros.
@@ -1711,16 +1856,36 @@ por `achievementCode`.
 ```json
 {
   "achievements": [
-    { "achievementCode": "WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2" },
-    { "achievementCode": "WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2" },
-    { "achievementCode": "WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO" },
-    { "achievementCode": "WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA" },
-    { "achievementCode": "FOLD_BEFORE_ANY_CARD_IS_PLAYED" },
-    { "achievementCode": "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO" },
-    { "achievementCode": "WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO" },
-    { "achievementCode": "WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND" },
-    { "achievementCode": "WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0" },
-    { "achievementCode": "WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS" }
+    {
+      "achievementCode": "WIN_GAME_AS_PIE_MANO_BUSTS_ON_ENVIDO_WITH_0_0_AT_2_2"
+    },
+    {
+      "achievementCode": "WIN_GAME_AS_MANO_VIA_FALTA_ENVIDO_WITH_33_33_AT_2_2"
+    },
+    {
+      "achievementCode": "WIN_GAME_BUST_OPPONENT_VIA_QUIERO_Y_ME_VOY_AL_MAZO"
+    },
+    {
+      "achievementCode": "WIN_HAND_UNCONTESTED_WITH_ANCHO_DE_ESPADA"
+    },
+    {
+      "achievementCode": "FOLD_BEFORE_ANY_CARD_IS_PLAYED"
+    },
+    {
+      "achievementCode": "WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO"
+    },
+    {
+      "achievementCode": "WIN_GAME_THREE_ZERO_VIA_REAL_OR_FALTA_ENVIDO"
+    },
+    {
+      "achievementCode": "WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND"
+    },
+    {
+      "achievementCode": "WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0"
+    },
+    {
+      "achievementCode": "WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS"
+    }
   ]
 }
 ```
