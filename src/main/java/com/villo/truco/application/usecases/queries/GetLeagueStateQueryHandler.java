@@ -2,12 +2,14 @@ package com.villo.truco.application.usecases.queries;
 
 import com.villo.truco.application.dto.LeagueFixtureDTO;
 import com.villo.truco.application.dto.LeagueMatchdayDTO;
+import com.villo.truco.application.dto.LeagueParticipantDTO;
 import com.villo.truco.application.dto.LeagueStandingDTO;
 import com.villo.truco.application.dto.LeagueStateDTO;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
 import com.villo.truco.application.queries.GetLeagueStateQuery;
 import com.villo.truco.application.usecases.commands.LeagueResolver;
+import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +41,10 @@ public final class GetLeagueStateQueryHandler implements GetLeagueStateUseCase {
     league.validatePlayerInLeague(query.requestingPlayer());
     final var actorNames = this.publicActorResolver.resolveAll(
         Set.copyOf(league.getParticipants()));
+    final var host = actorNames.get(league.getCreator());
+    final var participants = league.getParticipants().stream().map(
+        player -> new LeagueParticipantDTO(actorNames.get(player),
+            player.equals(league.getCreator()))).toList();
 
     final var standings = league.getWinsByPlayer().entrySet().stream()
         .map(entry -> new LeagueStandingDTO(actorNames.get(entry.getKey()), entry.getValue()))
@@ -57,7 +63,11 @@ public final class GetLeagueStateQueryHandler implements GetLeagueStateUseCase {
       return new LeagueMatchdayDTO(matchday.matchdayNumber(), matchdayFixtures);
     }).toList();
 
-    return new LeagueStateDTO(league.getId().value().toString(), league.getStatus().name(),
+    final var canStart = league.getCreator().equals(query.requestingPlayer())
+        && league.getStatus() == LeagueStatus.WAITING_FOR_START;
+
+    return new LeagueStateDTO(league.getId().value().toString(), league.getStatus().name(), host,
+        league.getNumberOfPlayers(), league.getParticipants().size(), canStart, participants,
         standings, winners, matchdays);
   }
 

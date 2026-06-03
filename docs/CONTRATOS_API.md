@@ -1042,6 +1042,24 @@ Response `200`:
 {
   "leagueId": "league-123",
   "status": "IN_PROGRESS",
+  "host": "juancho",
+  "totalSlots": 3,
+  "occupiedSlots": 3,
+  "canStart": false,
+  "participants": [
+    {
+      "player": "juancho",
+      "creator": true
+    },
+    {
+      "player": "martina",
+      "creator": false
+    },
+    {
+      "player": "pedro",
+      "creator": false
+    }
+  ],
   "standings": [
     {
       "player": "juancho",
@@ -1110,13 +1128,23 @@ Response `200`:
 
 Campos de nivel raíz:
 
-| Campo       | Tipo            | Descripción                                             |
-|-------------|-----------------|---------------------------------------------------------|
-| `leagueId`  | `string`        | ID de la liga.                                          |
-| `status`    | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.          |
-| `standings` | `array`         | Tabla de posiciones, ordenada por `wins` descendente.   |
-| `winners`   | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo. |
-| `matchdays` | `array`         | Calendario completo, una entrada por jornada.           |
+| Campo           | Tipo             | Descripción                                                            |
+|-----------------|------------------|------------------------------------------------------------------------|
+| `leagueId`      | `string`         | ID de la liga.                                                         |
+| `status`        | `string` (enum)  | Estado de la liga. Ver tabla de estados abajo.                         |
+| `host`          | `string`         | Nombre visible del creador de la sala.                                 |
+| `totalSlots`    | `int`            | Cupo total de jugadores configurado para la liga.                      |
+| `occupiedSlots` | `int`            | Cantidad actual de participantes en la sala.                           |
+| `canStart`      | `boolean`        | `true` si el usuario autenticado puede iniciar la liga en este estado. |
+| `participants`  | `array`          | Participantes actuales de la sala, en orden de ingreso.                |
+| `standings`     | `array`          | Tabla de posiciones, ordenada por `wins` descendente.                  |
+| `winners`       | `array<string>`  | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                |
+| `matchdays`     | `array`          | Calendario completo, una entrada por jornada.                          |
+
+Nota para sala de espera: `participants`, `totalSlots`, `occupiedSlots`, `host`
+y `canStart` son la fuente para renderizar la sala antes de iniciar. No inferir
+participantes desde `standings`: antes de arrancar la liga, `standings` puede
+venir vacio porque todavia no hay victorias inicializadas.
 
 Estados de liga (`status`):
 
@@ -1139,6 +1167,13 @@ Cada item de `standings` (`LeagueStandingResponse`):
 |----------|----------|-----------------------------|
 | `player` | `string` | Nombre visible del jugador. |
 | `wins`   | `int`    | Cantidad de victorias.      |
+
+Cada item de `participants` (`LeagueParticipantResponse`):
+
+| Campo      | Tipo       | Descripcion                                       |
+|------------|------------|---------------------------------------------------|
+| `player`   | `string`   | Nombre visible del jugador.                       |
+| `creator`  | `boolean`  | `true` si este participante creo la sala.         |
 
 Cada item de `matchdays` (`LeagueMatchdayResponse`):
 

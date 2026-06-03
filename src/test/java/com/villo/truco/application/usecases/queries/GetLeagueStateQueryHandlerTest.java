@@ -1,8 +1,10 @@
 package com.villo.truco.application.usecases.queries;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.application.dto.LeagueParticipantDTO;
 import com.villo.truco.application.queries.GetLeagueStateQuery;
 import com.villo.truco.application.usecases.commands.LeagueResolver;
 import com.villo.truco.domain.model.league.League;
@@ -117,6 +119,45 @@ class GetLeagueStateQueryHandlerTest {
         participant.value().toString());
 
     assertThatNoException().isThrownBy(() -> handler.handle(query));
+  }
+
+  @Test
+  @DisplayName("devuelve participantes, cupo y creador aunque la tabla este vacia")
+  void returnsRoomParticipantsBeforeLeagueStarts() {
+
+    final var thirdParticipant = PlayerId.generate();
+    league.join(thirdParticipant);
+    final var query = new GetLeagueStateQuery(league.getId().value().toString(),
+        creator.value().toString());
+
+    final var result = handler.handle(query);
+
+    assertThat(result.status()).isEqualTo("WAITING_FOR_START");
+    assertThat(result.host()).isEqualTo(TestPublicActorResolver.displayName(creator));
+    assertThat(result.totalSlots()).isEqualTo(3);
+    assertThat(result.occupiedSlots()).isEqualTo(3);
+    assertThat(result.canStart()).isTrue();
+    assertThat(result.participants()).extracting(LeagueParticipantDTO::player).containsExactly(
+        TestPublicActorResolver.displayName(creator),
+        TestPublicActorResolver.displayName(participant),
+        TestPublicActorResolver.displayName(thirdParticipant));
+    assertThat(result.participants()).extracting(LeagueParticipantDTO::creator).containsExactly(
+        true, false, false);
+    assertThat(result.standings()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("solo el creador puede iniciar desde el estado de sala")
+  void canStartIsFalseForNonCreator() {
+
+    final var thirdParticipant = PlayerId.generate();
+    league.join(thirdParticipant);
+    final var query = new GetLeagueStateQuery(league.getId().value().toString(),
+        participant.value().toString());
+
+    final var result = handler.handle(query);
+
+    assertThat(result.canStart()).isFalse();
   }
 
 }
