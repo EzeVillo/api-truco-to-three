@@ -7,6 +7,10 @@ Este documento resume todos los contratos que expone el backend para el equipo d
 - WebSocket/STOMP (eventos en tiempo real)
 - Estados, enums y formato de errores
 
+Las reglas del juego y la variante a 3 puntos se documentan en `docs/REGLAS_JUEGO.md` y
+`docs/REGLAS_VARIANTE.md`. La pantalla de reglas accesible desde el lobby del frontend usa
+contenido local y no agrega un contrato de backend.
+
 Base URL (local):
 
 - `http://localhost:8080`
@@ -1128,18 +1132,18 @@ Response `200`:
 
 Campos de nivel raíz:
 
-| Campo           | Tipo             | Descripción                                                            |
-|-----------------|------------------|------------------------------------------------------------------------|
-| `leagueId`      | `string`         | ID de la liga.                                                         |
-| `status`        | `string` (enum)  | Estado de la liga. Ver tabla de estados abajo.                         |
-| `host`          | `string`         | Nombre visible del creador de la sala.                                 |
-| `totalSlots`    | `int`            | Cupo total de jugadores configurado para la liga.                      |
-| `occupiedSlots` | `int`            | Cantidad actual de participantes en la sala.                           |
-| `canStart`      | `boolean`        | `true` si el usuario autenticado puede iniciar la liga en este estado. |
-| `participants`  | `array`          | Participantes actuales de la sala, en orden de ingreso.                |
-| `standings`     | `array`          | Tabla de posiciones, ordenada por `wins` descendente.                  |
-| `winners`       | `array<string>`  | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                |
-| `matchdays`     | `array`          | Calendario completo, una entrada por jornada.                          |
+| Campo           | Tipo            | Descripción                                                            |
+|-----------------|-----------------|------------------------------------------------------------------------|
+| `leagueId`      | `string`        | ID de la liga.                                                         |
+| `status`        | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.                         |
+| `host`          | `string`        | Nombre visible del creador de la sala.                                 |
+| `totalSlots`    | `int`           | Cupo total de jugadores configurado para la liga.                      |
+| `occupiedSlots` | `int`           | Cantidad actual de participantes en la sala.                           |
+| `canStart`      | `boolean`       | `true` si el usuario autenticado puede iniciar la liga en este estado. |
+| `participants`  | `array`         | Participantes actuales de la sala, en orden de ingreso.                |
+| `standings`     | `array`         | Tabla de posiciones, ordenada por `wins` descendente.                  |
+| `winners`       | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                |
+| `matchdays`     | `array`         | Calendario completo, una entrada por jornada.                          |
 
 Nota para sala de espera: `participants`, `totalSlots`, `occupiedSlots`, `host`
 y `canStart` son la fuente para renderizar la sala antes de iniciar. No inferir
@@ -1170,10 +1174,10 @@ Cada item de `standings` (`LeagueStandingResponse`):
 
 Cada item de `participants` (`LeagueParticipantResponse`):
 
-| Campo      | Tipo       | Descripcion                                       |
-|------------|------------|---------------------------------------------------|
-| `player`   | `string`   | Nombre visible del jugador.                       |
-| `creator`  | `boolean`  | `true` si este participante creo la sala.         |
+| Campo     | Tipo      | Descripcion                               |
+|-----------|-----------|-------------------------------------------|
+| `player`  | `string`  | Nombre visible del jugador.               |
+| `creator` | `boolean` | `true` si este participante creo la sala. |
 
 Cada item de `matchdays` (`LeagueMatchdayResponse`):
 
@@ -2631,9 +2635,9 @@ Request:
 }
 ```
 
-| Campo         | Tipo      | Descripcion                                        |
-|---------------|-----------|----------------------------------------------------|
-| `gamesToPlay` | `integer` | Partidas a ganar para terminar el match (minimo 1) |
+| Campo         | Tipo      | Descripcion                                                  |
+|---------------|-----------|--------------------------------------------------------------|
+| `gamesToPlay` | `integer` | Partidas totales de la serie. Valores validos: `1`, `3`, `5` |
 
 Response `200`:
 
@@ -2765,10 +2769,10 @@ Flujo recomendado para reconectar tras una desconexión:
 3. **Bufferar** los eventos entrantes sin procesarlos todavía
 4. Hacer `GET` del estado actual:
 
-    - Match: `GET /api/matches/{matchId}`
-    - Liga: `GET /api/leagues/{leagueId}`
-    - Copa: `GET /api/cups/{cupId}`
-    - Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
+- Match: `GET /api/matches/{matchId}`
+- Liga: `GET /api/leagues/{leagueId}`
+- Copa: `GET /api/cups/{cupId}`
+- Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
 
 5. Aplicar el estado del GET como base autoritativa
 6. Descartar eventos bufferados con `timestamp` anterior al GET; aplicar los posteriores
