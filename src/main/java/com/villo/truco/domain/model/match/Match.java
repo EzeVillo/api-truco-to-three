@@ -795,6 +795,11 @@ public final class Match extends AggregateBase<MatchId> {
     return this.currentRound != null ? this.currentRound.getCurrentTrucoCall() : null;
   }
 
+  public EnvidoCall getCurrentEnvidoCall() {
+
+    return this.currentRound != null ? this.currentRound.getCurrentEnvidoCall() : null;
+  }
+
   List<EnvidoCall> getEnvidoChain() {
 
     return this.currentRound != null ? this.currentRound.getEnvidoStateMachine().getChain()

@@ -64,6 +64,9 @@ public final class SpectatorMatchStateDTOAssembler {
     final var currentTrucoCall = Optional.ofNullable(match.getCurrentTrucoCall()).map(Enum::name)
         .orElse(null);
 
+    final var currentEnvidoCall = Optional.ofNullable(match.getCurrentEnvidoCall()).map(Enum::name)
+        .orElse(null);
+
     final var matchWinner = Optional.ofNullable(match.getMatchWinner()).map(actorNames::get)
         .orElse(null);
 
@@ -82,8 +85,8 @@ public final class SpectatorMatchStateDTOAssembler {
     final var deadline = ActionDeadlineProjection.of(match, this.idleTimeoutMillis);
 
     return new SpectatorRoundStateDTO(match.getStatus().name(), currentTurn, roundStatus,
-        currentTrucoCall, matchWinner, playedHands, currentHand, deadline.actionDeadline(),
-        deadline.turnDurationMillis(), deadline.actionDeadlineSeat());
+        currentTrucoCall, currentEnvidoCall, matchWinner, playedHands, currentHand,
+        deadline.actionDeadline(), deadline.turnDurationMillis(), deadline.actionDeadlineSeat());
   }
 
 }

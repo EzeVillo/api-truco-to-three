@@ -519,6 +519,24 @@ class MatchTest {
     }
 
     @Test
+    @DisplayName("getCurrentEnvidoCall expone el canto pendiente y null cuando no hay o ya se resolvió")
+    void exposesCurrentEnvidoCall() {
+
+      final var match = matchInProgress();
+
+      assertThat(match.getCurrentEnvidoCall()).isNull();
+
+      match.callEnvido(playerOne, EnvidoCall.ENVIDO);
+      assertThat(match.getCurrentEnvidoCall()).isEqualTo(EnvidoCall.ENVIDO);
+
+      match.callEnvido(playerTwo, EnvidoCall.REAL_ENVIDO);
+      assertThat(match.getCurrentEnvidoCall()).isEqualTo(EnvidoCall.REAL_ENVIDO);
+
+      match.acceptEnvido(playerOne);
+      assertThat(match.getCurrentEnvidoCall()).isNull();
+    }
+
+    @Test
     @DisplayName("acceptEnvido calcula puntos sobre las 3 cartas repartidas aunque mano ya haya jugado una")
     void acceptEnvidoUsesOriginalDealtCards() {
 

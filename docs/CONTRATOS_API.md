@@ -667,6 +667,7 @@ Response `200`:
     ],
     "roundStatus": "PLAYING",
     "currentTrucoCall": null,
+    "currentEnvidoCall": null,
     "winner": null,
     "availableActions": [
       {
@@ -744,6 +745,7 @@ Response `200`:
     "currentTurn": "juancho",
     "roundStatus": "PLAYING",
     "currentTrucoCall": "TRUCO",
+    "currentEnvidoCall": null,
     "winner": null,
     "playedHands": [
       {
@@ -1965,6 +1967,10 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
     - `PLAYING`, `ENVIDO_IN_PROGRESS`, `TRUCO_IN_PROGRESS`, `FINISHED`
 - `RoundStateResponse.currentTrucoCall`:
     - `TRUCO`, `RETRUCO`, `VALE_CUATRO` (o `null`)
+- `RoundStateResponse.currentEnvidoCall`:
+    - `ENVIDO`, `REAL_ENVIDO`, `FALTA_ENVIDO` (o `null`). Refleja el canto de envido **pendiente de
+      respuesta**; es `null` si no hay envido en curso o si ya se resolvió (aceptado/rechazado). El
+      mismo campo existe en `SpectatorRoundStateResponse.currentEnvidoCall`.
 - `AvailableActionResponse.type`:
     - `PLAY_CARD`, `CALL_TRUCO`, `CALL_ENVIDO`, `RESPOND_TRUCO`, `RESPOND_ENVIDO`, `FOLD`
 - `FriendSummaryResponse`:

@@ -88,6 +88,9 @@ public final class MatchStateDTOAssembler {
     final var currentTrucoCall = Optional.ofNullable(match.getCurrentTrucoCall()).map(Enum::name)
         .orElse(null);
 
+    final var currentEnvidoCall = Optional.ofNullable(match.getCurrentEnvidoCall()).map(Enum::name)
+        .orElse(null);
+
     final var matchWinner = Optional.ofNullable(match.getMatchWinner()).map(actorNames::get)
         .orElse(null);
 
@@ -109,7 +112,7 @@ public final class MatchStateDTOAssembler {
     final var deadline = ActionDeadlineProjection.of(match, this.idleTimeoutMillis);
 
     return new RoundStateDTO(match.getStatus().name(), currentTurn, myCards, roundStatus,
-        currentTrucoCall, matchWinner, availableActions, playedHands, currentHand,
+        currentTrucoCall, currentEnvidoCall, matchWinner, availableActions, playedHands, currentHand,
         deadline.actionDeadline(), deadline.turnDurationMillis(), deadline.actionDeadlineSeat());
   }
 

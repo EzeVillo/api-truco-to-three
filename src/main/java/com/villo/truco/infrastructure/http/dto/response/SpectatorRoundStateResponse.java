@@ -11,6 +11,7 @@ public record SpectatorRoundStateResponse(
     @Schema(description = "ID del jugador al turno", example = "juancho") String currentTurn,
     @Schema(description = "Estado de resolución de la ronda", example = "PLAYING") String roundStatus,
     @Schema(description = "Último canto de truco activo", example = "TRUCO") String currentTrucoCall,
+    @Schema(description = "Canto de envido pendiente de respuesta; null si no hay envido en curso o ya se resolvió", example = "REAL_ENVIDO") String currentEnvidoCall,
     @Schema(description = "Ganador de la ronda, si existe", example = "juancho") String winner,
     @ArraySchema(schema = @Schema(implementation = PlayedHandResponse.class), arraySchema = @Schema(description = "Historial de manos jugadas")) List<PlayedHandResponse> playedHands,
     @Schema(description = "Estado parcial de la mano actual") CurrentHandResponse currentHand,
@@ -21,7 +22,7 @@ public record SpectatorRoundStateResponse(
   public static SpectatorRoundStateResponse from(final SpectatorRoundStateDTO dto) {
 
     return new SpectatorRoundStateResponse(dto.status(), dto.currentTurn(), dto.roundStatus(),
-        dto.currentTrucoCall(), dto.winner(),
+        dto.currentTrucoCall(), dto.currentEnvidoCall(), dto.winner(),
         dto.playedHands().stream().map(PlayedHandResponse::from).toList(),
         dto.currentHand() != null ? CurrentHandResponse.from(dto.currentHand()) : null,
         dto.actionDeadline(), dto.turnDurationMillis(), dto.actionDeadlineSeat());

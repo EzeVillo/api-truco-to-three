@@ -401,6 +401,14 @@ final class Round extends EntityBase<RoundId> {
     return this.trucoStateMachine.getCurrentCall();
   }
 
+  EnvidoCall getCurrentEnvidoCall() {
+
+    if (this.envidoStateMachine.isResolved() || this.envidoStateMachine.isEmpty()) {
+      return null;
+    }
+    return this.envidoStateMachine.getChain().getLast();
+  }
+
   boolean isFirstHand() {
 
     return playedHands.isEmpty();

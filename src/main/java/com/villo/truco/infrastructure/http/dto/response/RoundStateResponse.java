@@ -12,6 +12,7 @@ public record RoundStateResponse(
     @ArraySchema(schema = @Schema(implementation = CardResponse.class), arraySchema = @Schema(description = "Cartas en mano del jugador autenticado")) List<CardResponse> myCards,
     @Schema(description = "Estado de resolucion de la ronda", example = "PLAYING") String roundStatus,
     @Schema(description = "Ultimo canto de truco activo", example = "TRUCO") String currentTrucoCall,
+    @Schema(description = "Canto de envido pendiente de respuesta; null si no hay envido en curso o ya se resolvio", example = "REAL_ENVIDO") String currentEnvidoCall,
     @Schema(description = "Nombre visible del ganador de la ronda, si existe", example = "juancho") String winner,
     @ArraySchema(schema = @Schema(implementation = AvailableActionResponse.class), arraySchema = @Schema(description = "Acciones permitidas para el jugador")) List<AvailableActionResponse> availableActions,
     @ArraySchema(schema = @Schema(implementation = PlayedHandResponse.class), arraySchema = @Schema(description = "Historial de manos jugadas")) List<PlayedHandResponse> playedHands,
@@ -24,7 +25,7 @@ public record RoundStateResponse(
 
     return new RoundStateResponse(dto.status(), dto.currentTurn(),
         dto.myCards().stream().map(CardResponse::from).toList(), dto.roundStatus(),
-        dto.currentTrucoCall(), dto.winner(),
+        dto.currentTrucoCall(), dto.currentEnvidoCall(), dto.winner(),
         dto.availableActions().stream().map(AvailableActionResponse::from).toList(),
         dto.playedHands().stream().map(PlayedHandResponse::from).toList(),
         dto.currentHand() != null ? CurrentHandResponse.from(dto.currentHand()) : null,
