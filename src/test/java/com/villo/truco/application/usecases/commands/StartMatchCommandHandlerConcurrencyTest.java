@@ -115,6 +115,14 @@ class StartMatchCommandHandlerConcurrencyTest {
     }
 
     @Override
+    public Optional<Match> findUnfinishedByPlayer(final PlayerId playerId) {
+
+      return store.values().stream().filter(
+          m -> m.getStatus() != MatchStatus.FINISHED && (playerId.equals(m.getPlayerOne())
+              || playerId.equals(m.getPlayerTwo()))).findFirst();
+    }
+
+    @Override
     public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
       return List.of();

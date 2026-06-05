@@ -1940,6 +1940,67 @@ perfil (`achievementCode`) para facilitar el cruce.
 |--------|--------------------------|
 | 401    | Token ausente o inválido |
 
+## 7.6 Presencia / reconexión del usuario
+
+Permite al frontend saber, tras un refresco de página o reconexión, **dónde está ocupado** el
+usuario autenticado, para llevarlo de vuelta al recurso correcto (partida, liga, copa o revancha)
+con los identificadores necesarios.
+
+### 7.6.1 Obtener presencia
+
+`GET /api/me/presence`
+
+Opera **siempre sobre el usuario autenticado** (sale del token; no recibe `userId`). Es de **solo
+lectura**: no modifica partidas, ligas, copas ni revanchas, ni reinicia sus temporizadores de
+inactividad.
+
+Response `200`:
+
+```json
+{
+  "busy": true,
+  "match": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "IN_PROGRESS"
+  },
+  "league": {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "status": "IN_PROGRESS",
+    "currentMatchId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "cup": null,
+  "rematch": null
+}
+```
+
+- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup` o `rematch` es no-nulo.
+- Cada dominio en el que el usuario **no** está ocupado se devuelve como `null` explícito (nunca se
+  omite la clave).
+- `match`: partida **no finalizada** del usuario (estados `WAITING_FOR_PLAYERS`, `READY` o
+  `IN_PROGRESS`; nunca `FINISHED`/`CANCELLED`). Trae `id` y `status`.
+- `league` / `cup`: torneo en espera o en progreso. Traen `id`, `status` y `currentMatchId`. El
+  `currentMatchId` solo es no-null cuando el torneo está `IN_PROGRESS`, y coincide con `match.id`
+  (la partida del torneo aparece en **ambos** dominios).
+- `rematch`: sesión de revancha abierta. Trae `id` (de la sesión) y `originMatchId` (partida de
+  origen).
+- **Quick Match queda fuera**: no sobrevive a la desconexión, por lo que nunca aparece aquí.
+
+Usuario sin ocupación alguna:
+
+```json
+{
+  "busy": false,
+  "match": null,
+  "league": null,
+  "cup": null,
+  "rematch": null
+}
+```
+
+Errores:
+
+- `401` sin token o token inválido
+
 ## 8. Enums y valores permitidos
 
 Estos valores son case-sensitive y deben enviarse exactamente igual, en mayusculas y con guiones
