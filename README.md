@@ -314,7 +314,10 @@ Recursos REST principales:
   `/api/profile/{username}` para mostrar todos los logros con marca de desbloqueado
 - `/api/me/presence` — `GET` de solo lectura que devuelve, para el usuario autenticado, en qué
   partida, liga, copa o revancha está ocupado (con los identificadores necesarios para reconectarse
-  tras un refresco). No incluye Quick Match porque no sobrevive a la desconexión
+  tras un refresco). No incluye Quick Match porque no sobrevive a la desconexión. Su contraparte en
+  tiempo real es la cola `/user/queue/presence`, que **empuja** el mismo snapshot a todas las
+  sesiones del usuario cada vez que su ocupación cambia (para sincronizar pestañas/dispositivos y
+  derivar a la sesión ociosa); el push complementa, no reemplaza, a este `GET`
 
 ## Salas Publicas y Privadas
 
@@ -344,7 +347,7 @@ WebSocket/STOMP:
 - endpoint SockJS: `/ws-sockjs`
 - colas por usuario:
   `/user/queue/match`, `/user/queue/match-spectate`, `/user/queue/league`, `/user/queue/cup`,
-  `/user/queue/chat`, `/user/queue/social`, `/user/queue/profile`
+  `/user/queue/chat`, `/user/queue/social`, `/user/queue/profile`, `/user/queue/presence`
 - topics publicos de lobby:
   `/topic/public-match-lobby`, `/topic/public-league-lobby`, `/topic/public-cup-lobby`
   solo emiten deltas `UPSERT`/`REMOVED`; el snapshot inicial del lobby se obtiene via REST.

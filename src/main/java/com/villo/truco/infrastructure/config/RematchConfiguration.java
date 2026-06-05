@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.config;
 
 import com.villo.truco.application.eventhandlers.MatchFinishedRematchSessionCreator;
 import com.villo.truco.application.eventhandlers.RematchNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.RematchPresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.RematchSessionConfirmedMatchCreator;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
@@ -104,11 +105,12 @@ public class RematchConfiguration {
   @Bean
   RematchSessionEventNotifier rematchSessionEventNotifier(
       final RematchSessionConfirmedMatchCreator rematchSessionConfirmedMatchCreator,
-      final RematchSessionDomainEventHandler<RematchSessionDomainEvent> rematchSessionTimeoutEventHandler) {
+      final RematchSessionDomainEventHandler<RematchSessionDomainEvent> rematchSessionTimeoutEventHandler,
+      final RematchPresenceEventTranslator rematchPresenceEventTranslator) {
 
     final List<RematchSessionDomainEventHandler<?>> handlers = List.of(
         rematchNotificationEventTranslator(), rematchSessionConfirmedMatchCreator,
-        rematchSessionTimeoutEventHandler);
+        rematchSessionTimeoutEventHandler, rematchPresenceEventTranslator);
     return new RematchSessionDomainEventDispatcher(handlers);
   }
 

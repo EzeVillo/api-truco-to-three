@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.config;
 
 import com.villo.truco.application.ports.in.GetUserPresenceUseCase;
 import com.villo.truco.application.usecases.queries.GetUserPresenceQueryHandler;
+import com.villo.truco.application.usecases.queries.UserPresenceResolver;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -29,10 +30,17 @@ public class PresenceUseCaseConfiguration {
   }
 
   @Bean
-  GetUserPresenceUseCase getUserPresenceQueryHandler() {
+  UserPresenceResolver userPresenceResolver() {
 
-    return new GetUserPresenceQueryHandler(this.matchQueryRepository, this.leagueQueryRepository,
+    return new UserPresenceResolver(this.matchQueryRepository, this.leagueQueryRepository,
         this.cupQueryRepository, this.rematchSessionRepository);
+  }
+
+  @Bean
+  GetUserPresenceUseCase getUserPresenceQueryHandler(
+      final UserPresenceResolver userPresenceResolver) {
+
+    return new GetUserPresenceQueryHandler(userPresenceResolver);
   }
 
 }
