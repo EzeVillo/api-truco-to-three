@@ -8,11 +8,14 @@ import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator
 import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
 import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.CupPresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.LeaguePresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchFinishedRematchSessionCreator;
 import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchPresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicLeagueLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicMatchLobbyEventTranslator;
@@ -58,9 +61,11 @@ class EventNotifierConfigurationTest {
     assertThat(configuration.chatCupStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.chatLeagueStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.chatMatchGameStartedHandler(chatEventNotifier)).isNotNull();
-    assertThat(configuration.matchEventNotifier()).isNotNull();
-    assertThat(configuration.cupEventNotifier()).isNotNull();
-    assertThat(configuration.leagueEventNotifier()).isNotNull();
+    assertThat(
+        configuration.matchEventNotifier(mock(MatchPresenceEventTranslator.class))).isNotNull();
+    assertThat(configuration.cupEventNotifier(mock(CupPresenceEventTranslator.class))).isNotNull();
+    assertThat(
+        configuration.leagueEventNotifier(mock(LeaguePresenceEventTranslator.class))).isNotNull();
   }
 
 }

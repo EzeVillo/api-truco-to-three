@@ -15,11 +15,14 @@ import com.villo.truco.application.eventhandlers.ChatNotificationEventTranslator
 import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslator;
 import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.CupPresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.LeaguePresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchFinishedRematchSessionCreator;
 import com.villo.truco.application.eventhandlers.MatchInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.MatchNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.MatchPresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicCupLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicLeagueLobbyEventTranslator;
 import com.villo.truco.application.eventhandlers.PublicMatchLobbyEventTranslator;
@@ -201,7 +204,8 @@ public class EventNotifierConfiguration {
   }
 
   @Bean
-  MatchEventNotifier matchEventNotifier() {
+  MatchEventNotifier matchEventNotifier(
+      final MatchPresenceEventTranslator matchPresenceEventTranslator) {
 
     final List<MatchDomainEventHandler<?>> handlers = List.of(this.matchNotificationEventTranslator,
         this.publicMatchLobbyEventTranslator, this.spectatorNotificationEventTranslator,
@@ -210,29 +214,31 @@ public class EventNotifierConfiguration {
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
         this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator,
         this.profileMatchDomainEventHandler, this.matchFinishedRematchSessionCreator,
-        this.matchTimeoutEventHandler);
+        this.matchTimeoutEventHandler, matchPresenceEventTranslator);
     return new MatchDomainEventDispatcher(handlers);
   }
 
   @Bean
-  CupEventNotifier cupEventNotifier() {
+  CupEventNotifier cupEventNotifier(final CupPresenceEventTranslator cupPresenceEventTranslator) {
 
     final List<CupDomainEventHandler<?>> handlers = List.of(this.cupNotificationEventTranslator,
         this.publicCupLobbyEventTranslator, this.chatCupStartedHandler(chatEventNotifier()),
         this.chatCupFinishedHandler(), this.chatCupCancelledHandler(),
         this.spectatorAutoKickOnCupHandler, this.cupInvitationExpirationEventTranslator,
-        this.cupTimeoutEventHandler);
+        this.cupTimeoutEventHandler, cupPresenceEventTranslator);
     return new CompositeCupEventNotifier(handlers);
   }
 
   @Bean
-  LeagueEventNotifier leagueEventNotifier() {
+  LeagueEventNotifier leagueEventNotifier(
+      final LeaguePresenceEventTranslator leaguePresenceEventTranslator) {
 
     final List<LeagueDomainEventHandler<?>> handlers = List.of(
         this.leagueNotificationEventTranslator, this.publicLeagueLobbyEventTranslator,
         this.chatLeagueStartedHandler(chatEventNotifier()), this.chatLeagueFinishedHandler(),
         this.chatLeagueCancelledHandler(), this.spectatorAutoKickOnLeagueHandler,
-        this.leagueInvitationExpirationEventTranslator, this.leagueTimeoutEventHandler);
+        this.leagueInvitationExpirationEventTranslator, this.leagueTimeoutEventHandler,
+        leaguePresenceEventTranslator);
     return new CompositeLeagueEventNotifier(handlers);
   }
 

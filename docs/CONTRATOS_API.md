@@ -2001,6 +2001,55 @@ Errores:
 
 - `401` sin token o token inválido
 
+### 7.6.2 Presencia en tiempo real (push)
+
+`GET /api/me/presence` resuelve el **arranque en frío** (la foto al cargar/reconectar). Para
+mantener sincronizadas las sesiones ya abiertas mientras la ocupación cambia, el backend **empuja**
+los cambios por WebSocket/STOMP a la cola de usuario:
+
+`/user/queue/presence`
+
+Un mismo usuario puede tener la sesión iniciada en varios lugares (pestañas/dispositivos). Cuando su
+ocupación **cambia** en un dominio reconectable (entra a una partida, su liga/copa arranca o avanza,
+se abre/cierra una revancha, o se libera al finalizar), **todas** sus sesiones activas —incluida la
+que originó el cambio— reciben un mensaje con el snapshot completo de presencia, para derivar al
+recurso correcto (p. ej., una sesión ociosa que no entró al match igual se entera y deriva ahí).
+
+Mensaje empujado:
+
+```json
+{
+  "eventType": "PRESENCE_UPDATED",
+  "timestamp": 1717612800000,
+  "payload": {
+    "busy": true,
+    "match": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "status": "IN_PROGRESS"
+    },
+    "league": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "status": "IN_PROGRESS",
+      "currentMatchId": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "cup": null,
+    "rematch": null
+  }
+}
+```
+
+- `payload` tiene **exactamente el mismo shape** que el body de `GET /api/me/presence`
+  (`UserPresenceResponse`): `busy` + `match`/`league`/`cup`/`rematch` (objeto u `null`).
+- Las notificaciones llegan **solo** a las sesiones del propio usuario (nunca a terceros).
+- Es **solo lectura**: emitir el push no modifica partidas/ligas/copas/revanchas ni reinicia sus
+  temporizadores de inactividad.
+- **Complementa, no reemplaza** a `GET /api/me/presence`: el stream cubre los cambios **posteriores
+  **
+  a la suscripción; el arranque en frío y la reconciliación ante un mensaje perdido se resuelven con
+  la consulta pull (entrega best-effort).
+- **Quick Match** y **bots** quedan fuera (la cola de quick match no genera push; sí la partida ya
+  creada).
+
 ## 8. Enums y valores permitidos
 
 Estos valores son case-sensitive y deben enviarse exactamente igual, en mayusculas y con guiones
@@ -2103,6 +2152,7 @@ Suscripciones permitidas por interceptor:
 - `/user/queue/chat` - eventos de chat en tiempo real
 - `/user/queue/social` - eventos de amistades e invitaciones
 - `/user/queue/profile` - eventos de logros del perfil
+- `/user/queue/presence` - cambios de presencia/ocupación del usuario (`PRESENCE_UPDATED`)
 
 - `/topic/public-match-lobby` - stream compartido del lobby publico de matches
 - `/topic/public-cup-lobby` - stream compartido del lobby publico de copas
