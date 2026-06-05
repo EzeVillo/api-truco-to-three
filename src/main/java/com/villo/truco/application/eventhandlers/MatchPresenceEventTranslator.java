@@ -4,6 +4,7 @@ import com.villo.truco.application.ports.out.MatchDomainEventHandler;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
+import com.villo.truco.domain.model.match.events.MatchCreatedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
@@ -33,10 +34,11 @@ public final class MatchPresenceEventTranslator implements
 
   private static boolean isOccupancyTransition(final MatchDomainEvent event) {
 
-    return event instanceof PlayerJoinedEvent || (event instanceof GameStartedEvent gameStarted
-        && gameStarted.getGameNumber() == 1) || event instanceof MatchFinishedEvent
-        || event instanceof MatchCancelledEvent || event instanceof MatchAbandonedEvent
-        || event instanceof MatchForfeitedEvent || event instanceof MatchPlayerLeftEvent;
+    return event instanceof MatchCreatedEvent || event instanceof PlayerJoinedEvent || (
+        event instanceof GameStartedEvent gameStarted && gameStarted.getGameNumber() == 1)
+        || event instanceof MatchFinishedEvent || event instanceof MatchCancelledEvent
+        || event instanceof MatchAbandonedEvent || event instanceof MatchForfeitedEvent
+        || event instanceof MatchPlayerLeftEvent;
   }
 
   @Override

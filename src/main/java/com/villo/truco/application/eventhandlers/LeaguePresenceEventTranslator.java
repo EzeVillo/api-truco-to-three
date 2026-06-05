@@ -3,6 +3,7 @@ package com.villo.truco.application.eventhandlers;
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.domain.model.league.events.LeagueAdvancedEvent;
 import com.villo.truco.domain.model.league.events.LeagueCancelledEvent;
+import com.villo.truco.domain.model.league.events.LeagueCreatedEvent;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
 import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
 import com.villo.truco.domain.model.league.events.LeagueMatchActivatedEvent;
@@ -33,10 +34,11 @@ public final class LeaguePresenceEventTranslator implements
 
   private static boolean isOccupancyTransition(final LeagueDomainEvent event) {
 
-    return event instanceof LeaguePlayerJoinedEvent || event instanceof LeagueStartedEvent
-        || event instanceof LeagueMatchActivatedEvent || event instanceof LeagueAdvancedEvent
-        || event instanceof LeagueFinishedEvent || event instanceof LeagueCancelledEvent
-        || event instanceof LeaguePlayerLeftEvent || event instanceof LeaguePlayerForfeitedEvent;
+    return event instanceof LeagueCreatedEvent || event instanceof LeaguePlayerJoinedEvent
+        || event instanceof LeagueStartedEvent || event instanceof LeagueMatchActivatedEvent
+        || event instanceof LeagueAdvancedEvent || event instanceof LeagueFinishedEvent
+        || event instanceof LeagueCancelledEvent || event instanceof LeaguePlayerLeftEvent
+        || event instanceof LeaguePlayerForfeitedEvent;
   }
 
   @Override

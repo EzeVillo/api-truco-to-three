@@ -11,6 +11,7 @@ import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.events.MatchCreatedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.PublicMatchLobbyOpenedEvent;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
@@ -395,8 +396,9 @@ class CreateMatchCommandHandlerTest {
         Visibility.PUBLIC.name()));
 
     assertThat(savedMatch.get()).isNotNull();
-    assertThat(publishedEvents).hasSize(1);
-    assertThat(publishedEvents.getFirst()).isInstanceOf(PublicMatchLobbyOpenedEvent.class);
+    assertThat(publishedEvents).hasSize(2);
+    assertThat(publishedEvents.getFirst()).isInstanceOf(MatchCreatedEvent.class);
+    assertThat(publishedEvents).anyMatch(PublicMatchLobbyOpenedEvent.class::isInstance);
     assertThat(savedMatch.get().getMatchDomainEvents()).isEmpty();
   }
 

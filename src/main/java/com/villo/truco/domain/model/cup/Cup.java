@@ -3,6 +3,7 @@ package com.villo.truco.domain.model.cup;
 import com.villo.truco.domain.model.cup.events.CupAdvancedEvent;
 import com.villo.truco.domain.model.cup.events.CupBoutActivatedEvent;
 import com.villo.truco.domain.model.cup.events.CupCancelledEvent;
+import com.villo.truco.domain.model.cup.events.CupCreatedEvent;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.cup.events.CupFinishedEvent;
 import com.villo.truco.domain.model.cup.events.CupMatchActivatedEvent;
@@ -95,6 +96,7 @@ public final class Cup extends AggregateBase<CupId> {
     final var cup = new Cup(CupId.generate(), participants, new ArrayList<>(), new HashSet<>(),
         numberOfPlayers, gamesToPlay, visibility, JoinCode.generate(),
         CupStatus.WAITING_FOR_PLAYERS, null);
+    cup.addDomainEvent(new CupCreatedEvent(cup.getId(), List.copyOf(participants)));
     if (visibility == Visibility.PUBLIC) {
       cup.addDomainEvent(new PublicCupLobbyOpenedEvent(cup.getId(), creatorId));
     }

@@ -9,6 +9,7 @@ import com.villo.truco.application.commands.StartCupCommand;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
+import com.villo.truco.domain.model.cup.events.CupCreatedEvent;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.cup.events.PublicCupLobbyOpenedEvent;
 import com.villo.truco.domain.model.cup.valueobjects.BoutStatus;
@@ -254,8 +255,9 @@ class CupCommandHandlersTest {
     assertThat(result.cupId()).isEqualTo(saved.get().getId().value().toString());
     assertThat(result.joinCode()).isEqualTo(saved.get().getJoinCode().value());
     assertThat(result.joinCode()).isNotBlank();
-    assertThat(publishedEvents).hasSize(1);
-    assertThat(publishedEvents.getFirst()).isInstanceOf(PublicCupLobbyOpenedEvent.class);
+    assertThat(publishedEvents).hasSize(2);
+    assertThat(publishedEvents.getFirst()).isInstanceOf(CupCreatedEvent.class);
+    assertThat(publishedEvents).anyMatch(PublicCupLobbyOpenedEvent.class::isInstance);
     assertThat(saved.get().getCupDomainEvents()).isEmpty();
   }
 

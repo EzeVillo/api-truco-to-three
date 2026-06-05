@@ -6,6 +6,7 @@ import com.villo.truco.domain.model.match.events.GameScoreChangedEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
 import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
+import com.villo.truco.domain.model.match.events.MatchCreatedEvent;
 import com.villo.truco.domain.model.match.events.MatchDerivedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
@@ -100,6 +101,7 @@ public final class Match extends AggregateBase<MatchId> {
 
     final var match = new Match(MatchId.generate(), playerOne, null, JoinCode.generate(), rules,
         visibility, MatchStatus.WAITING_FOR_PLAYERS);
+    match.addDomainEvent(new MatchCreatedEvent(match.getId(), playerOne));
     if (visibility == Visibility.PUBLIC) {
       match.addDomainEvent(new PublicMatchLobbyOpenedEvent(match.getId(), playerOne));
     }

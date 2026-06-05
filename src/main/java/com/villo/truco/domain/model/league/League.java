@@ -2,6 +2,7 @@ package com.villo.truco.domain.model.league;
 
 import com.villo.truco.domain.model.league.events.LeagueAdvancedEvent;
 import com.villo.truco.domain.model.league.events.LeagueCancelledEvent;
+import com.villo.truco.domain.model.league.events.LeagueCreatedEvent;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
 import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
 import com.villo.truco.domain.model.league.events.LeagueFixtureActivatedEvent;
@@ -90,6 +91,7 @@ public final class League extends AggregateBase<LeagueId> {
     final var league = new League(LeagueId.generate(), participants, new ArrayList<>(),
         new LinkedHashMap<>(), LeagueStatus.WAITING_FOR_PLAYERS, numberOfPlayers, gamesToPlay,
         visibility, JoinCode.generate());
+    league.addDomainEvent(new LeagueCreatedEvent(league.getId(), List.copyOf(participants)));
     if (visibility == Visibility.PUBLIC) {
       league.addDomainEvent(new PublicLeagueLobbyOpenedEvent(league.getId(), creatorId));
     }

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
+import com.villo.truco.domain.model.match.events.MatchCreatedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -52,6 +53,21 @@ class MatchPresenceEventTranslatorTest {
     final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
     verify(notifier).notifyPlayers(captor.capture());
     assertThat(captor.getValue()).containsExactlyInAnyOrder(playerOne, playerTwo);
+  }
+
+  @Test
+  @DisplayName("ante MATCH_CREATED notifica al creador (host a la espera, ya ocupado)")
+  void notifiesOnMatchCreated() {
+
+    final var notifier = mock(PresenceNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var creator = PlayerId.generate();
+
+    translator.handle(new MatchCreatedEvent(MatchId.generate(), creator));
+
+    final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
+    verify(notifier).notifyPlayers(captor.capture());
+    assertThat(captor.getValue()).contains(creator);
   }
 
   @Test

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import com.villo.truco.domain.model.cup.events.CupCreatedEvent;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.cup.events.CupMatchActivatedEvent;
 import com.villo.truco.domain.model.cup.events.CupPlayerLeftEvent;
@@ -19,6 +20,21 @@ import org.mockito.ArgumentCaptor;
 
 @DisplayName("CupPresenceEventTranslator")
 class CupPresenceEventTranslatorTest {
+
+  @Test
+  @DisplayName("ante CUP_CREATED notifica al creador (host a la espera, ya ocupado)")
+  void notifiesOnCupCreated() {
+
+    final var notifier = mock(PresenceNotifier.class);
+    final var translator = new CupPresenceEventTranslator(notifier);
+    final var creator = PlayerId.generate();
+
+    translator.handle(new CupCreatedEvent(CupId.generate(), List.of(creator)));
+
+    final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
+    verify(notifier).notifyPlayers(captor.capture());
+    assertThat(captor.getValue()).containsExactly(creator);
+  }
 
   @Test
   @DisplayName("ante CUP_MATCH_ACTIVATED notifica a todos los participantes")

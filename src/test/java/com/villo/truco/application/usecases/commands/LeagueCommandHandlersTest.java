@@ -10,6 +10,7 @@ import com.villo.truco.domain.model.bot.BotProfile;
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.League;
+import com.villo.truco.domain.model.league.events.LeagueCreatedEvent;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
 import com.villo.truco.domain.model.league.events.PublicLeagueLobbyOpenedEvent;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
@@ -235,8 +236,9 @@ class LeagueCommandHandlersTest {
     assertThat(result.leagueId()).isEqualTo(saved.get().getId().value().toString());
     assertThat(result.joinCode()).isEqualTo(saved.get().getJoinCode().value());
     assertThat(result.joinCode()).isNotBlank();
-    assertThat(publishedEvents).hasSize(1);
-    assertThat(publishedEvents.getFirst()).isInstanceOf(PublicLeagueLobbyOpenedEvent.class);
+    assertThat(publishedEvents).hasSize(2);
+    assertThat(publishedEvents.getFirst()).isInstanceOf(LeagueCreatedEvent.class);
+    assertThat(publishedEvents).anyMatch(PublicLeagueLobbyOpenedEvent.class::isInstance);
     assertThat(saved.get().getLeagueDomainEvents()).isEmpty();
   }
 
