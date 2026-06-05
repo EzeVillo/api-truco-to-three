@@ -60,6 +60,12 @@ class CreateMatchCommandHandlerTest {
     }
 
     @Override
+    public Optional<Match> findUnfinishedByPlayer(final PlayerId playerId) {
+
+      return Optional.empty();
+    }
+
+    @Override
     public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
       return List.of();
@@ -324,6 +330,12 @@ class CreateMatchCommandHandlerTest {
       public boolean hasUnfinishedMatch(final PlayerId playerId) {
 
         return true;
+      }
+
+      @Override
+      public Optional<Match> findUnfinishedByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
       }
 
       @Override

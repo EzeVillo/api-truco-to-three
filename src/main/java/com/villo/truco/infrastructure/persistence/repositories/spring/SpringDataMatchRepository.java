@@ -19,6 +19,11 @@ public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity,
       + "WHERE m.status NOT IN ('FINISHED', 'CANCELLED') AND (m.playerOne = :playerId OR m.playerTwo = :playerId)")
   boolean hasUnfinishedMatch(@Param("playerId") UUID playerId);
 
+  @Query("SELECT m FROM MatchJpaEntity m " + "WHERE m.status NOT IN ('FINISHED', 'CANCELLED') "
+      + "AND (m.playerOne = :playerId OR m.playerTwo = :playerId) "
+      + "ORDER BY m.lastActivityAt DESC")
+  List<MatchJpaEntity> findUnfinishedByPlayer(@Param("playerId") UUID playerId, Pageable pageable);
+
   @Query("SELECT m.id FROM MatchJpaEntity m "
       + "WHERE m.status NOT IN ('FINISHED', 'CANCELLED') AND m.lastActivityAt < :idleSince")
   List<UUID> findIdleMatchIds(@Param("idleSince") Instant idleSince);

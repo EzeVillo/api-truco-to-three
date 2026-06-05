@@ -94,6 +94,12 @@ class PublicMatchLobbyEventTranslatorTest {
       }
 
       @Override
+      public Optional<Match> findUnfinishedByPlayer(final PlayerId playerId) {
+
+        return Optional.empty();
+      }
+
+      @Override
       public List<MatchId> findIdleMatchIds(final Instant idleSince) {
 
         return List.of();

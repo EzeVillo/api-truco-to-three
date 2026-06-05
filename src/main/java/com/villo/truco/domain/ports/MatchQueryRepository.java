@@ -17,6 +17,8 @@ public interface MatchQueryRepository {
 
   boolean hasUnfinishedMatch(PlayerId playerId);
 
+  Optional<Match> findUnfinishedByPlayer(PlayerId playerId);
+
   List<MatchId> findIdleMatchIds(Instant idleSince);
 
   List<Match> findPublicWaiting();

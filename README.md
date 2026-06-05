@@ -312,6 +312,9 @@ Recursos REST principales:
 - `/api/profile`
 - `/api/achievements` — catálogo de logros existentes (solo los códigos); el frontend lo cruza con
   `/api/profile/{username}` para mostrar todos los logros con marca de desbloqueado
+- `/api/me/presence` — `GET` de solo lectura que devuelve, para el usuario autenticado, en qué
+  partida, liga, copa o revancha está ocupado (con los identificadores necesarios para reconectarse
+  tras un refresco). No incluye Quick Match porque no sobrevive a la desconexión
 
 ## Salas Publicas y Privadas
 
