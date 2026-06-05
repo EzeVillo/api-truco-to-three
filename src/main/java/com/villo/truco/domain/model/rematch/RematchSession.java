@@ -72,6 +72,14 @@ public final class RematchSession extends AggregateBase<RematchSessionId> {
     session.addDomainEvent(
         new RematchSessionOpenedEvent(id, originMatchId, playerOneId, playerTwoId, expiresAt,
             playerOneIsBot, playerTwoIsBot));
+    if (playerOneIsBot && !playerTwoIsBot) {
+      session.addDomainEvent(
+          new RematchPlayerWantsRematchEvent(id, originMatchId, playerOneId, playerTwoId));
+    }
+    if (playerTwoIsBot && !playerOneIsBot) {
+      session.addDomainEvent(
+          new RematchPlayerWantsRematchEvent(id, originMatchId, playerTwoId, playerOneId));
+    }
     return session;
   }
 

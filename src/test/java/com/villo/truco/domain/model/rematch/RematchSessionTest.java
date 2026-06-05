@@ -95,6 +95,45 @@ class RematchSessionTest {
       assertThat(session.isPlayerOneIsBot()).isTrue();
     }
 
+    @Test
+    @DisplayName("emits RematchPlayerWantsRematchEvent for the bot when playerTwo is bot, notifying the human")
+    void emitsWantsRematchEventForBotPlayerTwo() {
+
+      final var session = RematchSession.open(originMatchId, playerOne, playerTwo, 2, false, true,
+          now, ttl);
+
+      final var wants = session.getRematchDomainEvents().stream()
+          .filter(e -> e instanceof RematchPlayerWantsRematchEvent)
+          .map(e -> (RematchPlayerWantsRematchEvent) e).findFirst().orElseThrow();
+      assertThat(wants.getActorId()).isEqualTo(playerTwo);
+      assertThat(wants.getOtherPlayerId()).isEqualTo(playerOne);
+    }
+
+    @Test
+    @DisplayName("emits RematchPlayerWantsRematchEvent for the bot when playerOne is bot, notifying the human")
+    void emitsWantsRematchEventForBotPlayerOne() {
+
+      final var session = RematchSession.open(originMatchId, playerOne, playerTwo, 2, true, false,
+          now, ttl);
+
+      final var wants = session.getRematchDomainEvents().stream()
+          .filter(e -> e instanceof RematchPlayerWantsRematchEvent)
+          .map(e -> (RematchPlayerWantsRematchEvent) e).findFirst().orElseThrow();
+      assertThat(wants.getActorId()).isEqualTo(playerOne);
+      assertThat(wants.getOtherPlayerId()).isEqualTo(playerTwo);
+    }
+
+    @Test
+    @DisplayName("does not emit RematchPlayerWantsRematchEvent when both players are bots")
+    void doesNotEmitWantsRematchWhenBothBots() {
+
+      final var session = RematchSession.open(originMatchId, playerOne, playerTwo, 2, true, true,
+          now, ttl);
+
+      assertThat(session.getRematchDomainEvents()).noneMatch(
+          e -> e instanceof RematchPlayerWantsRematchEvent);
+    }
+
   }
 
   @Nested

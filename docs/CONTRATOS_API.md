@@ -2922,8 +2922,9 @@ procesar `UNSUBSCRIBE` o `DISCONNECT`.
 - Mientras la sesion este `OPEN`, el jugador tiene disponibilidad bloqueada: cualquier intento de
   crear o unirse a otra partida, liga, copa o aceptar una invitacion social devolvera `422` con
   `PlayerHasOpenRematchSessionException`. Mostrar mensaje orientativo.
-- Si el bot es oponente, acepta automaticamente al abrirse la sesion (`REMATCH_OPPONENT_WANTS` no
-  se emite). El bot no puede abandonar. El FE puede ignorar el estado `playerTwoChoice` en
-  partidas contra bot.
+- Si el bot es oponente, acepta automaticamente al abrirse la sesion: junto con
+  `REMATCH_SESSION_OPENED` se emite un `REMATCH_OPPONENT_WANTS` con el bot como `actor`, de modo
+  que el FE recibe por push que el oponente ya quiere revancha (mismo evento que para un humano).
+  El bot no puede abandonar.
 - La sesion expira por TTL configurable (por defecto `PT2M`). Tras `REMATCH_EXPIRED` la
   disponibilidad del jugador se libera automaticamente.
