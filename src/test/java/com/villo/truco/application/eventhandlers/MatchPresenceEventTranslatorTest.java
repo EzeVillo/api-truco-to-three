@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import com.villo.truco.domain.model.match.events.GameStartedEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
@@ -51,6 +52,35 @@ class MatchPresenceEventTranslatorTest {
     final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
     verify(notifier).notifyPlayers(captor.capture());
     assertThat(captor.getValue()).containsExactlyInAnyOrder(playerOne, playerTwo);
+  }
+
+  @Test
+  @DisplayName("ante GAME_STARTED del primer juego notifica (cubre bot match y quick match)")
+  void notifiesOnFirstGameStarted() {
+
+    final var notifier = mock(PresenceNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var playerOne = PlayerId.generate();
+    final var playerTwo = PlayerId.generate();
+
+    translator.handle(new GameStartedEvent(MatchId.generate(), playerOne, playerTwo, 1));
+
+    final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
+    verify(notifier).notifyPlayers(captor.capture());
+    assertThat(captor.getValue()).containsExactlyInAnyOrder(playerOne, playerTwo);
+  }
+
+  @Test
+  @DisplayName("ante GAME_STARTED de un juego posterior no notifica (no es borde de ocupacion)")
+  void ignoresLaterGameStarted() {
+
+    final var notifier = mock(PresenceNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier);
+
+    translator.handle(
+        new GameStartedEvent(MatchId.generate(), PlayerId.generate(), PlayerId.generate(), 2));
+
+    verifyNoInteractions(notifier);
   }
 
   @Test
