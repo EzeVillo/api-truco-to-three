@@ -7,6 +7,9 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
+import com.villo.truco.application.events.ApplicationEvent;
+import com.villo.truco.application.events.InTransactionApplicationEvent;
+import com.villo.truco.application.events.PostCommitApplicationEvent;
 
 @AnalyzeClasses(packages = "com.villo.truco", importOptions = ImportOption.DoNotIncludeTests.class)
 class CleanArchitectureTest {
@@ -111,5 +114,14 @@ class CleanArchitectureTest {
       .that().resideInAPackage("com.villo.truco.domain..").should().dependOnClassesThat()
       .resideInAnyPackage("com.villo.truco.infrastructure.scheduler..",
           "com.villo.truco.application.ports.out.timeout..");
+
+  @ArchTest
+  static final ArchRule application_events_must_declare_emission_timing_marker = ArchRuleDefinition.classes()
+      .that().areAssignableTo(ApplicationEvent.class).and().areNotInterfaces().should()
+      .beAssignableTo(PostCommitApplicationEvent.class).orShould()
+      .beAssignableTo(InTransactionApplicationEvent.class).because(
+          "todo ApplicationEvent concreto debe declarar su timing de emision: "
+              + "PostCommitApplicationEvent para notificaciones al usuario (post-commit) o "
+              + "InTransactionApplicationEvent para coordinacion con escrituras atomicas (in-tx)");
 
 }
