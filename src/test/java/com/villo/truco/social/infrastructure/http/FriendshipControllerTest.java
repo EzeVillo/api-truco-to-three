@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.villo.truco.social.application.dto.FriendAvailabilityStatus;
+import com.villo.truco.social.application.dto.FriendBusyReason;
 import com.villo.truco.social.application.dto.FriendSummaryDTO;
 import com.villo.truco.social.application.dto.IncomingFriendshipRequestDTO;
 import com.villo.truco.social.application.dto.OutgoingFriendshipRequestDTO;
@@ -42,8 +44,10 @@ class FriendshipControllerTest {
         GetFriendshipRequestsUseCase.class);
     final GetSentFriendshipRequestsUseCase getSentFriendshipRequestsUseCase = mock(
         GetSentFriendshipRequestsUseCase.class);
-    when(getFriendsUseCase.handle(any())).thenReturn(List.of(new FriendSummaryDTO("martina",
-        new SpectatableMatchRefDTO("550e8400-e29b-41d4-a716-446655440000", "IN_PROGRESS"))));
+    when(getFriendsUseCase.handle(any())).thenReturn(List.of(
+        new FriendSummaryDTO("martina", true, FriendAvailabilityStatus.BUSY,
+            FriendBusyReason.IN_MATCH,
+            new SpectatableMatchRefDTO("550e8400-e29b-41d4-a716-446655440000", "IN_PROGRESS"))));
     when(getFriendshipRequestsUseCase.handle(any())).thenReturn(
         List.of(new IncomingFriendshipRequestDTO("agus")));
     when(getSentFriendshipRequestsUseCase.handle(any())).thenReturn(

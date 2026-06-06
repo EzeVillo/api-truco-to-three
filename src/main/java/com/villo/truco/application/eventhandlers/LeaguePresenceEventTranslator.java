@@ -12,6 +12,7 @@ import com.villo.truco.domain.model.league.events.LeaguePlayerJoinedEvent;
 import com.villo.truco.domain.model.league.events.LeaguePlayerLeftEvent;
 import com.villo.truco.domain.model.league.events.LeagueStartedEvent;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -26,10 +27,13 @@ public final class LeaguePresenceEventTranslator implements
     LeagueDomainEventHandler<LeagueDomainEvent> {
 
   private final PresenceNotifier presenceNotifier;
+  private final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
 
-  public LeaguePresenceEventTranslator(final PresenceNotifier presenceNotifier) {
+  public LeaguePresenceEventTranslator(final PresenceNotifier presenceNotifier,
+      final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier) {
 
     this.presenceNotifier = Objects.requireNonNull(presenceNotifier);
+    this.friendAvailabilityChangeNotifier = Objects.requireNonNull(friendAvailabilityChangeNotifier);
   }
 
   private static boolean isOccupancyTransition(final LeagueDomainEvent event) {
@@ -62,6 +66,10 @@ public final class LeaguePresenceEventTranslator implements
     }
 
     this.presenceNotifier.notifyPlayers(affected);
+    for (final PlayerId player : affected) {
+      this.friendAvailabilityChangeNotifier.notifyAvailabilityChanged(player,
+          event.getTimestamp());
+    }
   }
 
 }

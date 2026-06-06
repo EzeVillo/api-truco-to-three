@@ -2,7 +2,10 @@ package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +14,7 @@ import com.villo.truco.domain.model.quickmatch.QuickMatchTicket;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,13 +25,16 @@ import org.junit.jupiter.api.Test;
 class CancelQuickMatchSearchCommandHandlerTest {
 
   private QuickMatchQueuePort queuePort;
+  private FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
   private CancelQuickMatchSearchCommandHandler handler;
 
   @BeforeEach
   void setUp() {
 
     queuePort = mock(QuickMatchQueuePort.class);
-    handler = new CancelQuickMatchSearchCommandHandler(queuePort);
+    friendAvailabilityChangeNotifier = mock(FriendAvailabilityChangeNotifier.class);
+    handler = new CancelQuickMatchSearchCommandHandler(queuePort,
+        friendAvailabilityChangeNotifier);
   }
 
   @Test
@@ -41,6 +48,7 @@ class CancelQuickMatchSearchCommandHandlerTest {
     handler.handle(new CancelQuickMatchSearchCommand(player));
 
     verify(queuePort).tryDequeue(player);
+    verify(friendAvailabilityChangeNotifier).notifyAvailabilityChanged(eq(player), anyLong());
   }
 
   @Test
@@ -53,6 +61,7 @@ class CancelQuickMatchSearchCommandHandlerTest {
     assertThatCode(
         () -> handler.handle(new CancelQuickMatchSearchCommand(player))).doesNotThrowAnyException();
     verify(queuePort).tryDequeue(player);
+    verify(friendAvailabilityChangeNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
   }
 
 }

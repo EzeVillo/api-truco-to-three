@@ -17,6 +17,7 @@ import com.villo.truco.social.application.ports.in.DeclineFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.DeclineResourceInvitationUseCase;
 import com.villo.truco.social.application.ports.in.ExpireResourceInvitationUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendActivityUseCase;
+import com.villo.truco.social.application.ports.in.GetFriendAvailabilityUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendsUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendshipRequestsUseCase;
 import com.villo.truco.social.application.ports.in.GetResourceInvitationsUseCase;
@@ -24,7 +25,9 @@ import com.villo.truco.social.application.ports.in.GetSentFriendshipRequestsUseC
 import com.villo.truco.social.application.ports.in.GetSentResourceInvitationsUseCase;
 import com.villo.truco.social.application.ports.in.RemoveFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.RequestFriendshipUseCase;
+import com.villo.truco.social.application.ports.out.FriendOnlinePresencePort;
 import com.villo.truco.social.application.services.FriendActivityResolver;
+import com.villo.truco.social.application.services.FriendAvailabilityResolver;
 import com.villo.truco.social.application.services.FriendshipResolver;
 import com.villo.truco.social.application.services.InvitationTargetService;
 import com.villo.truco.social.application.services.ResourceInvitationPolicy;
@@ -45,6 +48,7 @@ import com.villo.truco.social.application.usecases.commands.ExpireResourceInvita
 import com.villo.truco.social.application.usecases.commands.RemoveFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RequestFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendActivityQueryHandler;
+import com.villo.truco.social.application.usecases.queries.GetFriendAvailabilityQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendshipRequestsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetResourceInvitationsQueryHandler;
@@ -176,6 +180,16 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
+  FriendAvailabilityResolver friendAvailabilityResolver(
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
+      @Lazy final FriendOnlinePresencePort friendOnlinePresencePort) {
+
+    return new FriendAvailabilityResolver(this.friendshipQueryRepository, this.matchQueryRepository,
+        this.userQueryRepository, playerAvailabilityChecker, friendOnlinePresencePort,
+        this.resourceInvitationQueryRepository);
+  }
+
+  @Bean
   RequestFriendshipUseCase requestFriendshipUseCase(final SocialEventNotifier socialEventNotifier) {
 
     final var handler = new RequestFriendshipCommandHandler(this.socialUserGuard(),
@@ -216,16 +230,26 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
-  GetFriendsUseCase getFriendsUseCase() {
+  GetFriendsUseCase getFriendsUseCase(final PlayerAvailabilityChecker playerAvailabilityChecker,
+      final FriendOnlinePresencePort friendOnlinePresencePort) {
 
-    return new GetFriendsQueryHandler(this.socialUserGuard(), this.friendshipQueryRepository,
-        this.matchQueryRepository, this.socialViewAssembler());
+    return new GetFriendsQueryHandler(this.socialUserGuard(),
+        this.friendAvailabilityResolver(playerAvailabilityChecker, friendOnlinePresencePort));
   }
 
   @Bean
   GetFriendActivityUseCase getFriendActivityUseCase() {
 
     return new GetFriendActivityQueryHandler(this.socialUserGuard(), this.friendActivityResolver());
+  }
+
+  @Bean
+  GetFriendAvailabilityUseCase getFriendAvailabilityUseCase(
+      final PlayerAvailabilityChecker playerAvailabilityChecker,
+      final FriendOnlinePresencePort friendOnlinePresencePort) {
+
+    return new GetFriendAvailabilityQueryHandler(this.socialUserGuard(),
+        this.friendAvailabilityResolver(playerAvailabilityChecker, friendOnlinePresencePort));
   }
 
   @Bean

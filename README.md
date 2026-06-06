@@ -75,12 +75,13 @@ games.
   amigos aceptados y DM efimero por `FRIENDSHIP`. El envio de invitaciones valida que el
   destinatario no este ocupado en otra partida o torneo. La API separa `friendship-requests`
   (pendientes) de `friendships` (amistades aceptadas) y expone jugadores por `username`, no por
-  `PlayerId`. En amistades aceptadas, `GET /api/social/friendships` incluye `spectatableMatch`
-  cuando el amigo esta jugando un match `IN_PROGRESS`; ese `id` se usa para entrar por el flujo de
-  spectate existente. La cola `/user/queue/social` envia `FRIEND_ACTIVITY_STATE` al suscribirse y
-  `FRIEND_ACTIVITY_CHANGED` cuando un amigo empieza o deja de tener una partida espectable, sin
-  exponer cartas ni estado privado. `friendshipId` queda solo como identidad interna del agregado y
-  no forma parte del contrato publico REST/WebSocket.
+  `PlayerId`. En amistades aceptadas, `GET /api/social/friendships` incluye `online`,
+  `availability`, `busyReason` y `spectatableMatch`. `availability` indica si se puede invitar al
+  amigo; `online` es una senal separada basada en sesiones WebSocket activas. `spectatableMatch.id`
+  se usa para entrar por el flujo de spectate existente. La cola `/user/queue/social` envia
+  `FRIEND_AVAILABILITY_STATE` al suscribirse y `FRIEND_AVAILABILITY_CHANGED` cuando cambia
+  disponibilidad, online o spectate, sin exponer cartas ni estado privado. `friendshipId` queda solo
+  como identidad interna del agregado y no forma parte del contrato publico REST/WebSocket.
 - Profile:
   tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
   interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea
@@ -366,7 +367,7 @@ WebSocket/STOMP:
   enviando header nativo `matchId`; la API expone `GET /api/matches/{matchId}/spectate` para leer
   el snapshot del espectador ya registrado. Para amigos, el `matchId` se descubre en
   `GET /api/social/friendships` dentro de `spectatableMatch`. La disponibilidad de ese campo se
-  mantiene en vivo por `/user/queue/social` con eventos de actividad de amigos.
+  mantiene en vivo por `/user/queue/social` con eventos de disponibilidad de amigos.
 
 ## Observabilidad y operacion
 

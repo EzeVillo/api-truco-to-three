@@ -3,7 +3,9 @@ package com.villo.truco.social.infrastructure.websocket;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.websocket.WebSocketUserNaming;
 import com.villo.truco.social.application.ports.in.GetFriendActivityUseCase;
+import com.villo.truco.social.application.ports.in.GetFriendAvailabilityUseCase;
 import com.villo.truco.social.application.queries.GetFriendActivityQuery;
+import com.villo.truco.social.application.queries.GetFriendAvailabilityQuery;
 import com.villo.truco.social.infrastructure.websocket.dto.SocialWsEvent;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -19,18 +21,22 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 final class SocialSubscribeEventListener {
 
   static final String STATE_EVENT_TYPE = "FRIEND_ACTIVITY_STATE";
+  static final String AVAILABILITY_STATE_EVENT_TYPE = "FRIEND_AVAILABILITY_STATE";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SocialSubscribeEventListener.class);
   private static final String SOCIAL_DESTINATION = "/user/queue/social";
   private static final String IDENTITY_ATTR = "authenticatedPlayer";
 
   private final GetFriendActivityUseCase getFriendActivityUseCase;
+  private final GetFriendAvailabilityUseCase getFriendAvailabilityUseCase;
   private final SimpMessagingTemplate messagingTemplate;
 
   SocialSubscribeEventListener(final GetFriendActivityUseCase getFriendActivityUseCase,
+      final GetFriendAvailabilityUseCase getFriendAvailabilityUseCase,
       final SimpMessagingTemplate messagingTemplate) {
 
     this.getFriendActivityUseCase = Objects.requireNonNull(getFriendActivityUseCase);
+    this.getFriendAvailabilityUseCase = Objects.requireNonNull(getFriendAvailabilityUseCase);
     this.messagingTemplate = Objects.requireNonNull(messagingTemplate);
   }
 
@@ -66,6 +72,15 @@ final class SocialSubscribeEventListener {
 
     this.messagingTemplate.convertAndSendToUser(WebSocketUserNaming.userName(playerId),
         "/queue/social", wsEvent);
+
+    final var availabilityState = this.getFriendAvailabilityUseCase.handle(
+        new GetFriendAvailabilityQuery(PlayerId.of(playerId)));
+    final var availabilityPayload = new LinkedHashMap<String, Object>();
+    availabilityPayload.put("friends", availabilityState.friends());
+    final var availabilityWsEvent = new SocialWsEvent(AVAILABILITY_STATE_EVENT_TYPE,
+        System.currentTimeMillis(), availabilityPayload);
+    this.messagingTemplate.convertAndSendToUser(WebSocketUserNaming.userName(playerId),
+        "/queue/social", availabilityWsEvent);
   }
 
 }

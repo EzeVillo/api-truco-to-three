@@ -85,6 +85,7 @@ public final class FriendActivityMatchEventTranslator implements
           new FriendActivityNotification(List.of(entry.getKey()), CHANGED_EVENT_TYPE,
               event.getTimestamp(), payload(entry.getValue())));
     }
+
   }
 
 }

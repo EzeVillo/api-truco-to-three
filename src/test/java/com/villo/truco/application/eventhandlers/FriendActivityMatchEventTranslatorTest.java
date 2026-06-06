@@ -37,8 +37,9 @@ class FriendActivityMatchEventTranslatorTest {
 
     translator.handle(new GameStartedEvent(matchId, player, rival, 1));
 
-    assertThat(publisher.events()).singleElement()
-        .isInstanceOfSatisfying(FriendActivityNotification.class, event -> {
+    assertThat(publisher.events()).hasSize(1);
+    assertThat(publisher.events()).filteredOn(FriendActivityNotification.class::isInstance)
+        .singleElement().isInstanceOfSatisfying(FriendActivityNotification.class, event -> {
           assertThat(event.recipients()).containsExactly(friend);
           assertThat(event.eventType()).isEqualTo("FRIEND_ACTIVITY_CHANGED");
           assertThat(event.payload()).containsEntry("friendUsername", "martina");
@@ -62,8 +63,9 @@ class FriendActivityMatchEventTranslatorTest {
 
     translator.handle(new MatchFinishedEvent(matchId, player, rival, PlayerSeat.PLAYER_ONE, 2, 0));
 
-    assertThat(publisher.events()).singleElement()
-        .isInstanceOfSatisfying(FriendActivityNotification.class, event -> {
+    assertThat(publisher.events()).hasSize(1);
+    assertThat(publisher.events()).filteredOn(FriendActivityNotification.class::isInstance)
+        .singleElement().isInstanceOfSatisfying(FriendActivityNotification.class, event -> {
           assertThat(event.recipients()).containsExactly(friend);
           assertThat(event.payload()).containsEntry("friendUsername", "martina");
           assertThat(event.payload()).containsEntry("spectatableMatch", null);

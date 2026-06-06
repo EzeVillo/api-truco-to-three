@@ -1681,6 +1681,9 @@ Response `200`:
 [
   {
     "friendUsername": "martina",
+    "online": true,
+    "availability": "BUSY",
+    "busyReason": "IN_MATCH",
     "spectatableMatch": {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "status": "IN_PROGRESS"
@@ -1688,6 +1691,9 @@ Response `200`:
   },
   {
     "friendUsername": "agus",
+    "online": false,
+    "availability": "AVAILABLE",
+    "busyReason": null,
     "spectatableMatch": null
   }
 ]
@@ -1695,13 +1701,21 @@ Response `200`:
 
 Notas:
 
+- `availability` indica si el amigo puede recibir o aceptar una invitacion a partida:
+  `AVAILABLE` o `BUSY`.
+- `busyReason` es `null` si `availability = AVAILABLE`; si esta `BUSY`, puede ser `IN_MATCH`,
+  `IN_LEAGUE`, `IN_CUP`, `OPEN_REMATCH`, `IN_QUICK_QUEUE`, `PENDING_INVITATION`,
+  `PENDING_FRIEND_REQUEST` o `UNKNOWN`.
+- `online` es presencia aproximada por sesiones WebSocket activas conocidas y no cambia por si
+  misma la disponibilidad para invitar.
 - `spectatableMatch` es `null` cuando el amigo no tiene una partida `IN_PROGRESS`.
 - `spectatableMatch.id` se usa como header `matchId` al suscribirse a
   `/user/queue/match-spectate`.
 - El alta de espectador sigue siendo WebSocket-first; este endpoint solo permite descubrir partidas
   espectables de amigos.
 - El estado inicial puede reconciliarse luego por `/user/queue/social` con
-  `FRIEND_ACTIVITY_STATE`, y los cambios posteriores llegan como `FRIEND_ACTIVITY_CHANGED`.
+  `FRIEND_AVAILABILITY_STATE`, y los cambios posteriores llegan como
+  `FRIEND_AVAILABILITY_CHANGED`.
 
 ### 7.4.6 Listar solicitudes recibidas
 
@@ -2285,16 +2299,19 @@ Cada tipo de recurso tiene su propia estructura de evento:
 }
 ```
 
-Actividad de amigos, snapshot al suscribirse a `/user/queue/social`:
+Disponibilidad de amigos, snapshot al suscribirse a `/user/queue/social`:
 
 ```json
 {
-  "eventType": "FRIEND_ACTIVITY_STATE",
+  "eventType": "FRIEND_AVAILABILITY_STATE",
   "timestamp": 1772768158123,
   "payload": {
     "friends": [
       {
         "friendUsername": "martina",
+        "online": true,
+        "availability": "BUSY",
+        "busyReason": "IN_MATCH",
         "spectatableMatch": {
           "id": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
           "status": "IN_PROGRESS"
@@ -2302,6 +2319,9 @@ Actividad de amigos, snapshot al suscribirse a `/user/queue/social`:
       },
       {
         "friendUsername": "agus",
+        "online": false,
+        "availability": "AVAILABLE",
+        "busyReason": null,
         "spectatableMatch": null
       }
     ]
@@ -2309,14 +2329,17 @@ Actividad de amigos, snapshot al suscribirse a `/user/queue/social`:
 }
 ```
 
-Actividad de amigos, delta:
+Disponibilidad de amigos, delta:
 
 ```json
 {
-  "eventType": "FRIEND_ACTIVITY_CHANGED",
+  "eventType": "FRIEND_AVAILABILITY_CHANGED",
   "timestamp": 1772768158123,
   "payload": {
     "friendUsername": "martina",
+    "online": true,
+    "availability": "AVAILABLE",
+    "busyReason": null,
     "spectatableMatch": null
   }
 }
@@ -2480,9 +2503,10 @@ Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` to
 - `RESOURCE_INVITATION_DECLINED` - el destinatario rechazó una invitación enviada por el usuario
 - `RESOURCE_INVITATION_EXPIRED` - una invitación pendiente expiró por tiempo o por recurso no
   joinable
-- `FRIEND_ACTIVITY_STATE` - snapshot completo de actividad espectable de amigos aceptados enviado al
+- `FRIEND_AVAILABILITY_STATE` - snapshot completo de disponibilidad de amigos aceptados enviado al
   suscribirse a `/user/queue/social`
-- `FRIEND_ACTIVITY_CHANGED` - delta de un amigo cuando empieza o deja de tener `spectatableMatch`
+- `FRIEND_AVAILABILITY_CHANGED` - delta de un amigo cuando cambia disponibilidad, online o
+  `spectatableMatch`
 
 ### 9.5f eventType posibles - Profile (`/user/queue/profile`, usuarios registrados)
 
@@ -2903,11 +2927,14 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
 - Las novedades sociales llegan por `/user/queue/social`; no reemplazan el flujo existente de
   `joinCode`, solo agregan targeting y UX mas rapida entre amigos.
-- Al suscribirse a `/user/queue/social`, el backend envia `FRIEND_ACTIVITY_STATE` para reconciliar
+- Al suscribirse a `/user/queue/social`, el backend envia `FRIEND_AVAILABILITY_STATE` para
+  reconciliar
   la lista de amigos despues del bootstrap REST o una reconexion. Luego envia
-  `FRIEND_ACTIVITY_CHANGED` por cada alta/baja de `spectatableMatch`.
-- La actividad social de amigos solo incluye `friendUsername` y `spectatableMatch` nullable. No
-  incluye cartas, acciones disponibles ni estado privado de ronda.
+  `FRIEND_AVAILABILITY_CHANGED` cuando cambia `availability`, `busyReason`, `online` o
+  `spectatableMatch`.
+- La disponibilidad social de amigos solo incluye `friendUsername`, `online`, `availability`,
+  `busyReason` y `spectatableMatch` nullable. No incluye cartas, acciones disponibles ni estado
+  privado de ronda.
 - Los logros llegan por `/user/queue/profile` con evento `ACHIEVEMENT_UNLOCKED` y payload
   `{ achievementCode, unlockedAt, matchId, gameNumber }`.
 - El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al
