@@ -10,6 +10,8 @@ import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.MatchPlayerLeftEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -26,10 +28,14 @@ public final class MatchPresenceEventTranslator implements
     MatchDomainEventHandler<MatchDomainEvent> {
 
   private final PresenceNotifier presenceNotifier;
+  private final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
 
-  public MatchPresenceEventTranslator(final PresenceNotifier presenceNotifier) {
+  public MatchPresenceEventTranslator(final PresenceNotifier presenceNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
     this.presenceNotifier = Objects.requireNonNull(presenceNotifier);
+    this.friendPresenceAvailabilityNotifier = Objects.requireNonNull(
+        friendPresenceAvailabilityNotifier);
   }
 
   private static boolean isOccupancyTransition(final MatchDomainEvent event) {
@@ -54,7 +60,14 @@ public final class MatchPresenceEventTranslator implements
       return;
     }
 
-    this.presenceNotifier.notifyPlayers(Arrays.asList(event.getPlayerOne(), event.getPlayerTwo()));
+    final var affected = Arrays.asList(event.getPlayerOne(), event.getPlayerTwo());
+    this.presenceNotifier.notifyPlayers(affected);
+    for (final PlayerId player : affected) {
+      if (player != null) {
+        this.friendPresenceAvailabilityNotifier.notifyAvailabilityChanged(player,
+            event.getTimestamp());
+      }
+    }
   }
 
 }

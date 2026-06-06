@@ -13,6 +13,7 @@ import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import java.util.Collection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,15 +27,19 @@ class MatchPresenceEventTranslatorTest {
   void notifiesOnPlayerJoined() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier, friendNotifier);
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
+    final var event = new PlayerJoinedEvent(MatchId.generate(), playerOne, playerTwo);
 
-    translator.handle(new PlayerJoinedEvent(MatchId.generate(), playerOne, playerTwo));
+    translator.handle(event);
 
     final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
     verify(notifier).notifyPlayers(captor.capture());
     assertThat(captor.getValue()).containsExactlyInAnyOrder(playerOne, playerTwo);
+    verify(friendNotifier).notifyAvailabilityChanged(playerOne, event.getTimestamp());
+    verify(friendNotifier).notifyAvailabilityChanged(playerTwo, event.getTimestamp());
   }
 
   @Test
@@ -42,7 +47,8 @@ class MatchPresenceEventTranslatorTest {
   void notifiesOnMatchFinished() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var translator = new MatchPresenceEventTranslator(notifier,
+        mock(FriendPresenceAvailabilityNotifier.class));
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
 
@@ -60,14 +66,17 @@ class MatchPresenceEventTranslatorTest {
   void notifiesOnMatchCreated() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier, friendNotifier);
     final var creator = PlayerId.generate();
+    final var event = new MatchCreatedEvent(MatchId.generate(), creator);
 
-    translator.handle(new MatchCreatedEvent(MatchId.generate(), creator));
+    translator.handle(event);
 
     final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
     verify(notifier).notifyPlayers(captor.capture());
     assertThat(captor.getValue()).contains(creator);
+    verify(friendNotifier).notifyAvailabilityChanged(creator, event.getTimestamp());
   }
 
   @Test
@@ -75,7 +84,8 @@ class MatchPresenceEventTranslatorTest {
   void notifiesOnFirstGameStarted() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var translator = new MatchPresenceEventTranslator(notifier,
+        mock(FriendPresenceAvailabilityNotifier.class));
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
 
@@ -91,12 +101,14 @@ class MatchPresenceEventTranslatorTest {
   void ignoresLaterGameStarted() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier, friendNotifier);
 
     translator.handle(
         new GameStartedEvent(MatchId.generate(), PlayerId.generate(), PlayerId.generate(), 2));
 
     verifyNoInteractions(notifier);
+    verifyNoInteractions(friendNotifier);
   }
 
   @Test
@@ -104,12 +116,14 @@ class MatchPresenceEventTranslatorTest {
   void ignoresNonOccupancyEvents() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new MatchPresenceEventTranslator(notifier);
+    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var translator = new MatchPresenceEventTranslator(notifier, friendNotifier);
 
     translator.handle(
         new OtherMatchEvent(MatchId.generate(), PlayerId.generate(), PlayerId.generate()));
 
     verifyNoInteractions(notifier);
+    verifyNoInteractions(friendNotifier);
   }
 
   private static final class OtherMatchEvent extends MatchDomainEvent {

@@ -92,11 +92,10 @@ public class SocialApplicationEventConfiguration {
   @Bean
   FriendActivityMatchEventTranslator friendActivityMatchEventTranslator(
       final FriendActivityResolver friendActivityResolver,
-      final FriendAvailabilityResolver friendAvailabilityResolver,
       final ApplicationEventPublisher applicationEventPublisher) {
 
     return new FriendActivityMatchEventTranslator(friendActivityResolver,
-        friendAvailabilityResolver, applicationEventPublisher);
+        applicationEventPublisher);
   }
 
   @Bean

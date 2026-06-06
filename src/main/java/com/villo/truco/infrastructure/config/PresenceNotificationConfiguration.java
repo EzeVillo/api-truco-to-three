@@ -10,6 +10,7 @@ import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.usecases.queries.UserPresenceResolver;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.websocket.StompPresenceNotificationHandler;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -34,30 +35,33 @@ public class PresenceNotificationConfiguration {
   }
 
   @Bean
-  MatchPresenceEventTranslator matchPresenceEventTranslator(
-      final PresenceNotifier presenceNotifier) {
+  MatchPresenceEventTranslator matchPresenceEventTranslator(final PresenceNotifier presenceNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
-    return new MatchPresenceEventTranslator(presenceNotifier);
+    return new MatchPresenceEventTranslator(presenceNotifier, friendPresenceAvailabilityNotifier);
   }
 
   @Bean
   LeaguePresenceEventTranslator leaguePresenceEventTranslator(
-      final PresenceNotifier presenceNotifier) {
+      final PresenceNotifier presenceNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
-    return new LeaguePresenceEventTranslator(presenceNotifier);
+    return new LeaguePresenceEventTranslator(presenceNotifier, friendPresenceAvailabilityNotifier);
   }
 
   @Bean
-  CupPresenceEventTranslator cupPresenceEventTranslator(final PresenceNotifier presenceNotifier) {
+  CupPresenceEventTranslator cupPresenceEventTranslator(final PresenceNotifier presenceNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
-    return new CupPresenceEventTranslator(presenceNotifier);
+    return new CupPresenceEventTranslator(presenceNotifier, friendPresenceAvailabilityNotifier);
   }
 
   @Bean
   RematchPresenceEventTranslator rematchPresenceEventTranslator(
-      final PresenceNotifier presenceNotifier) {
+      final PresenceNotifier presenceNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
-    return new RematchPresenceEventTranslator(presenceNotifier);
+    return new RematchPresenceEventTranslator(presenceNotifier, friendPresenceAvailabilityNotifier);
   }
 
   @Bean

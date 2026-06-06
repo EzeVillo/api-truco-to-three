@@ -34,12 +34,16 @@ public final class FriendPresenceAvailabilityNotifier {
 
   public void notifyPresenceChanged(final PlayerId player) {
 
+    this.notifyAvailabilityChanged(player, System.currentTimeMillis());
+  }
+
+  public void notifyAvailabilityChanged(final PlayerId player, final long timestamp) {
+
     Objects.requireNonNull(player);
 
     this.transactionalRunner.run(() -> {
       final var changes = this.friendAvailabilityResolver.resolveAvailabilityChangesForPlayer(
           player);
-      final var timestamp = System.currentTimeMillis();
       for (final var entry : changes.entrySet()) {
         this.applicationEventPublisher.publish(
             new FriendAvailabilityNotification(List.of(entry.getKey()),

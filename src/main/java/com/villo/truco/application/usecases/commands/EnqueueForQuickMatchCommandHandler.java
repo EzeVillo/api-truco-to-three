@@ -10,6 +10,7 @@ import com.villo.truco.domain.model.quickmatch.QuickMatchTicket;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -19,15 +20,19 @@ public final class EnqueueForQuickMatchCommandHandler implements EnqueueForQuick
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
+  private final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
 
   public EnqueueForQuickMatchCommandHandler(final QuickMatchQueuePort queuePort,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
-      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier) {
+      final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
     this.queuePort = Objects.requireNonNull(queuePort);
     this.playerAvailabilityChecker = Objects.requireNonNull(playerAvailabilityChecker);
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
+    this.friendPresenceAvailabilityNotifier = Objects.requireNonNull(
+        friendPresenceAvailabilityNotifier);
   }
 
   @Override
@@ -57,6 +62,8 @@ public final class EnqueueForQuickMatchCommandHandler implements EnqueueForQuick
     final var ticket = new QuickMatchTicket(playerId, command.gamesToPlay(), Instant.now(),
         command.webSocketSessionId());
     this.queuePort.enqueue(ticket);
+    this.friendPresenceAvailabilityNotifier.notifyAvailabilityChanged(playerId,
+        ticket.enqueuedAt().toEpochMilli());
     return new QuickMatchSearchDTO(QuickMatchStatus.SEARCHING, null, ticket.enqueuedAt());
   }
 

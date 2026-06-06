@@ -12,6 +12,7 @@ import com.villo.truco.domain.model.cup.events.CupPlayerLeftEvent;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -26,14 +27,17 @@ class CupPresenceEventTranslatorTest {
   void notifiesOnCupCreated() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new CupPresenceEventTranslator(notifier);
+    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var translator = new CupPresenceEventTranslator(notifier, friendNotifier);
     final var creator = PlayerId.generate();
+    final var event = new CupCreatedEvent(CupId.generate(), List.of(creator));
 
-    translator.handle(new CupCreatedEvent(CupId.generate(), List.of(creator)));
+    translator.handle(event);
 
     final ArgumentCaptor<Collection<PlayerId>> captor = ArgumentCaptor.forClass(Collection.class);
     verify(notifier).notifyPlayers(captor.capture());
     assertThat(captor.getValue()).containsExactly(creator);
+    verify(friendNotifier).notifyAvailabilityChanged(creator, event.getTimestamp());
   }
 
   @Test
@@ -41,7 +45,8 @@ class CupPresenceEventTranslatorTest {
   void notifiesParticipantsOnMatchActivated() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new CupPresenceEventTranslator(notifier);
+    final var translator = new CupPresenceEventTranslator(notifier,
+        mock(FriendPresenceAvailabilityNotifier.class));
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
 
@@ -58,7 +63,8 @@ class CupPresenceEventTranslatorTest {
   void notifiesLeaverOnPlayerLeft() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new CupPresenceEventTranslator(notifier);
+    final var translator = new CupPresenceEventTranslator(notifier,
+        mock(FriendPresenceAvailabilityNotifier.class));
     final var remaining = PlayerId.generate();
     final var leaver = PlayerId.generate();
 
@@ -74,11 +80,13 @@ class CupPresenceEventTranslatorTest {
   void ignoresNonOccupancyEvents() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var translator = new CupPresenceEventTranslator(notifier);
+    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var translator = new CupPresenceEventTranslator(notifier, friendNotifier);
 
     translator.handle(new OtherCupEvent(CupId.generate(), List.of(PlayerId.generate())));
 
     verifyNoInteractions(notifier);
+    verifyNoInteractions(friendNotifier);
   }
 
   private static final class OtherCupEvent extends CupDomainEvent {

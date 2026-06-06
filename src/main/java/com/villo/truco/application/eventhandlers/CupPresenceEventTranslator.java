@@ -12,6 +12,7 @@ import com.villo.truco.domain.model.cup.events.CupPlayerJoinedEvent;
 import com.villo.truco.domain.model.cup.events.CupPlayerLeftEvent;
 import com.villo.truco.domain.model.cup.events.CupStartedEvent;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -25,10 +26,14 @@ import java.util.Set;
 public final class CupPresenceEventTranslator implements CupDomainEventHandler<CupDomainEvent> {
 
   private final PresenceNotifier presenceNotifier;
+  private final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
 
-  public CupPresenceEventTranslator(final PresenceNotifier presenceNotifier) {
+  public CupPresenceEventTranslator(final PresenceNotifier presenceNotifier,
+      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
 
     this.presenceNotifier = Objects.requireNonNull(presenceNotifier);
+    this.friendPresenceAvailabilityNotifier = Objects.requireNonNull(
+        friendPresenceAvailabilityNotifier);
   }
 
   private static boolean isOccupancyTransition(final CupDomainEvent event) {
@@ -61,6 +66,10 @@ public final class CupPresenceEventTranslator implements CupDomainEventHandler<C
     }
 
     this.presenceNotifier.notifyPlayers(affected);
+    for (final PlayerId player : affected) {
+      this.friendPresenceAvailabilityNotifier.notifyAvailabilityChanged(player,
+          event.getTimestamp());
+    }
   }
 
 }
