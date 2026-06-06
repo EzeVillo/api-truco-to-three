@@ -2,9 +2,11 @@ package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.assemblers.SpectatorMatchStateDTOAssembler;
 import com.villo.truco.application.commands.SpectateMatchCommand;
+import com.villo.truco.application.eventhandlers.PresenceNotifier;
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.events.SpectatorCountChanged;
 import com.villo.truco.application.exceptions.MatchNotFoundException;
@@ -31,6 +33,7 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -323,7 +326,7 @@ class SpectateMatchCommandHandlerTest {
 
     this.handler = new SpectateMatchCommandHandler(matchRepo, this.repository,
         new SpectatingEligibilityPolicy(resolver, (match, spectatorId) -> false), countPublisher,
-        assembler);
+        assembler, mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
   }
 
   @Test
@@ -354,7 +357,8 @@ class SpectateMatchCommandHandlerTest {
     final var h = new SpectateMatchCommandHandler(emptyMatchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),
         countPublisher,
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     assertThatThrownBy(
         () -> h.handle(new SpectateMatchCommand(MatchId.generate(), this.spectator))).isInstanceOf(
@@ -371,7 +375,8 @@ class SpectateMatchCommandHandlerTest {
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     assertThatThrownBy(
         () -> h.handle(new SpectateMatchCommand(readyMatch.getId(), this.spectator))).isInstanceOf(
@@ -385,6 +390,23 @@ class SpectateMatchCommandHandlerTest {
     assertThatThrownBy(() -> this.handler.handle(
         new SpectateMatchCommand(this.match.getId(), this.playerOne))).isInstanceOf(
         CannotSpectateOwnMatchException.class);
+  }
+
+  @Test
+  @DisplayName("segundo dispositivo espectea el mismo match sin incrementar el contador")
+  void secondDeviceSameMatchIsIdempotent() {
+
+    this.handler.handle(new SpectateMatchCommand(this.match.getId(), this.spectator));
+    final var eventsAfterFirst = this.publishedEvents.size();
+
+    final var result = this.handler.handle(
+        new SpectateMatchCommand(this.match.getId(), this.spectator));
+
+    assertThat(result).isNotNull();
+    assertThat(result.matchId()).isEqualTo(this.match.getId().value().toString());
+    assertThat(this.publishedEvents).hasSize(eventsAfterFirst);
+    assertThat(this.repository.findBySpectatorId(this.spectator)
+        .flatMap(Spectatorship::getActiveMatchId)).contains(this.match.getId());
   }
 
   @Test
@@ -409,7 +431,8 @@ class SpectateMatchCommandHandlerTest {
         new SpectatingEligibilityPolicy((matchId, playerId) -> false,
             (match, spectatorId) -> false),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     assertThatThrownBy(() -> h.handle(
         new SpectateMatchCommand(this.match.getId(), PlayerId.generate()))).isInstanceOf(
@@ -425,7 +448,8 @@ class SpectateMatchCommandHandlerTest {
         new SpectatingEligibilityPolicy((matchId, playerId) -> false,
             (match, spectatorId) -> spectatorId.equals(this.spectator)),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     final var result = h.handle(new SpectateMatchCommand(this.match.getId(), this.spectator));
 

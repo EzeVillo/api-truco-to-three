@@ -35,7 +35,7 @@ final class SpectateSessionTerminationEventListener {
     final var session = this.sessionRegistry.removeSubscription(accessor.getSessionId(),
         accessor.getSubscriptionId());
 
-    if (session != null) {
+    if (session != null && !this.sessionRegistry.hasActiveSessionsForPlayer(session.playerId())) {
       stopSpectating(session.playerId());
     }
   }
@@ -43,8 +43,11 @@ final class SpectateSessionTerminationEventListener {
   @EventListener
   public void onDisconnect(final SessionDisconnectEvent event) {
 
-    this.sessionRegistry.removeSession(event.getSessionId())
-        .forEach(session -> stopSpectating(session.playerId()));
+    this.sessionRegistry.removeSession(event.getSessionId()).forEach(session -> {
+      if (!this.sessionRegistry.hasActiveSessionsForPlayer(session.playerId())) {
+        stopSpectating(session.playerId());
+      }
+    });
   }
 
   private void stopSpectating(final String playerId) {

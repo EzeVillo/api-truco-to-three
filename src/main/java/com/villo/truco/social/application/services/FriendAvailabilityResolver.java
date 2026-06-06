@@ -53,6 +53,7 @@ public final class FriendAvailabilityResolver {
       case IN_MATCH -> FriendBusyReason.IN_MATCH;
       case OPEN_REMATCH -> FriendBusyReason.OPEN_REMATCH;
       case IN_QUICK_QUEUE -> FriendBusyReason.IN_QUICK_QUEUE;
+      case SPECTATING -> FriendBusyReason.SPECTATING;
       case IN_LEAGUE -> FriendBusyReason.IN_LEAGUE;
       case IN_CUP -> FriendBusyReason.IN_CUP;
     };

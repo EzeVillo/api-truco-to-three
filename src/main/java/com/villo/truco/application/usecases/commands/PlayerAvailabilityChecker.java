@@ -8,11 +8,13 @@ import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueExceptio
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
 import com.villo.truco.domain.model.quickmatch.exceptions.PlayerAlreadyInQueueException;
 import com.villo.truco.domain.model.rematch.exceptions.PlayerHasOpenRematchSessionException;
+import com.villo.truco.domain.model.spectator.exceptions.PlayerIsSpectatingException;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
+import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,11 +27,14 @@ public final class PlayerAvailabilityChecker {
   private final BotRegistry botRegistry;
   private final RematchSessionRepository rematchSessionRepository;
   private final QuickMatchQueuePort quickMatchQueuePort;
+  private final SpectatorshipRepository spectatorshipRepository;
+
   public PlayerAvailabilityChecker(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository, final BotRegistry botRegistry,
       final RematchSessionRepository rematchSessionRepository,
-      final QuickMatchQueuePort quickMatchQueuePort) {
+      final QuickMatchQueuePort quickMatchQueuePort,
+      final SpectatorshipRepository spectatorshipRepository) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
@@ -37,6 +42,7 @@ public final class PlayerAvailabilityChecker {
     this.botRegistry = Objects.requireNonNull(botRegistry);
     this.rematchSessionRepository = Objects.requireNonNull(rematchSessionRepository);
     this.quickMatchQueuePort = Objects.requireNonNull(quickMatchQueuePort);
+    this.spectatorshipRepository = Objects.requireNonNull(spectatorshipRepository);
   }
 
   public void ensureAvailable(final PlayerId playerId) {
@@ -55,6 +61,9 @@ public final class PlayerAvailabilityChecker {
       }
       case IN_QUICK_QUEUE -> {
         throw new PlayerAlreadyInQueueException();
+      }
+      case SPECTATING -> {
+        throw new PlayerIsSpectatingException();
       }
       case IN_LEAGUE -> this.throwLeagueBusy(playerId);
       case IN_CUP -> this.throwCupBusy(playerId);
@@ -77,6 +86,11 @@ public final class PlayerAvailabilityChecker {
 
     if (this.quickMatchQueuePort.isPlayerQueued(playerId)) {
       return Optional.of(BlockingReason.IN_QUICK_QUEUE);
+    }
+
+    if (this.spectatorshipRepository.findBySpectatorId(playerId).filter(s -> s.isActive())
+        .isPresent()) {
+      return Optional.of(BlockingReason.SPECTATING);
     }
 
     if (this.leagueQueryRepository.findInProgressByPlayer(playerId)
@@ -136,7 +150,7 @@ public final class PlayerAvailabilityChecker {
   }
 
   public enum BlockingReason {
-    IN_MATCH, OPEN_REMATCH, IN_QUICK_QUEUE, IN_LEAGUE, IN_CUP
+    IN_MATCH, OPEN_REMATCH, IN_QUICK_QUEUE, SPECTATING, IN_LEAGUE, IN_CUP
   }
 
 }

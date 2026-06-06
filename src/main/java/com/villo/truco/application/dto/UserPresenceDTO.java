@@ -2,15 +2,17 @@ package com.villo.truco.application.dto;
 
 public record UserPresenceDTO(boolean busy, ActiveMatchRefDTO match, ActiveLeagueRefDTO league,
                               ActiveCupRefDTO cup, ActiveRematchRefDTO rematch,
-                              ActiveQuickMatchRefDTO quickMatch) {
+                              ActiveQuickMatchRefDTO quickMatch,
+                              ActiveSpectatingRefDTO spectating) {
 
   public static UserPresenceDTO of(final ActiveMatchRefDTO match, final ActiveLeagueRefDTO league,
       final ActiveCupRefDTO cup, final ActiveRematchRefDTO rematch,
-      final ActiveQuickMatchRefDTO quickMatch) {
+      final ActiveQuickMatchRefDTO quickMatch, final ActiveSpectatingRefDTO spectating) {
 
     final var busy =
-        match != null || league != null || cup != null || rematch != null || quickMatch != null;
-    return new UserPresenceDTO(busy, match, league, cup, rematch, quickMatch);
+        match != null || league != null || cup != null || rematch != null || quickMatch != null
+            || spectating != null;
+    return new UserPresenceDTO(busy, match, league, cup, rematch, quickMatch, spectating);
   }
 
 }

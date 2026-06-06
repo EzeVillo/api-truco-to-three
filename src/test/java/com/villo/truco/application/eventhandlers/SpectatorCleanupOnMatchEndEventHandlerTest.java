@@ -1,6 +1,7 @@
 package com.villo.truco.application.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.events.SpectatorCountChanged;
@@ -23,6 +24,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,7 +104,8 @@ class SpectatorCleanupOnMatchEndEventHandlerTest {
 
     final var lifecycleManager = new SpectatorshipLifecycleManager(this.repository,
         new SpectatorCountChangedPublisher(matchQueryRepository, this.repository,
-            this.publishedEvents::add));
+            this.publishedEvents::add), mock(FriendAvailabilityChangeNotifier.class),
+        mock(PresenceNotifier.class));
     this.handler = new SpectatorCleanupOnMatchEndEventHandler(lifecycleManager);
   }
 

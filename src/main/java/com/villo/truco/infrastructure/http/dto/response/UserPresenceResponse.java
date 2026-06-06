@@ -5,6 +5,7 @@ import com.villo.truco.application.dto.ActiveLeagueRefDTO;
 import com.villo.truco.application.dto.ActiveMatchRefDTO;
 import com.villo.truco.application.dto.ActiveQuickMatchRefDTO;
 import com.villo.truco.application.dto.ActiveRematchRefDTO;
+import com.villo.truco.application.dto.ActiveSpectatingRefDTO;
 import com.villo.truco.application.dto.UserPresenceDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -16,13 +17,15 @@ public record UserPresenceResponse(
     @Schema(description = "Liga del usuario, o null", nullable = true) ActiveLeagueRef league,
     @Schema(description = "Copa del usuario, o null", nullable = true) ActiveCupRef cup,
     @Schema(description = "Sesion de revancha abierta del usuario, o null", nullable = true) ActiveRematchRef rematch,
-    @Schema(description = "Busqueda Quick Match activa del usuario, o null", nullable = true) ActiveQuickMatchRef quickMatch) {
+    @Schema(description = "Busqueda Quick Match activa del usuario, o null", nullable = true) ActiveQuickMatchRef quickMatch,
+    @Schema(description = "Partida que el usuario esta especteando, o null", nullable = true) ActiveSpectatingRef spectating) {
 
   public static UserPresenceResponse from(final UserPresenceDTO presence) {
 
     return new UserPresenceResponse(presence.busy(), ActiveMatchRef.from(presence.match()),
         ActiveLeagueRef.from(presence.league()), ActiveCupRef.from(presence.cup()),
-        ActiveRematchRef.from(presence.rematch()), ActiveQuickMatchRef.from(presence.quickMatch()));
+        ActiveRematchRef.from(presence.rematch()), ActiveQuickMatchRef.from(presence.quickMatch()),
+        ActiveSpectatingRef.from(presence.spectating()));
   }
 
   @Schema(description = "Referencia a la partida activa")
@@ -83,6 +86,17 @@ public record UserPresenceResponse(
     static ActiveQuickMatchRef from(final ActiveQuickMatchRefDTO dto) {
 
       return dto == null ? null : new ActiveQuickMatchRef(dto.status(), dto.enqueuedAt());
+    }
+
+  }
+
+  @Schema(description = "Referencia a la partida que el usuario esta especteando")
+  public record ActiveSpectatingRef(
+      @Schema(description = "ID de la partida especteada", example = "550e8400-e29b-41d4-a716-446655440000") String matchId) {
+
+    static ActiveSpectatingRef from(final ActiveSpectatingRefDTO dto) {
+
+      return dto == null ? null : new ActiveSpectatingRef(dto.matchId());
     }
 
   }

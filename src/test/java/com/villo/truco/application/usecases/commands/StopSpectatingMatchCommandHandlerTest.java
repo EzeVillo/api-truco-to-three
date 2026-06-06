@@ -2,8 +2,10 @@ package com.villo.truco.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.commands.StopSpectatingMatchCommand;
+import com.villo.truco.application.eventhandlers.PresenceNotifier;
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.events.SpectatorCountChanged;
 import com.villo.truco.domain.model.match.Match;
@@ -17,6 +19,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +96,8 @@ class StopSpectatingMatchCommandHandlerTest {
     };
 
     final var lifecycleManager = new SpectatorshipLifecycleManager(this.repository,
-        new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add));
+        new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
     this.handler = new StopSpectatingMatchCommandHandler(lifecycleManager);
   }
 

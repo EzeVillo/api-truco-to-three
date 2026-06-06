@@ -48,7 +48,7 @@ public final class SpectatingEligibilityPolicy {
       throw new SpectateNotAllowedException();
     }
 
-    if (spectatorship.isActive()) {
+    if (spectatorship.isActive() && !spectatorship.isWatching(match.getId())) {
       throw new AlreadySpectatingException();
     }
   }

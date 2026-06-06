@@ -1,6 +1,7 @@
 package com.villo.truco.application.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.events.SpectatorCountChanged;
@@ -18,6 +19,7 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import com.villo.truco.social.domain.model.friendship.Friendship;
 import com.villo.truco.social.domain.model.friendship.events.FriendshipRemovedEvent;
 import java.time.Instant;
@@ -49,7 +51,8 @@ class SpectatorCleanupOnFriendshipRemovedEventHandlerTest {
     final var events = new ArrayList<ApplicationEvent>();
     final MatchQueryRepository matchRepo = new SingleMatchRepo(match);
     final var lifecycleManager = new SpectatorshipLifecycleManager(repository,
-        new SpectatorCountChangedPublisher(matchRepo, repository, events::add));
+        new SpectatorCountChangedPublisher(matchRepo, repository, events::add),
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
     final var handler = new SpectatorCleanupOnFriendshipRemovedEventHandler(repository, matchRepo,
         competitionResolver, friendshipResolver, lifecycleManager);
 

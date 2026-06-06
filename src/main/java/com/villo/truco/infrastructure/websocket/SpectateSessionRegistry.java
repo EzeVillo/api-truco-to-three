@@ -44,6 +44,12 @@ final class SpectateSessionRegistry {
     return removedSessions;
   }
 
+  boolean hasActiveSessionsForPlayer(final String playerId) {
+
+    return this.sessionsBySubscriptionKey.values().stream()
+        .anyMatch(s -> s.playerId().equals(playerId));
+  }
+
   record SpectateSession(String playerId, String matchId) {
 
   }

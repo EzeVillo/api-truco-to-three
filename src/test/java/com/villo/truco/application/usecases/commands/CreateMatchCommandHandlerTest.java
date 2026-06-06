@@ -29,6 +29,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import com.villo.truco.testutil.NoOpRematchSessionRepository;
+import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -204,7 +205,7 @@ class CreateMatchCommandHandlerTest {
 
   private static final PlayerAvailabilityChecker FREE_CHECKER = new PlayerAvailabilityChecker(
       NO_ACTIVE_MATCH_REPO, NO_LEAGUE_REPO, NO_CUP_REPO, NO_BOT_REGISTRY, NO_REMATCH_REPO,
-      NoOpQuickMatchQueuePort.INSTANCE);
+      NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE);
   private static final MatchEventNotifier NO_OP_MATCH_EVENT_NOTIFIER = events -> {
   };
 
@@ -359,7 +360,8 @@ class CreateMatchCommandHandlerTest {
     };
 
     final var busyChecker = new PlayerAvailabilityChecker(busyMatchRepo, NO_LEAGUE_REPO,
-        NO_CUP_REPO, NO_BOT_REGISTRY, NO_REMATCH_REPO, NoOpQuickMatchQueuePort.INSTANCE);
+        NO_CUP_REPO, NO_BOT_REGISTRY, NO_REMATCH_REPO, NoOpQuickMatchQueuePort.INSTANCE,
+        NoOpSpectatorshipRepository.INSTANCE);
     final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
         busyChecker);
 

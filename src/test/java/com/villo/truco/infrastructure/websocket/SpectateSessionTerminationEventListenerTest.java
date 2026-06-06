@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.websocket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -71,6 +72,65 @@ class SpectateSessionTerminationEventListenerTest {
 
     verify(useCase, times(2)).handle(any());
     assertThat(registry.removeSession("session-1")).isEmpty();
+  }
+
+  @Test
+  @DisplayName("no detiene el especteo al desuscribirse si el jugador tiene otra sesion activa")
+  void doesNotStopSpectatingOnUnsubscribeIfOtherSessionActive() {
+
+    final var useCase = mock(StopSpectatingMatchUseCase.class);
+    final var registry = new SpectateSessionRegistry();
+    final var listener = new SpectateSessionTerminationEventListener(useCase, registry);
+    final var playerId = java.util.UUID.randomUUID().toString();
+    final var matchId = java.util.UUID.randomUUID().toString();
+
+    registry.register("session-1", "sub-1", playerId, matchId);
+    registry.register("session-2", "sub-2", playerId, matchId);
+
+    listener.onUnsubscribe(
+        new SessionUnsubscribeEvent(this, unsubscribeMessage("session-1", "sub-1")));
+
+    verify(useCase, never()).handle(any());
+  }
+
+  @Test
+  @DisplayName("no detiene el especteo al desconectarse si el jugador tiene otra sesion activa")
+  void doesNotStopSpectatingOnDisconnectIfOtherSessionActive() {
+
+    final var useCase = mock(StopSpectatingMatchUseCase.class);
+    final var registry = new SpectateSessionRegistry();
+    final var listener = new SpectateSessionTerminationEventListener(useCase, registry);
+    final var playerId = java.util.UUID.randomUUID().toString();
+    final var matchId = java.util.UUID.randomUUID().toString();
+
+    registry.register("session-1", "sub-1", playerId, matchId);
+    registry.register("session-2", "sub-2", playerId, matchId);
+
+    listener.onDisconnect(
+        new SessionDisconnectEvent(this, unsubscribeMessage("session-1", "sub-1"), "session-1",
+            CloseStatus.NORMAL));
+
+    verify(useCase, never()).handle(any());
+  }
+
+  @Test
+  @DisplayName("detiene el especteo cuando se desconecta la ultima sesion del jugador")
+  void stopsSpectatingWhenLastSessionDisconnects() {
+
+    final var useCase = mock(StopSpectatingMatchUseCase.class);
+    final var registry = new SpectateSessionRegistry();
+    final var listener = new SpectateSessionTerminationEventListener(useCase, registry);
+    final var playerId = java.util.UUID.randomUUID().toString();
+
+    registry.register("session-1", "sub-1", playerId, java.util.UUID.randomUUID().toString());
+
+    listener.onDisconnect(
+        new SessionDisconnectEvent(this, unsubscribeMessage("session-1", "sub-1"), "session-1",
+            CloseStatus.NORMAL));
+
+    final var commandCaptor = ArgumentCaptor.forClass(StopSpectatingMatchCommand.class);
+    verify(useCase).handle(commandCaptor.capture());
+    assertThat(commandCaptor.getValue().spectatorId().value().toString()).isEqualTo(playerId);
   }
 
 }

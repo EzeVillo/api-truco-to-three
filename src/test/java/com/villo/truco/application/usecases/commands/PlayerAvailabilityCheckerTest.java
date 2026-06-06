@@ -15,14 +15,19 @@ import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeag
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
 import com.villo.truco.domain.model.quickmatch.exceptions.PlayerAlreadyInQueueException;
+import com.villo.truco.domain.model.spectator.Spectatorship;
+import com.villo.truco.domain.model.spectator.exceptions.PlayerIsSpectatingException;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
+import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
+import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,8 +72,10 @@ class PlayerAvailabilityCheckerTest {
     when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
     final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
     when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(false);
+    final var spectatorshipRepo = mock(SpectatorshipRepository.class);
+    when(spectatorshipRepo.findBySpectatorId(any())).thenReturn(Optional.empty());
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        quickMatchQueuePort);
+        quickMatchQueuePort, spectatorshipRepo);
   }
 
   @Test
@@ -283,7 +290,7 @@ class PlayerAvailabilityCheckerTest {
     final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
     when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(true);
     final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
-        rematchRepo, quickMatchQueuePort);
+        rematchRepo, quickMatchQueuePort, NoOpSpectatorshipRepository.INSTANCE);
 
     assertThatThrownBy(() -> checker.ensureAvailable(PlayerId.generate())).isInstanceOf(
         PlayerAlreadyInQueueException.class);
@@ -296,6 +303,38 @@ class PlayerAvailabilityCheckerTest {
     final var checker = checker(false, Optional.empty(), Optional.empty());
 
     assertThatCode(() -> checker.ensureAvailable(PlayerId.generate())).doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("jugador especteando → PlayerIsSpectatingException")
+  void throwsWhenPlayerIsSpectating() {
+
+    final var spectatorId = PlayerId.generate();
+    final var spectatorship = Spectatorship.create(spectatorId);
+    spectatorship.startWatching(MatchId.generate());
+
+    final var spectatorshipRepo = mock(SpectatorshipRepository.class);
+    when(spectatorshipRepo.findBySpectatorId(any())).thenReturn(Optional.of(spectatorship));
+
+    final var matchRepo = mock(MatchQueryRepository.class);
+    when(matchRepo.hasUnfinishedMatch(any())).thenReturn(false);
+    final var leagueRepo = mock(LeagueQueryRepository.class);
+    when(leagueRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(leagueRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var cupRepo = mock(CupQueryRepository.class);
+    when(cupRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(cupRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var botRegistry = mock(BotRegistry.class);
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
+    when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(false);
+
+    final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
+        rematchRepo, quickMatchQueuePort, spectatorshipRepo);
+
+    assertThatThrownBy(() -> checker.ensureAvailable(spectatorId)).isInstanceOf(
+        PlayerIsSpectatingException.class);
   }
 
 }

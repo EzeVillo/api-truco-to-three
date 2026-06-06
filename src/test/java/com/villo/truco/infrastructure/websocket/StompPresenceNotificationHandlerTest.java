@@ -26,7 +26,7 @@ class StompPresenceNotificationHandlerTest {
         mock(EventNotifierHealthRegistry.class));
     final var recipient = PlayerId.of("11111111-1111-1111-1111-111111111111");
     final var snapshot = UserPresenceDTO.of(new ActiveMatchRefDTO("m-1", "IN_PROGRESS"), null, null,
-        null, null);
+        null, null, null);
 
     handler.handle(
         new PresenceEventNotification(recipient, PresenceEventNotification.EVENT_TYPE, 7L,

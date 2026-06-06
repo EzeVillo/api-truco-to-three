@@ -42,6 +42,7 @@ import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvit
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
+import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -358,8 +359,8 @@ class CreateResourceInvitationCommandHandlerTest {
     return new CreateResourceInvitationCommandHandler(new SocialUserGuard(userQueryRepository),
         new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
             cupQueryRepository, mock(BotRegistry.class), mock(RematchSessionRepository.class),
-            mock(QuickMatchQueuePort.class)), friendshipQueryRepository,
-        new ResourceInvitationPolicy(resourceInvitationQueryRepository),
+            mock(QuickMatchQueuePort.class), NoOpSpectatorshipRepository.INSTANCE),
+        friendshipQueryRepository, new ResourceInvitationPolicy(resourceInvitationQueryRepository),
         resourceInvitationRepository, events -> {
     }, new InvitationTargetService(matchQueryRepository, leagueQueryRepository, cupQueryRepository),
         new SocialInvitationExpirationPolicy(Duration.ofMinutes(10), Duration.ofMinutes(30),

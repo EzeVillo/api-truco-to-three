@@ -39,7 +39,7 @@ class PresenceControllerTest {
   void freeUserReturnsNotBusy() {
 
     when(getUserPresence.handle(any())).thenReturn(
-        UserPresenceDTO.of(null, null, null, null, null));
+        UserPresenceDTO.of(null, null, null, null, null, null));
 
     final var response = controller.getPresence(jwt("11111111-1111-1111-1111-111111111111"));
 
@@ -58,7 +58,7 @@ class PresenceControllerTest {
   void busyUserMapsMatchReference() {
 
     when(getUserPresence.handle(any())).thenReturn(
-        UserPresenceDTO.of(new ActiveMatchRefDTO("match-id", "IN_PROGRESS"), null, null, null,
+        UserPresenceDTO.of(new ActiveMatchRefDTO("match-id", "IN_PROGRESS"), null, null, null, null,
             null));
 
     final var response = controller.getPresence(jwt("22222222-2222-2222-2222-222222222222"));
@@ -77,7 +77,7 @@ class PresenceControllerTest {
 
     final var enqueuedAt = Instant.parse("2026-05-20T10:00:00Z");
     when(getUserPresence.handle(any())).thenReturn(UserPresenceDTO.of(null, null, null, null,
-        new ActiveQuickMatchRefDTO("SEARCHING", enqueuedAt)));
+        new ActiveQuickMatchRefDTO("SEARCHING", enqueuedAt), null));
 
     final var response = controller.getPresence(jwt("33333333-3333-3333-3333-333333333333"));
 
