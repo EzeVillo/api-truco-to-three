@@ -7,6 +7,6 @@ import java.util.Map;
 
 public record CupEventNotification(CupId cupId, List<PlayerId> recipients, String eventType,
                                    long timestamp, Map<String, Object> payload) implements
-    ApplicationEvent {
+    PostCommitApplicationEvent {
 
 }

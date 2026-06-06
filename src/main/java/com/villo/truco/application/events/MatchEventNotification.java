@@ -7,6 +7,6 @@ import java.util.Map;
 
 public record MatchEventNotification(MatchId matchId, List<PlayerId> recipients, String eventType,
                                      long timestamp, Map<String, Object> payload,
-                                     Long stateVersion) implements ApplicationEvent {
+                                     Long stateVersion) implements PostCommitApplicationEvent {
 
 }
