@@ -108,6 +108,9 @@ class GetSpectateMatchStateQueryHandlerTest {
 
     assertThat(result).isNotNull();
     assertThat(result.matchId()).isEqualTo(this.match.getId().value().toString());
+    assertThat(result.playerOneUsername()).isNotBlank();
+    assertThat(result.playerTwoUsername()).isNotBlank();
+    assertThat(result.gamesToPlay()).isEqualTo(this.match.getGamesToPlay());
     assertThat(result.scorePlayerOne()).isZero();
     assertThat(result.scorePlayerTwo()).isZero();
     assertThat(result.spectatorCount()).isEqualTo(1);

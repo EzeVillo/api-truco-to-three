@@ -7,10 +7,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record SpectatorMatchStateResponse(
     @Schema(description = "ID de la partida", example = "match-123") String matchId,
     @Schema(description = "Estado de la partida", example = "IN_PROGRESS") String status,
+    @Schema(description = "Username del jugador en el asiento player one", example = "juancho") String playerOneUsername,
+    @Schema(description = "Username del jugador en el asiento player two, null si aun no hay rival", example = "martina") String playerTwoUsername,
     @Schema(description = "Puntaje del game actual de player one", example = "2") int scorePlayerOne,
     @Schema(description = "Puntaje del game actual de player two", example = "1") int scorePlayerTwo,
     @Schema(description = "Juegos ganados por player one", example = "1") int gamesWonPlayerOne,
     @Schema(description = "Juegos ganados por player two", example = "0") int gamesWonPlayerTwo,
+    @Schema(description = "Cantidad de games necesarios para ganar el match (best-of)", example = "3") int gamesToPlay,
     @Schema(description = "ID del ganador final, si existe", example = "juancho") String matchWinner,
     @Schema(description = "Estado de la ronda actual") SpectatorRoundStateResponse currentRound,
     @Schema(description = "Cantidad de espectadores", example = "3") int spectatorCount,
@@ -18,8 +21,9 @@ public record SpectatorMatchStateResponse(
 
   public static SpectatorMatchStateResponse from(final SpectatorMatchStateDTO dto) {
 
-    return new SpectatorMatchStateResponse(dto.matchId(), dto.status(), dto.scorePlayerOne(),
-        dto.scorePlayerTwo(), dto.gamesWonPlayerOne(), dto.gamesWonPlayerTwo(), dto.matchWinner(),
+    return new SpectatorMatchStateResponse(dto.matchId(), dto.status(), dto.playerOneUsername(),
+        dto.playerTwoUsername(), dto.scorePlayerOne(), dto.scorePlayerTwo(),
+        dto.gamesWonPlayerOne(), dto.gamesWonPlayerTwo(), dto.gamesToPlay(), dto.matchWinner(),
         dto.currentRound() != null ? SpectatorRoundStateResponse.from(dto.currentRound()) : null,
         dto.spectatorCount(), dto.stateVersion());
   }

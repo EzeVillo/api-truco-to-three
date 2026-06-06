@@ -36,10 +36,14 @@ public final class SpectatorMatchStateDTOAssembler {
     final var matchWinner = Optional.ofNullable(match.getMatchWinner()).map(actorNames::get)
         .orElse(null);
 
+    final var playerOneUsername = actorNames.get(match.getPlayerOne());
+    final var playerTwoUsername =
+        match.getPlayerTwo() != null ? actorNames.get(match.getPlayerTwo()) : null;
+
     return new SpectatorMatchStateDTO(match.getId().value().toString(), match.getStatus().name(),
-        match.getScorePlayerOne(), match.getScorePlayerTwo(), match.getGamesWonPlayerOne(),
-        match.getGamesWonPlayerTwo(), matchWinner, roundState, spectatorCount,
-        match.getStateVersion());
+        playerOneUsername, playerTwoUsername, match.getScorePlayerOne(), match.getScorePlayerTwo(),
+        match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(), match.getGamesToPlay(),
+        matchWinner, roundState, spectatorCount, match.getStateVersion());
   }
 
   private Map<PlayerId, String> resolveActorNames(final Match match) {

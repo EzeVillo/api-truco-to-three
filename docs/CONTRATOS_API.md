@@ -734,10 +734,13 @@ Response `200`:
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "status": "IN_PROGRESS",
+  "playerOneUsername": "juancho",
+  "playerTwoUsername": "martina",
   "scorePlayerOne": 2,
   "scorePlayerTwo": 1,
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
+  "gamesToPlay": 3,
   "matchWinner": null,
   "stateVersion": 5,
   "currentRound": {
@@ -776,6 +779,10 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `playerOneUsername` y `playerTwoUsername` son el roster asiento->nombre, para que el tablero
+  etiquete ambos lados; `playerTwoUsername` es `null` si todavia no hay rival sentado
+- `gamesToPlay` es la cantidad de games necesarios para ganar el match (best-of); coincide con el
+  `gamesToPlay` de la vista de jugador
 - `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` se exponen igual que en §4.14, para
   que el espectador renderice el temporizador del turno sobre el asiento que debe actuar (§4.18)
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
