@@ -6,7 +6,7 @@ public final class SpectateNotAllowedException extends DomainException {
 
   public SpectateNotAllowedException() {
 
-    super("You can only spectate matches within your own league or cup");
+    super("You can only spectate matches within your own league, cup, or accepted friendships");
   }
 
 }

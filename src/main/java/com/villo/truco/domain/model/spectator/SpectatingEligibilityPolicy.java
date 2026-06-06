@@ -7,16 +7,21 @@ import com.villo.truco.domain.model.spectator.exceptions.AlreadySpectatingExcept
 import com.villo.truco.domain.model.spectator.exceptions.CannotSpectateOwnMatchException;
 import com.villo.truco.domain.model.spectator.exceptions.SpectateNotAllowedException;
 import com.villo.truco.domain.ports.CompetitionMembershipResolver;
+import com.villo.truco.domain.ports.FriendshipSpectateEligibilityResolver;
 import java.util.Objects;
 
 public final class SpectatingEligibilityPolicy {
 
   private final CompetitionMembershipResolver competitionMembershipResolver;
+  private final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver;
 
   public SpectatingEligibilityPolicy(
-      final CompetitionMembershipResolver competitionMembershipResolver) {
+      final CompetitionMembershipResolver competitionMembershipResolver,
+      final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver) {
 
     this.competitionMembershipResolver = Objects.requireNonNull(competitionMembershipResolver);
+    this.friendshipSpectateEligibilityResolver = Objects.requireNonNull(
+        friendshipSpectateEligibilityResolver);
   }
 
   public void ensureCanStartWatching(final Spectatorship spectatorship, final Match match) {
@@ -34,7 +39,12 @@ public final class SpectatingEligibilityPolicy {
       throw new CannotSpectateOwnMatchException();
     }
 
-    if (!this.competitionMembershipResolver.belongsToSameCompetition(match.getId(), spectatorId)) {
+    final var canSpectateByCompetition = this.competitionMembershipResolver.belongsToSameCompetition(
+        match.getId(), spectatorId);
+    final var canSpectateByFriendship = this.friendshipSpectateEligibilityResolver.canSpectateAsFriend(
+        match, spectatorId);
+
+    if (!canSpectateByCompetition && !canSpectateByFriendship) {
       throw new SpectateNotAllowedException();
     }
 

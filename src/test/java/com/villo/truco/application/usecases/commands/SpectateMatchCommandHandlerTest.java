@@ -322,7 +322,8 @@ class SpectateMatchCommandHandlerTest {
         this.publishedEvents::add);
 
     this.handler = new SpectateMatchCommandHandler(matchRepo, this.repository,
-        new SpectatingEligibilityPolicy(resolver), countPublisher, assembler);
+        new SpectatingEligibilityPolicy(resolver, (match, spectatorId) -> false), countPublisher,
+        assembler);
   }
 
   @Test
@@ -351,7 +352,8 @@ class SpectateMatchCommandHandlerTest {
     final var countPublisher = new SpectatorCountChangedPublisher(emptyMatchRepo, this.repository,
         this.publishedEvents::add);
     final var h = new SpectateMatchCommandHandler(emptyMatchRepo, this.repository,
-        new SpectatingEligibilityPolicy((matchId, playerId) -> true), countPublisher,
+        new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),
+        countPublisher,
         new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
 
     assertThatThrownBy(
@@ -367,7 +369,7 @@ class SpectateMatchCommandHandlerTest {
         MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
     final var matchRepo = stubMatchRepo(readyMatch);
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
-        new SpectatingEligibilityPolicy((matchId, playerId) -> true),
+        new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
         new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
 
@@ -404,13 +406,32 @@ class SpectateMatchCommandHandlerTest {
 
     final var matchRepo = stubMatchRepo(this.match);
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
-        new SpectatingEligibilityPolicy((matchId, playerId) -> false),
+        new SpectatingEligibilityPolicy((matchId, playerId) -> false,
+            (match, spectatorId) -> false),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
         new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
 
     assertThatThrownBy(() -> h.handle(
         new SpectateMatchCommand(this.match.getId(), PlayerId.generate()))).isInstanceOf(
         SpectateNotAllowedException.class);
+  }
+
+  @Test
+  @DisplayName("permite espectar si es amigo confirmado de un jugador")
+  void succeedsWhenAcceptedFriend() {
+
+    final var matchRepo = stubMatchRepo(this.match);
+    final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
+        new SpectatingEligibilityPolicy((matchId, playerId) -> false,
+            (match, spectatorId) -> spectatorId.equals(this.spectator)),
+        new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L));
+
+    final var result = h.handle(new SpectateMatchCommand(this.match.getId(), this.spectator));
+
+    assertThat(result.spectatorCount()).isEqualTo(1);
+    assertThat(this.repository.findBySpectatorId(this.spectator)
+        .flatMap(Spectatorship::getActiveMatchId)).contains(this.match.getId());
   }
 
 }

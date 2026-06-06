@@ -6,6 +6,7 @@ import com.villo.truco.social.application.dto.FriendSummaryDTO;
 import com.villo.truco.social.application.dto.IncomingFriendshipRequestDTO;
 import com.villo.truco.social.application.dto.OutgoingFriendshipRequestDTO;
 import com.villo.truco.social.application.dto.ResourceInvitationDTO;
+import com.villo.truco.social.application.dto.SpectatableMatchRefDTO;
 import com.villo.truco.social.domain.model.friendship.Friendship;
 import com.villo.truco.social.domain.model.invitation.ResourceInvitation;
 import java.util.Objects;
@@ -21,9 +22,10 @@ public final class SocialViewAssembler {
   }
 
   public FriendSummaryDTO toFriendSummaryDto(final Friendship friendship,
-      final PlayerId perspective) {
+      final PlayerId perspective, final SpectatableMatchRefDTO spectatableMatch) {
 
-    return new FriendSummaryDTO(this.resolveUsername(friendship.counterpartOf(perspective)));
+    return new FriendSummaryDTO(this.resolveUsername(friendship.counterpartOf(perspective)),
+        spectatableMatch);
   }
 
   public IncomingFriendshipRequestDTO toIncomingFriendshipRequestDto(final Friendship friendship) {

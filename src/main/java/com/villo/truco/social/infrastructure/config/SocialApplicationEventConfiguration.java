@@ -1,5 +1,6 @@
 package com.villo.truco.social.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.SpectatorCleanupOnFriendshipRemovedEventHandler;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.TransactionalRunner;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
@@ -77,12 +78,13 @@ public class SocialApplicationEventConfiguration {
   @Bean
   SocialEventNotifier socialEventNotifier(
       final SocialNotificationEventTranslator socialNotificationEventTranslator,
+      final SpectatorCleanupOnFriendshipRemovedEventHandler spectatorCleanupOnFriendshipRemovedEventHandler,
       final ResourceInvitationAcceptedJoinEventHandler resourceInvitationAcceptedJoinEventHandler,
       final ResourceInvitationDomainEventHandler<ResourceInvitationDomainEvent> resourceInvitationTimeoutEventHandler) {
 
     return new CompositeSocialEventNotifier(
-        List.of(socialNotificationEventTranslator, resourceInvitationAcceptedJoinEventHandler,
-            resourceInvitationTimeoutEventHandler));
+        List.of(socialNotificationEventTranslator, spectatorCleanupOnFriendshipRemovedEventHandler,
+            resourceInvitationAcceptedJoinEventHandler, resourceInvitationTimeoutEventHandler));
   }
 
 }
