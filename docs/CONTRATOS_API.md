@@ -63,8 +63,8 @@ La pertenencia al recurso y las reglas de acceso se validan dentro de los casos 
 - un jugador solo puede operar sobre partidas en las que participa
 - un espectador solo puede consultar una partida si ya quedo registrado como espectador de esa
   partida
-- spectate solo esta permitido para miembros de la misma liga o copa del match, nunca para uno de
-  los dos jugadores activos
+- spectate esta permitido para miembros de la misma liga/copa del match o para amigos confirmados
+  de alguno de los jugadores, nunca para uno de los dos jugadores activos
 
 ### 1.4 IDs
 
@@ -803,11 +803,12 @@ El flujo actual de spectate es WebSocket-first:
 Restricciones de negocio:
 
 - el match debe estar `IN_PROGRESS`
-- el espectador debe pertenecer a la misma liga o copa del match
+- el espectador debe pertenecer a la misma liga/copa del match o tener amistad confirmada con
+  alguno de los jugadores
 - un jugador no puede spectear su propio match
 - un jugador no puede spectear dos matches al mismo tiempo
-- al terminar el match, o si el espectador pasa a ser jugador activo en una liga/copa, el backend
-  lo desregistra automaticamente
+- al terminar el match, si el espectador pasa a ser jugador activo en una liga/copa, o si se elimina
+  la amistad que era su unico motivo de elegibilidad, el backend lo desregistra automaticamente
 
 ### 4.17 Revancha (Rematch)
 
@@ -1679,10 +1680,26 @@ Response `200`:
 ```json
 [
   {
-    "friendUsername": "martina"
+    "friendUsername": "martina",
+    "spectatableMatch": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "status": "IN_PROGRESS"
+    }
+  },
+  {
+    "friendUsername": "agus",
+    "spectatableMatch": null
   }
 ]
 ```
+
+Notas:
+
+- `spectatableMatch` es `null` cuando el amigo no tiene una partida `IN_PROGRESS`.
+- `spectatableMatch.id` se usa como header `matchId` al suscribirse a
+  `/user/queue/match-spectate`.
+- El alta de espectador sigue siendo WebSocket-first; este endpoint solo permite descubrir partidas
+  espectables de amigos.
 
 ### 7.4.6 Listar solicitudes recibidas
 
@@ -2852,6 +2869,9 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   ver un item, esa exclusion es responsabilidad del lifecycle del cliente.
 - Spectate se activa por WebSocket, no por REST: para empezar a mirar un match hay que suscribirse
   a `/user/queue/match-spectate` con header `matchId`.
+- Para amigos, el `matchId` puede obtenerse de `GET /api/social/friendships` en
+  `spectatableMatch.id`; la amistad confirmada habilita el alta igual que la pertenencia a
+  liga/copa.
 - Si la conexion WebSocket del espectador se corta o hace `UNSUBSCRIBE`, el backend deja de
   registrarlo como espectador de ese match.
 - `GET /api/matches/{matchId}/spectate` sirve para refrescar el snapshot de un espectador ya

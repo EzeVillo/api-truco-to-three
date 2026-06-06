@@ -3,6 +3,7 @@ package com.villo.truco.social.infrastructure.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import com.villo.truco.application.eventhandlers.SpectatorCleanupOnFriendshipRemovedEventHandler;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.ResourceInvitationDomainEventHandler;
@@ -34,7 +35,8 @@ class SocialApplicationEventConfigurationTest {
     assertThat(mapper).isNotNull();
     assertThat(translator).isNotNull();
     assertThat(joinEventHandler).isNotNull();
-    assertThat(configuration.socialEventNotifier(translator, joinEventHandler,
+    assertThat(configuration.socialEventNotifier(translator,
+        mock(SpectatorCleanupOnFriendshipRemovedEventHandler.class), joinEventHandler,
         timeoutHandler)).isNotNull();
   }
 

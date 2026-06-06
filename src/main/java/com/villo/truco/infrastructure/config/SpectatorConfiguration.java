@@ -4,6 +4,7 @@ import com.villo.truco.application.assemblers.SpectatorMatchStateDTOAssembler;
 import com.villo.truco.application.eventhandlers.MatchEventMapper;
 import com.villo.truco.application.eventhandlers.SpectatorAutoKickOnCupMatchActivatedEventHandler;
 import com.villo.truco.application.eventhandlers.SpectatorAutoKickOnLeagueMatchActivatedEventHandler;
+import com.villo.truco.application.eventhandlers.SpectatorCleanupOnFriendshipRemovedEventHandler;
 import com.villo.truco.application.eventhandlers.SpectatorCleanupOnMatchEndEventHandler;
 import com.villo.truco.application.eventhandlers.SpectatorNotificationEventTranslator;
 import com.villo.truco.application.ports.PublicActorResolver;
@@ -19,6 +20,7 @@ import com.villo.truco.application.usecases.queries.GetSpectateMatchStateQueryHa
 import com.villo.truco.domain.model.spectator.SpectatingEligibilityPolicy;
 import com.villo.truco.domain.ports.CompetitionMembershipResolver;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.FriendshipSpectateEligibilityResolver;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.SpectatorshipRepository;
@@ -35,12 +37,14 @@ public class SpectatorConfiguration {
   private final ApplicationEventPublisher eventPublisher;
   private final MatchEventMapper matchEventMapper;
   private final PublicActorResolver publicActorResolver;
+  private final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver;
   private final long idleTimeoutMillis;
 
   public SpectatorConfiguration(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository, final ApplicationEventPublisher eventPublisher,
       final MatchEventMapper matchEventMapper, final PublicActorResolver publicActorResolver,
+      final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver,
       final MatchTimeoutProperties matchTimeoutProperties) {
 
     this.matchQueryRepository = matchQueryRepository;
@@ -49,6 +53,7 @@ public class SpectatorConfiguration {
     this.eventPublisher = eventPublisher;
     this.matchEventMapper = matchEventMapper;
     this.publicActorResolver = publicActorResolver;
+    this.friendshipSpectateEligibilityResolver = friendshipSpectateEligibilityResolver;
     this.idleTimeoutMillis = matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L;
   }
 
@@ -70,7 +75,8 @@ public class SpectatorConfiguration {
   @Bean
   SpectatingEligibilityPolicy spectatingEligibilityPolicy() {
 
-    return new SpectatingEligibilityPolicy(competitionMembershipResolver());
+    return new SpectatingEligibilityPolicy(competitionMembershipResolver(),
+        this.friendshipSpectateEligibilityResolver);
   }
 
   @Bean
@@ -125,6 +131,14 @@ public class SpectatorConfiguration {
   SpectatorCleanupOnMatchEndEventHandler spectatorCleanupOnMatchEndEventHandler() {
 
     return new SpectatorCleanupOnMatchEndEventHandler(spectatorshipLifecycleManager());
+  }
+
+  @Bean
+  SpectatorCleanupOnFriendshipRemovedEventHandler spectatorCleanupOnFriendshipRemovedEventHandler() {
+
+    return new SpectatorCleanupOnFriendshipRemovedEventHandler(spectatorshipRepository(),
+        this.matchQueryRepository, competitionMembershipResolver(),
+        this.friendshipSpectateEligibilityResolver, spectatorshipLifecycleManager());
   }
 
   @Bean

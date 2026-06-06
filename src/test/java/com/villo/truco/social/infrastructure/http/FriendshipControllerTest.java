@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.villo.truco.social.application.dto.FriendSummaryDTO;
 import com.villo.truco.social.application.dto.IncomingFriendshipRequestDTO;
 import com.villo.truco.social.application.dto.OutgoingFriendshipRequestDTO;
+import com.villo.truco.social.application.dto.SpectatableMatchRefDTO;
 import com.villo.truco.social.application.ports.in.AcceptFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.CancelFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.DeclineFriendshipUseCase;
@@ -41,7 +42,8 @@ class FriendshipControllerTest {
         GetFriendshipRequestsUseCase.class);
     final GetSentFriendshipRequestsUseCase getSentFriendshipRequestsUseCase = mock(
         GetSentFriendshipRequestsUseCase.class);
-    when(getFriendsUseCase.handle(any())).thenReturn(List.of(new FriendSummaryDTO("martina")));
+    when(getFriendsUseCase.handle(any())).thenReturn(List.of(new FriendSummaryDTO("martina",
+        new SpectatableMatchRefDTO("550e8400-e29b-41d4-a716-446655440000", "IN_PROGRESS"))));
     when(getFriendshipRequestsUseCase.handle(any())).thenReturn(
         List.of(new IncomingFriendshipRequestDTO("agus")));
     when(getSentFriendshipRequestsUseCase.handle(any())).thenReturn(
@@ -66,6 +68,9 @@ class FriendshipControllerTest {
     assertThat(controller.getFriends(jwt).getBody()).hasSize(1);
     assertThat(controller.getFriends(jwt).getBody().getFirst().friendUsername()).isEqualTo(
         "martina");
+    assertThat(
+        controller.getFriends(jwt).getBody().getFirst().spectatableMatch().status()).isEqualTo(
+        "IN_PROGRESS");
     assertThat(controller.getFriendshipRequests(jwt).getBody()).hasSize(1);
     assertThat(
         controller.getFriendshipRequests(jwt).getBody().getFirst().requesterUsername()).isEqualTo(

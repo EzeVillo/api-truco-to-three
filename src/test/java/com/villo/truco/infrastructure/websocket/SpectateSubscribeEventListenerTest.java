@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.villo.truco.application.commands.SpectateMatchCommand;
 import com.villo.truco.application.dto.SpectatorMatchStateDTO;
 import com.villo.truco.application.ports.in.SpectateMatchUseCase;
+import com.villo.truco.domain.model.spectator.exceptions.SpectateNotAllowedException;
+import com.villo.truco.infrastructure.websocket.dto.MatchDerivedWsEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -62,6 +64,30 @@ class SpectateSubscribeEventListenerTest {
     assertThat(commandCaptor.getValue().matchId().value().toString()).isEqualTo(matchId);
     assertThat(commandCaptor.getValue().spectatorId().value().toString()).isEqualTo(playerId);
     assertThat(registry.removeSubscription("session-1", "sub-1")).isNotNull();
+  }
+
+  @Test
+  @DisplayName("envia SPECTATE_ERROR si el alta de espectador es rechazada")
+  void sendsErrorWhenUseCaseRejects() {
+
+    final var useCase = mock(SpectateMatchUseCase.class);
+    final var messaging = mock(SimpMessagingTemplate.class);
+    final var registry = new SpectateSessionRegistry();
+    final var listener = new SpectateSubscribeEventListener(useCase, messaging, registry);
+    final var playerId = java.util.UUID.randomUUID().toString();
+    final var matchId = java.util.UUID.randomUUID().toString();
+
+    when(useCase.handle(any())).thenThrow(new SpectateNotAllowedException());
+
+    listener.onSubscribe(
+        new SessionSubscribeEvent(this, subscribeMessage(playerId, matchId, "session-1", "sub-1")));
+
+    final var eventCaptor = ArgumentCaptor.forClass(MatchDerivedWsEvent.class);
+    verify(messaging).convertAndSendToUser(eq(playerId), eq("/queue/match-spectate"),
+        eventCaptor.capture());
+
+    assertThat(eventCaptor.getValue().eventType()).isEqualTo("SPECTATE_ERROR");
+    assertThat(registry.removeSubscription("session-1", "sub-1")).isNull();
   }
 
 }

@@ -12,7 +12,7 @@ games.
 - ligas round-robin
 - copas single elimination
 - lobby publico para partidas, ligas y copas
-- spectating de matches de ligas y copas
+- spectating de matches de ligas, copas y amigos confirmados
 - chat por recurso
 - amistades, invitaciones rapidas y DM efimero entre amigos
 - revancha post-partida en matches casuales
@@ -65,8 +65,9 @@ games.
   autostart publico al completarse, leave, start privado, bracket, avance automatico y
   resolucion por forfeit.
 - Spectators:
-  solo participantes de la misma liga o copa pueden spectear matches en progreso; la vista de
-  espectador no expone cartas privadas ni acciones disponibles.
+  participantes de la misma liga/copa y amigos confirmados de alguno de los jugadores pueden
+  spectear matches en progreso; la vista de espectador no expone cartas privadas ni acciones
+  disponibles.
 - Chat:
   lectura, envio de mensajes, limite de 50 mensajes y rate limit de 2 segundos por jugador.
 - Social:
@@ -74,8 +75,10 @@ games.
   amigos aceptados y DM efimero por `FRIENDSHIP`. El envio de invitaciones valida que el
   destinatario no este ocupado en otra partida o torneo. La API separa `friendship-requests`
   (pendientes) de `friendships` (amistades aceptadas) y expone jugadores por `username`, no por
-  `PlayerId`. `friendshipId` queda solo como identidad interna del agregado y no forma parte del
-  contrato publico REST/WebSocket.
+  `PlayerId`. En amistades aceptadas, `GET /api/social/friendships` incluye `spectatableMatch`
+  cuando el amigo esta jugando un match `IN_PROGRESS`; ese `id` se usa para entrar por el flujo de
+  spectate existente. `friendshipId` queda solo como identidad interna del agregado y no forma parte
+  del contrato publico REST/WebSocket.
 - Profile:
   tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
   interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea
@@ -359,7 +362,8 @@ WebSocket/STOMP:
 - spectate:
   el alta de espectador se registra al suscribirse por STOMP a `/user/queue/match-spectate`
   enviando header nativo `matchId`; la API expone `GET /api/matches/{matchId}/spectate` para leer
-  el snapshot del espectador ya registrado.
+  el snapshot del espectador ya registrado. Para amigos, el `matchId` se descubre en
+  `GET /api/social/friendships` dentro de `spectatableMatch`.
 
 ## Observabilidad y operacion
 

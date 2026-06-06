@@ -28,6 +28,7 @@ import com.villo.truco.social.application.services.InvitationTargetService;
 import com.villo.truco.social.application.services.ResourceInvitationPolicy;
 import com.villo.truco.social.application.services.ResourceInvitationResolver;
 import com.villo.truco.social.application.services.SocialFriendshipParticipantsSupport;
+import com.villo.truco.social.application.services.SocialFriendshipSpectateEligibilitySupport;
 import com.villo.truco.social.application.services.SocialInvitationExpirationPolicy;
 import com.villo.truco.social.application.services.SocialUserGuard;
 import com.villo.truco.social.application.services.SocialViewAssembler;
@@ -159,6 +160,12 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
+  SocialFriendshipSpectateEligibilitySupport socialFriendshipSpectateEligibilitySupport() {
+
+    return new SocialFriendshipSpectateEligibilitySupport(this.friendshipQueryRepository);
+  }
+
+  @Bean
   RequestFriendshipUseCase requestFriendshipUseCase(final SocialEventNotifier socialEventNotifier) {
 
     final var handler = new RequestFriendshipCommandHandler(this.socialUserGuard(),
@@ -202,7 +209,7 @@ public class SocialUseCaseConfiguration {
   GetFriendsUseCase getFriendsUseCase() {
 
     return new GetFriendsQueryHandler(this.socialUserGuard(), this.friendshipQueryRepository,
-        this.socialViewAssembler());
+        this.matchQueryRepository, this.socialViewAssembler());
   }
 
   @Bean
