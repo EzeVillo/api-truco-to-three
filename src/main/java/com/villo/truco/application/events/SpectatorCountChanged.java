@@ -7,6 +7,6 @@ import java.util.Set;
 
 public record SpectatorCountChanged(MatchId matchId, List<PlayerId> players,
                                     Set<PlayerId> spectators, int count) implements
-    ApplicationEvent {
+    PostCommitApplicationEvent {
 
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 
 public record LeagueEventNotification(LeagueId leagueId, List<PlayerId> recipients,
                                       String eventType, long timestamp,
-                                      Map<String, Object> payload) implements ApplicationEvent {
+                                      Map<String, Object> payload) implements
+    PostCommitApplicationEvent {
 
 }
