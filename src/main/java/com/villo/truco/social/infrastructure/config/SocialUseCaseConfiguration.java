@@ -16,6 +16,7 @@ import com.villo.truco.social.application.ports.in.CreateResourceInvitationUseCa
 import com.villo.truco.social.application.ports.in.DeclineFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.DeclineResourceInvitationUseCase;
 import com.villo.truco.social.application.ports.in.ExpireResourceInvitationUseCase;
+import com.villo.truco.social.application.ports.in.GetFriendActivityUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendsUseCase;
 import com.villo.truco.social.application.ports.in.GetFriendshipRequestsUseCase;
 import com.villo.truco.social.application.ports.in.GetResourceInvitationsUseCase;
@@ -23,6 +24,7 @@ import com.villo.truco.social.application.ports.in.GetSentFriendshipRequestsUseC
 import com.villo.truco.social.application.ports.in.GetSentResourceInvitationsUseCase;
 import com.villo.truco.social.application.ports.in.RemoveFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.RequestFriendshipUseCase;
+import com.villo.truco.social.application.services.FriendActivityResolver;
 import com.villo.truco.social.application.services.FriendshipResolver;
 import com.villo.truco.social.application.services.InvitationTargetService;
 import com.villo.truco.social.application.services.ResourceInvitationPolicy;
@@ -42,6 +44,7 @@ import com.villo.truco.social.application.usecases.commands.DeclineResourceInvit
 import com.villo.truco.social.application.usecases.commands.ExpireResourceInvitationCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RemoveFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RequestFriendshipCommandHandler;
+import com.villo.truco.social.application.usecases.queries.GetFriendActivityQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendshipRequestsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetResourceInvitationsQueryHandler;
@@ -166,6 +169,13 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
+  FriendActivityResolver friendActivityResolver() {
+
+    return new FriendActivityResolver(this.friendshipQueryRepository, this.matchQueryRepository,
+        this.userQueryRepository);
+  }
+
+  @Bean
   RequestFriendshipUseCase requestFriendshipUseCase(final SocialEventNotifier socialEventNotifier) {
 
     final var handler = new RequestFriendshipCommandHandler(this.socialUserGuard(),
@@ -210,6 +220,12 @@ public class SocialUseCaseConfiguration {
 
     return new GetFriendsQueryHandler(this.socialUserGuard(), this.friendshipQueryRepository,
         this.matchQueryRepository, this.socialViewAssembler());
+  }
+
+  @Bean
+  GetFriendActivityUseCase getFriendActivityUseCase() {
+
+    return new GetFriendActivityQueryHandler(this.socialUserGuard(), this.friendActivityResolver());
   }
 
   @Bean

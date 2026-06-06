@@ -1700,6 +1700,8 @@ Notas:
   `/user/queue/match-spectate`.
 - El alta de espectador sigue siendo WebSocket-first; este endpoint solo permite descubrir partidas
   espectables de amigos.
+- El estado inicial puede reconciliarse luego por `/user/queue/social` con
+  `FRIEND_ACTIVITY_STATE`, y los cambios posteriores llegan como `FRIEND_ACTIVITY_CHANGED`.
 
 ### 7.4.6 Listar solicitudes recibidas
 
@@ -2283,6 +2285,43 @@ Cada tipo de recurso tiene su propia estructura de evento:
 }
 ```
 
+Actividad de amigos, snapshot al suscribirse a `/user/queue/social`:
+
+```json
+{
+  "eventType": "FRIEND_ACTIVITY_STATE",
+  "timestamp": 1772768158123,
+  "payload": {
+    "friends": [
+      {
+        "friendUsername": "martina",
+        "spectatableMatch": {
+          "id": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+          "status": "IN_PROGRESS"
+        }
+      },
+      {
+        "friendUsername": "agus",
+        "spectatableMatch": null
+      }
+    ]
+  }
+}
+```
+
+Actividad de amigos, delta:
+
+```json
+{
+  "eventType": "FRIEND_ACTIVITY_CHANGED",
+  "timestamp": 1772768158123,
+  "payload": {
+    "friendUsername": "martina",
+    "spectatableMatch": null
+  }
+}
+```
+
 **Profile** (`/user/queue/profile`):
 
 ```json
@@ -2441,6 +2480,9 @@ Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` to
 - `RESOURCE_INVITATION_DECLINED` - el destinatario rechazó una invitación enviada por el usuario
 - `RESOURCE_INVITATION_EXPIRED` - una invitación pendiente expiró por tiempo o por recurso no
   joinable
+- `FRIEND_ACTIVITY_STATE` - snapshot completo de actividad espectable de amigos aceptados enviado al
+  suscribirse a `/user/queue/social`
+- `FRIEND_ACTIVITY_CHANGED` - delta de un amigo cuando empieza o deja de tener `spectatableMatch`
 
 ### 9.5f eventType posibles - Profile (`/user/queue/profile`, usuarios registrados)
 
@@ -2861,6 +2903,11 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
 - Las novedades sociales llegan por `/user/queue/social`; no reemplazan el flujo existente de
   `joinCode`, solo agregan targeting y UX mas rapida entre amigos.
+- Al suscribirse a `/user/queue/social`, el backend envia `FRIEND_ACTIVITY_STATE` para reconciliar
+  la lista de amigos despues del bootstrap REST o una reconexion. Luego envia
+  `FRIEND_ACTIVITY_CHANGED` por cada alta/baja de `spectatableMatch`.
+- La actividad social de amigos solo incluye `friendUsername` y `spectatableMatch` nullable. No
+  incluye cartas, acciones disponibles ni estado privado de ronda.
 - Los logros llegan por `/user/queue/profile` con evento `ACHIEVEMENT_UNLOCKED` y payload
   `{ achievementCode, unlockedAt, matchId, gameNumber }`.
 - El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al

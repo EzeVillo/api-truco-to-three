@@ -9,6 +9,7 @@ import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslato
 import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupPresenceEventTranslator;
+import com.villo.truco.application.eventhandlers.FriendActivityMatchEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeaguePresenceEventTranslator;
@@ -61,8 +62,8 @@ class EventNotifierConfigurationTest {
     assertThat(configuration.chatCupStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.chatLeagueStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.chatMatchGameStartedHandler(chatEventNotifier)).isNotNull();
-    assertThat(
-        configuration.matchEventNotifier(mock(MatchPresenceEventTranslator.class))).isNotNull();
+    assertThat(configuration.matchEventNotifier(mock(MatchPresenceEventTranslator.class),
+        mock(FriendActivityMatchEventTranslator.class))).isNotNull();
     assertThat(configuration.cupEventNotifier(mock(CupPresenceEventTranslator.class))).isNotNull();
     assertThat(
         configuration.leagueEventNotifier(mock(LeaguePresenceEventTranslator.class))).isNotNull();

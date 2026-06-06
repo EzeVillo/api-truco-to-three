@@ -1,5 +1,6 @@
 package com.villo.truco.social.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.FriendActivityMatchEventTranslator;
 import com.villo.truco.application.eventhandlers.SpectatorCleanupOnFriendshipRemovedEventHandler;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.TransactionalRunner;
@@ -12,6 +13,7 @@ import com.villo.truco.social.application.eventhandlers.ResourceInvitationAccept
 import com.villo.truco.social.application.eventhandlers.ResourceUnjoinableInvitationExpirationHandler;
 import com.villo.truco.social.application.eventhandlers.SocialEventMapper;
 import com.villo.truco.social.application.eventhandlers.SocialNotificationEventTranslator;
+import com.villo.truco.social.application.services.FriendActivityResolver;
 import com.villo.truco.social.domain.model.invitation.events.ResourceInvitationDomainEvent;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
@@ -55,6 +57,14 @@ public class SocialApplicationEventConfiguration {
       final ApplicationEventPublisher applicationEventPublisher) {
 
     return new SocialNotificationEventTranslator(socialEventMapper, applicationEventPublisher);
+  }
+
+  @Bean
+  FriendActivityMatchEventTranslator friendActivityMatchEventTranslator(
+      final FriendActivityResolver friendActivityResolver,
+      final ApplicationEventPublisher applicationEventPublisher) {
+
+    return new FriendActivityMatchEventTranslator(friendActivityResolver, applicationEventPublisher);
   }
 
   @Bean
