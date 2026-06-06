@@ -90,6 +90,15 @@ Docker Compose starts PostgreSQL on port `5432` and Adminer on `8081`.
   código; agregar el import arriba y usar el nombre corto.
   Excepción válida: cuando hay colisión de nombres entre dos clases con el mismo simple name.
 
+- **Timing de emisión de `ApplicationEvent`**: todo evento de aplicación nuevo DEBE declarar su
+  momento de emisión implementando exactamente uno de dos marcadores (verificado por ArchUnit en
+  `CleanArchitectureTest`):
+    - `PostCommitApplicationEvent`: notificaciones al usuario (pushes WebSocket). Se difieren a
+      `afterCommit` para evitar race conditions (404 por lectura prematura, avisos fantasma o
+      duplicados por rollback/retry).
+    - `InTransactionApplicationEvent`: eventos de coordinación que disparan escrituras atómicas en
+      otro agregado (avance de liga/copa, logros, etc.). Permanecen dentro de la transacción.
+
 ## Documentación:
 
 verificá si el cambio propuesto impacta la documentación del proyecto:
@@ -117,5 +126,5 @@ Esto está definido como Principio IV en `.specify/memory/constitution.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/009-presence-push/plan.md`
+`specs/010-post-commit-events/plan.md`
 <!-- SPECKIT END -->
