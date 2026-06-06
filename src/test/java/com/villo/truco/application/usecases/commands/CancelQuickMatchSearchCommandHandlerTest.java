@@ -51,7 +51,7 @@ class CancelQuickMatchSearchCommandHandlerTest {
     final var ticket = new QuickMatchTicket(player, GamesToPlay.of(3), Instant.now(), null);
     when(queuePort.tryDequeue(player)).thenReturn(Optional.of(ticket));
 
-    handler.handle(new CancelQuickMatchSearchCommand(player.toString()));
+    handler.handle(new CancelQuickMatchSearchCommand(player.value().toString()));
 
     verify(queuePort).tryDequeue(player);
     verify(friendAvailabilityChangeNotifier).notifyAvailabilityChanged(eq(player), anyLong());
@@ -66,7 +66,7 @@ class CancelQuickMatchSearchCommandHandlerTest {
     when(queuePort.tryDequeue(any())).thenReturn(Optional.empty());
 
     assertThatCode(() -> handler.handle(
-        new CancelQuickMatchSearchCommand(player.toString()))).doesNotThrowAnyException();
+        new CancelQuickMatchSearchCommand(player.value().toString()))).doesNotThrowAnyException();
     verify(queuePort).tryDequeue(player);
     verify(friendAvailabilityChangeNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
     verify(presenceNotifier, never()).notifyPlayers(any());
