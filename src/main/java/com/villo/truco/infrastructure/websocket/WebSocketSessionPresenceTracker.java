@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.websocket;
 
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.social.application.ports.out.FriendOnlinePresencePort;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +20,13 @@ public final class WebSocketSessionPresenceTracker implements FriendOnlinePresen
 
   private final Map<PlayerId, ConcurrentSkipListSet<String>> sessionsByPlayer = new ConcurrentHashMap<>();
   private final Map<String, PlayerId> playerBySession = new ConcurrentHashMap<>();
+  private final FriendPresenceAvailabilityNotifier presenceAvailabilityNotifier;
+
+  public WebSocketSessionPresenceTracker(
+      final FriendPresenceAvailabilityNotifier presenceAvailabilityNotifier) {
+
+    this.presenceAvailabilityNotifier = Objects.requireNonNull(presenceAvailabilityNotifier);
+  }
 
   private static String extractPlayerId(final StompHeaderAccessor accessor) {
 
@@ -56,8 +64,14 @@ public final class WebSocketSessionPresenceTracker implements FriendOnlinePresen
 
     final var parsedPlayerId = PlayerId.of(playerId);
     this.playerBySession.put(sessionId, parsedPlayerId);
-    this.sessionsByPlayer.computeIfAbsent(parsedPlayerId, ignored -> new ConcurrentSkipListSet<>())
-        .add(sessionId);
+    final var sessions = this.sessionsByPlayer.computeIfAbsent(parsedPlayerId,
+        ignored -> new ConcurrentSkipListSet<>());
+    final var becameOnline = sessions.isEmpty();
+    sessions.add(sessionId);
+
+    if (becameOnline) {
+      this.presenceAvailabilityNotifier.notifyPresenceChanged(parsedPlayerId);
+    }
   }
 
   @EventListener
@@ -80,6 +94,7 @@ public final class WebSocketSessionPresenceTracker implements FriendOnlinePresen
     sessions.remove(sessionId);
     if (sessions.isEmpty()) {
       this.sessionsByPlayer.remove(playerId, sessions);
+      this.presenceAvailabilityNotifier.notifyPresenceChanged(playerId);
     }
   }
 

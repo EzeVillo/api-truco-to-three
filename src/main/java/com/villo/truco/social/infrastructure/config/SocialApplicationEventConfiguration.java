@@ -15,6 +15,7 @@ import com.villo.truco.social.application.eventhandlers.SocialEventMapper;
 import com.villo.truco.social.application.eventhandlers.SocialNotificationEventTranslator;
 import com.villo.truco.social.application.services.FriendActivityResolver;
 import com.villo.truco.social.application.services.FriendAvailabilityResolver;
+import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
 import com.villo.truco.social.domain.model.invitation.events.ResourceInvitationDomainEvent;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
@@ -71,9 +72,21 @@ public class SocialApplicationEventConfiguration {
   @Bean
   SocialNotificationEventTranslator socialNotificationEventTranslator(
       final SocialEventMapper socialEventMapper,
+      final FriendAvailabilityResolver friendAvailabilityResolver,
       final ApplicationEventPublisher applicationEventPublisher) {
 
-    return new SocialNotificationEventTranslator(socialEventMapper, applicationEventPublisher);
+    return new SocialNotificationEventTranslator(socialEventMapper, friendAvailabilityResolver,
+        applicationEventPublisher);
+  }
+
+  @Bean
+  FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier(
+      final FriendAvailabilityResolver friendAvailabilityResolver,
+      final ApplicationEventPublisher applicationEventPublisher,
+      final TransactionalRunner transactionalRunner) {
+
+    return new FriendPresenceAvailabilityNotifier(friendAvailabilityResolver,
+        applicationEventPublisher, transactionalRunner);
   }
 
   @Bean

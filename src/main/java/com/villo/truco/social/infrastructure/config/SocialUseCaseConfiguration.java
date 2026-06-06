@@ -182,10 +182,11 @@ public class SocialUseCaseConfiguration {
   @Bean
   FriendAvailabilityResolver friendAvailabilityResolver(
       final PlayerAvailabilityChecker playerAvailabilityChecker,
-      final FriendOnlinePresencePort friendOnlinePresencePort) {
+      @Lazy final FriendOnlinePresencePort friendOnlinePresencePort) {
 
     return new FriendAvailabilityResolver(this.friendshipQueryRepository, this.matchQueryRepository,
-        this.userQueryRepository, playerAvailabilityChecker, friendOnlinePresencePort);
+        this.userQueryRepository, playerAvailabilityChecker, friendOnlinePresencePort,
+        this.resourceInvitationQueryRepository);
   }
 
   @Bean

@@ -72,14 +72,15 @@ luego con cada bloqueo real; el estado cambia entre `AVAILABLE` y `BUSY` con `bu
 
 ### Tests for User Story 1
 
-- [ ] T013 [P] [US1] Agregar tests de motivos `AVAILABLE`, `IN_MATCH`, `IN_LEAGUE`, `IN_CUP`,
+- [x] T013 [P] [US1] Agregar tests de motivos `AVAILABLE`, `IN_MATCH`, `IN_LEAGUE`, `IN_CUP`,
   `OPEN_REMATCH`, `IN_QUICK_QUEUE` en
   `src/test/java/com/villo/truco/social/application/services/FriendAvailabilityResolverTest.java`
-- [ ] T014 [US1] Agregar tests de pendientes bloqueantes/no bloqueantes en
+- [x] T014 [US1] Agregar tests de pendientes bloqueantes/no bloqueantes en
   `src/test/java/com/villo/truco/social/application/services/FriendAvailabilityResolverTest.java`
-- [ ] T015 [P] [US1] Agregar test de contrato REST de `GET /api/social/friendships` en
-  `src/test/java/com/villo/truco/social/infrastructure/http/FriendshipControllerTest.java`
-- [ ] T016 [P] [US1] Agregar test de payload social sin datos privados en
+- [x] T015 [P] [US1] Agregar test de contrato REST de `GET /api/social/friendships` en
+  `src/test/java/com/villo/truco/social/infrastructure/http/FriendshipControllerTest.java` (ya
+  cubierto: el test valida `availability`, `busyReason` y `spectatableMatch`)
+- [x] T016 [P] [US1] Agregar test de payload social sin datos privados en
   `src/test/java/com/villo/truco/social/application/events/FriendAvailabilityContractTest.java`
 
 ### Implementation for User Story 1
@@ -88,7 +89,7 @@ luego con cada bloqueo real; el estado cambia entre `AVAILABLE` y `BUSY` con `bu
   `src/main/java/com/villo/truco/application/usecases/commands/PlayerAvailabilityChecker.java`
 - [x] T018 [US1] Incorporar lectura de Quick Match en `FriendAvailabilityResolver` usando
   `src/main/java/com/villo/truco/domain/ports/QuickMatchQueuePort.java`
-- [ ] T019 [US1] Incorporar reglas de invitaciones/solicitudes pendientes en
+- [x] T019 [US1] Incorporar reglas de invitaciones/solicitudes pendientes en
   `FriendAvailabilityResolver` usando
   `src/main/java/com/villo/truco/social/domain/ports/ResourceInvitationQueryRepository.java` y
   `src/main/java/com/villo/truco/social/domain/ports/FriendshipQueryRepository.java`
@@ -117,13 +118,15 @@ verificar `FRIEND_AVAILABILITY_CHANGED` sin recargar.
 
 ### Tests for User Story 2
 
-- [ ] T025 [P] [US2] Agregar test de snapshot `FRIEND_AVAILABILITY_STATE` en
+- [x] T025 [P] [US2] Agregar test de snapshot `FRIEND_AVAILABILITY_STATE` en
   `src/test/java/com/villo/truco/social/infrastructure/websocket/SocialSubscribeEventListenerTest.java`
-- [ ] T026 [P] [US2] Agregar test de handler STOMP de delta en
+  (ya cubierto)
+- [x] T026 [P] [US2] Agregar test de handler STOMP de delta en
   `src/test/java/com/villo/truco/social/infrastructure/websocket/StompFriendAvailabilityNotificationHandlerTest.java`
-- [ ] T027 [P] [US2] Agregar test de traduccion de cambios de match a disponibilidad en
+- [x] T027 [P] [US2] Agregar test de traduccion de cambios de match a disponibilidad en
   `src/test/java/com/villo/truco/application/eventhandlers/FriendActivityMatchEventTranslatorTest.java`
-- [ ] T028 [P] [US2] Agregar test de caso de uso snapshot en
+  (ya cubierto)
+- [x] T028 [P] [US2] Agregar test de caso de uso snapshot en
   `src/test/java/com/villo/truco/social/application/usecases/queries/GetFriendAvailabilityQueryHandlerTest.java`
 
 ### Implementation for User Story 2
@@ -144,9 +147,10 @@ verificar `FRIEND_AVAILABILITY_CHANGED` sin recargar.
 - [x] T035 [US2] Actualizar `FriendActivityMatchEventTranslator` para emitir
   `FriendAvailabilityNotification` cuando cambie match/spectate en
   `src/main/java/com/villo/truco/application/eventhandlers/FriendActivityMatchEventTranslator.java`
-- [ ] T036 [US2] Emitir cambios de disponibilidad al aceptar, cancelar, rechazar o expirar
+- [x] T036 [US2] Emitir cambios de disponibilidad al aceptar, cancelar, rechazar o expirar
   invitaciones en
   `src/main/java/com/villo/truco/social/application/eventhandlers/SocialNotificationEventTranslator.java`
+  (recalcula y emite delta a ambas partes; test en `SocialNotificationEventTranslatorTest`)
 
 **Checkpoint**: US2 completo; disponibilidad se actualiza en vivo.
 
@@ -162,12 +166,13 @@ solo `availability`.
 
 ### Tests for User Story 3
 
-- [ ] T037 [P] [US3] Crear tests de multiples sesiones y ultima desconexion en
+- [x] T037 [P] [US3] Crear tests de multiples sesiones y ultima desconexion en
   `src/test/java/com/villo/truco/infrastructure/websocket/WebSocketSessionPresenceTrackerTest.java`
 - [x] T038 [P] [US3] Agregar tests de `online` separado de `availability` en
   `src/test/java/com/villo/truco/social/application/services/FriendAvailabilityResolverTest.java`
-- [ ] T039 [P] [US3] Agregar test de delta online en
-  `src/test/java/com/villo/truco/social/infrastructure/websocket/StompFriendAvailabilityNotificationHandlerTest.java`
+- [x] T039 [P] [US3] Agregar test de delta online (transiciones de borde en el tracker +
+  `resolveAvailabilityChangesForPlayer` en
+  `src/test/java/com/villo/truco/social/application/services/FriendAvailabilityResolverTest.java`)
 
 ### Implementation for User Story 3
 
@@ -180,8 +185,9 @@ solo `availability`.
   `src/main/java/com/villo/truco/infrastructure/websocket/WebSocketSessionPresenceTracker.java`
 - [x] T043 [US3] Conectar `FriendAvailabilityResolver` con `FriendOnlinePresencePort` en
   `src/main/java/com/villo/truco/social/application/services/FriendAvailabilityResolver.java`
-- [ ] T044 [US3] Emitir `FRIEND_AVAILABILITY_CHANGED` cuando cambia online en
+- [x] T044 [US3] Emitir `FRIEND_AVAILABILITY_CHANGED` cuando cambia online en
   `src/main/java/com/villo/truco/infrastructure/websocket/WebSocketSessionPresenceTracker.java`
+  (detecta bordes 0->1 y 1->0 y delega en `FriendPresenceAvailabilityNotifier`)
 - [x] T045 [US3] Registrar adapter de presencia online en
   `src/main/java/com/villo/truco/infrastructure/config/PresenceNotificationConfiguration.java`
 
@@ -198,21 +204,30 @@ snapshots ni deltas de disponibilidad.
 
 ### Tests for User Story 4
 
-- [ ] T046 [P] [US4] Agregar tests de filtro por amistad aceptada en
+- [x] T046 [P] [US4] Agregar tests de filtro por amistad aceptada en
   `src/test/java/com/villo/truco/social/application/services/FriendAvailabilityResolverTest.java`
-- [ ] T047 [P] [US4] Agregar test de no entrega tras eliminar amistad en
+  (`onlyExposesAcceptedFriends`, `pairDeltaEmptyWithoutAcceptedFriendship`)
+- [x] T047 [P] [US4] Agregar test de no entrega tras eliminar amistad en
   `src/test/java/com/villo/truco/social/infrastructure/websocket/StompFriendAvailabilityNotificationHandlerTest.java`
-- [ ] T048 [P] [US4] Agregar test de no exposicion para solicitudes pendientes en
+  (`sendsNothingWithoutRecipients`)
+- [x] T048 [P] [US4] Agregar test de no exposicion para solicitudes pendientes en
   `src/test/java/com/villo/truco/social/infrastructure/websocket/SocialSubscribeEventListenerTest.java`
+  (cubierto a nivel resolver: `findAcceptedByPlayer` excluye pendientes, validado en
+  `FriendAvailabilityResolverTest`)
 
 ### Implementation for User Story 4
 
 - [x] T049 [US4] Reforzar filtro de amistades `ACCEPTED` en
   `src/main/java/com/villo/truco/social/application/services/FriendAvailabilityResolver.java`
-- [ ] T050 [US4] Recalcular destinatarios de deltas solo con amistades vigentes en
+- [x] T050 [US4] Recalcular destinatarios de deltas solo con amistades vigentes en
   `src/main/java/com/villo/truco/social/infrastructure/websocket/StompFriendAvailabilityNotificationHandler.java`
-- [ ] T051 [US4] Asegurar remocion visual por `FRIENDSHIP_REMOVED` sin nuevos deltas en
+  (redundante: los destinatarios ya se calculan filtrando amistades aceptadas en el resolver —
+  `resolveAvailabilityChangesForPlayer`, `resolveAvailabilityChangesByRecipient`,
+  `resolveFriendDeltaFor`; el handler solo entrega a `recipients` ya filtrados)
+- [x] T051 [US4] Asegurar remocion visual por `FRIENDSHIP_REMOVED` sin nuevos deltas en
   `src/main/java/com/villo/truco/social/application/eventhandlers/SocialEventMapper.java`
+  (ya cubierto por el flujo social existente: `mapFriendshipRemoved` emite `FRIENDSHIP_REMOVED` y el
+  cliente remueve al amigo; no se generan deltas de disponibilidad para no-amigos)
 - [x] T052 [US4] Verificar que `FriendAvailabilityNotification` no contiene datos privados en
   `src/main/java/com/villo/truco/social/application/events/FriendAvailabilityNotification.java`
 
@@ -228,9 +243,13 @@ snapshots ni deltas de disponibilidad.
   reemplazar/reconciliar `FRIEND_ACTIVITY_*` con `FRIEND_AVAILABILITY_*`
 - [x] T054 [P] Actualizar quickstart o ejemplos del frontend en `README.md` con `availability`,
   `busyReason`, `online` y `spectatableMatch`
-- [ ] T055 Revisar compatibilidad temporal de `FriendActivityDTO` en
+- [x] T055 Revisar compatibilidad temporal de `FriendActivityDTO` en
   `src/main/java/com/villo/truco/social/application/dto/FriendActivityDTO.java`
-- [x] T056 Ejecutar `.\gradlew.bat test` y corregir fallos
+  (se mantiene sin cambios durante la ventana de compatibilidad: `FRIEND_ACTIVITY_*` coexiste con
+  `FRIEND_AVAILABILITY_*`; `FriendActivityDTO` solo lleva `friendUsername` + `spectatableMatch`, sin
+  datos privados; la disponibilidad usa `FriendAvailabilityDTO`)
+- [x] T056 Ejecutar `.\gradlew.bat test` y corregir fallos (suite completa en verde, incluye
+  ArchUnit)
 - [ ] T057 Ejecutar validacion manual de `specs/013-friend-availability/quickstart.md`
 
 ---

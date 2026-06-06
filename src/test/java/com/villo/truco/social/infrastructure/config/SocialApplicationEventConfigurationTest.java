@@ -9,6 +9,7 @@ import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.ResourceInvitationDomainEventHandler;
 import com.villo.truco.application.usecases.commands.JoinTargetDispatcher;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
+import com.villo.truco.social.application.services.FriendAvailabilityResolver;
 import com.villo.truco.social.domain.model.invitation.events.ResourceInvitationDomainEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -23,7 +24,7 @@ class SocialApplicationEventConfigurationTest {
         mock(SimpMessagingTemplate.class), mock(EventNotifierHealthRegistry.class));
     final var mapper = configuration.socialEventMapper(mock(PublicActorResolver.class));
     final var translator = configuration.socialNotificationEventTranslator(mapper,
-        mock(ApplicationEventPublisher.class));
+        mock(FriendAvailabilityResolver.class), mock(ApplicationEventPublisher.class));
 
     final var joinEventHandler = configuration.resourceInvitationAcceptedJoinEventHandler(
         mock(JoinTargetDispatcher.class));

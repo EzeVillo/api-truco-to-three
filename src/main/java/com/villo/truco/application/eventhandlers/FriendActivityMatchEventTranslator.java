@@ -10,7 +10,6 @@ import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
 import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.social.application.dto.FriendActivityDTO;
-import com.villo.truco.social.application.dto.FriendAvailabilityDTO;
 import com.villo.truco.social.application.events.FriendActivityNotification;
 import com.villo.truco.social.application.events.FriendAvailabilityNotification;
 import com.villo.truco.social.application.services.FriendActivityResolver;
@@ -58,17 +57,6 @@ public final class FriendActivityMatchEventTranslator implements
     return payload;
   }
 
-  private static Map<String, Object> availabilityPayload(final FriendAvailabilityDTO availability) {
-
-    final var payload = new LinkedHashMap<String, Object>();
-    payload.put("friendUsername", availability.friendUsername());
-    payload.put("online", availability.online());
-    payload.put("availability", availability.availability());
-    payload.put("busyReason", availability.busyReason());
-    payload.put("spectatableMatch", availability.spectatableMatch());
-    return payload;
-  }
-
   @Override
   public Class<MatchDomainEvent> eventType() {
 
@@ -109,8 +97,7 @@ public final class FriendActivityMatchEventTranslator implements
     for (final var entry : availabilityChanges.entrySet()) {
       this.applicationEventPublisher.publish(
           new FriendAvailabilityNotification(List.of(entry.getKey()),
-              AVAILABILITY_CHANGED_EVENT_TYPE, event.getTimestamp(),
-              availabilityPayload(entry.getValue())));
+              AVAILABILITY_CHANGED_EVENT_TYPE, event.getTimestamp(), entry.getValue().toPayload()));
     }
   }
 
