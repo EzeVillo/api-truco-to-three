@@ -2,7 +2,7 @@ package com.villo.truco.infrastructure.websocket;
 
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.social.application.ports.out.FriendOnlinePresencePort;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,12 +20,12 @@ public final class WebSocketSessionPresenceTracker implements FriendOnlinePresen
 
   private final Map<PlayerId, ConcurrentSkipListSet<String>> sessionsByPlayer = new ConcurrentHashMap<>();
   private final Map<String, PlayerId> playerBySession = new ConcurrentHashMap<>();
-  private final FriendPresenceAvailabilityNotifier presenceAvailabilityNotifier;
+  private final FriendAvailabilityChangeNotifier availabilityChangeNotifier;
 
   public WebSocketSessionPresenceTracker(
-      final FriendPresenceAvailabilityNotifier presenceAvailabilityNotifier) {
+      final FriendAvailabilityChangeNotifier availabilityChangeNotifier) {
 
-    this.presenceAvailabilityNotifier = Objects.requireNonNull(presenceAvailabilityNotifier);
+    this.availabilityChangeNotifier = Objects.requireNonNull(availabilityChangeNotifier);
   }
 
   private static String extractPlayerId(final StompHeaderAccessor accessor) {
@@ -70,7 +70,7 @@ public final class WebSocketSessionPresenceTracker implements FriendOnlinePresen
     sessions.add(sessionId);
 
     if (becameOnline) {
-      this.presenceAvailabilityNotifier.notifyPresenceChanged(parsedPlayerId);
+      this.availabilityChangeNotifier.notifyOnlinePresenceChanged(parsedPlayerId);
     }
   }
 
@@ -94,7 +94,7 @@ public final class WebSocketSessionPresenceTracker implements FriendOnlinePresen
     sessions.remove(sessionId);
     if (sessions.isEmpty()) {
       this.sessionsByPlayer.remove(playerId, sessions);
-      this.presenceAvailabilityNotifier.notifyPresenceChanged(playerId);
+      this.availabilityChangeNotifier.notifyOnlinePresenceChanged(playerId);
     }
   }
 

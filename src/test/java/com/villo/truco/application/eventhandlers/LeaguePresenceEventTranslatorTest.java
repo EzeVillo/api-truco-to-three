@@ -12,7 +12,7 @@ import com.villo.truco.domain.model.league.events.LeaguePlayerLeftEvent;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +27,7 @@ class LeaguePresenceEventTranslatorTest {
   void notifiesOnLeagueCreated() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var friendNotifier = mock(FriendAvailabilityChangeNotifier.class);
     final var translator = new LeaguePresenceEventTranslator(notifier, friendNotifier);
     final var creator = PlayerId.generate();
     final var event = new LeagueCreatedEvent(LeagueId.generate(), List.of(creator));
@@ -46,7 +46,7 @@ class LeaguePresenceEventTranslatorTest {
 
     final var notifier = mock(PresenceNotifier.class);
     final var translator = new LeaguePresenceEventTranslator(notifier,
-        mock(FriendPresenceAvailabilityNotifier.class));
+        mock(FriendAvailabilityChangeNotifier.class));
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
 
@@ -64,7 +64,7 @@ class LeaguePresenceEventTranslatorTest {
 
     final var notifier = mock(PresenceNotifier.class);
     final var translator = new LeaguePresenceEventTranslator(notifier,
-        mock(FriendPresenceAvailabilityNotifier.class));
+        mock(FriendAvailabilityChangeNotifier.class));
     final var remaining = PlayerId.generate();
     final var leaver = PlayerId.generate();
 
@@ -80,7 +80,7 @@ class LeaguePresenceEventTranslatorTest {
   void ignoresNonOccupancyEvents() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var friendNotifier = mock(FriendAvailabilityChangeNotifier.class);
     final var translator = new LeaguePresenceEventTranslator(notifier, friendNotifier);
 
     translator.handle(new OtherLeagueEvent(LeagueId.generate(), List.of(PlayerId.generate())));

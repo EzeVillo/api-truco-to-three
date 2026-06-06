@@ -20,7 +20,7 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +35,7 @@ class EnqueueForQuickMatchCommandHandlerTest {
   private PlayerAvailabilityChecker availabilityChecker;
   private MatchRepository matchRepository;
   private MatchEventNotifier matchEventNotifier;
-  private FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
+  private FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
   private EnqueueForQuickMatchCommandHandler handler;
 
   @BeforeEach
@@ -45,9 +45,9 @@ class EnqueueForQuickMatchCommandHandlerTest {
     availabilityChecker = mock(PlayerAvailabilityChecker.class);
     matchRepository = mock(MatchRepository.class);
     matchEventNotifier = mock(MatchEventNotifier.class);
-    friendPresenceAvailabilityNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    friendAvailabilityChangeNotifier = mock(FriendAvailabilityChangeNotifier.class);
     handler = new EnqueueForQuickMatchCommandHandler(queuePort, availabilityChecker,
-        matchRepository, matchEventNotifier, friendPresenceAvailabilityNotifier);
+        matchRepository, matchEventNotifier, friendAvailabilityChangeNotifier);
   }
 
   private EnqueueForQuickMatchCommand command(final PlayerId playerId) {
@@ -72,7 +72,7 @@ class EnqueueForQuickMatchCommandHandlerTest {
     assertThat(result.matchId()).isNotNull();
     verify(matchRepository).save(any());
     verify(matchEventNotifier).publishDomainEvents(any());
-    verify(friendPresenceAvailabilityNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
+    verify(friendAvailabilityChangeNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
     verify(queuePort, never()).enqueue(any());
   }
 
@@ -90,7 +90,7 @@ class EnqueueForQuickMatchCommandHandlerTest {
     assertThat(result.status()).isEqualTo(QuickMatchStatus.SEARCHING);
     assertThat(result.matchId()).isNull();
     verify(queuePort).enqueue(any());
-    verify(friendPresenceAvailabilityNotifier).notifyAvailabilityChanged(eq(player), anyLong());
+    verify(friendAvailabilityChangeNotifier).notifyAvailabilityChanged(eq(player), anyLong());
     verify(matchRepository, never()).save(any());
   }
 
@@ -109,7 +109,7 @@ class EnqueueForQuickMatchCommandHandlerTest {
     assertThat(result.status()).isEqualTo(QuickMatchStatus.SEARCHING);
     assertThat(result.enqueuedAt()).isEqualTo(originalTime);
     verify(queuePort, never()).enqueue(any());
-    verify(friendPresenceAvailabilityNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
+    verify(friendAvailabilityChangeNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
     verify(availabilityChecker, never()).ensureAvailable(any());
   }
 
@@ -127,7 +127,7 @@ class EnqueueForQuickMatchCommandHandlerTest {
         PlayerAlreadyInActiveMatchException.class);
 
     verify(matchRepository, never()).save(any());
-    verify(friendPresenceAvailabilityNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
+    verify(friendAvailabilityChangeNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
   }
 
   @Test

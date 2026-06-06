@@ -7,7 +7,7 @@ import com.villo.truco.domain.model.rematch.events.RematchSessionDomainEvent;
 import com.villo.truco.domain.model.rematch.events.RematchSessionExpiredEvent;
 import com.villo.truco.domain.model.rematch.events.RematchSessionOpenedEvent;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -20,14 +20,13 @@ public final class RematchPresenceEventTranslator implements
     RematchSessionDomainEventHandler<RematchSessionDomainEvent> {
 
   private final PresenceNotifier presenceNotifier;
-  private final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
+  private final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
 
   public RematchPresenceEventTranslator(final PresenceNotifier presenceNotifier,
-      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
+      final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier) {
 
     this.presenceNotifier = Objects.requireNonNull(presenceNotifier);
-    this.friendPresenceAvailabilityNotifier = Objects.requireNonNull(
-        friendPresenceAvailabilityNotifier);
+    this.friendAvailabilityChangeNotifier = Objects.requireNonNull(friendAvailabilityChangeNotifier);
   }
 
   @Override
@@ -63,7 +62,7 @@ public final class RematchPresenceEventTranslator implements
   private void publishAvailabilityChanges(final PlayerId player,
       final RematchSessionDomainEvent event) {
 
-    this.friendPresenceAvailabilityNotifier.notifyAvailabilityChanged(player, event.getTimestamp());
+    this.friendAvailabilityChangeNotifier.notifyAvailabilityChanged(player, event.getTimestamp());
   }
 
 }

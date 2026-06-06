@@ -12,7 +12,7 @@ import com.villo.truco.domain.model.rematch.events.RematchSessionOpenedEvent;
 import com.villo.truco.domain.model.rematch.valueobjects.RematchSessionId;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.time.Instant;
 import java.util.Collection;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +27,7 @@ class RematchPresenceEventTranslatorTest {
   void notifiesOnRematchOpened() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var friendNotifier = mock(FriendAvailabilityChangeNotifier.class);
     final var translator = new RematchPresenceEventTranslator(notifier, friendNotifier);
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
@@ -48,7 +48,7 @@ class RematchPresenceEventTranslatorTest {
 
     final var notifier = mock(PresenceNotifier.class);
     final var translator = new RematchPresenceEventTranslator(notifier,
-        mock(FriendPresenceAvailabilityNotifier.class));
+        mock(FriendAvailabilityChangeNotifier.class));
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
 
@@ -66,7 +66,7 @@ class RematchPresenceEventTranslatorTest {
   void publishesAvailabilityWhenRematchIsClosedByLeave() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var friendNotifier = mock(FriendAvailabilityChangeNotifier.class);
     final var translator = new RematchPresenceEventTranslator(notifier, friendNotifier);
     final var actor = PlayerId.generate();
     final var otherPlayer = PlayerId.generate();
@@ -87,7 +87,7 @@ class RematchPresenceEventTranslatorTest {
   void ignoresOtherRematchEvents() {
 
     final var notifier = mock(PresenceNotifier.class);
-    final var friendNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var friendNotifier = mock(FriendAvailabilityChangeNotifier.class);
     final var translator = new RematchPresenceEventTranslator(notifier, friendNotifier);
 
     translator.handle(new OtherRematchEvent(RematchSessionId.generate(), MatchId.generate()));

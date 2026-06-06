@@ -21,7 +21,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.events.InProcessApplicationEventPublisher;
 import com.villo.truco.infrastructure.websocket.dto.PresenceWsEvent;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ class PresencePushIntegrationTest {
     final var publisher = new InProcessApplicationEventPublisher(handlers);
     final var notifier = new PresenceNotifier(resolver, publisher, botRegistry);
     final var translator = new MatchPresenceEventTranslator(notifier,
-        mock(FriendPresenceAvailabilityNotifier.class));
+        mock(FriendAvailabilityChangeNotifier.class));
 
     translator.handle(new PlayerJoinedEvent(MatchId.generate(), playerOne, playerTwo));
 

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.Message;
@@ -45,33 +45,33 @@ class WebSocketSessionPresenceTrackerTest {
   @DisplayName("notifica a los amigos cuando el jugador pasa a online (primera sesion)")
   void notifiesWhenPlayerBecomesOnline() {
 
-    final var notifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var notifier = mock(FriendAvailabilityChangeNotifier.class);
     final var tracker = new WebSocketSessionPresenceTracker(notifier);
 
     tracker.onConnect(new SessionConnectEvent(this, connectMessage(PLAYER, "session-1")));
 
     assertThat(tracker.isOnline(PlayerId.of(PLAYER))).isTrue();
-    verify(notifier).notifyPresenceChanged(PlayerId.of(PLAYER));
+    verify(notifier).notifyOnlinePresenceChanged(PlayerId.of(PLAYER));
   }
 
   @Test
   @DisplayName("no vuelve a notificar online cuando se abre una sesion adicional")
   void doesNotRenotifyOnAdditionalSession() {
 
-    final var notifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var notifier = mock(FriendAvailabilityChangeNotifier.class);
     final var tracker = new WebSocketSessionPresenceTracker(notifier);
 
     tracker.onConnect(new SessionConnectEvent(this, connectMessage(PLAYER, "session-1")));
     tracker.onConnect(new SessionConnectEvent(this, connectMessage(PLAYER, "session-2")));
 
-    verify(notifier).notifyPresenceChanged(PlayerId.of(PLAYER));
+    verify(notifier).notifyOnlinePresenceChanged(PlayerId.of(PLAYER));
   }
 
   @Test
   @DisplayName("notifica offline solo cuando se cierra la ultima sesion")
   void notifiesOfflineOnLastSessionOnly() {
 
-    final var notifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var notifier = mock(FriendAvailabilityChangeNotifier.class);
     final var tracker = new WebSocketSessionPresenceTracker(notifier);
     tracker.onConnect(new SessionConnectEvent(this, connectMessage(PLAYER, "session-1")));
     tracker.onConnect(new SessionConnectEvent(this, connectMessage(PLAYER, "session-2")));
@@ -83,14 +83,14 @@ class WebSocketSessionPresenceTrackerTest {
     assertThat(tracker.isOnline(PlayerId.of(PLAYER))).isFalse();
 
     // 1 online (primera sesion) + 1 offline (ultima desconexion); las intermedias no notifican.
-    verify(notifier, org.mockito.Mockito.times(2)).notifyPresenceChanged(PlayerId.of(PLAYER));
+    verify(notifier, org.mockito.Mockito.times(2)).notifyOnlinePresenceChanged(PlayerId.of(PLAYER));
   }
 
   @Test
   @DisplayName("ignora conexiones sin jugador autenticado")
   void ignoresConnectWithoutAuthenticatedPlayer() {
 
-    final var notifier = mock(FriendPresenceAvailabilityNotifier.class);
+    final var notifier = mock(FriendAvailabilityChangeNotifier.class);
     final var tracker = new WebSocketSessionPresenceTracker(notifier);
 
     final var accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
@@ -100,7 +100,7 @@ class WebSocketSessionPresenceTrackerTest {
 
     tracker.onConnect(new SessionConnectEvent(this, message));
 
-    verify(notifier, never()).notifyPresenceChanged(org.mockito.ArgumentMatchers.any());
+    verify(notifier, never()).notifyOnlinePresenceChanged(org.mockito.ArgumentMatchers.any());
   }
 
 }

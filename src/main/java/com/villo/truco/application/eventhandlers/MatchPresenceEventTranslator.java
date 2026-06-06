@@ -11,7 +11,7 @@ import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.MatchPlayerLeftEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -28,14 +28,13 @@ public final class MatchPresenceEventTranslator implements
     MatchDomainEventHandler<MatchDomainEvent> {
 
   private final PresenceNotifier presenceNotifier;
-  private final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
+  private final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
 
   public MatchPresenceEventTranslator(final PresenceNotifier presenceNotifier,
-      final FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier) {
+      final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier) {
 
     this.presenceNotifier = Objects.requireNonNull(presenceNotifier);
-    this.friendPresenceAvailabilityNotifier = Objects.requireNonNull(
-        friendPresenceAvailabilityNotifier);
+    this.friendAvailabilityChangeNotifier = Objects.requireNonNull(friendAvailabilityChangeNotifier);
   }
 
   private static boolean isOccupancyTransition(final MatchDomainEvent event) {
@@ -64,7 +63,7 @@ public final class MatchPresenceEventTranslator implements
     this.presenceNotifier.notifyPlayers(affected);
     for (final PlayerId player : affected) {
       if (player != null) {
-        this.friendPresenceAvailabilityNotifier.notifyAvailabilityChanged(player,
+        this.friendAvailabilityChangeNotifier.notifyAvailabilityChanged(player,
             event.getTimestamp());
       }
     }

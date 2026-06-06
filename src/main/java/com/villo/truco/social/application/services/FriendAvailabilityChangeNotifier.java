@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Publica deltas de disponibilidad hacia los amigos aceptados cuando un jugador cambia su presencia
- * online (al conectar su primera sesion WebSocket o desconectar la ultima). La resolucion de
- * destinatarios y snapshot corre dentro de una transaccion para que las queries del resolver
- * dispongan de sesion, y el push STOMP se difiere a post-commit via
+ * Publica deltas de disponibilidad hacia los amigos aceptados cuando cambia el estado invitable de
+ * un jugador, ya sea por presencia online o por ocupacion en partidas, cola quick, torneos o
+ * revanchas. La resolucion de destinatarios y snapshot corre dentro de una transaccion para que las
+ * queries del resolver dispongan de sesion, y el push STOMP se difiere a post-commit via
  * {@link FriendAvailabilityNotification}.
  */
-public final class FriendPresenceAvailabilityNotifier {
+public final class FriendAvailabilityChangeNotifier {
 
   public static final String AVAILABILITY_CHANGED_EVENT_TYPE = "FRIEND_AVAILABILITY_CHANGED";
 
@@ -22,7 +22,7 @@ public final class FriendPresenceAvailabilityNotifier {
   private final ApplicationEventPublisher applicationEventPublisher;
   private final TransactionalRunner transactionalRunner;
 
-  public FriendPresenceAvailabilityNotifier(
+  public FriendAvailabilityChangeNotifier(
       final FriendAvailabilityResolver friendAvailabilityResolver,
       final ApplicationEventPublisher applicationEventPublisher,
       final TransactionalRunner transactionalRunner) {
@@ -32,7 +32,7 @@ public final class FriendPresenceAvailabilityNotifier {
     this.transactionalRunner = Objects.requireNonNull(transactionalRunner);
   }
 
-  public void notifyPresenceChanged(final PlayerId player) {
+  public void notifyOnlinePresenceChanged(final PlayerId player) {
 
     this.notifyAvailabilityChanged(player, System.currentTimeMillis());
   }

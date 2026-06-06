@@ -14,7 +14,7 @@ import com.villo.truco.domain.model.quickmatch.QuickMatchTicket;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
-import com.villo.truco.social.application.services.FriendPresenceAvailabilityNotifier;
+import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,16 +25,16 @@ import org.junit.jupiter.api.Test;
 class CancelQuickMatchSearchCommandHandlerTest {
 
   private QuickMatchQueuePort queuePort;
-  private FriendPresenceAvailabilityNotifier friendPresenceAvailabilityNotifier;
+  private FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
   private CancelQuickMatchSearchCommandHandler handler;
 
   @BeforeEach
   void setUp() {
 
     queuePort = mock(QuickMatchQueuePort.class);
-    friendPresenceAvailabilityNotifier = mock(FriendPresenceAvailabilityNotifier.class);
+    friendAvailabilityChangeNotifier = mock(FriendAvailabilityChangeNotifier.class);
     handler = new CancelQuickMatchSearchCommandHandler(queuePort,
-        friendPresenceAvailabilityNotifier);
+        friendAvailabilityChangeNotifier);
   }
 
   @Test
@@ -48,7 +48,7 @@ class CancelQuickMatchSearchCommandHandlerTest {
     handler.handle(new CancelQuickMatchSearchCommand(player));
 
     verify(queuePort).tryDequeue(player);
-    verify(friendPresenceAvailabilityNotifier).notifyAvailabilityChanged(eq(player), anyLong());
+    verify(friendAvailabilityChangeNotifier).notifyAvailabilityChanged(eq(player), anyLong());
   }
 
   @Test
@@ -61,7 +61,7 @@ class CancelQuickMatchSearchCommandHandlerTest {
     assertThatCode(
         () -> handler.handle(new CancelQuickMatchSearchCommand(player))).doesNotThrowAnyException();
     verify(queuePort).tryDequeue(player);
-    verify(friendPresenceAvailabilityNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
+    verify(friendAvailabilityChangeNotifier, never()).notifyAvailabilityChanged(any(), anyLong());
   }
 
 }
