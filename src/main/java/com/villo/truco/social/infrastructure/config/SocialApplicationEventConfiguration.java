@@ -14,10 +14,13 @@ import com.villo.truco.social.application.eventhandlers.ResourceUnjoinableInvita
 import com.villo.truco.social.application.eventhandlers.SocialEventMapper;
 import com.villo.truco.social.application.eventhandlers.SocialNotificationEventTranslator;
 import com.villo.truco.social.application.services.FriendActivityResolver;
+import com.villo.truco.social.application.services.FriendAvailabilityResolver;
 import com.villo.truco.social.domain.model.invitation.events.ResourceInvitationDomainEvent;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
 import com.villo.truco.social.domain.ports.SocialEventNotifier;
+import com.villo.truco.social.infrastructure.websocket.StompFriendActivityNotificationHandler;
+import com.villo.truco.social.infrastructure.websocket.StompFriendAvailabilityNotificationHandler;
 import com.villo.truco.social.infrastructure.websocket.StompSocialNotificationHandler;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +49,20 @@ public class SocialApplicationEventConfiguration {
   }
 
   @Bean
+  StompFriendActivityNotificationHandler stompFriendActivityNotificationHandler() {
+
+    return new StompFriendActivityNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
+  StompFriendAvailabilityNotificationHandler stompFriendAvailabilityNotificationHandler() {
+
+    return new StompFriendAvailabilityNotificationHandler(this.messagingTemplate,
+        this.eventNotifierHealthRegistry);
+  }
+
+  @Bean
   SocialEventMapper socialEventMapper(final PublicActorResolver publicActorResolver) {
 
     return new SocialEventMapper(publicActorResolver);
@@ -62,9 +79,11 @@ public class SocialApplicationEventConfiguration {
   @Bean
   FriendActivityMatchEventTranslator friendActivityMatchEventTranslator(
       final FriendActivityResolver friendActivityResolver,
+      final FriendAvailabilityResolver friendAvailabilityResolver,
       final ApplicationEventPublisher applicationEventPublisher) {
 
-    return new FriendActivityMatchEventTranslator(friendActivityResolver, applicationEventPublisher);
+    return new FriendActivityMatchEventTranslator(friendActivityResolver,
+        friendAvailabilityResolver, applicationEventPublisher);
   }
 
   @Bean

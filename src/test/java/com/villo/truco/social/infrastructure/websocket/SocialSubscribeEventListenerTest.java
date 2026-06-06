@@ -9,13 +9,19 @@ import static org.mockito.Mockito.when;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.social.application.dto.FriendActivityDTO;
 import com.villo.truco.social.application.dto.FriendActivityStateDTO;
+import com.villo.truco.social.application.dto.FriendAvailabilityDTO;
+import com.villo.truco.social.application.dto.FriendAvailabilityStateDTO;
+import com.villo.truco.social.application.dto.FriendAvailabilityStatus;
 import com.villo.truco.social.application.ports.in.GetFriendActivityUseCase;
+import com.villo.truco.social.application.ports.in.GetFriendAvailabilityUseCase;
 import com.villo.truco.social.application.queries.GetFriendActivityQuery;
+import com.villo.truco.social.application.queries.GetFriendAvailabilityQuery;
 import com.villo.truco.social.infrastructure.websocket.dto.SocialWsEvent;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -44,19 +50,27 @@ class SocialSubscribeEventListenerTest {
   void sendsFriendActivityStateOnSocialSubscribe() {
 
     final var useCase = mock(GetFriendActivityUseCase.class);
+    final var availabilityUseCase = mock(GetFriendAvailabilityUseCase.class);
     final var messaging = mock(SimpMessagingTemplate.class);
-    final var listener = new SocialSubscribeEventListener(useCase, messaging);
+    final var listener = new SocialSubscribeEventListener(useCase, availabilityUseCase, messaging);
     final var playerId = "11111111-1111-1111-1111-111111111111";
     when(useCase.handle(new GetFriendActivityQuery(PlayerId.of(playerId)))).thenReturn(
         new FriendActivityStateDTO(List.of(new FriendActivityDTO("martina", null))));
+    when(availabilityUseCase.handle(
+        new GetFriendAvailabilityQuery(PlayerId.of(playerId)))).thenReturn(
+        new FriendAvailabilityStateDTO(List.of(
+            new FriendAvailabilityDTO("martina", true, FriendAvailabilityStatus.AVAILABLE, null,
+                null))));
 
     listener.onSubscribe(new SessionSubscribeEvent(this, subscribeMessage(playerId)));
 
     final var eventCaptor = ArgumentCaptor.forClass(SocialWsEvent.class);
-    verify(messaging).convertAndSendToUser(eq(playerId), eq("/queue/social"),
+    verify(messaging, Mockito.times(2)).convertAndSendToUser(eq(playerId), eq("/queue/social"),
         eventCaptor.capture());
-    assertThat(eventCaptor.getValue().eventType()).isEqualTo("FRIEND_ACTIVITY_STATE");
-    assertThat(eventCaptor.getValue().payload()).containsKey("friends");
+    assertThat(eventCaptor.getAllValues()).extracting(SocialWsEvent::eventType)
+        .containsExactly("FRIEND_ACTIVITY_STATE", "FRIEND_AVAILABILITY_STATE");
+    assertThat(eventCaptor.getAllValues()).allSatisfy(
+        event -> assertThat(event.payload()).containsKey("friends"));
   }
 
 }
