@@ -35,7 +35,8 @@ public final class QuickMatchSessionDisconnectEventListener {
       if (playerId == null || playerId.isBlank()) {
         return;
       }
-      this.cancelQuickMatchSearch.handle(new CancelQuickMatchSearchCommand(playerId));
+      this.cancelQuickMatchSearch.handle(
+          new CancelQuickMatchSearchCommand(playerId, accessor.getSessionId()));
       LOGGER.debug("Quick match queue cleanup on disconnect: playerId={}", playerId);
     } catch (final RuntimeException ex) {
       LOGGER.warn("Quick match disconnect cleanup failed: {}", ex.getMessage());

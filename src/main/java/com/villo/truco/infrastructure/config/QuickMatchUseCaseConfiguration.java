@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.eventhandlers.PresenceNotifier;
 import com.villo.truco.application.ports.in.CancelQuickMatchSearchUseCase;
 import com.villo.truco.application.ports.in.EnqueueForQuickMatchUseCase;
 import com.villo.truco.application.usecases.commands.CancelQuickMatchSearchCommandHandler;
@@ -23,12 +24,14 @@ public class QuickMatchUseCaseConfiguration {
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
   private final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
+  private final PresenceNotifier presenceNotifier;
   private final UseCasePipeline retryTransactionalPipeline;
 
   public QuickMatchUseCaseConfiguration(final QuickMatchQueuePort quickMatchQueuePort,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
       final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier,
+      final PresenceNotifier presenceNotifier,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.quickMatchQueuePort = quickMatchQueuePort;
@@ -36,6 +39,7 @@ public class QuickMatchUseCaseConfiguration {
     this.matchRepository = matchRepository;
     this.matchEventNotifier = matchEventNotifier;
     this.friendAvailabilityChangeNotifier = friendAvailabilityChangeNotifier;
+    this.presenceNotifier = presenceNotifier;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
   }
 
@@ -44,7 +48,7 @@ public class QuickMatchUseCaseConfiguration {
 
     final var handler = new EnqueueForQuickMatchCommandHandler(this.quickMatchQueuePort,
         this.playerAvailabilityChecker, this.matchRepository, this.matchEventNotifier,
-        this.friendAvailabilityChangeNotifier);
+        this.friendAvailabilityChangeNotifier, this.presenceNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 
@@ -52,7 +56,7 @@ public class QuickMatchUseCaseConfiguration {
   CancelQuickMatchSearchUseCase cancelQuickMatchSearchCommandHandler() {
 
     final var handler = new CancelQuickMatchSearchCommandHandler(this.quickMatchQueuePort,
-        this.friendAvailabilityChangeNotifier);
+        this.friendAvailabilityChangeNotifier, this.presenceNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

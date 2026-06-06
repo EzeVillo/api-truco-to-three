@@ -48,7 +48,7 @@ class PresencePushIntegrationTest {
 
     final var playerOne = PlayerId.of("11111111-1111-1111-1111-111111111111");
     final var playerTwo = PlayerId.of("22222222-2222-2222-2222-222222222222");
-    final var snapshot = UserPresenceDTO.of(new ActiveMatchRefDTO("m-1", "READY"), null, null,
+    final var snapshot = UserPresenceDTO.of(new ActiveMatchRefDTO("m-1", "READY"), null, null, null,
         null);
     when(resolver.resolve(any())).thenReturn(snapshot);
 

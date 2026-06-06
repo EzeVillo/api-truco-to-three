@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,11 +39,13 @@ public class QuickMatchController {
 
   @PostMapping
   public ResponseEntity<QuickMatchSearchResponse> enqueue(
-      @Valid @RequestBody final QuickMatchRequest request, @AuthenticationPrincipal final Jwt jwt) {
+      @Valid @RequestBody final QuickMatchRequest request, @AuthenticationPrincipal final Jwt jwt,
+      @RequestHeader(value = "X-WebSocket-Session-Id", required = false) final String webSocketSessionId) {
 
     LOGGER.info("HTTP quickMatch enqueue requested");
     final var dto = this.enqueueForQuickMatch.handle(
-        new EnqueueForQuickMatchCommand(jwt.getSubject(), request.gamesToPlay(), null));
+        new EnqueueForQuickMatchCommand(jwt.getSubject(), request.gamesToPlay(),
+            webSocketSessionId));
     return ResponseEntity.ok(QuickMatchSearchResponse.from(dto));
   }
 

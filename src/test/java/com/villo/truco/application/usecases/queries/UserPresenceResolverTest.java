@@ -9,10 +9,12 @@ import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
+import com.villo.truco.domain.model.quickmatch.QuickMatchTicket;
 import com.villo.truco.domain.model.rematch.RematchSession;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
@@ -32,6 +34,7 @@ class UserPresenceResolverTest {
   private LeagueQueryRepository leagueQueryRepository;
   private CupQueryRepository cupQueryRepository;
   private RematchSessionRepository rematchSessionRepository;
+  private QuickMatchQueuePort quickMatchQueuePort;
   private UserPresenceResolver resolver;
 
   private static Match unfinishedMatch(final PlayerId player) {
@@ -66,8 +69,9 @@ class UserPresenceResolverTest {
     leagueQueryRepository = mock(LeagueQueryRepository.class);
     cupQueryRepository = mock(CupQueryRepository.class);
     rematchSessionRepository = mock(RematchSessionRepository.class);
+    quickMatchQueuePort = mock(QuickMatchQueuePort.class);
     resolver = new UserPresenceResolver(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository, rematchSessionRepository);
+        cupQueryRepository, rematchSessionRepository, quickMatchQueuePort);
 
     when(matchQueryRepository.findUnfinishedByPlayer(any())).thenReturn(Optional.empty());
     when(leagueQueryRepository.findInProgressByPlayer(any())).thenReturn(Optional.empty());
@@ -75,6 +79,7 @@ class UserPresenceResolverTest {
     when(cupQueryRepository.findInProgressByPlayer(any())).thenReturn(Optional.empty());
     when(cupQueryRepository.findWaitingByPlayer(any())).thenReturn(Optional.empty());
     when(rematchSessionRepository.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    when(quickMatchQueuePort.findByPlayer(any())).thenReturn(Optional.empty());
   }
 
   @Test
@@ -88,6 +93,7 @@ class UserPresenceResolverTest {
     assertThat(presence.league()).isNull();
     assertThat(presence.cup()).isNull();
     assertThat(presence.rematch()).isNull();
+    assertThat(presence.quickMatch()).isNull();
   }
 
   @Test
@@ -169,6 +175,23 @@ class UserPresenceResolverTest {
     assertThat(presence.rematch()).isNotNull();
     assertThat(presence.rematch().id()).isEqualTo(session.getId().value().toString());
     assertThat(presence.rematch().originMatchId()).isEqualTo(originMatchId.value().toString());
+  }
+
+  @Test
+  @DisplayName("con busqueda Quick Match expone quickMatch ref y busy true")
+  void exposesQuickMatchReference() {
+
+    final var player = PlayerId.generate();
+    final var enqueuedAt = Instant.parse("2026-05-20T10:00:00Z");
+    final var ticket = new QuickMatchTicket(player, GamesToPlay.of(3), enqueuedAt, "ws-1");
+    when(quickMatchQueuePort.findByPlayer(player)).thenReturn(Optional.of(ticket));
+
+    final var presence = resolver.resolve(player);
+
+    assertThat(presence.busy()).isTrue();
+    assertThat(presence.quickMatch()).isNotNull();
+    assertThat(presence.quickMatch().status()).isEqualTo("SEARCHING");
+    assertThat(presence.quickMatch().enqueuedAt()).isEqualTo(enqueuedAt);
   }
 
 }

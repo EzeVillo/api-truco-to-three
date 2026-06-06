@@ -1,11 +1,14 @@
 package com.villo.truco.infrastructure.websocket;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.villo.truco.application.commands.CancelQuickMatchSearchCommand;
 import com.villo.truco.application.ports.in.CancelQuickMatchSearchUseCase;
 import java.security.Principal;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +51,10 @@ class QuickMatchSessionDisconnectEventListenerTest {
 
     listener.onDisconnect(eventWith("ws-session-1", principal));
 
-    verify(cancelUseCase).handle(any());
+    final var captor = forClass(CancelQuickMatchSearchCommand.class);
+    verify(cancelUseCase).handle(captor.capture());
+    assertThat(captor.getValue().playerId().value().toString()).isEqualTo(playerId);
+    assertThat(captor.getValue().webSocketSessionId()).isEqualTo("ws-session-1");
   }
 
   @Test

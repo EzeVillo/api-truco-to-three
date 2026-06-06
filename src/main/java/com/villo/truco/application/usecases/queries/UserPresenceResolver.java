@@ -3,6 +3,7 @@ package com.villo.truco.application.usecases.queries;
 import com.villo.truco.application.dto.ActiveCupRefDTO;
 import com.villo.truco.application.dto.ActiveLeagueRefDTO;
 import com.villo.truco.application.dto.ActiveMatchRefDTO;
+import com.villo.truco.application.dto.ActiveQuickMatchRefDTO;
 import com.villo.truco.application.dto.ActiveRematchRefDTO;
 import com.villo.truco.application.dto.UserPresenceDTO;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
@@ -10,6 +11,7 @@ import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
@@ -27,16 +29,19 @@ public final class UserPresenceResolver {
   private final LeagueQueryRepository leagueQueryRepository;
   private final CupQueryRepository cupQueryRepository;
   private final RematchSessionRepository rematchSessionRepository;
+  private final QuickMatchQueuePort quickMatchQueuePort;
 
   public UserPresenceResolver(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository,
-      final RematchSessionRepository rematchSessionRepository) {
+      final RematchSessionRepository rematchSessionRepository,
+      final QuickMatchQueuePort quickMatchQueuePort) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
     this.cupQueryRepository = Objects.requireNonNull(cupQueryRepository);
     this.rematchSessionRepository = Objects.requireNonNull(rematchSessionRepository);
+    this.quickMatchQueuePort = Objects.requireNonNull(quickMatchQueuePort);
   }
 
   public UserPresenceDTO resolve(final PlayerId player) {
@@ -48,8 +53,9 @@ public final class UserPresenceResolver {
     final var leagueRef = resolveLeague(player, currentMatchId);
     final var cupRef = resolveCup(player, currentMatchId);
     final var rematchRef = resolveRematch(player);
+    final var quickMatchRef = resolveQuickMatch(player);
 
-    return UserPresenceDTO.of(matchRef, leagueRef, cupRef, rematchRef);
+    return UserPresenceDTO.of(matchRef, leagueRef, cupRef, rematchRef, quickMatchRef);
   }
 
   private ActiveMatchRefDTO resolveMatch(final PlayerId player) {
@@ -93,6 +99,12 @@ public final class UserPresenceResolver {
     return this.rematchSessionRepository.findOpenByPlayer(player).map(
         session -> new ActiveRematchRefDTO(session.getId().value().toString(),
             session.getOriginMatchId().value().toString())).orElse(null);
+  }
+
+  private ActiveQuickMatchRefDTO resolveQuickMatch(final PlayerId player) {
+
+    return this.quickMatchQueuePort.findByPlayer(player)
+        .map(ticket -> new ActiveQuickMatchRefDTO("SEARCHING", ticket.enqueuedAt())).orElse(null);
   }
 
 }

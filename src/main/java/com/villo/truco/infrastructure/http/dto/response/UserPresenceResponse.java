@@ -3,9 +3,11 @@ package com.villo.truco.infrastructure.http.dto.response;
 import com.villo.truco.application.dto.ActiveCupRefDTO;
 import com.villo.truco.application.dto.ActiveLeagueRefDTO;
 import com.villo.truco.application.dto.ActiveMatchRefDTO;
+import com.villo.truco.application.dto.ActiveQuickMatchRefDTO;
 import com.villo.truco.application.dto.ActiveRematchRefDTO;
 import com.villo.truco.application.dto.UserPresenceDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Instant;
 
 @Schema(description = "Estado de presencia/ocupacion del usuario autenticado")
 public record UserPresenceResponse(
@@ -13,13 +15,14 @@ public record UserPresenceResponse(
     @Schema(description = "Partida no finalizada del usuario, o null", nullable = true) ActiveMatchRef match,
     @Schema(description = "Liga del usuario, o null", nullable = true) ActiveLeagueRef league,
     @Schema(description = "Copa del usuario, o null", nullable = true) ActiveCupRef cup,
-    @Schema(description = "Sesion de revancha abierta del usuario, o null", nullable = true) ActiveRematchRef rematch) {
+    @Schema(description = "Sesion de revancha abierta del usuario, o null", nullable = true) ActiveRematchRef rematch,
+    @Schema(description = "Busqueda Quick Match activa del usuario, o null", nullable = true) ActiveQuickMatchRef quickMatch) {
 
   public static UserPresenceResponse from(final UserPresenceDTO presence) {
 
     return new UserPresenceResponse(presence.busy(), ActiveMatchRef.from(presence.match()),
         ActiveLeagueRef.from(presence.league()), ActiveCupRef.from(presence.cup()),
-        ActiveRematchRef.from(presence.rematch()));
+        ActiveRematchRef.from(presence.rematch()), ActiveQuickMatchRef.from(presence.quickMatch()));
   }
 
   @Schema(description = "Referencia a la partida activa")
@@ -68,6 +71,18 @@ public record UserPresenceResponse(
     static ActiveRematchRef from(final ActiveRematchRefDTO dto) {
 
       return dto == null ? null : new ActiveRematchRef(dto.id(), dto.originMatchId());
+    }
+
+  }
+
+  @Schema(description = "Referencia a la busqueda Quick Match activa")
+  public record ActiveQuickMatchRef(
+      @Schema(description = "Estado de la busqueda", example = "SEARCHING") String status,
+      @Schema(description = "Momento en que el usuario entro a la cola") Instant enqueuedAt) {
+
+    static ActiveQuickMatchRef from(final ActiveQuickMatchRefDTO dto) {
+
+      return dto == null ? null : new ActiveQuickMatchRef(dto.status(), dto.enqueuedAt());
     }
 
   }

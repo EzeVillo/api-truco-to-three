@@ -1,11 +1,13 @@
 package com.villo.truco.infrastructure.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.villo.truco.application.commands.EnqueueForQuickMatchCommand;
 import com.villo.truco.application.dto.QuickMatchSearchDTO;
 import com.villo.truco.application.dto.QuickMatchStatus;
 import com.villo.truco.application.ports.in.CancelQuickMatchSearchUseCase;
@@ -48,7 +50,7 @@ class QuickMatchControllerTest {
         new QuickMatchSearchDTO(QuickMatchStatus.SEARCHING, null, enqueuedAt));
 
     final var response = controller.enqueue(new QuickMatchRequest(3),
-        jwt("11111111-1111-1111-1111-111111111111"));
+        jwt("11111111-1111-1111-1111-111111111111"), null);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isNotNull();
@@ -66,7 +68,7 @@ class QuickMatchControllerTest {
         new QuickMatchSearchDTO(QuickMatchStatus.MATCHED, matchId, Instant.now()));
 
     final var response = controller.enqueue(new QuickMatchRequest(3),
-        jwt("22222222-2222-2222-2222-222222222222"));
+        jwt("22222222-2222-2222-2222-222222222222"), null);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isNotNull();
@@ -82,6 +84,21 @@ class QuickMatchControllerTest {
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     verify(cancelUseCase).handle(any());
+  }
+
+  @Test
+  @DisplayName("POST propaga X-WebSocket-Session-Id al caso de uso")
+  void postPropagatesWebSocketSessionId() {
+
+    when(enqueueUseCase.handle(any())).thenReturn(
+        new QuickMatchSearchDTO(QuickMatchStatus.SEARCHING, null, Instant.now()));
+
+    controller.enqueue(new QuickMatchRequest(3), jwt("44444444-4444-4444-4444-444444444444"),
+        "ws-1");
+
+    final var captor = forClass(EnqueueForQuickMatchCommand.class);
+    verify(enqueueUseCase).handle(captor.capture());
+    assertThat(captor.getValue().webSocketSessionId()).isEqualTo("ws-1");
   }
 
 }

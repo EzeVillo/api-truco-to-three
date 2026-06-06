@@ -6,8 +6,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.dto.ActiveMatchRefDTO;
+import com.villo.truco.application.dto.ActiveQuickMatchRefDTO;
 import com.villo.truco.application.dto.UserPresenceDTO;
 import com.villo.truco.application.ports.in.GetUserPresenceUseCase;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +38,8 @@ class PresenceControllerTest {
   @DisplayName("GET presence de usuario libre devuelve 200 con busy false y refs nulas")
   void freeUserReturnsNotBusy() {
 
-    when(getUserPresence.handle(any())).thenReturn(UserPresenceDTO.of(null, null, null, null));
+    when(getUserPresence.handle(any())).thenReturn(
+        UserPresenceDTO.of(null, null, null, null, null));
 
     final var response = controller.getPresence(jwt("11111111-1111-1111-1111-111111111111"));
 
@@ -47,6 +50,7 @@ class PresenceControllerTest {
     assertThat(response.getBody().league()).isNull();
     assertThat(response.getBody().cup()).isNull();
     assertThat(response.getBody().rematch()).isNull();
+    assertThat(response.getBody().quickMatch()).isNull();
   }
 
   @Test
@@ -54,7 +58,8 @@ class PresenceControllerTest {
   void busyUserMapsMatchReference() {
 
     when(getUserPresence.handle(any())).thenReturn(
-        UserPresenceDTO.of(new ActiveMatchRefDTO("match-id", "IN_PROGRESS"), null, null, null));
+        UserPresenceDTO.of(new ActiveMatchRefDTO("match-id", "IN_PROGRESS"), null, null, null,
+            null));
 
     final var response = controller.getPresence(jwt("22222222-2222-2222-2222-222222222222"));
 
@@ -64,6 +69,24 @@ class PresenceControllerTest {
     assertThat(response.getBody().match()).isNotNull();
     assertThat(response.getBody().match().id()).isEqualTo("match-id");
     assertThat(response.getBody().match().status()).isEqualTo("IN_PROGRESS");
+  }
+
+  @Test
+  @DisplayName("GET presence con busqueda Quick Match mapea quickMatch ref y busy true")
+  void busyUserMapsQuickMatchReference() {
+
+    final var enqueuedAt = Instant.parse("2026-05-20T10:00:00Z");
+    when(getUserPresence.handle(any())).thenReturn(UserPresenceDTO.of(null, null, null, null,
+        new ActiveQuickMatchRefDTO("SEARCHING", enqueuedAt)));
+
+    final var response = controller.getPresence(jwt("33333333-3333-3333-3333-333333333333"));
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().busy()).isTrue();
+    assertThat(response.getBody().quickMatch()).isNotNull();
+    assertThat(response.getBody().quickMatch().status()).isEqualTo("SEARCHING");
+    assertThat(response.getBody().quickMatch().enqueuedAt()).isEqualTo(enqueuedAt);
   }
 
 }
