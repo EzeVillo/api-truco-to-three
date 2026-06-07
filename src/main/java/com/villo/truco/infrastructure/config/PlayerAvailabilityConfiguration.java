@@ -10,6 +10,7 @@ import com.villo.truco.domain.ports.RematchSessionRepository;
 import com.villo.truco.domain.ports.SpectatorshipRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class PlayerAvailabilityConfiguration {
@@ -27,7 +28,7 @@ public class PlayerAvailabilityConfiguration {
       final CupQueryRepository cupQueryRepository, final BotRegistry botRegistry,
       final RematchSessionRepository rematchSessionRepository,
       final QuickMatchQueuePort quickMatchQueuePort,
-      final SpectatorshipRepository spectatorshipRepository) {
+      @Lazy final SpectatorshipRepository spectatorshipRepository) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;

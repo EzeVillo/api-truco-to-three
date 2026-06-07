@@ -90,7 +90,7 @@ public class BotConfiguration {
   }
 
   @Bean
-  BotDomainEventTranslator botDomainEventTranslator(final ApplicationEventPublisher publisher) {
+  BotDomainEventTranslator botDomainEventTranslator(@Lazy final ApplicationEventPublisher publisher) {
 
     return new BotDomainEventTranslator(this.botRegistry, publisher);
   }

@@ -9,6 +9,7 @@ import com.villo.truco.profile.infrastructure.websocket.StompProfileNotification
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Configuration
@@ -33,7 +34,7 @@ public class ProfileApplicationEventConfiguration {
 
   @Bean
   ProfileNotificationEventTranslator profileNotificationEventTranslator(
-      final ApplicationEventPublisher applicationEventPublisher) {
+      @Lazy final ApplicationEventPublisher applicationEventPublisher) {
 
     return new ProfileNotificationEventTranslator(applicationEventPublisher);
   }

@@ -27,8 +27,10 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
 import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class SpectatorConfiguration {
@@ -41,17 +43,17 @@ public class SpectatorConfiguration {
   private final PublicActorResolver publicActorResolver;
   private final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver;
   private final long idleTimeoutMillis;
-  private final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier;
-  private final PresenceNotifier presenceNotifier;
+  private final ObjectProvider<FriendAvailabilityChangeNotifier> friendAvailabilityChangeNotifierProvider;
+  private final ObjectProvider<PresenceNotifier> presenceNotifierProvider;
 
   public SpectatorConfiguration(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
-      final CupQueryRepository cupQueryRepository, final ApplicationEventPublisher eventPublisher,
+      final CupQueryRepository cupQueryRepository, @Lazy final ApplicationEventPublisher eventPublisher,
       final MatchEventMapper matchEventMapper, final PublicActorResolver publicActorResolver,
       final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver,
       final MatchTimeoutProperties matchTimeoutProperties,
-      final FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier,
-      final PresenceNotifier presenceNotifier) {
+      final ObjectProvider<FriendAvailabilityChangeNotifier> friendAvailabilityChangeNotifierProvider,
+      final ObjectProvider<PresenceNotifier> presenceNotifierProvider) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;
@@ -61,8 +63,8 @@ public class SpectatorConfiguration {
     this.publicActorResolver = publicActorResolver;
     this.friendshipSpectateEligibilityResolver = friendshipSpectateEligibilityResolver;
     this.idleTimeoutMillis = matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L;
-    this.friendAvailabilityChangeNotifier = friendAvailabilityChangeNotifier;
-    this.presenceNotifier = presenceNotifier;
+    this.friendAvailabilityChangeNotifierProvider = friendAvailabilityChangeNotifierProvider;
+    this.presenceNotifierProvider = presenceNotifierProvider;
   }
 
   @Bean
@@ -98,8 +100,8 @@ public class SpectatorConfiguration {
   SpectatorshipLifecycleManager spectatorshipLifecycleManager() {
 
     return new SpectatorshipLifecycleManager(spectatorshipRepository(),
-        spectatorCountChangedPublisher(), this.friendAvailabilityChangeNotifier,
-        this.presenceNotifier);
+        spectatorCountChangedPublisher(), this.friendAvailabilityChangeNotifierProvider.getObject(),
+        this.presenceNotifierProvider.getObject());
   }
 
   @Bean
@@ -113,8 +115,8 @@ public class SpectatorConfiguration {
 
     return new SpectateMatchCommandHandler(this.matchQueryRepository, spectatorshipRepository(),
         spectatingEligibilityPolicy(), spectatorCountChangedPublisher(),
-        spectatorMatchStateDTOAssembler(), this.friendAvailabilityChangeNotifier,
-        this.presenceNotifier);
+        spectatorMatchStateDTOAssembler(), this.friendAvailabilityChangeNotifierProvider.getObject(),
+        this.presenceNotifierProvider.getObject());
   }
 
   @Bean

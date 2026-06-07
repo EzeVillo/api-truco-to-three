@@ -12,6 +12,7 @@ import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
+import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,8 @@ class MatchUseCaseConfigurationTest {
     final var availabilityConfiguration = new PlayerAvailabilityConfiguration(
         mock(MatchQueryRepository.class), mock(LeagueQueryRepository.class),
         mock(CupQueryRepository.class), mock(BotRegistry.class),
-        mock(RematchSessionRepository.class), mock(QuickMatchQueuePort.class));
+        mock(RematchSessionRepository.class), mock(QuickMatchQueuePort.class),
+        mock(SpectatorshipRepository.class));
 
     final var configuration = new MatchUseCaseConfiguration(mock(MatchQueryRepository.class),
         mock(MatchRepository.class), mock(MatchEventNotifier.class),

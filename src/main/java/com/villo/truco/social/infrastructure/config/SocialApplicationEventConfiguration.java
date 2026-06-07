@@ -73,7 +73,7 @@ public class SocialApplicationEventConfiguration {
   SocialNotificationEventTranslator socialNotificationEventTranslator(
       final SocialEventMapper socialEventMapper,
       final FriendAvailabilityResolver friendAvailabilityResolver,
-      final ApplicationEventPublisher applicationEventPublisher) {
+      @Lazy final ApplicationEventPublisher applicationEventPublisher) {
 
     return new SocialNotificationEventTranslator(socialEventMapper, friendAvailabilityResolver,
         applicationEventPublisher);
@@ -82,7 +82,7 @@ public class SocialApplicationEventConfiguration {
   @Bean
   FriendAvailabilityChangeNotifier friendAvailabilityChangeNotifier(
       final FriendAvailabilityResolver friendAvailabilityResolver,
-      final ApplicationEventPublisher applicationEventPublisher,
+      @Lazy final ApplicationEventPublisher applicationEventPublisher,
       final TransactionalRunner transactionalRunner) {
 
     return new FriendAvailabilityChangeNotifier(friendAvailabilityResolver,
@@ -92,7 +92,7 @@ public class SocialApplicationEventConfiguration {
   @Bean
   FriendActivityMatchEventTranslator friendActivityMatchEventTranslator(
       final FriendActivityResolver friendActivityResolver,
-      final ApplicationEventPublisher applicationEventPublisher) {
+      @Lazy final ApplicationEventPublisher applicationEventPublisher) {
 
     return new FriendActivityMatchEventTranslator(friendActivityResolver,
         applicationEventPublisher);

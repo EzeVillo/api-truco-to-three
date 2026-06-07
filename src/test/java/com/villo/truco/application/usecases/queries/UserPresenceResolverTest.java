@@ -16,6 +16,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.QuickMatchQueuePort;
 import com.villo.truco.domain.ports.RematchSessionRepository;
+import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -35,6 +36,7 @@ class UserPresenceResolverTest {
   private CupQueryRepository cupQueryRepository;
   private RematchSessionRepository rematchSessionRepository;
   private QuickMatchQueuePort quickMatchQueuePort;
+  private SpectatorshipRepository spectatorshipRepository;
   private UserPresenceResolver resolver;
 
   private static Match unfinishedMatch(final PlayerId player) {
@@ -70,8 +72,9 @@ class UserPresenceResolverTest {
     cupQueryRepository = mock(CupQueryRepository.class);
     rematchSessionRepository = mock(RematchSessionRepository.class);
     quickMatchQueuePort = mock(QuickMatchQueuePort.class);
+    spectatorshipRepository = mock(SpectatorshipRepository.class);
     resolver = new UserPresenceResolver(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository, rematchSessionRepository, quickMatchQueuePort);
+        cupQueryRepository, rematchSessionRepository, quickMatchQueuePort, spectatorshipRepository);
 
     when(matchQueryRepository.findUnfinishedByPlayer(any())).thenReturn(Optional.empty());
     when(leagueQueryRepository.findInProgressByPlayer(any())).thenReturn(Optional.empty());
