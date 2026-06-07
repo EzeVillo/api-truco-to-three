@@ -44,4 +44,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     registration.interceptors(new WebSocketAuthInterceptor(this.jwtDecoder));
   }
 
+  @Override
+  public void configureClientOutboundChannel(final ChannelRegistration registration) {
+
+    registration.taskExecutor().corePoolSize(1).maxPoolSize(1);
+  }
+
 }
