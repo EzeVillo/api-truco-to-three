@@ -1509,7 +1509,7 @@ Chat en tiempo real asociado a un match, liga o copa. Se crea automáticamente a
 padre y se elimina al finalizar o cancelarse.
 
 - **Match**: chat creado en `GameStartedEvent` (primer game), eliminado en `MatchFinishedEvent` o
-  `MatchForfeitedEvent`
+  `MatchForfeitedEvent`. **Las partidas contra bots no generan chat.**
 - **Liga**: chat creado en `LeagueStartedEvent`, eliminado en `LeagueFinishedEvent` o
   `LeagueCancelledEvent`
 - **Copa**: chat creado en `CupStartedEvent`, eliminado en `CupFinishedEvent` o
@@ -1940,7 +1940,8 @@ propio perfil o para el de otro jugador.
 - La busqueda actual es case-insensitive.
 - Las stats son eventual-consistent: se actualizan después de que el evento
   `MATCH_FINISHED`, `MATCH_ABANDONED` o `MATCH_FORFEITED` es procesado por el backend.
-- Solo se computan partidas PvP humanas (bots excluidos).
+- Solo se computan partidas PvP humanas en las **estadísticas** (bots excluidos de `matchesPlayed`,
+  `matchesWon`, `matchesLost`, `winRate`). Los **logros sí se desbloquean** en partidas contra bots.
 - El abandono cuenta como derrota para el abandoner y victoria para el rival.
 
 ### 7.5.2 Logros disponibles
@@ -2611,8 +2612,9 @@ Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` to
 
 Reglas:
 
-- solo se evalúa en matches `human vs human`
-- las partidas contra bots no generan tracking ni unlocks
+- los logros **sí se evalúan en partidas contra bots**: el jugador humano puede desbloquear
+  achievements jugando contra un bot
+- el bot no recibe logros (no es usuario registrado)
 - el abandono cuenta como derrota para el abandoner y victoria para el rival
 
 ### 9.5g eventType posibles - Spectate (
@@ -2734,6 +2736,14 @@ No se reenvian al espectador los eventos privados por asiento:
     - `{ invitationId, recipientUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_EXPIRED`:
     - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
+- `CHAT_CREATED`:
+    - `{ parentType, parentId }` — `parentType`: `MATCH`, `LEAGUE` o `CUP`; `parentId`: UUID del
+      recurso padre. No se emite para `FRIENDSHIP` (esos chats se crean lazily al consultar)
+- `MESSAGE_SENT`:
+    - `{ sender, content, sentAt }` — `sender`: username/displayName del remitente; `content`:
+      texto del mensaje; `sentAt`: `epochMillis`. No incluye `messageId` (solo disponible en REST
+      vía `GET /api/chats/{chatId}/messages`) ni `sendState` (el cooldown solo va al remitente por
+      REST, no por WebSocket)
 - `ACHIEVEMENT_UNLOCKED`:
     - `{ achievementCode, unlockedAt, matchId, gameNumber }`
 - `LEAGUE_MATCH_ACTIVATED`:
