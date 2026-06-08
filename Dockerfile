@@ -13,10 +13,8 @@ RUN chmod +x gradlew && ./gradlew dependencies --no-daemon || true
 
 # Ahora el código fuente y el empaquetado (sin tests: el CI ya los corre aparte).
 COPY src ./src
-RUN ./gradlew bootJar --no-daemon -x test
-
-# Extraemos el jar por capas para aprovechar el cacheo de capas de Docker.
-RUN java -Djarmode=tools -jar build/libs/*.jar extract --layers --destination build/extracted
+RUN ./gradlew bootJar --no-daemon -x test \
+    && cp build/libs/*.jar /app.jar
 
 ###############################################################################
 # Stage 2 — Construir un JRE mínimo a medida con jlink
@@ -29,7 +27,7 @@ java.base,java.compiler,java.desktop,java.instrument,java.management,java.naming
       --output /javaruntime
 
 ###############################################################################
-# Stage 3 — Imagen final mínima (Alpine + JRE recortado + capas de la app)
+# Stage 3 — Imagen final mínima (Alpine + JRE recortado + fat jar)
 ###############################################################################
 FROM alpine:3.20
 # tzdata: la app opera con zona America/Argentina/Buenos_Aires.
@@ -41,11 +39,9 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 COPY --from=jre-build /javaruntime $JAVA_HOME
 
 WORKDIR /app
-# Capas ordenadas de menos a más cambiante (mejor cacheo en cada deploy).
-COPY --from=build /workspace/build/extracted/dependencies/ ./
-COPY --from=build /workspace/build/extracted/spring-boot-loader/ ./
-COPY --from=build /workspace/build/extracted/snapshot-dependencies/ ./
-COPY --from=build /workspace/build/extracted/application/ ./
+# Ejecutamos el fat jar directamente: el Main-Class del manifest resuelve el
+# launcher embebido, sin depender de la ubicación de las capas extraídas.
+COPY --from=build /app.jar ./app.jar
 
 USER spring:spring
 EXPOSE 8080
@@ -56,4 +52,4 @@ ENV JAVA_OPTS="-XX:MaxRAMPercentage=70.0 -XX:+UseSerialGC -XX:+ExitOnOutOfMemory
 HEALTHCHECK --interval=30s --timeout=3s --start-period=70s --retries=3 \
   CMD wget -qO- http://localhost:8080/actuator/health/liveness || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
