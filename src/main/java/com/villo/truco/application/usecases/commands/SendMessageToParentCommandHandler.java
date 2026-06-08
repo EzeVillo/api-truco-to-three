@@ -1,15 +1,17 @@
 package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.SendMessageToParentCommand;
+import com.villo.truco.application.dto.ChatSendStateDTO;
+import com.villo.truco.application.dto.SendMessageResultDTO;
 import com.villo.truco.application.exceptions.ChatNotFoundException;
 import com.villo.truco.application.ports.FriendshipParticipantsPort;
 import com.villo.truco.application.ports.in.SendMessageToParentUseCase;
 import com.villo.truco.domain.model.chat.Chat;
-import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
@@ -31,17 +33,19 @@ public final class SendMessageToParentCommandHandler implements SendMessageToPar
   }
 
   @Override
-  public ChatId handle(final SendMessageToParentCommand command) {
+  public SendMessageResultDTO handle(final SendMessageToParentCommand command) {
 
     final var chat = this.chatQueryRepository.findByParentTypeAndParentId(command.parentType(),
         command.parentId()).orElseGet(() -> this.createFriendshipChatIfAllowed(command));
 
     chat.sendMessage(command.playerId(), command.content());
+    final var sendState = chat.sendStateFor(command.playerId(), Instant.now());
     this.chatRepository.save(chat);
     this.chatEventNotifier.publishDomainEvents(chat.getChatDomainEvents());
     chat.clearDomainEvents();
 
-    return chat.getId();
+    return new SendMessageResultDTO(chat.getId().value().toString(),
+        new ChatSendStateDTO(sendState.canSendNow(), sendState.nextMessageAllowedAt()));
   }
 
   private Chat createFriendshipChatIfAllowed(final SendMessageToParentCommand command) {

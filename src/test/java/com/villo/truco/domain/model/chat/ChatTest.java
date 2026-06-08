@@ -13,6 +13,7 @@ import com.villo.truco.domain.model.chat.exceptions.PlayerNotInChatException;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -201,6 +202,46 @@ class ChatTest {
       chat.sendMessage(playerOne, "third");
 
       assertThat(chat.toReadView().messages()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("informa que puede enviar cuando el jugador no tiene cooldown activo")
+    void sendState_withoutCooldown_canSendNow() {
+
+      final var chat = createChatWithRateLimit();
+
+      final var sendState = chat.sendStateFor(playerOne, Instant.now());
+
+      assertThat(sendState.canSendNow()).isTrue();
+      assertThat(sendState.nextMessageAllowedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("informa proximo envio permitido cuando el jugador esta en cooldown")
+    void sendState_duringCooldown_returnsNextAllowedAt() {
+
+      final var chat = createChatWithRateLimit();
+      chat.sendMessage(playerOne, "first");
+      final var sentAt = chat.toReadView().messages().getFirst().sentAt();
+
+      final var sendState = chat.sendStateFor(playerOne, sentAt.plusSeconds(1));
+
+      assertThat(sendState.canSendNow()).isFalse();
+      assertThat(sendState.nextMessageAllowedAt()).isEqualTo(sentAt.plusSeconds(10).toEpochMilli());
+    }
+
+    @Test
+    @DisplayName("informa que puede enviar cuando el cooldown ya vencio")
+    void sendState_afterCooldown_canSendNow() {
+
+      final var chat = createChatWithRateLimit();
+      chat.sendMessage(playerOne, "first");
+      final var sentAt = chat.toReadView().messages().getFirst().sentAt();
+
+      final var sendState = chat.sendStateFor(playerOne, sentAt.plusSeconds(10));
+
+      assertThat(sendState.canSendNow()).isTrue();
+      assertThat(sendState.nextMessageAllowedAt()).isNull();
     }
 
   }

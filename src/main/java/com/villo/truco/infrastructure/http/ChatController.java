@@ -11,6 +11,7 @@ import com.villo.truco.application.queries.GetChatMessagesQuery;
 import com.villo.truco.infrastructure.http.dto.request.SendMessageRequest;
 import com.villo.truco.infrastructure.http.dto.response.ChatMessagesResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
+import com.villo.truco.infrastructure.http.dto.response.SendMessageResponse;
 import com.villo.truco.infrastructure.http.dto.response.SendMessageToParentResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -58,26 +59,28 @@ public class ChatController {
   }
 
   @PostMapping("/{chatId}/messages")
-  @Operation(summary = "Enviar mensaje", description = "Envía un mensaje en el chat", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Mensaje enviado"),
-      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+  @Operation(summary = "Enviar mensaje", description = "Envia un mensaje en el chat", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Mensaje enviado", content = @Content(schema = @Schema(implementation = SendMessageResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o invalido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "No se pudo enviar el mensaje", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-  public ResponseEntity<Void> sendMessage(
+  public ResponseEntity<SendMessageResponse> sendMessage(
       @Parameter(description = "ID del chat") @PathVariable final String chatId,
       @Valid @RequestBody final SendMessageRequest request,
       @AuthenticationPrincipal final Jwt jwt) {
 
     LOGGER.info("HTTP sendMessage requested: chatId={}", chatId);
-    this.sendMessage.handle(new SendMessageCommand(chatId, jwt.getSubject(), request.content()));
-    return ResponseEntity.noContent().build();
+    final var result = this.sendMessage.handle(
+        new SendMessageCommand(chatId, jwt.getSubject(), request.content()));
+    return ResponseEntity.ok(SendMessageResponse.from(result));
   }
 
   @GetMapping("/{chatId}/messages")
-  @Operation(summary = "Obtener mensajes", description = "Devuelve los mensajes del chat (máximo 50)", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Obtener mensajes", description = "Devuelve los mensajes del chat y el estado de envio del jugador autenticado", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Mensajes del chat", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o invalido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<ChatMessagesResponse> getChatMessages(
       @Parameter(description = "ID del chat") @PathVariable final String chatId,
@@ -88,10 +91,10 @@ public class ChatController {
   }
 
   @PostMapping("/by-parent/{parentType}/{parentId}/messages")
-  @Operation(summary = "Enviar mensaje por recurso padre", description = "Envía un mensaje al chat de un recurso. Para FRIENDSHIP, crea el chat si es el primer mensaje.", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Enviar mensaje por recurso padre", description = "Envia un mensaje al chat de un recurso. Para FRIENDSHIP, crea el chat si es el primer mensaje.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "Mensaje enviado", content = @Content(schema = @Schema(implementation = SendMessageToParentResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o invalido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Chat o recurso no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "422", description = "No se pudo enviar el mensaje", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<SendMessageToParentResponse> sendMessageToParent(
@@ -102,17 +105,17 @@ public class ChatController {
 
     LOGGER.info("HTTP sendMessageToParent requested: parentType={}, parentId={}", parentType,
         parentId);
-    final var chatId = this.sendMessageToParent.handle(
+    final var result = this.sendMessageToParent.handle(
         new SendMessageToParentCommand(parentType, parentId, jwt.getSubject(), request.content()));
-    return ResponseEntity.created(URI.create("/api/chats/" + chatId.value()))
-        .body(new SendMessageToParentResponse(chatId.value().toString()));
+    return ResponseEntity.created(URI.create("/api/chats/" + result.chatId()))
+        .body(SendMessageToParentResponse.from(result));
   }
 
   @GetMapping("/by-parent/{parentType}/{parentId}")
-  @Operation(summary = "Buscar chat por recurso padre", description = "Busca el chat asociado a un match, league, cup o friendship. Retorna 404 si el chat aún no existe (para FRIENDSHIP, se crea al enviar el primer mensaje).", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Buscar chat por recurso padre", description = "Busca el chat asociado a un match, league, cup o friendship con estado de envio del jugador autenticado.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Chat encontrado", content = @Content(schema = @Schema(implementation = ChatMessagesResponse.class))),
-      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o invalido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Chat no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<ChatMessagesResponse> getChatByParent(
       @Parameter(description = "Tipo: MATCH, LEAGUE, CUP o FRIENDSHIP") @PathVariable final String parentType,

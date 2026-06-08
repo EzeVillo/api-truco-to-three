@@ -1,10 +1,12 @@
 package com.villo.truco.application.usecases.commands;
 
 import com.villo.truco.application.commands.SendMessageCommand;
+import com.villo.truco.application.dto.ChatSendStateDTO;
+import com.villo.truco.application.dto.SendMessageResultDTO;
 import com.villo.truco.application.ports.in.SendMessageUseCase;
-import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatRepository;
+import java.time.Instant;
 import java.util.Objects;
 
 public final class SendMessageCommandHandler implements SendMessageUseCase {
@@ -22,15 +24,17 @@ public final class SendMessageCommandHandler implements SendMessageUseCase {
   }
 
   @Override
-  public ChatId handle(final SendMessageCommand command) {
+  public SendMessageResultDTO handle(final SendMessageCommand command) {
 
     final var chat = this.chatResolver.resolve(command.chatId());
     chat.sendMessage(command.playerId(), command.content());
+    final var sendState = chat.sendStateFor(command.playerId(), Instant.now());
     this.chatRepository.save(chat);
     this.chatEventNotifier.publishDomainEvents(chat.getChatDomainEvents());
     chat.clearDomainEvents();
 
-    return command.chatId();
+    return new SendMessageResultDTO(command.chatId().value().toString(),
+        new ChatSendStateDTO(sendState.canSendNow(), sendState.nextMessageAllowedAt()));
   }
 
 }

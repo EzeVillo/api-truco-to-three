@@ -3,10 +3,10 @@ package com.villo.truco.application.usecases.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.villo.truco.application.commands.SendMessageCommand;
+import com.villo.truco.application.dto.SendMessageResultDTO;
 import com.villo.truco.application.ports.in.SendMessageUseCase;
 import com.villo.truco.application.ports.in.UseCase;
 import com.villo.truco.domain.model.chat.Chat;
-import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.infrastructure.persistence.repositories.InMemoryChatRepositoryAdapter;
@@ -53,7 +53,7 @@ class SendMessageCommandHandlerConcurrencyTest {
         List.of(new OptimisticLockRetryBehavior(3, Duration.ZERO)));
     final var rawHandler = new SendMessageCommandHandler(new ChatResolver(repository), repository,
         notifier);
-    final UseCase<SendMessageCommand, ChatId> transactionalHandler = command -> TestTransactionRunner.inTransaction(
+    final UseCase<SendMessageCommand, SendMessageResultDTO> transactionalHandler = command -> TestTransactionRunner.inTransaction(
         () -> rawHandler.handle(command));
     final SendMessageUseCase handler = pipeline.wrap(transactionalHandler)::handle;
 

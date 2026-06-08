@@ -7,17 +7,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.commands.SendMessageCommand;
+import com.villo.truco.application.commands.SendMessageToParentCommand;
+import com.villo.truco.application.ports.FriendshipParticipantsPort;
 import com.villo.truco.domain.model.chat.Chat;
 import com.villo.truco.domain.model.chat.events.ChatDomainEvent;
 import com.villo.truco.domain.model.chat.events.ChatEventEnvelope;
+import com.villo.truco.domain.model.chat.valueobjects.ChatId;
 import com.villo.truco.domain.model.chat.valueobjects.ChatParentType;
 import com.villo.truco.domain.ports.ChatEventNotifier;
+import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.repositories.InMemoryChatRepositoryAdapter;
 import com.villo.truco.support.TestTransactionRunner;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -44,7 +49,11 @@ class SendMessageCommandHandlerTest {
 
     when(chatResolver.resolve(chat.getId())).thenReturn(chat);
 
-    handler.handle(command);
+    final var result = handler.handle(command);
+
+    assertThat(result.chatId()).isEqualTo(chat.getId().value().toString());
+    assertThat(result.sendState().canSendNow()).isFalse();
+    assertThat(result.sendState().nextMessageAllowedAt()).isNotNull();
 
     verify(chatRepository).save(chat);
     final var captor = ArgumentCaptor.forClass(List.class);
@@ -80,6 +89,44 @@ class SendMessageCommandHandlerTest {
 
     final var stored = repository.findById(chat.getId()).orElseThrow();
     assertThat(stored.toReadView().messages()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("devuelve chatId y sendState al enviar por recurso padre")
+  void sendMessageToParentReturnsChatIdAndSendState() {
+
+    final var sender = PlayerId.generate();
+    final var other = PlayerId.generate();
+    final var chat = Chat.create(ChatParentType.MATCH, "parent-123",
+        new LinkedHashSet<>(List.of(sender, other)));
+    chat.clearDomainEvents();
+
+    final ChatQueryRepository queryRepository = new ChatQueryRepository() {
+      @Override
+      public Optional<Chat> findById(final ChatId chatId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Chat> findByParentTypeAndParentId(final ChatParentType parentType,
+          final String parentId) {
+
+        return Optional.of(chat);
+      }
+    };
+    final var chatRepository = mock(ChatRepository.class);
+    final var chatEventNotifier = mock(ChatEventNotifier.class);
+    final FriendshipParticipantsPort friendshipParticipantsPort = (parentId, requestingPlayer) -> Optional.empty();
+    final var handler = new SendMessageToParentCommandHandler(queryRepository, chatRepository,
+        chatEventNotifier, friendshipParticipantsPort);
+
+    final var result = handler.handle(
+        new SendMessageToParentCommand(ChatParentType.MATCH, "parent-123", sender, "hola"));
+
+    assertThat(result.chatId()).isEqualTo(chat.getId().value().toString());
+    assertThat(result.sendState().canSendNow()).isFalse();
+    assertThat(result.sendState().nextMessageAllowedAt()).isNotNull();
   }
 
 }

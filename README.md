@@ -69,7 +69,9 @@ games.
   spectear matches en progreso; la vista de espectador no expone cartas privadas ni acciones
   disponibles.
 - Chat:
-  lectura, envio de mensajes, limite de 50 mensajes y rate limit de 2 segundos por jugador.
+  lectura, envio de mensajes, limite de 50 mensajes y rate limit de 2 segundos por jugador. Las
+  lecturas y confirmaciones de envio exponen `sendState` con `canSendNow` y
+  `nextMessageAllowedAt` en epoch millis para reconstruir cooldown despues de un refresh.
 - Social:
   solicitudes de amistad por username exacto, invitaciones rapidas a `MATCH`/`LEAGUE`/`CUP` entre
   amigos aceptados y DM efimero por `FRIENDSHIP`. El envio de invitaciones valida que el
