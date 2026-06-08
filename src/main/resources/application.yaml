@@ -1,8 +1,12 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
 spring:
   application:
     name: truco
   datasource:
-    url: jdbc:postgresql://localhost:5432/truco
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/truco}
     username: ${TRUCO_DB_USER:truco}
     password: ${TRUCO_DB_PASSWORD:truco}
   jpa:
@@ -17,6 +21,8 @@ spring:
     enabled: true
 
 truco:
+  web:
+    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:http://localhost:4200,https://*.trycloudflare.com}
   retry:
     max-retries: 3
     delay-ms: 200
@@ -49,7 +55,7 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{requestId:-no-request}] %logger{36} - %msg%n"
   level:
     root: INFO
-    com.villo.truco: DEBUG
+    com.villo.truco: ${TRUCO_LOG_LEVEL:DEBUG}
 
 management:
   endpoints:
