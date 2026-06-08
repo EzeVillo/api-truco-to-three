@@ -38,10 +38,28 @@ ENV JAVA_HOME=/opt/java
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 COPY --from=jre-build /javaruntime $JAVA_HOME
 
+# Generamos el "base CDS archive" para ESTE runtime recortado por jlink (los
+# runtimes jlink no lo traen por defecto). Es la base sobre la que se apoya el
+# archivo CDS dinámico de la app. Usamos el mismo GC que en runtime para que el
+# archivo sea compatible y no se descarte silenciosamente.
+RUN java -XX:+UseSerialGC -Xshare:dump
+
 WORKDIR /app
-# Ejecutamos el fat jar directamente: el Main-Class del manifest resuelve el
-# launcher embebido, sin depender de la ubicación de las capas extraídas.
+# Extraemos el fat jar a una estructura ejecutable (app.jar liviano + lib/).
+# CDS rinde mejor con las clases desempaquetadas que dentro del fat jar.
 COPY --from=build /app.jar ./app.jar
+RUN java -Djarmode=tools -jar app.jar extract --destination /app/extracted \
+    && rm app.jar
+
+WORKDIR /app/extracted
+# Training run: arranca el contexto Spring con el perfil 'cds' (sin DB), sale en
+# cuanto el contexto refresca y dumpea todas las clases cargadas a application.jsa.
+RUN java -XX:+UseSerialGC \
+        -XX:ArchiveClassesAtExit=application.jsa \
+        -Dspring.context.exit=onRefresh \
+        -Dspring.profiles.active=cds \
+        -jar app.jar
+RUN chown -R spring:spring /app
 
 USER spring:spring
 EXPOSE 8080
@@ -52,4 +70,5 @@ ENV JAVA_OPTS="-XX:MaxRAMPercentage=70.0 -XX:+UseSerialGC -XX:+ExitOnOutOfMemory
 HEALTHCHECK --interval=30s --timeout=3s --start-period=70s --retries=3 \
   CMD wget -qO- http://localhost:8080/actuator/health/liveness || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# -XX:SharedArchiveFile reusa las clases ya procesadas del training run.
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -XX:SharedArchiveFile=application.jsa -jar app.jar"]
