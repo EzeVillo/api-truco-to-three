@@ -52,12 +52,22 @@ RUN java -Djarmode=tools -jar app.jar extract --destination /app/extracted \
     && rm app.jar
 
 WORKDIR /app/extracted
-# Training run: arranca el contexto Spring con el perfil 'cds' (sin DB), sale en
-# cuanto el contexto refresca y dumpea todas las clases cargadas a application.jsa.
+# Training run: arranca el contexto Spring SIN tocar la DB (no hay Postgres en
+# build-time), sale en cuanto el contexto refresca y dumpea todas las clases
+# cargadas a application.jsa. Las propiedades van como flags -D (máxima
+# precedencia) para garantizar que nada intente conectar:
+#   - flyway.enabled=false                  -> no migra
+#   - hikari.initialization-fail-timeout=-1 -> el pool no valida conexión al crear
+#   - ddl-auto=none + dialect explícito +
+#     allow_jdbc_metadata_access=false      -> Hibernate inicializa el EMF sin conectar
 RUN java -XX:+UseSerialGC \
         -XX:ArchiveClassesAtExit=application.jsa \
         -Dspring.context.exit=onRefresh \
-        -Dspring.profiles.active=cds \
+        -Dspring.flyway.enabled=false \
+        -Dspring.datasource.hikari.initialization-fail-timeout=-1 \
+        -Dspring.jpa.hibernate.ddl-auto=none \
+        -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
+        -Dspring.jpa.properties.hibernate.boot.allow_jdbc_metadata_access=false \
         -jar app.jar
 RUN chown -R spring:spring /app
 
