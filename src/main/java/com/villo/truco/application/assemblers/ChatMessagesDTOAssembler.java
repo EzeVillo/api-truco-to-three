@@ -2,8 +2,10 @@ package com.villo.truco.application.assemblers;
 
 import com.villo.truco.application.dto.ChatMessageDTO;
 import com.villo.truco.application.dto.ChatMessagesDTO;
+import com.villo.truco.application.dto.ChatSendStateDTO;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.domain.model.chat.ChatReadView;
+import com.villo.truco.domain.model.chat.ChatSendStateView;
 import java.util.Objects;
 
 public final class ChatMessagesDTOAssembler {
@@ -15,7 +17,7 @@ public final class ChatMessagesDTOAssembler {
     this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
   }
 
-  public ChatMessagesDTO toDto(final ChatReadView chat) {
+  public ChatMessagesDTO toDto(final ChatReadView chat, final ChatSendStateView sendState) {
 
     final var actorNames = this.publicActorResolver.resolveAll(chat.participants());
 
@@ -25,7 +27,8 @@ public final class ChatMessagesDTOAssembler {
         .toList();
 
     return new ChatMessagesDTO(chat.id().value().toString(), chat.parentType().name(),
-        chat.parentId(), messages);
+        chat.parentId(), sendState == null ? null
+        : new ChatSendStateDTO(sendState.canSendNow(), sendState.nextMessageAllowedAt()), messages);
   }
 
 }

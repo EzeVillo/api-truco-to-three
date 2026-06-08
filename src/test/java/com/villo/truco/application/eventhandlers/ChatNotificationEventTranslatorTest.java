@@ -67,6 +67,8 @@ class ChatNotificationEventTranslatorTest {
     assertThat(notification.payload()).containsEntry("sender",
             TestPublicActorResolver.displayName(sender)).containsEntry("content", "hola")
         .containsEntry("sentAt", 1234L);
+    assertThat(notification.payload()).doesNotContainKeys("sendState", "nextMessageAllowedAt",
+        "retryAfterMs");
   }
 
 }

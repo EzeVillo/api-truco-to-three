@@ -7,6 +7,7 @@ import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.GetChatByParentUseCase;
 import com.villo.truco.application.queries.GetChatByParentQuery;
 import com.villo.truco.domain.ports.ChatQueryRepository;
+import java.time.Instant;
 import java.util.Objects;
 
 public final class GetChatByParentQueryHandler implements GetChatByParentUseCase {
@@ -30,7 +31,8 @@ public final class GetChatByParentQueryHandler implements GetChatByParentUseCase
 
     chat.validateParticipant(query.requestingPlayer());
 
-    return this.dtoAssembler.toDto(chat.toReadView());
+    return this.dtoAssembler.toDto(chat.toReadView(),
+        chat.sendStateFor(query.requestingPlayer(), Instant.now()));
   }
 
 }

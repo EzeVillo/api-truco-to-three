@@ -6,6 +6,7 @@ import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.GetChatMessagesUseCase;
 import com.villo.truco.application.queries.GetChatMessagesQuery;
 import com.villo.truco.application.usecases.commands.ChatResolver;
+import java.time.Instant;
 import java.util.Objects;
 
 public final class GetChatMessagesQueryHandler implements GetChatMessagesUseCase {
@@ -27,7 +28,8 @@ public final class GetChatMessagesQueryHandler implements GetChatMessagesUseCase
 
     chat.validateParticipant(query.requestingPlayer());
 
-    return this.dtoAssembler.toDto(chat.toReadView());
+    return this.dtoAssembler.toDto(chat.toReadView(),
+        chat.sendStateFor(query.requestingPlayer(), Instant.now()));
   }
 
 }

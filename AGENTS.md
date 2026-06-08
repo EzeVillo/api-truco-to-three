@@ -5,7 +5,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/013-friend-availability/plan.md`
+`specs/014-chat-cooldown-metadata/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)

@@ -65,10 +65,23 @@ class GetChatByParentQueryHandlerTest {
 
     assertThat(dto.parentType()).isEqualTo(ChatParentType.MATCH.name());
     assertThat(dto.parentId()).isEqualTo(PARENT_ID);
+    assertThat(dto.sendState().canSendNow()).isTrue();
+    assertThat(dto.sendState().nextMessageAllowedAt()).isNull();
     assertThat(dto.messages()).hasSize(1);
     assertThat(dto.messages().getFirst().sender()).isEqualTo(
         TestPublicActorResolver.displayName(this.playerTwo));
     assertThat(dto.messages().getFirst().content()).isEqualTo("buenas");
+  }
+
+  @Test
+  @DisplayName("devuelve sendState en cooldown para el jugador que envio recientemente")
+  void returnsCooldownSendStateForRecentSender() {
+
+    final var dto = this.handler.handle(
+        new GetChatByParentQuery(ChatParentType.MATCH, PARENT_ID, this.playerTwo));
+
+    assertThat(dto.sendState().canSendNow()).isFalse();
+    assertThat(dto.sendState().nextMessageAllowedAt()).isNotNull();
   }
 
   @Test

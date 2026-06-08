@@ -122,21 +122,28 @@ public final class Chat extends AggregateBase<ChatId> {
     return this.parentId;
   }
 
-  Duration getRateLimitCooldown() {
-
-    return this.rateLimitCooldown;
-  }
-
-  Map<PlayerId, Instant> getLastMessageTimestamps() {
-
-    return Collections.unmodifiableMap(this.lastMessageTimestamps);
-  }
-
   public ChatReadView toReadView() {
 
     return new ChatReadView(this.id, this.parentType, this.parentId,
         Collections.unmodifiableSet(new LinkedHashSet<>(this.participants)),
         this.messages.stream().map(ChatMessage::toReadView).toList());
+  }
+
+  public ChatSendStateView sendStateFor(final PlayerId playerId, final Instant now) {
+
+    this.validateParticipant(playerId);
+    Objects.requireNonNull(now, "Now cannot be null");
+
+    final var lastSent = this.lastMessageTimestamps.get(playerId);
+    if (lastSent == null) {
+      return new ChatSendStateView(true, null);
+    }
+
+    final var nextAllowedAt = lastSent.plus(this.rateLimitCooldown);
+    if (!now.isBefore(nextAllowedAt)) {
+      return new ChatSendStateView(true, null);
+    }
+    return new ChatSendStateView(false, nextAllowedAt.toEpochMilli());
   }
 
   public ChatSnapshot snapshot() {

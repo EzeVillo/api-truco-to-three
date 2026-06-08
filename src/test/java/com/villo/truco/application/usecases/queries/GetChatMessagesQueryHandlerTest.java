@@ -64,10 +64,23 @@ class GetChatMessagesQueryHandlerTest {
     assertThat(dto.chatId()).isEqualTo(this.chat.getId().value().toString());
     assertThat(dto.parentType()).isEqualTo(ChatParentType.MATCH.name());
     assertThat(dto.parentId()).isEqualTo("parent-123");
+    assertThat(dto.sendState().canSendNow()).isFalse();
+    assertThat(dto.sendState().nextMessageAllowedAt()).isNotNull();
     assertThat(dto.messages()).hasSize(1);
     assertThat(dto.messages().getFirst().sender()).isEqualTo(
         TestPublicActorResolver.displayName(this.playerOne));
     assertThat(dto.messages().getFirst().content()).isEqualTo("hola");
+  }
+
+  @Test
+  @DisplayName("devuelve sendState disponible para participante sin cooldown propio")
+  void returnsSendStateForParticipantWithoutOwnCooldown() {
+
+    final var dto = this.handler.handle(
+        new GetChatMessagesQuery(this.chat.getId(), this.playerTwo));
+
+    assertThat(dto.sendState().canSendNow()).isTrue();
+    assertThat(dto.sendState().nextMessageAllowedAt()).isNull();
   }
 
   @Test
