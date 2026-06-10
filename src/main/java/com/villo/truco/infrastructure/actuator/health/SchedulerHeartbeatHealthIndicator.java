@@ -22,7 +22,7 @@ public class SchedulerHeartbeatHealthIndicator implements HealthIndicator {
 
   public SchedulerHeartbeatHealthIndicator(final TimeoutReconciliationRunner reconciliationRunner,
       final SpringTimeoutScheduler springTimeoutScheduler,
-      @Value("${truco.observability.scheduler-heartbeat-max-age-ms:180000}") final long maxAgeMs) {
+      @Value("${truco.observability.scheduler-heartbeat-max-age-ms:360000}") final long maxAgeMs) {
 
     this.reconciliationRunner = reconciliationRunner;
     this.springTimeoutScheduler = springTimeoutScheduler;
