@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.villo'
-version = '0.0.1-SNAPSHOT'
+version = file('VERSION').text.trim()
 description = 'Truco argentino a tres.'
 
 java {
