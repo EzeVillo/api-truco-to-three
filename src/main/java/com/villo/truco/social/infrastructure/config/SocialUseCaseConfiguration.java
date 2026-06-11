@@ -230,11 +230,9 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
-  GetFriendsUseCase getFriendsUseCase(final PlayerAvailabilityChecker playerAvailabilityChecker,
-      final FriendOnlinePresencePort friendOnlinePresencePort) {
+  GetFriendsUseCase getFriendsUseCase(final FriendAvailabilityResolver friendAvailabilityResolver) {
 
-    return new GetFriendsQueryHandler(this.socialUserGuard(),
-        this.friendAvailabilityResolver(playerAvailabilityChecker, friendOnlinePresencePort));
+    return new GetFriendsQueryHandler(this.socialUserGuard(), friendAvailabilityResolver);
   }
 
   @Bean
@@ -245,11 +243,10 @@ public class SocialUseCaseConfiguration {
 
   @Bean
   GetFriendAvailabilityUseCase getFriendAvailabilityUseCase(
-      final PlayerAvailabilityChecker playerAvailabilityChecker,
-      final FriendOnlinePresencePort friendOnlinePresencePort) {
+      final FriendAvailabilityResolver friendAvailabilityResolver) {
 
     return new GetFriendAvailabilityQueryHandler(this.socialUserGuard(),
-        this.friendAvailabilityResolver(playerAvailabilityChecker, friendOnlinePresencePort));
+        friendAvailabilityResolver);
   }
 
   @Bean

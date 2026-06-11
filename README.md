@@ -413,10 +413,13 @@ El proyecto soporta compilación a native image con Spring AOT:
 
 - La compilación corre **solo en CI** (necesita 4+ vCPU y ~8 GB de RAM); local alcanza con
   verificar `.\gradlew.bat processAot`.
-- Los DTOs que viajan por WebSocket vía `SimpMessagingTemplate` no pasan por firmas de
-  controllers, por lo que Spring AOT no les registra hints de reflection: eso lo cubre
-  `WebSocketPayloadRuntimeHints` (escanea los paquetes de DTOs en build-time). **Si se agrega
-  un paquete nuevo de DTOs de payload WS, hay que sumarlo a esa lista.**
+- Los hints de reflection/proxies que Spring AOT no cubre se registran automáticamente en
+  build-time escaneando el código (`infrastructure/aot/*RuntimeHints`): DTOs en paquetes
+  `.dto` (payloads WebSocket), arrays del tipo de id de cada `@Entity`, proxies de parámetros
+  `@Lazy` sobre interfaces y executors del JDK. Mientras se respeten esas convenciones, los
+  agregados futuros quedan cubiertos sin tocar nada.
+- Build nativo local (sin gastar pipeline): `docker build -f Dockerfile.native-local -t
+  truco-native-local .` y correrlo apuntando al Postgres de `docker compose`.
 - `Dockerfile` (JVM + CDS) sigue siendo el camino de deploy por defecto y el fallback si el
   binario nativo presenta problemas; `Dockerfile.native` solo empaqueta el binario ya
   compilado por el workflow.

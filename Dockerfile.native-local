@@ -1,0 +1,51 @@
+# syntax=docker/dockerfile:1
+#
+# Build nativo COMPLETO en local (equivale a lo que hace native-release.yml en CI).
+# Útil para validar el binario nativo sin gastar una corrida del pipeline:
+#
+#   docker build -f Dockerfile.native-local -t truco-native-local .
+#   docker run --rm -p 8080:8080 \
+#     -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/truco \
+#     truco-native-local
+#
+# Requiere Docker con >= 8 GB de RAM asignada. La compilación tarda 10-25 min.
+
+###############################################################################
+# Stage 1 — Compilar el binario nativo con GraalVM 25 (requisito de Boot 4)
+###############################################################################
+FROM ghcr.io/graalvm/native-image-community:25 AS build
+WORKDIR /workspace
+
+# findutils/zip los usa Gradle; el toolchain Java 21 de compilación lo descarga
+# Gradle solo (foojay-resolver en settings.gradle). native-image sale de JAVA_HOME
+# (GraalVM 25) porque toolchainDetection está deshabilitado en build.gradle.
+RUN microdnf install -y findutils zip && microdnf clean all
+
+COPY gradlew settings.gradle build.gradle ./
+COPY gradle ./gradle
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon || true
+
+COPY src ./src
+RUN ./gradlew nativeCompile --no-daemon -x test
+
+###############################################################################
+# Stage 2 — Imagen final (misma base que Dockerfile.native)
+###############################################################################
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system spring && useradd --system --gid spring spring
+
+WORKDIR /app
+COPY --from=build /workspace/build/native/nativeCompile/truco ./truco
+RUN chmod +x ./truco && chown -R spring:spring /app
+
+USER spring:spring
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:8080/actuator/health/liveness || exit 1
+
+ENTRYPOINT ["./truco", "-XX:MaximumHeapSizePercent=70"]
