@@ -401,6 +401,25 @@ Workflows actuales en `.github/workflows`:
   ejecuta tests en cada push y build luego del test.
 - `release.yml`
   publica GitHub Release al pushear tags `v*` con el JAR generado.
+- `native-release.yml`
+  al pushear tags `v*-native` (o manualmente): compila el binario GraalVM native
+  (`nativeCompile`), lo valida con un smoke test contra PostgreSQL real (readiness,
+  Flyway, springdoc), publica la imagen en GHCR (`Dockerfile.native`) y dispara el
+  deploy hook de Render (secret `RENDER_DEPLOY_HOOK_URL`).
+
+## Build nativo (GraalVM)
+
+El proyecto soporta compilación a native image con Spring AOT:
+
+- La compilación corre **solo en CI** (necesita 4+ vCPU y ~8 GB de RAM); local alcanza con
+  verificar `.\gradlew.bat processAot`.
+- Los DTOs que viajan por WebSocket vía `SimpMessagingTemplate` no pasan por firmas de
+  controllers, por lo que Spring AOT no les registra hints de reflection: eso lo cubre
+  `WebSocketPayloadRuntimeHints` (escanea los paquetes de DTOs en build-time). **Si se agrega
+  un paquete nuevo de DTOs de payload WS, hay que sumarlo a esa lista.**
+- `Dockerfile` (JVM + CDS) sigue siendo el camino de deploy por defecto y el fallback si el
+  binario nativo presenta problemas; `Dockerfile.native` solo empaqueta el binario ya
+  compilado por el workflow.
 
 ## Notas
 

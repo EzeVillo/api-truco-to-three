@@ -63,10 +63,12 @@ class EventNotifierConfigurationTest {
     assertThat(configuration.chatLeagueStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.chatMatchGameStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.matchEventNotifier(mock(MatchPresenceEventTranslator.class),
-        mock(FriendActivityMatchEventTranslator.class))).isNotNull();
-    assertThat(configuration.cupEventNotifier(mock(CupPresenceEventTranslator.class))).isNotNull();
-    assertThat(
-        configuration.leagueEventNotifier(mock(LeaguePresenceEventTranslator.class))).isNotNull();
+        mock(FriendActivityMatchEventTranslator.class),
+        configuration.chatMatchGameStartedHandler(chatEventNotifier))).isNotNull();
+    assertThat(configuration.cupEventNotifier(mock(CupPresenceEventTranslator.class),
+        configuration.chatCupStartedHandler(chatEventNotifier))).isNotNull();
+    assertThat(configuration.leagueEventNotifier(mock(LeaguePresenceEventTranslator.class),
+        configuration.chatLeagueStartedHandler(chatEventNotifier))).isNotNull();
   }
 
 }
