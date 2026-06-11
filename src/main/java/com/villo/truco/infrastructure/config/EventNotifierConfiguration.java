@@ -207,12 +207,13 @@ public class EventNotifierConfiguration {
   @Bean
   MatchEventNotifier matchEventNotifier(
       final MatchPresenceEventTranslator matchPresenceEventTranslator,
-      final FriendActivityMatchEventTranslator friendActivityMatchEventTranslator) {
+      final FriendActivityMatchEventTranslator friendActivityMatchEventTranslator,
+      final ChatMatchGameStartedEventHandler chatMatchGameStartedHandler) {
 
     final List<MatchDomainEventHandler<?>> handlers = List.of(this.matchNotificationEventTranslator,
         this.publicMatchLobbyEventTranslator, this.spectatorNotificationEventTranslator,
         this.competitionDomainEventTranslator, this.botDomainEventTranslator,
-        this.chatMatchGameStartedHandler(chatEventNotifier()), this.chatMatchFinishedHandler(),
+        chatMatchGameStartedHandler, this.chatMatchFinishedHandler(),
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
         this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator,
         this.profileMatchDomainEventHandler, this.matchFinishedRematchSessionCreator,
@@ -222,23 +223,25 @@ public class EventNotifierConfiguration {
   }
 
   @Bean
-  CupEventNotifier cupEventNotifier(final CupPresenceEventTranslator cupPresenceEventTranslator) {
+  CupEventNotifier cupEventNotifier(final CupPresenceEventTranslator cupPresenceEventTranslator,
+      final ChatCupStartedEventHandler chatCupStartedHandler) {
 
     final List<CupDomainEventHandler<?>> handlers = List.of(this.cupNotificationEventTranslator,
-        this.publicCupLobbyEventTranslator, this.chatCupStartedHandler(chatEventNotifier()),
-        this.chatCupFinishedHandler(), this.chatCupCancelledHandler(),
-        this.spectatorAutoKickOnCupHandler, this.cupInvitationExpirationEventTranslator,
-        this.cupTimeoutEventHandler, cupPresenceEventTranslator);
+        this.publicCupLobbyEventTranslator, chatCupStartedHandler, this.chatCupFinishedHandler(),
+        this.chatCupCancelledHandler(), this.spectatorAutoKickOnCupHandler,
+        this.cupInvitationExpirationEventTranslator, this.cupTimeoutEventHandler,
+        cupPresenceEventTranslator);
     return new CompositeCupEventNotifier(handlers);
   }
 
   @Bean
   LeagueEventNotifier leagueEventNotifier(
-      final LeaguePresenceEventTranslator leaguePresenceEventTranslator) {
+      final LeaguePresenceEventTranslator leaguePresenceEventTranslator,
+      final ChatLeagueStartedEventHandler chatLeagueStartedHandler) {
 
     final List<LeagueDomainEventHandler<?>> handlers = List.of(
         this.leagueNotificationEventTranslator, this.publicLeagueLobbyEventTranslator,
-        this.chatLeagueStartedHandler(chatEventNotifier()), this.chatLeagueFinishedHandler(),
+        chatLeagueStartedHandler, this.chatLeagueFinishedHandler(),
         this.chatLeagueCancelledHandler(), this.spectatorAutoKickOnLeagueHandler,
         this.leagueInvitationExpirationEventTranslator, this.leagueTimeoutEventHandler,
         leaguePresenceEventTranslator);

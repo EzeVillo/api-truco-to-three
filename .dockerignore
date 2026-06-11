@@ -1,5 +1,6 @@
 .gradle
 build/
+!build/native/nativeCompile/truco
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/

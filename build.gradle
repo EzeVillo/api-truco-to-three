@@ -3,10 +3,11 @@ plugins {
     id 'jacoco'
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.graalvm.buildtools.native' version '0.11.5'
 }
 
 group = 'com.villo'
-version = '0.0.1-SNAPSHOT'
+version = file('VERSION').text.trim()
 description = 'Truco argentino a tres.'
 
 java {
@@ -41,6 +42,17 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.20.4'
     testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+graalvmNative {
+    toolchainDetection = false
+    testSupport = false
+    binaries {
+        main {
+            imageName = 'truco'
+            buildArgs.add('-march=compatibility')
+        }
+    }
 }
 
 tasks.named('test') {

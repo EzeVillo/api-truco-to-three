@@ -400,7 +400,24 @@ Workflows actuales en `.github/workflows`:
 - `ci.yml`
   ejecuta tests en cada push y build luego del test.
 - `release.yml`
-  publica GitHub Release al pushear tags `v*` con el JAR generado.
+  al pushear tags `v*` (o manualmente): compila el binario nativo (`nativeCompile`), lo valida
+  con un smoke test contra PostgreSQL real (readiness, Flyway, springdoc), publica la imagen
+  en GHCR (`Dockerfile`) y dispara el deploy hook de Render (secret `RENDER_DEPLOY_HOOK_URL`).
+
+## Build (GraalVM native)
+
+El proyecto se compila a binario nativo con Spring AOT:
+
+- La compilación corre **solo en CI** (necesita 4+ vCPU y ~8 GB de RAM); local alcanza con
+  verificar `.\gradlew.bat processAot`.
+- Los hints de reflection/proxies que Spring AOT no cubre se registran automáticamente en
+  build-time escaneando el código (`infrastructure/aot/*RuntimeHints`): DTOs en paquetes
+  `.dto` (payloads WebSocket), arrays del tipo de id de cada `@Entity`, proxies de parámetros
+  `@Lazy` sobre interfaces y executors del JDK. Mientras se respeten esas convenciones, los
+  agregados futuros quedan cubiertos sin tocar nada.
+- Build local (sin gastar pipeline): `docker build -f Dockerfile.local -t
+  truco-local .` y correrlo apuntando al Postgres de `docker compose`.
+- `Dockerfile` empaqueta el binario ya compilado por el workflow.
 
 ## Notas
 

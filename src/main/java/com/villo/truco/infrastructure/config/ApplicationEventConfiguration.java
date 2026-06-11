@@ -175,9 +175,9 @@ public class ApplicationEventConfiguration {
 
   @Bean
   ChatNotificationEventTranslator chatNotificationTranslator(
-      final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
+      final ApplicationEventPublisher publisher, final ChatEventMapper chatEventMapper) {
 
-    return new ChatNotificationEventTranslator(chatEventMapper(publicActorResolver), publisher);
+    return new ChatNotificationEventTranslator(chatEventMapper, publisher);
   }
 
   @Bean
@@ -197,16 +197,16 @@ public class ApplicationEventConfiguration {
 
   @Bean
   CupNotificationEventTranslator cupNotificationTranslator(
-      final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
+      final ApplicationEventPublisher publisher, final CupEventMapper cupEventMapper) {
 
-    return new CupNotificationEventTranslator(cupEventMapper(publicActorResolver), publisher);
+    return new CupNotificationEventTranslator(cupEventMapper, publisher);
   }
 
   @Bean
   LeagueNotificationEventTranslator leagueNotificationTranslator(
-      final ApplicationEventPublisher publisher, final PublicActorResolver publicActorResolver) {
+      final ApplicationEventPublisher publisher, final LeagueEventMapper leagueEventMapper) {
 
-    return new LeagueNotificationEventTranslator(leagueEventMapper(publicActorResolver), publisher);
+    return new LeagueNotificationEventTranslator(leagueEventMapper, publisher);
   }
 
   @Bean
