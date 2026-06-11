@@ -1,28 +1,61 @@
 name: Release
 
+# Compila el binario nativo, lo valida contra un Postgres real,
+# publica la imagen en GHCR y dispara el deploy en Render.
+#
+# Disparadores:
+#   - tag `v*` (ej: v0.0.1)
+#   - manual (workflow_dispatch)
+
 on:
   push:
     tags:
       - 'v*'
-      - '!v*-native'
+  workflow_dispatch:
+
 permissions:
-  contents: write
+  contents: read
+  packages: write
 
 concurrency:
   group: release-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
 jobs:
   release:
-    name: Publish Release
+    name: Build, smoke test & publish image
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: truco
+          POSTGRES_USER: truco
+          POSTGRES_PASSWORD: truco
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U truco"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      - name: Set up GraalVM 25 (native-image)
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Java 21 (Gradle toolchain)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,20 +67,89 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-native-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
+            ${{ runner.os }}-gradle-native-
             ${{ runner.os }}-gradle-
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build artifact
-        run: ./gradlew build --no-daemon
+      - name: Run tests
+        run: ./gradlew test --no-daemon
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          files: build/libs/*.jar
+      - name: Compile native binary
+        run: ./gradlew nativeCompile --no-daemon
+
+      # Smoke test: el binario nativo falla en runtime (no en compile) si faltan
+      # hints de reflection/recursos. Validamos contra Postgres real:
+      #   - readiness: Flyway migró, Hibernate conectó y el scheduler late
+      #   - /v3/api-docs: springdoc (el componente más frágil en native)
+      - name: Smoke test binary
+        run: |
+          ./build/native/nativeCompile/truco &
+          APP_PID=$!
+          trap "kill $APP_PID || true" EXIT
+
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/actuator/health/readiness > /dev/null 2>&1; then
+              break
+            fi
+            if ! kill -0 $APP_PID 2> /dev/null; then
+              echo "::error::El binario nativo terminó antes de estar listo"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "--- readiness ---"
+          curl -fsS http://localhost:8080/actuator/health/readiness
+          echo ""
+          echo "--- api-docs (springdoc) ---"
+          curl -fsS http://localhost:8080/v3/api-docs | head -c 300
+          echo ""
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/truco
+          TRUCO_DB_USER: truco
+          TRUCO_DB_PASSWORD: truco
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image tags
+        id: tags
+        run: |
+          IMAGE="${IMAGE_NAME,,}"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="${GITHUB_SHA::8}"
+          fi
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        run: |
+          docker build -f Dockerfile \
+            -t "${{ steps.tags.outputs.image }}:${{ steps.tags.outputs.version }}" \
+            -t "${{ steps.tags.outputs.image }}:latest" \
+            .
+          docker push "${{ steps.tags.outputs.image }}:${{ steps.tags.outputs.version }}"
+          docker push "${{ steps.tags.outputs.image }}:latest"
+
+      # Render redeploya la imagen apuntada por el servicio (tag latest).
+      # Secret opcional: si no está configurado, el paso se omite.
+      - name: Trigger Render deploy
+        if: ${{ github.ref_type == 'tag' }}
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL no configurado; deploy manual desde el dashboard de Render."
+            exit 0
+          fi
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"

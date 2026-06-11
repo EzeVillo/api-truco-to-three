@@ -1,17 +1,19 @@
 # syntax=docker/dockerfile:1
 #
-# Build nativo COMPLETO en local (equivale a lo que hace native-release.yml en CI).
-# Útil para validar el binario nativo sin gastar una corrida del pipeline:
+# syntax=docker/dockerfile:1
 #
-#   docker build -f Dockerfile.native-local -t truco-native-local .
+# Build COMPLETO en local (equivale a lo que hace release.yml en CI).
+# Útil para validar el binario sin gastar una corrida del pipeline:
+#
+#   docker build -f Dockerfile.local -t truco-local .
 #   docker run --rm -p 8080:8080 \
 #     -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/truco \
-#     truco-native-local
+#     truco-local
 #
 # Requiere Docker con >= 8 GB de RAM asignada. La compilación tarda 10-25 min.
 
 ###############################################################################
-# Stage 1 — Compilar el binario nativo con GraalVM 25 (requisito de Boot 4)
+# Stage 1 — Compilar el binario con GraalVM 25 (requisito de Boot 4)
 ###############################################################################
 FROM ghcr.io/graalvm/native-image-community:25 AS build
 WORKDIR /workspace
@@ -29,7 +31,7 @@ COPY src ./src
 RUN ./gradlew nativeCompile --no-daemon -x test
 
 ###############################################################################
-# Stage 2 — Imagen final (misma base que Dockerfile.native)
+# Stage 2 — Imagen final (misma base que Dockerfile)
 ###############################################################################
 FROM debian:bookworm-slim
 

@@ -400,16 +400,13 @@ Workflows actuales en `.github/workflows`:
 - `ci.yml`
   ejecuta tests en cada push y build luego del test.
 - `release.yml`
-  publica GitHub Release al pushear tags `v*` con el JAR generado.
-- `native-release.yml`
-  al pushear tags `v*-native` (o manualmente): compila el binario GraalVM native
-  (`nativeCompile`), lo valida con un smoke test contra PostgreSQL real (readiness,
-  Flyway, springdoc), publica la imagen en GHCR (`Dockerfile.native`) y dispara el
-  deploy hook de Render (secret `RENDER_DEPLOY_HOOK_URL`).
+  al pushear tags `v*` (o manualmente): compila el binario nativo (`nativeCompile`), lo valida
+  con un smoke test contra PostgreSQL real (readiness, Flyway, springdoc), publica la imagen
+  en GHCR (`Dockerfile`) y dispara el deploy hook de Render (secret `RENDER_DEPLOY_HOOK_URL`).
 
-## Build nativo (GraalVM)
+## Build (GraalVM native)
 
-El proyecto soporta compilación a native image con Spring AOT:
+El proyecto se compila a binario nativo con Spring AOT:
 
 - La compilación corre **solo en CI** (necesita 4+ vCPU y ~8 GB de RAM); local alcanza con
   verificar `.\gradlew.bat processAot`.
@@ -418,11 +415,9 @@ El proyecto soporta compilación a native image con Spring AOT:
   `.dto` (payloads WebSocket), arrays del tipo de id de cada `@Entity`, proxies de parámetros
   `@Lazy` sobre interfaces y executors del JDK. Mientras se respeten esas convenciones, los
   agregados futuros quedan cubiertos sin tocar nada.
-- Build nativo local (sin gastar pipeline): `docker build -f Dockerfile.native-local -t
-  truco-native-local .` y correrlo apuntando al Postgres de `docker compose`.
-- `Dockerfile` (JVM + CDS) sigue siendo el camino de deploy por defecto y el fallback si el
-  binario nativo presenta problemas; `Dockerfile.native` solo empaqueta el binario ya
-  compilado por el workflow.
+- Build local (sin gastar pipeline): `docker build -f Dockerfile.local -t
+  truco-local .` y correrlo apuntando al Postgres de `docker compose`.
+- `Dockerfile` empaqueta el binario ya compilado por el workflow.
 
 ## Notas
 
