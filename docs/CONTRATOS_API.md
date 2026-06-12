@@ -2190,6 +2190,8 @@ objetivo es alcanzar el puesto `#1`. El jugador arranca con `0` puntos en el fon
 
 Reglas de negocio:
 
+- Solo **usuarios registrados** pueden jugar el modo campaña: iniciar un desafío con un token de
+  invitado (`guest`) se rechaza con `401`.
 - Solo puede desafiarse al bot **inmediatamente superior** en el ranking. Alcanzado el `#1`, se
   desbloquea desafiar a **cualquier** bot.
 - Todos los enfrentamientos son al **mejor de 5** games. Las partidas de campaña **no** ofrecen
@@ -2273,7 +2275,8 @@ estado inicial (posición `101`, `0` puntos) sin necesidad de inicializarla.
 
 ### 7.7.2 Desafiar a un rival
 
-`POST /api/campaign/challenges` — requiere Bearer token.
+`POST /api/campaign/challenges` — requiere Bearer token de **usuario registrado** (los invitados no
+pueden jugar el modo campaña; ver errores).
 
 Crea una partida al mejor de `5` contra el rival desafiable y la marca como partida de campaña (sin
 revancha). El body es **opcional**:
@@ -2309,7 +2312,7 @@ desbloquea algún logro.
 | Codigo | Descripcion                                                                                          |
 |--------|------------------------------------------------------------------------------------------------------|
 | 400    | `botId` requerido (el jugador ya está `#1` y no hay rival inmediato) o body inválido                 |
-| 401    | Token ausente o inválido                                                                             |
+| 401    | Token ausente o inválido, o el token pertenece a un invitado (solo usuarios registrados)             |
 | 404    | `botId` no corresponde a un bot del ranking de campaña                                               |
 | 422    | Desafío no permitido: el bot no es el inmediato superior (antes del `#1`) o ya hay un desafío activo |
 

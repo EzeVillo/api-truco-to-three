@@ -2,10 +2,12 @@ package com.villo.truco.campaign.infrastructure.config;
 
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
+import com.villo.truco.auth.domain.ports.UserQueryRepository;
 import com.villo.truco.campaign.application.ports.out.CampaignDomainEventHandler;
 import com.villo.truco.campaign.application.services.CampaignChallengeResolutionService;
 import com.villo.truco.campaign.application.services.CampaignHiddenBotIdsProvider;
 import com.villo.truco.campaign.application.services.CampaignRematchVeto;
+import com.villo.truco.campaign.application.services.CampaignUserGuard;
 import com.villo.truco.campaign.application.usecases.commands.StartCampaignChallengeCommandHandler;
 import com.villo.truco.campaign.application.usecases.commands.StartCampaignChallengeUseCase;
 import com.villo.truco.campaign.application.usecases.queries.GetCampaignQueryHandler;
@@ -29,16 +31,19 @@ public class CampaignConfiguration {
 
   private final CampaignProgressRepository campaignProgressRepository;
   private final CampaignMatchRegistry campaignMatchRegistry;
+  private final UserQueryRepository userQueryRepository;
   private final UseCasePipeline transactionalPipeline;
   private final UseCasePipeline retryTransactionalPipeline;
 
   public CampaignConfiguration(final CampaignProgressRepository campaignProgressRepository,
       final CampaignMatchRegistry campaignMatchRegistry,
+      final UserQueryRepository userQueryRepository,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.campaignProgressRepository = campaignProgressRepository;
     this.campaignMatchRegistry = campaignMatchRegistry;
+    this.userQueryRepository = userQueryRepository;
     this.transactionalPipeline = transactionalPipeline;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
   }
@@ -89,13 +94,19 @@ public class CampaignConfiguration {
   }
 
   @Bean
+  CampaignUserGuard campaignUserGuard() {
+
+    return new CampaignUserGuard(this.userQueryRepository);
+  }
+
+  @Bean
   StartCampaignChallengeUseCase startCampaignChallengeCommandHandler(
       @Lazy final CreateBotMatchUseCase createBotMatchUseCase,
       @Lazy final CampaignEventNotifier campaignEventNotifier) {
 
     final var handler = new StartCampaignChallengeCommandHandler(this.campaignProgressRepository,
         campaignBotCatalog(), this.campaignMatchRegistry, campaignEventNotifier,
-        createBotMatchUseCase);
+        createBotMatchUseCase, campaignUserGuard());
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

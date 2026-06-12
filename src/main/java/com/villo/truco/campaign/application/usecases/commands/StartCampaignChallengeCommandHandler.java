@@ -5,6 +5,7 @@ import com.villo.truco.application.exceptions.BotNotFoundException;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
 import com.villo.truco.campaign.application.dto.StartCampaignChallengeDTO;
 import com.villo.truco.campaign.application.exceptions.CampaignRivalSelectionRequiredException;
+import com.villo.truco.campaign.application.services.CampaignUserGuard;
 import com.villo.truco.campaign.domain.model.CampaignBot;
 import com.villo.truco.campaign.domain.model.CampaignLadder;
 import com.villo.truco.campaign.domain.model.CampaignProgress;
@@ -25,23 +26,27 @@ public final class StartCampaignChallengeCommandHandler implements StartCampaign
   private final CampaignMatchRegistry campaignMatchRegistry;
   private final CampaignEventNotifier campaignEventNotifier;
   private final CreateBotMatchUseCase createBotMatch;
+  private final CampaignUserGuard campaignUserGuard;
 
   public StartCampaignChallengeCommandHandler(
       final CampaignProgressRepository campaignProgressRepository,
       final CampaignLadderProvider campaignLadderProvider,
       final CampaignMatchRegistry campaignMatchRegistry,
-      final CampaignEventNotifier campaignEventNotifier,
-      final CreateBotMatchUseCase createBotMatch) {
+      final CampaignEventNotifier campaignEventNotifier, final CreateBotMatchUseCase createBotMatch,
+      final CampaignUserGuard campaignUserGuard) {
 
     this.campaignProgressRepository = Objects.requireNonNull(campaignProgressRepository);
     this.campaignLadderProvider = Objects.requireNonNull(campaignLadderProvider);
     this.campaignMatchRegistry = Objects.requireNonNull(campaignMatchRegistry);
     this.campaignEventNotifier = Objects.requireNonNull(campaignEventNotifier);
     this.createBotMatch = Objects.requireNonNull(createBotMatch);
+    this.campaignUserGuard = Objects.requireNonNull(campaignUserGuard);
   }
 
   @Override
   public StartCampaignChallengeDTO handle(final StartCampaignChallengeCommand command) {
+
+    this.campaignUserGuard.ensureRegisteredUser(command.playerId());
 
     final var ladder = this.campaignLadderProvider.ladder();
     final var progress = this.campaignProgressRepository.findByPlayerId(command.playerId())

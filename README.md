@@ -98,7 +98,8 @@ games.
   frontend a partir del código.
 - Campaign:
   modo single-player de progresion contra un ranking fijo de `100` bots ordenados por puntos, con
-  el puesto `#1` como meta. El jugador arranca con `0` puntos en el fondo del ranking y solo puede
+  el puesto `#1` como meta. Solo usuarios registrados pueden jugarlo (los invitados reciben `401` al
+  iniciar un desafio). El jugador arranca con `0` puntos en el fondo del ranking y solo puede
   desafiar al bot inmediatamente superior; alcanzado el `#1` se desbloquea desafiar a cualquier bot.
   Todos los enfrentamientos son al mejor de `5` games (no ofrecen revancha). La victoria otorga
   `100 x (games_ganador - games_perdedor)` puntos (3-0 = 300, 3-1 = 200, 3-2 = 100); la derrota no

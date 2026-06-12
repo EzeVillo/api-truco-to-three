@@ -7,7 +7,10 @@ import com.villo.truco.application.commands.CreateBotMatchCommand;
 import com.villo.truco.application.dto.CreateBotMatchDTO;
 import com.villo.truco.application.exceptions.BotNotFoundException;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
+import com.villo.truco.auth.domain.ports.UserQueryRepository;
+import com.villo.truco.campaign.application.exceptions.CampaignRequiresRegisteredUserException;
 import com.villo.truco.campaign.application.exceptions.CampaignRivalSelectionRequiredException;
+import com.villo.truco.campaign.application.services.CampaignUserGuard;
 import com.villo.truco.campaign.application.support.FixedCampaignLadderProvider;
 import com.villo.truco.campaign.application.support.InMemoryCampaignMatchRegistry;
 import com.villo.truco.campaign.application.support.InMemoryCampaignProgressRepository;
@@ -20,6 +23,10 @@ import com.villo.truco.campaign.domain.model.exceptions.BotNotImmediatelyAboveEx
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -38,9 +45,12 @@ class StartCampaignChallengeCommandHandlerTest {
 
   private final CreateBotMatchUseCase createBotMatch = new RecordingCreateBotMatch(createdMatchId);
 
+  private final AllUsersRegistered userQueryRepository = new AllUsersRegistered();
+  private final CampaignUserGuard campaignUserGuard = new CampaignUserGuard(userQueryRepository);
+
   private final StartCampaignChallengeCommandHandler handler = new StartCampaignChallengeCommandHandler(
       progressRepository, new FixedCampaignLadderProvider(ladder), matchRegistry, eventNotifier,
-      createBotMatch);
+      createBotMatch, campaignUserGuard);
 
   @Test
   @DisplayName("sin botId desafía al bot inmediatamente superior y registra el match de campaña")
@@ -113,12 +123,73 @@ class StartCampaignChallengeCommandHandlerTest {
         CampaignRivalSelectionRequiredException.class);
   }
 
+  @Test
+  @DisplayName("un invitado (no registrado) no puede iniciar un desafío de campaña")
+  void rejectsGuests() {
+
+    final var guestHandler = new StartCampaignChallengeCommandHandler(progressRepository,
+        new FixedCampaignLadderProvider(ladder), matchRegistry, eventNotifier, createBotMatch,
+        new CampaignUserGuard(new NoUsersRegistered()));
+    final var guest = PlayerId.generate();
+
+    assertThatThrownBy(() -> guestHandler.handle(
+        new StartCampaignChallengeCommand(guest.value().toString(), null))).isInstanceOf(
+        CampaignRequiresRegisteredUserException.class);
+
+    assertThat(matchRegistry.isCampaignMatch(createdMatchId)).isFalse();
+    assertThat(progressRepository.findByPlayerId(guest)).isEmpty();
+  }
+
   private record RecordingCreateBotMatch(MatchId matchId) implements CreateBotMatchUseCase {
 
     @Override
     public CreateBotMatchDTO handle(final CreateBotMatchCommand command) {
 
       return new CreateBotMatchDTO(matchId.value().toString());
+    }
+
+  }
+
+  private static final class AllUsersRegistered implements UserQueryRepository {
+
+    @Override
+    public Map<PlayerId, String> findUsernamesByIds(final Set<PlayerId> playerIds) {
+
+      return playerIds.stream().collect(Collectors.toMap(playerId -> playerId, playerId -> "user"));
+    }
+
+    @Override
+    public Optional<String> findUsernameById(final PlayerId playerId) {
+
+      return Optional.of("user");
+    }
+
+    @Override
+    public Optional<PlayerId> findUserIdByUsername(final String username) {
+
+      return Optional.empty();
+    }
+
+  }
+
+  private static final class NoUsersRegistered implements UserQueryRepository {
+
+    @Override
+    public Map<PlayerId, String> findUsernamesByIds(final Set<PlayerId> playerIds) {
+
+      return Map.of();
+    }
+
+    @Override
+    public Optional<String> findUsernameById(final PlayerId playerId) {
+
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<PlayerId> findUserIdByUsername(final String username) {
+
+      return Optional.empty();
     }
 
   }
