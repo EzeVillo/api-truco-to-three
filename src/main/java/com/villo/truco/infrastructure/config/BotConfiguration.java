@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.config;
 
 import com.villo.truco.application.eventhandlers.BotDomainEventTranslator;
 import com.villo.truco.application.ports.BotRegistry;
+import com.villo.truco.application.ports.HiddenBotIdsProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
@@ -22,6 +23,7 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.infrastructure.bot.AsyncBotActionExecutor;
 import com.villo.truco.infrastructure.bot.BotCatalogInitializer;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -90,7 +92,8 @@ public class BotConfiguration {
   }
 
   @Bean
-  BotDomainEventTranslator botDomainEventTranslator(@Lazy final ApplicationEventPublisher publisher) {
+  BotDomainEventTranslator botDomainEventTranslator(
+      @Lazy final ApplicationEventPublisher publisher) {
 
     return new BotDomainEventTranslator(this.botRegistry, publisher);
   }
@@ -104,9 +107,9 @@ public class BotConfiguration {
   }
 
   @Bean
-  GetBotsUseCase getBotsQueryHandler() {
+  GetBotsUseCase getBotsQueryHandler(final List<HiddenBotIdsProvider> hiddenBotIdsProviders) {
 
-    return new GetBotsQueryHandler(this.botRegistry);
+    return new GetBotsQueryHandler(this.botRegistry, hiddenBotIdsProviders);
   }
 
   @Bean

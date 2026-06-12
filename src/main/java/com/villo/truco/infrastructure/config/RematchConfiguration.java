@@ -6,6 +6,7 @@ import com.villo.truco.application.eventhandlers.RematchPresenceEventTranslator;
 import com.villo.truco.application.eventhandlers.RematchSessionConfirmedMatchCreator;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
+import com.villo.truco.application.ports.RematchVeto;
 import com.villo.truco.application.ports.RetryableTransactionalRunner;
 import com.villo.truco.application.ports.in.ChooseRematchUseCase;
 import com.villo.truco.application.ports.in.ExpireRematchSessionUseCase;
@@ -82,9 +83,10 @@ public class RematchConfiguration {
   }
 
   @Bean
-  RematchEligibilityPolicy rematchEligibilityPolicy() {
+  RematchEligibilityPolicy rematchEligibilityPolicy(final List<RematchVeto> rematchVetoes) {
 
-    return new RematchEligibilityPolicy(this.leagueQueryRepository, this.cupQueryRepository);
+    return new RematchEligibilityPolicy(this.leagueQueryRepository, this.cupQueryRepository,
+        rematchVetoes);
   }
 
   @Bean
@@ -124,10 +126,11 @@ public class RematchConfiguration {
 
   @Bean
   MatchFinishedRematchSessionCreator matchFinishedRematchSessionCreator(
-      final RematchSessionEventNotifier rematchSessionEventNotifier) {
+      final RematchSessionEventNotifier rematchSessionEventNotifier,
+      final RematchEligibilityPolicy rematchEligibilityPolicy) {
 
     return new MatchFinishedRematchSessionCreator(this.rematchSessionRepository,
-        rematchSessionEventNotifier, rematchEligibilityPolicy(), this.botRegistry,
+        rematchSessionEventNotifier, rematchEligibilityPolicy, this.botRegistry,
         this.matchQueryRepository, this.properties.duration(), this.clock);
   }
 
