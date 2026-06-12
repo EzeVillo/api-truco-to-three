@@ -96,6 +96,24 @@ games.
   códigos), idéntico para todos e independiente del progreso, para que el frontend sepa qué logros
   existen sin hardcodear la lista; el título y la descripción de cada logro los resuelve el
   frontend a partir del código.
+- Campaign:
+  modo single-player de progresion contra un ranking fijo de `100` bots ordenados por puntos, con
+  el puesto `#1` como meta. El jugador arranca con `0` puntos en el fondo del ranking y solo puede
+  desafiar al bot inmediatamente superior; alcanzado el `#1` se desbloquea desafiar a cualquier bot.
+  Todos los enfrentamientos son al mejor de `5` games (no ofrecen revancha). La victoria otorga
+  `100 x (games_ganador - games_perdedor)` puntos (3-0 = 300, 3-1 = 200, 3-2 = 100); la derrota no
+  descuenta y los puntos nunca son negativos. La posicion en el ranking se deriva de los puntos:
+  para
+  superar a un bot hay que tener estrictamente mas puntos que el. La distribucion de puntos de los
+  bots sigue una curva cuadratica calibrada para que llegar al `#1` requiera ~24 h de juego
+  efectivo.
+  Cada cruce queda registrado en un head-to-head por rival (victorias/derrotas). El endpoint
+  `GET /api/campaign` devuelve el ranking completo (`100` bots + el jugador intercalado en su
+  posicion real), el progreso y que rival es desafiable; `POST /api/campaign/challenges` crea el
+  match de campaña contra el rival correspondiente. Desbloquea los logros `REACH_CAMPAIGN_TOP_ONE`
+  (llegar al `#1`) y `DEFEAT_ALL_CAMPAIGN_RIVALS` (ganarle al menos una vez a cada uno de los `100`
+  bots; como subir el ranking puede saltear rivales, exige volver despues del `#1` por los
+  pendientes).
 - Quick Match:
   emparejamiento automatico por `gamesToPlay`. El jugador entra a una cola efimera en memoria; si
   ya hay un oponente esperando con la misma configuracion, se crea una partida `PRIVATE` que arranca
@@ -137,6 +155,7 @@ Agregados principales del dominio:
 - `user`
 - `profile`
 - `rematch`
+- `campaign`
 
 La restriccion de dependencias se valida con ArchUnit en
 `src/test/java/com/villo/truco/architecture/CleanArchitectureTest.java`.
@@ -317,6 +336,9 @@ Recursos REST principales:
 - `/api/chats`
 - `/api/social`
 - `/api/bots`
+- `/api/campaign` — modo campaña: `GET` devuelve el ranking de `100` bots + el jugador y su
+  progreso; `POST /api/campaign/challenges` crea el match al mejor de `5` contra el rival
+  desafiable (el inmediato superior, o cualquiera si ya se alcanzó el `#1`)
 - `/api/profile`
 - `/api/achievements` — catálogo de logros existentes (solo los códigos); el frontend lo cruza con
   `/api/profile/{username}` para mostrar todos los logros con marca de desbloqueado

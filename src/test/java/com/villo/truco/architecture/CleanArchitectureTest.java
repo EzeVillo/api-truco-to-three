@@ -61,6 +61,27 @@ class CleanArchitectureTest {
           "com.villo.truco.profile.infrastructure..", "org.springframework..");
 
   @ArchTest
+  static final ArchRule campaign_layered_architecture_must_be_respected = layeredArchitecture().consideringOnlyDependenciesInLayers()
+      .layer("CampaignDomain").definedBy("com.villo.truco.campaign.domain..")
+      .layer("CampaignApplication").definedBy("com.villo.truco.campaign.application..")
+      .layer("CampaignInfrastructure").definedBy("com.villo.truco.campaign.infrastructure..")
+      .whereLayer("CampaignDomain")
+      .mayOnlyBeAccessedByLayers("CampaignApplication", "CampaignInfrastructure")
+      .whereLayer("CampaignApplication").mayOnlyBeAccessedByLayers("CampaignInfrastructure")
+      .whereLayer("CampaignInfrastructure").mayNotBeAccessedByAnyLayer();
+
+  @ArchTest
+  static final ArchRule campaign_domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.campaign.domain..").should().dependOnClassesThat()
+      .resideInAnyPackage("com.villo.truco.campaign.application..",
+          "com.villo.truco.campaign.infrastructure..", "org.springframework..");
+
+  @ArchTest
+  static final ArchRule campaign_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.campaign.application..").should()
+      .dependOnClassesThat().resideInAnyPackage("org.springframework..");
+
+  @ArchTest
   static final ArchRule truco_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
       .that().resideInAPackage("com.villo.truco.application..").should().dependOnClassesThat()
       .resideInAnyPackage("org.springframework..");

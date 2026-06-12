@@ -5,6 +5,7 @@ import com.villo.truco.auth.domain.ports.UserQueryRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import com.villo.truco.profile.application.eventhandlers.ProfileUserRegisteredEventHandler;
 import com.villo.truco.profile.application.services.ProfileAchievementTrackingService;
+import com.villo.truco.profile.application.services.ProfileCampaignAchievementService;
 import com.villo.truco.profile.application.services.ProfilePlayerStatsTrackingService;
 import com.villo.truco.profile.application.usecases.queries.GetAchievementCatalogQueryHandler;
 import com.villo.truco.profile.application.usecases.queries.GetAchievementCatalogUseCase;
@@ -16,6 +17,7 @@ import com.villo.truco.profile.domain.ports.PlayerProfileRepository;
 import com.villo.truco.profile.domain.ports.PlayerStatsRepository;
 import com.villo.truco.profile.domain.ports.ProcessedMatchStatsRegistry;
 import com.villo.truco.profile.domain.ports.ProfileEventNotifier;
+import com.villo.truco.profile.infrastructure.eventhandlers.ProfileCampaignDomainEventHandler;
 import com.villo.truco.profile.infrastructure.eventhandlers.ProfileMatchDomainEventHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -80,6 +82,20 @@ public class ProfileUseCaseConfiguration {
 
     return new ProfileMatchDomainEventHandler(profileAchievementTrackingService,
         profilePlayerStatsTrackingService);
+  }
+
+  @Bean
+  ProfileCampaignAchievementService profileCampaignAchievementService() {
+
+    return new ProfileCampaignAchievementService(this.playerProfileRepository,
+        this.profileEventNotifier);
+  }
+
+  @Bean
+  ProfileCampaignDomainEventHandler profileCampaignDomainEventHandler(
+      final ProfileCampaignAchievementService profileCampaignAchievementService) {
+
+    return new ProfileCampaignDomainEventHandler(profileCampaignAchievementService);
   }
 
   @Bean

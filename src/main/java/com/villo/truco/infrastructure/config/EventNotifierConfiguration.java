@@ -35,6 +35,7 @@ import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
+import com.villo.truco.campaign.infrastructure.eventhandlers.CampaignMatchDomainEventHandler;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
@@ -208,7 +209,8 @@ public class EventNotifierConfiguration {
   MatchEventNotifier matchEventNotifier(
       final MatchPresenceEventTranslator matchPresenceEventTranslator,
       final FriendActivityMatchEventTranslator friendActivityMatchEventTranslator,
-      final ChatMatchGameStartedEventHandler chatMatchGameStartedHandler) {
+      final ChatMatchGameStartedEventHandler chatMatchGameStartedHandler,
+      final CampaignMatchDomainEventHandler campaignMatchDomainEventHandler) {
 
     final List<MatchDomainEventHandler<?>> handlers = List.of(this.matchNotificationEventTranslator,
         this.publicMatchLobbyEventTranslator, this.spectatorNotificationEventTranslator,
@@ -216,9 +218,9 @@ public class EventNotifierConfiguration {
         chatMatchGameStartedHandler, this.chatMatchFinishedHandler(),
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
         this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator,
-        this.profileMatchDomainEventHandler, this.matchFinishedRematchSessionCreator,
-        this.matchTimeoutEventHandler, matchPresenceEventTranslator,
-        friendActivityMatchEventTranslator);
+        this.profileMatchDomainEventHandler, campaignMatchDomainEventHandler,
+        this.matchFinishedRematchSessionCreator, this.matchTimeoutEventHandler,
+        matchPresenceEventTranslator, friendActivityMatchEventTranslator);
     return new MatchDomainEventDispatcher(handlers);
   }
 

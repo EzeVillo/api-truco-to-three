@@ -28,6 +28,7 @@ import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
+import com.villo.truco.campaign.infrastructure.eventhandlers.CampaignMatchDomainEventHandler;
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
@@ -64,7 +65,8 @@ class EventNotifierConfigurationTest {
     assertThat(configuration.chatMatchGameStartedHandler(chatEventNotifier)).isNotNull();
     assertThat(configuration.matchEventNotifier(mock(MatchPresenceEventTranslator.class),
         mock(FriendActivityMatchEventTranslator.class),
-        configuration.chatMatchGameStartedHandler(chatEventNotifier))).isNotNull();
+        configuration.chatMatchGameStartedHandler(chatEventNotifier),
+        mock(CampaignMatchDomainEventHandler.class))).isNotNull();
     assertThat(configuration.cupEventNotifier(mock(CupPresenceEventTranslator.class),
         configuration.chatCupStartedHandler(chatEventNotifier))).isNotNull();
     assertThat(configuration.leagueEventNotifier(mock(LeaguePresenceEventTranslator.class),
