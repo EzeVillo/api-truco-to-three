@@ -1,0 +1,12 @@
+package com.villo.truco.campaign.application.events;
+
+import com.villo.truco.application.events.PostCommitApplicationEvent;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import java.util.List;
+import java.util.Map;
+
+public record CampaignEventNotification(List<PlayerId> recipients, String eventType, long timestamp,
+                                        Map<String, Object> payload) implements
+    PostCommitApplicationEvent {
+
+}

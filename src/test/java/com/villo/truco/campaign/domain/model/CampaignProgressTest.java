@@ -90,13 +90,18 @@ class CampaignProgressTest {
     progress.startChallenge(bottom, matchId, ladder);
     progress.clearDomainEvents();
 
-    progress.resolveChallengeLost(matchId);
+    progress.resolveChallengeLost(matchId, ladder);
 
     assertThat(progress.getPoints().value()).isZero();
     assertThat(progress.getActiveChallenge()).isNull();
     assertThat(progress.getRivalRecords().get(bottom.playerId()).losses()).isEqualTo(1);
     assertThat(progress.getCampaignDomainEvents()).singleElement()
-        .isInstanceOf(CampaignChallengeLostEvent.class);
+        .isInstanceOfSatisfying(CampaignChallengeLostEvent.class, event -> {
+          assertThat(event.getRivalId()).isEqualTo(bottom.playerId());
+          assertThat(event.getTotalPoints()).isZero();
+          assertThat(event.getPreviousPosition()).isEqualTo(4);
+          assertThat(event.getNewPosition()).isEqualTo(4);
+        });
   }
 
   @Test
