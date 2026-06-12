@@ -21,9 +21,14 @@ class GetCampaignQueryHandlerTest {
   private final CampaignBot middle = new CampaignBot(PlayerId.generate(), "Tito Toledo", 2, 500);
   private final CampaignBot bottom = new CampaignBot(PlayerId.generate(), "Rulo Suárez", 3, 100);
   private final CampaignLadder ladder = new CampaignLadder(List.of(top, middle, bottom));
-  private final GetCampaignQueryHandler handler = new GetCampaignQueryHandler(progressRepository,
-      new FixedCampaignLadderProvider(ladder));
   private final InMemoryCampaignProgressRepository progressRepository = new InMemoryCampaignProgressRepository();
+  private final GetCampaignQueryHandler handler;
+
+  GetCampaignQueryHandlerTest() {
+
+    this.handler = new GetCampaignQueryHandler(progressRepository,
+        new FixedCampaignLadderProvider(ladder));
+  }
 
   @Test
   @DisplayName("el jugador nuevo arranca último y solo puede desafiar al bot del fondo")

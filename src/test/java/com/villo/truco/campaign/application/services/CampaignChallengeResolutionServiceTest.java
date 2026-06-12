@@ -25,11 +25,16 @@ class CampaignChallengeResolutionServiceTest {
   private final CampaignBot top = new CampaignBot(PlayerId.generate(), "Cacho Medina", 1, 1000);
   private final CampaignBot bottom = new CampaignBot(PlayerId.generate(), "Rulo Suárez", 2, 100);
   private final CampaignLadder ladder = new CampaignLadder(List.of(top, bottom));
-  private final CampaignChallengeResolutionService service = new CampaignChallengeResolutionService(
-      progressRepository, new FixedCampaignLadderProvider(ladder), matchRegistry, eventNotifier);
   private final InMemoryCampaignProgressRepository progressRepository = new InMemoryCampaignProgressRepository();
   private final InMemoryCampaignMatchRegistry matchRegistry = new InMemoryCampaignMatchRegistry();
   private final RecordingCampaignEventNotifier eventNotifier = new RecordingCampaignEventNotifier();
+  private final CampaignChallengeResolutionService service;
+
+  CampaignChallengeResolutionServiceTest() {
+
+    this.service = new CampaignChallengeResolutionService(progressRepository,
+        new FixedCampaignLadderProvider(ladder), matchRegistry, eventNotifier);
+  }
 
   @Test
   @DisplayName("acredita puntos cuando el jugador (player one) gana su desafío de campaña")

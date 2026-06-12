@@ -124,14 +124,16 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
         new CampaignChallengeWonEvent(this.id, challenge.rivalId(), matchId, pointsAwarded,
             this.points.value(), previousPosition, newPosition));
 
+    final var decidingGameNumber = gamesWonPlayer + gamesWonRival;
+
     if (newPosition == 1 && !this.topOneReached) {
       this.topOneReached = true;
-      this.addDomainEvent(new CampaignTopOneReachedEvent(this.id, matchId));
+      this.addDomainEvent(new CampaignTopOneReachedEvent(this.id, matchId, decidingGameNumber));
     }
 
     if (!this.allRivalsDefeated && this.hasDefeatedAllRivals(ladder)) {
       this.allRivalsDefeated = true;
-      this.addDomainEvent(new CampaignAllRivalsDefeatedEvent(this.id, matchId));
+      this.addDomainEvent(new CampaignAllRivalsDefeatedEvent(this.id, matchId, decidingGameNumber));
     }
   }
 

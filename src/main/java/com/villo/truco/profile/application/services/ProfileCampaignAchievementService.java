@@ -13,8 +13,6 @@ import java.util.Objects;
 
 public final class ProfileCampaignAchievementService {
 
-  private static final int CAMPAIGN_ACHIEVEMENT_GAME_NUMBER = 0;
-
   private final PlayerProfileRepository playerProfileRepository;
   private final ProfileEventNotifier profileEventNotifier;
 
@@ -29,22 +27,23 @@ public final class ProfileCampaignAchievementService {
 
     switch (event) {
       case CampaignTopOneReachedEvent e ->
-          this.unlock(e, AchievementCode.REACH_CAMPAIGN_TOP_ONE, e.getMatchId());
+          this.unlock(e, AchievementCode.REACH_CAMPAIGN_TOP_ONE, e.getMatchId(), e.getGameNumber());
       case CampaignAllRivalsDefeatedEvent e ->
-          this.unlock(e, AchievementCode.DEFEAT_ALL_CAMPAIGN_RIVALS, e.getMatchId());
+          this.unlock(e, AchievementCode.DEFEAT_ALL_CAMPAIGN_RIVALS, e.getMatchId(),
+              e.getGameNumber());
       default -> {
       }
     }
   }
 
   private void unlock(final CampaignDomainEvent event, final AchievementCode achievementCode,
-      final MatchId matchId) {
+      final MatchId matchId, final int gameNumber) {
 
     final var profile = this.playerProfileRepository.findByPlayerId(event.getPlayerId())
         .orElseGet(() -> PlayerProfile.create(event.getPlayerId()));
 
     final var unlocked = profile.unlock(achievementCode, Instant.ofEpochMilli(event.getTimestamp()),
-        matchId, CAMPAIGN_ACHIEVEMENT_GAME_NUMBER);
+        matchId, gameNumber);
     if (!unlocked) {
       return;
     }
