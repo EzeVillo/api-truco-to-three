@@ -77,7 +77,7 @@ public final class CampaignChallengeResolutionService {
       progress.resolveChallengeWon(matchId, outcome.gamesWonBy(playerSeat),
           outcome.gamesWonAgainst(playerSeat), this.campaignLadderProvider.ladder());
     } else {
-      progress.resolveChallengeLost(matchId);
+      progress.resolveChallengeLost(matchId, this.campaignLadderProvider.ladder());
     }
 
     this.campaignProgressRepository.save(progress);

@@ -111,7 +111,9 @@ games.
   Cada cruce queda registrado en un head-to-head por rival (victorias/derrotas). El endpoint
   `GET /api/campaign` devuelve el ranking completo (`100` bots + el jugador intercalado en su
   posicion real), el progreso y que rival es desafiable; `POST /api/campaign/challenges` crea el
-  match de campaña contra el rival correspondiente. Desbloquea los logros `REACH_CAMPAIGN_TOP_ONE`
+  match de campaña contra el rival correspondiente. Al terminar cada match (victoria o derrota) se
+  empuja un evento `CAMPAIGN_MATCH_POINTS` por `/user/queue/campaign` con los puntos conseguidos, el
+  total acumulado y el movimiento de posicion. Desbloquea los logros `REACH_CAMPAIGN_TOP_ONE`
   (llegar al `#1`) y `DEFEAT_ALL_CAMPAIGN_RIVALS` (ganarle al menos una vez a cada uno de los `100`
   bots; como subir el ranking puede saltear rivales, exige volver despues del `#1` por los
   pendientes).
@@ -378,7 +380,8 @@ WebSocket/STOMP:
 - endpoint SockJS: `/ws-sockjs`
 - colas por usuario:
   `/user/queue/match`, `/user/queue/match-spectate`, `/user/queue/league`, `/user/queue/cup`,
-  `/user/queue/chat`, `/user/queue/social`, `/user/queue/profile`, `/user/queue/presence`
+  `/user/queue/chat`, `/user/queue/social`, `/user/queue/profile`, `/user/queue/campaign`,
+  `/user/queue/presence`
 - topics publicos de lobby:
   `/topic/public-match-lobby`, `/topic/public-league-lobby`, `/topic/public-cup-lobby`
   solo emiten deltas `UPSERT`/`REMOVED`; el snapshot inicial del lobby se obtiene via REST.

@@ -137,13 +137,18 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
     }
   }
 
-  public void resolveChallengeLost(final MatchId matchId) {
+  public void resolveChallengeLost(final MatchId matchId, final CampaignLadder ladder) {
 
+    Objects.requireNonNull(ladder, "ladder cannot be null");
     final var challenge = this.requireActiveChallenge(matchId);
 
     this.recordResult(challenge.rivalId(), CampaignRivalRecord::withLoss);
     this.activeChallenge = null;
-    this.addDomainEvent(new CampaignChallengeLostEvent(this.id, challenge.rivalId(), matchId));
+
+    final var position = ladder.positionFor(this.points);
+    this.addDomainEvent(
+        new CampaignChallengeLostEvent(this.id, challenge.rivalId(), matchId, this.points.value(),
+            position, position));
   }
 
   private CampaignChallenge requireActiveChallenge(final MatchId matchId) {

@@ -2,6 +2,7 @@ package com.villo.truco.application.events;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.villo.truco.campaign.application.events.CampaignEventNotification;
 import com.villo.truco.profile.application.events.ProfileEventNotification;
 import com.villo.truco.social.application.events.SocialEventNotification;
 import java.util.List;
@@ -17,7 +18,7 @@ class EventEmissionTimingClassificationTest {
       SpectatorCountChanged.class, PresenceEventNotification.class,
       PublicMatchLobbyNotification.class, PublicCupLobbyNotification.class,
       PublicLeagueLobbyNotification.class, BotTurnRequired.class, SocialEventNotification.class,
-      ProfileEventNotification.class);
+      ProfileEventNotification.class, CampaignEventNotification.class);
 
   private static final List<Class<? extends ApplicationEvent>> COORDINATION_EVENTS = List.of(
       MatchCompleted.class, MatchAbandoned.class, MatchForfeited.class,
