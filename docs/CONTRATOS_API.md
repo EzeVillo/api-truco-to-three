@@ -176,6 +176,34 @@ Ejemplo:
 }
 ```
 
+### 2.1 Errores de social y amistad
+
+La capa social (`/api/social/**`) usa los siguientes `errorCode` adicionales. Todos los endpoints
+sociales requieren un usuario registrado; un token de guest devuelve `401`
+(`SocialFeatureRequiresRegisteredUserException`).
+
+| errorCode                                            | HTTP  | Significado                                                                          |
+|------------------------------------------------------|-------|--------------------------------------------------------------------------------------|
+| `SocialFeatureRequiresRegisteredUserException`       | `401` | La funcionalidad social requiere un usuario registrado (no guest).                   |
+| `SocialUserNotFoundException`                        | `404` | El `username` indicado no corresponde a un usuario registrado.                       |
+| `FriendshipNotFoundException`                        | `404` | No existe la amistad/solicitud buscada para el par de jugadores.                     |
+| `InvitableResourceNotFoundException`                 | `404` | El recurso destino de una invitacion social (`MATCH`, `LEAGUE`, `CUP`) no existe.    |
+| `ResourceInvitationNotFoundException`                | `404` | La invitacion social no existe.                                                      |
+| `FriendshipRequestAlreadyPendingException`           | `409` | Ya existe una solicitud de amistad pendiente entre ambos usuarios.                   |
+| `FriendshipAlreadyExistsException`                   | `409` | Ya existe una amistad aceptada entre ambos usuarios.                                 |
+| `ResourceInvitationAlreadyExistsException`           | `409` | Ya existe una invitacion social pendiente para ese amigo y recurso.                  |
+| `ResourceInvitationTargetUnavailableException`       | `409` | El recurso destino ya no admite joins.                                               |
+| `FriendshipRequiredException`                        | `409` | Se requiere una amistad aceptada para realizar la accion.                            |
+| `CannotFriendYourselfException`                      | `422` | Un jugador intento enviarse una solicitud de amistad a si mismo.                     |
+| `FriendshipNotPendingException`                      | `422` | La solicitud de amistad no esta en estado `PENDING` cuando la operacion lo requiere. |
+| `FriendshipNotAcceptedException`                     | `422` | La amistad no esta en estado `ACCEPTED` cuando la operacion lo requiere.             |
+| `OnlyAddresseeCanRespondFriendRequestException`      | `422` | Solo el destinatario puede aceptar/rechazar una solicitud de amistad.                |
+| `OnlyRequesterCanCancelFriendRequestException`       | `422` | Solo el solicitante puede cancelar una solicitud de amistad.                         |
+| `PlayerNotPartOfFriendshipException`                 | `422` | El jugador autenticado no participa de la amistad.                                   |
+| `OnlyRecipientCanRespondResourceInvitationException` | `422` | Solo el destinatario puede aceptar/rechazar una invitacion social.                   |
+| `OnlySenderCanCancelResourceInvitationException`     | `422` | Solo el remitente puede cancelar una invitacion social.                              |
+| `ResourceInvitationNotPendingException`              | `422` | La invitacion social no esta en estado `PENDING` cuando la operacion lo requiere.    |
+
 ## 3. API REST - Auth
 
 ### 3.1 Registrar usuario
@@ -1685,17 +1713,44 @@ Request:
 
 Response `204`: sin body.
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`)
+- `409` si ya existe una solicitud pendiente (`FriendshipRequestAlreadyPendingException`) o una
+  amistad aceptada (`FriendshipAlreadyExistsException`) entre ambos usuarios
+- `422` si se envia una solicitud a si mismo (`CannotFriendYourselfException`)
+
 ### 7.4.2 Aceptar amistad
 
 `POST /api/social/friendship-requests/{username}/accept`
 
 Response `204`: sin body.
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
+  de ese usuario (`FriendshipNotFoundException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyAddresseeCanRespondFriendRequestException`)
+
 ### 7.4.3 Rechazar amistad
 
 `POST /api/social/friendship-requests/{username}/decline`
 
 Response `204`: sin body.
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
+  de ese usuario (`FriendshipNotFoundException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyAddresseeCanRespondFriendRequestException`)
 
 ### 7.4.4 Cancelar solicitud de amistad
 
@@ -1705,6 +1760,15 @@ Response `204`: sin body.
 
 Solo puede llamarlo el requester (quien envió la solicitud). El addressee recibe una notificación
 WebSocket `FRIEND_REQUEST_CANCELLED`.
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
+  hacia ese usuario (`FriendshipNotFoundException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
+  autenticado no es el solicitante (`OnlyRequesterCanCancelFriendRequestException`)
 
 ### 7.4.4b Eliminar amigo
 
@@ -1718,8 +1782,12 @@ de amistad al mismo usuario.
 
 Errores:
 
-- `404` si la amistad no existe
-- `422` si la amistad no en estado `ACCEPTED`
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una amistad aceptada
+  con ese usuario (`FriendshipNotFoundException`)
+- `422` si la amistad no esta `ACCEPTED` (`FriendshipNotAcceptedException`) o el usuario
+  autenticado no participa de ella (`PlayerNotPartOfFriendshipException`)
 
 ### 7.4.5 Listar amigos
 
@@ -1812,6 +1880,21 @@ Response `200`:
 }
 ```
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `recipientUsername` no existe (`SocialUserNotFoundException`)
+- `409` si no hay amistad aceptada con el destinatario (`FriendshipRequiredException`), el
+  destinatario no esta disponible (`PlayerAlreadyInActiveMatchException`,
+  `PlayerHasOpenRematchSessionException`, `PlayerAlreadyInQueueException`,
+  `PlayerIsSpectatingException`, `PlayerBusyInLeagueException`,
+  `PlayerAlreadyInWaitingLeagueException`, `PlayerBusyInCupException`,
+  `PlayerAlreadyInWaitingCupException`), ya existe una invitacion pendiente para ese amigo y
+  recurso (`ResourceInvitationAlreadyExistsException`), el recurso no existe
+  (`InvitableResourceNotFoundException`) o el recurso ya no admite joins
+  (`ResourceInvitationTargetUnavailableException`)
+
 ### 7.4.7 Aceptar invitacion social
 
 `POST /api/social/invitations/{id}/accept`
@@ -1823,11 +1906,28 @@ Semantica:
 - el backend hace `join` directo sobre el recurso destino
 - si el recurso ya no admite join, la invitacion pasa a `EXPIRED` y responde error
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
+- `409` si el recurso ya no admite joins (`ResourceInvitationTargetUnavailableException`)
+- `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyRecipientCanRespondResourceInvitationException`)
+
 ### 7.4.8 Rechazar invitacion social
 
 `POST /api/social/invitations/{id}/decline`
 
 Response `204`: sin body.
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
+- `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyRecipientCanRespondResourceInvitationException`)
 
 ### 7.4.9 Listar invitaciones recibidas
 
@@ -1867,10 +1967,14 @@ Response `200`: arreglo de `OutgoingResourceInvitationResponse`.
 
 Cancela una invitacion pendiente enviada por el jugador autenticado.
 
+Errores:
+
 - `204` si se cancela correctamente
-- `401` si el token es invalido o esta ausente
-- `404` si la invitacion no existe
-- `422` si no se puede cancelar (ya fue aceptada, rechazada o expirada)
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
+- `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
+  autenticado no es el remitente (`OnlySenderCanCancelResourceInvitationException`)
 
 ### 7.4.13 Expiracion configurable de invitaciones
 
