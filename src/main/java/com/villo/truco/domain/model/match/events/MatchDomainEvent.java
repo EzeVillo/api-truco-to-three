@@ -1,5 +1,6 @@
 package com.villo.truco.domain.model.match.events;
 
+import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
@@ -12,6 +13,7 @@ public abstract class MatchDomainEvent extends DomainEventBase {
   private final PlayerId playerOne;
   private final PlayerId playerTwo;
   private long stateVersion;
+  private MatchStatus matchStatus;
 
   protected MatchDomainEvent(final String eventType, final MatchId matchId,
       final PlayerId playerOne, final PlayerId playerTwo) {
@@ -45,6 +47,16 @@ public abstract class MatchDomainEvent extends DomainEventBase {
   public void setStateVersion(long stateVersion) {
 
     this.stateVersion = stateVersion;
+  }
+
+  public MatchStatus getMatchStatus() {
+
+    return matchStatus;
+  }
+
+  public void setMatchStatus(final MatchStatus matchStatus) {
+
+    this.matchStatus = matchStatus;
   }
 
   public PlayerId resolvePlayer(final PlayerSeat seat) {

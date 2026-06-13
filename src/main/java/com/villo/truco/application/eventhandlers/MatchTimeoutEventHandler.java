@@ -47,8 +47,12 @@ public class MatchTimeoutEventHandler extends AbstractTimeoutEventHandler implem
     if (inner instanceof ActionDeadlineSetEvent || inner instanceof ActionDeadlineClearedEvent) {
       return;
     }
+    final var status = event.getMatchStatus();
+    if (status == null) {
+      return;
+    }
 
-    final var phase = this.phasePolicy.phaseOf(inner);
+    final var phase = this.phasePolicy.phaseOf(status);
     switch (phase) {
       case NONE -> cancelTimeout(EntityType.MATCH, matchId);
       case LOBBY -> scheduleTimeoutFromNow(EntityType.MATCH, matchId, this.lobbyTimeout);

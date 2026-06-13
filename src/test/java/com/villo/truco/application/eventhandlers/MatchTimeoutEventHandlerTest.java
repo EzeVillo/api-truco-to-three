@@ -12,14 +12,13 @@ import com.villo.truco.application.ports.out.timeout.EntityType;
 import com.villo.truco.application.ports.out.timeout.TimeoutKey;
 import com.villo.truco.application.ports.out.timeout.TimeoutScheduler;
 import com.villo.truco.application.timeout.MatchTimeoutPhasePolicy;
+import com.villo.truco.domain.model.match.events.ActionDeadlineSetEvent;
 import com.villo.truco.domain.model.match.events.GameStartedEvent;
-import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
-import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
-import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import com.villo.truco.domain.model.match.events.PlayerJoinedEvent;
+import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -54,11 +53,11 @@ class MatchTimeoutEventHandlerTest {
   }
 
   @Test
-  @DisplayName("Un evento de lobby programa el timeout con la duracion de lobby")
-  void scheduleLobbyTimeoutOnLobbyEvent() {
+  @DisplayName("Un match en lobby programa el timeout con la duracion de lobby")
+  void scheduleLobbyTimeoutWhenMatchInLobby() {
 
     final var before = Instant.now();
-    handler.handle(new PlayerJoinedEvent(matchId, playerOne, null));
+    handler.handle(stamped(new PlayerJoinedEvent(matchId, playerOne, null), MatchStatus.READY));
 
     final var deadline = captureScheduledDeadline();
     assertThat(deadline).isBetween(before.plus(LOBBY_TIMEOUT).minusSeconds(5),
@@ -66,11 +65,12 @@ class MatchTimeoutEventHandlerTest {
   }
 
   @Test
-  @DisplayName("Un evento de juego programa el timeout con la duracion de turno")
-  void schedulePlayTimeoutOnGameEvent() {
+  @DisplayName("Un match en curso programa el timeout con la duracion de turno")
+  void schedulePlayTimeoutWhenMatchInProgress() {
 
     final var before = Instant.now();
-    handler.handle(new GameStartedEvent(matchId, playerOne, playerTwo, 1));
+    handler.handle(
+        stamped(new GameStartedEvent(matchId, playerOne, playerTwo, 1), MatchStatus.IN_PROGRESS));
 
     final var deadline = captureScheduledDeadline();
     assertThat(deadline).isBetween(before.plus(PLAY_TIMEOUT).minusSeconds(5),
@@ -78,54 +78,60 @@ class MatchTimeoutEventHandlerTest {
   }
 
   @Test
-  @DisplayName("Debe cancelar timeout al recibir MatchFinishedEvent")
-  void cancelTimeoutOnMatchFinished() {
+  @DisplayName("La fase se deriva del status, no del tipo de evento: un evento de lobby en un match "
+      + "en curso usa la duracion de turno")
+  void phaseFollowsStatusNotEventType() {
+
+    final var before = Instant.now();
+    handler.handle(
+        stamped(new PlayerJoinedEvent(matchId, playerOne, playerTwo), MatchStatus.IN_PROGRESS));
+
+    final var deadline = captureScheduledDeadline();
+    assertThat(deadline).isBetween(before.plus(PLAY_TIMEOUT).minusSeconds(5),
+        Instant.now().plus(PLAY_TIMEOUT).plusSeconds(5));
+  }
+
+  @Test
+  @DisplayName("Debe cancelar timeout cuando el match esta terminado")
+  void cancelTimeoutWhenMatchFinished() {
 
     handler.handle(
-        new MatchFinishedEvent(matchId, playerOne, playerTwo, PlayerSeat.PLAYER_ONE, 3, 1));
+        stamped(new MatchFinishedEvent(matchId, playerOne, playerTwo, PlayerSeat.PLAYER_ONE, 3, 1),
+            MatchStatus.FINISHED));
 
     verify(timeoutScheduler).cancel(expectedKey());
     verify(timeoutScheduler, never()).schedule(any(), any(), any());
   }
 
   @Test
-  @DisplayName("Debe cancelar timeout al recibir MatchForfeitedEvent")
-  void cancelTimeoutOnMatchForfeited() {
+  @DisplayName("Debe cancelar timeout cuando el match esta cancelado")
+  void cancelTimeoutWhenMatchCancelled() {
 
-    handler.handle(
-        new MatchForfeitedEvent(matchId, playerOne, playerTwo, PlayerSeat.PLAYER_ONE, 3, 1));
-
-    verify(timeoutScheduler).cancel(expectedKey());
-    verify(timeoutScheduler, never()).schedule(any(), any(), any());
-  }
-
-  @Test
-  @DisplayName("Debe cancelar timeout al recibir MatchCancelledEvent")
-  void cancelTimeoutOnMatchCancelled() {
-
-    handler.handle(new MatchCancelledEvent(matchId, playerOne, null));
+    handler.handle(stamped(new GameStartedEvent(matchId, playerOne, playerTwo, 1),
+        MatchStatus.CANCELLED));
 
     verify(timeoutScheduler).cancel(expectedKey());
     verify(timeoutScheduler, never()).schedule(any(), any(), any());
   }
 
   @Test
-  @DisplayName("Debe cancelar timeout al recibir MatchAbandonedEvent")
-  void cancelTimeoutOnMatchAbandoned() {
+  @DisplayName("Ignora los eventos de deadline derivados")
+  void ignoresDerivedDeadlineEvents() {
 
-    handler.handle(new MatchAbandonedEvent(matchId, playerOne, playerTwo, PlayerSeat.PLAYER_TWO,
-        PlayerSeat.PLAYER_ONE, 2, 1));
+    handler.handle(stamped(new ActionDeadlineSetEvent(matchId, playerOne, playerTwo,
+        PlayerSeat.PLAYER_ONE), MatchStatus.IN_PROGRESS));
 
-    verify(timeoutScheduler).cancel(expectedKey());
     verify(timeoutScheduler, never()).schedule(any(), any(), any());
+    verify(timeoutScheduler, never()).cancel(any());
   }
 
   @Test
-  @DisplayName("Debe programar timeout cuando el evento llega en sobre con inner no terminal")
-  void scheduleTimeoutOnEnvelopedActivityEvent() {
+  @DisplayName("Debe programar timeout cuando el evento llega en sobre")
+  void scheduleTimeoutOnEnvelopedEvent() {
 
     final var inner = new GameStartedEvent(matchId, playerOne, playerTwo, 1);
-    final var envelope = new MatchEventEnvelope(matchId, playerOne, playerTwo, inner);
+    final var envelope = stamped(new MatchEventEnvelope(matchId, playerOne, playerTwo, inner),
+        MatchStatus.IN_PROGRESS);
 
     handler.handle(envelope);
 
@@ -137,6 +143,12 @@ class MatchTimeoutEventHandlerTest {
   void handlerAcceptsMatchDomainEventClass() {
 
     assertThat(handler.eventType()).isEqualTo(MatchDomainEvent.class);
+  }
+
+  private MatchDomainEvent stamped(final MatchDomainEvent event, final MatchStatus status) {
+
+    event.setMatchStatus(status);
+    return event;
   }
 
   private TimeoutKey expectedKey() {

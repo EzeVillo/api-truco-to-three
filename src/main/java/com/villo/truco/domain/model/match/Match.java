@@ -688,7 +688,10 @@ public final class Match extends AggregateBase<MatchId> {
 
   public List<MatchDomainEvent> getMatchDomainEvents() {
 
-    return getDomainEvents().stream().map(MatchDomainEvent.class::cast).toList();
+    return getDomainEvents().stream().map(MatchDomainEvent.class::cast).map(event -> {
+      event.setMatchStatus(this.status);
+      return event;
+    }).toList();
   }
 
   private void validateMatchInProgress() {
