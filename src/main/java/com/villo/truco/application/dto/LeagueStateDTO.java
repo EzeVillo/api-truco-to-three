@@ -6,6 +6,7 @@ public record LeagueStateDTO(String leagueId, String status, String host, int to
                              int occupiedSlots, boolean canStart,
                              List<LeagueParticipantDTO> participants,
                              List<LeagueStandingDTO> standings, List<String> winners,
-                             List<LeagueMatchdayDTO> matchdays) {
+                             List<LeagueMatchdayDTO> matchdays, String visibility, String joinCode,
+                             Long lobbyTimeoutDeadline) {
 
 }

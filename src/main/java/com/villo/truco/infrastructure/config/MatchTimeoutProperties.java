@@ -5,16 +5,27 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "truco.match")
 public class MatchTimeoutProperties {
 
-  private int idleTimeoutSeconds = 300;
+  private int lobbyTimeoutSeconds = 300;
+  private int playTimeoutSeconds = 30;
 
-  public int getIdleTimeoutSeconds() {
+  public int getLobbyTimeoutSeconds() {
 
-    return idleTimeoutSeconds;
+    return lobbyTimeoutSeconds;
   }
 
-  public void setIdleTimeoutSeconds(int idleTimeoutSeconds) {
+  public void setLobbyTimeoutSeconds(int lobbyTimeoutSeconds) {
 
-    this.idleTimeoutSeconds = idleTimeoutSeconds;
+    this.lobbyTimeoutSeconds = lobbyTimeoutSeconds;
+  }
+
+  public int getPlayTimeoutSeconds() {
+
+    return playTimeoutSeconds;
+  }
+
+  public void setPlayTimeoutSeconds(int playTimeoutSeconds) {
+
+    this.playTimeoutSeconds = playTimeoutSeconds;
   }
 
 }

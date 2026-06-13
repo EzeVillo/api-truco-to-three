@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.cup.Cup;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
+import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.CupRepository;
 import com.villo.truco.domain.ports.CupTimeoutEntry;
@@ -100,8 +101,9 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
   @Override
   public Stream<CupTimeoutEntry> findActiveWithTimeoutDeadline() {
 
-    return this.springDataRepo.findActiveCupsWithLastActivity().stream()
-        .map(row -> new CupTimeoutEntry(new CupId(row.getId()), row.getLastActivityAt()));
+    return this.springDataRepo.findActiveCupsWithLastActivity().stream().map(
+        row -> new CupTimeoutEntry(new CupId(row.getId()), row.getLastActivityAt(),
+            CupStatus.valueOf(row.getStatus())));
   }
 
   @Override

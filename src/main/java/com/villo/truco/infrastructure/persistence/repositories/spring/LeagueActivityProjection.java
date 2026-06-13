@@ -9,4 +9,6 @@ public interface LeagueActivityProjection {
 
   Instant getLastActivityAt();
 
+  String getStatus();
+
 }

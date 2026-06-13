@@ -3,21 +3,25 @@ package com.villo.truco.application.eventhandlers;
 import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.application.ports.out.timeout.EntityType;
 import com.villo.truco.application.ports.out.timeout.TimeoutScheduler;
-import com.villo.truco.domain.model.cup.events.CupCancelledEvent;
+import com.villo.truco.application.timeout.CupTimeoutPhasePolicy;
+import com.villo.truco.application.timeout.TimeoutPhase;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
-import com.villo.truco.domain.model.cup.events.CupFinishedEvent;
 import java.time.Duration;
+import java.util.Objects;
 
 public class CupTimeoutEventHandler extends AbstractTimeoutEventHandler implements
     CupDomainEventHandler<CupDomainEvent> {
 
-  private final Duration idleTimeout;
+  private final CupTimeoutPhasePolicy phasePolicy;
+  private final Duration lobbyTimeout;
 
   public CupTimeoutEventHandler(final TimeoutScheduler timeoutScheduler,
-      final TimeoutActionDispatcher dispatcher, final Duration idleTimeout) {
+      final TimeoutActionDispatcher dispatcher, final CupTimeoutPhasePolicy phasePolicy,
+      final Duration lobbyTimeout) {
 
     super(timeoutScheduler, dispatcher);
-    this.idleTimeout = idleTimeout;
+    this.phasePolicy = Objects.requireNonNull(phasePolicy);
+    this.lobbyTimeout = Objects.requireNonNull(lobbyTimeout);
   }
 
   @Override
@@ -30,11 +34,10 @@ public class CupTimeoutEventHandler extends AbstractTimeoutEventHandler implemen
   public void handle(final CupDomainEvent event) {
 
     final var cupId = event.getCupId().value().toString();
-
-    if (event instanceof CupCancelledEvent || event instanceof CupFinishedEvent) {
-      cancelTimeout(EntityType.CUP, cupId);
+    if (this.phasePolicy.phaseOf(event) == TimeoutPhase.LOBBY) {
+      scheduleTimeoutFromNow(EntityType.CUP, cupId, this.lobbyTimeout);
     } else {
-      scheduleTimeoutFromNow(EntityType.CUP, cupId, idleTimeout);
+      cancelTimeout(EntityType.CUP, cupId);
     }
   }
 

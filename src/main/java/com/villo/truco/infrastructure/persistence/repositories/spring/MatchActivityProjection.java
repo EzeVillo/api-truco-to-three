@@ -9,4 +9,6 @@ public interface MatchActivityProjection {
 
   Instant getLastActivityAt();
 
+  String getStatus();
+
 }

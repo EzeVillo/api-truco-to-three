@@ -88,9 +88,10 @@ public class CupUseCaseConfiguration {
   }
 
   @Bean
-  GetCupStateUseCase getCupStateQueryHandler() {
+  GetCupStateUseCase getCupStateQueryHandler(final CupTimeoutProperties cupTimeoutProperties) {
 
-    return new GetCupStateQueryHandler(this.cupResolver(), this.publicActorResolver);
+    return new GetCupStateQueryHandler(this.cupResolver(), this.publicActorResolver,
+        cupTimeoutProperties.getLobbyTimeoutSeconds() * 1000L);
   }
 
   @Bean

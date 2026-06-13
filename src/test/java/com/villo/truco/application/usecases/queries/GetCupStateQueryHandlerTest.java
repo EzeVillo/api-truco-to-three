@@ -79,7 +79,7 @@ class GetCupStateQueryHandlerTest {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
       }
-    }), TestPublicActorResolver.guestStyle());
+    }), TestPublicActorResolver.guestStyle(), 600_000L);
 
     final var state = handler.handle(new GetCupStateQuery(cup.getId(), player));
 
@@ -136,7 +136,7 @@ class GetCupStateQueryHandlerTest {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
       }
-    }), TestPublicActorResolver.guestStyle());
+    }), TestPublicActorResolver.guestStyle(), 600_000L);
 
     assertThatThrownBy(
         () -> handler.handle(new GetCupStateQuery(cup.getId(), stranger))).isInstanceOf(

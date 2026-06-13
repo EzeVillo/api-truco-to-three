@@ -10,9 +10,20 @@ class MatchTimeoutPropertiesTest {
   void hasMutableTimeoutValues() {
 
     final var properties = new MatchTimeoutProperties();
-    properties.setIdleTimeoutSeconds(55);
+    properties.setLobbyTimeoutSeconds(55);
+    properties.setPlayTimeoutSeconds(22);
 
-    assertThat(properties.getIdleTimeoutSeconds()).isEqualTo(55);
+    assertThat(properties.getLobbyTimeoutSeconds()).isEqualTo(55);
+    assertThat(properties.getPlayTimeoutSeconds()).isEqualTo(22);
+  }
+
+  @Test
+  void hasSensibleDefaults() {
+
+    final var properties = new MatchTimeoutProperties();
+
+    assertThat(properties.getLobbyTimeoutSeconds()).isEqualTo(300);
+    assertThat(properties.getPlayTimeoutSeconds()).isEqualTo(30);
   }
 
 }

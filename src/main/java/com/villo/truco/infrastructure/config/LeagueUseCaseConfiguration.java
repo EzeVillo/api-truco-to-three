@@ -104,9 +104,11 @@ public class LeagueUseCaseConfiguration {
   }
 
   @Bean
-  GetLeagueStateUseCase getLeagueStateQueryHandler() {
+  GetLeagueStateUseCase getLeagueStateQueryHandler(
+      final LeagueTimeoutProperties leagueTimeoutProperties) {
 
-    return new GetLeagueStateQueryHandler(this.leagueResolver(), this.publicActorResolver);
+    return new GetLeagueStateQueryHandler(this.leagueResolver(), this.publicActorResolver,
+        leagueTimeoutProperties.getLobbyTimeoutSeconds() * 1000L);
   }
 
   @Bean

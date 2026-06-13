@@ -3,6 +3,7 @@ package com.villo.truco.application.assemblers;
 import com.villo.truco.application.dto.AvailableActionDTO;
 import com.villo.truco.application.dto.CardDTO;
 import com.villo.truco.application.dto.CurrentHandDTO;
+import com.villo.truco.application.dto.LobbyStateDTO;
 import com.villo.truco.application.dto.MatchStateDTO;
 import com.villo.truco.application.dto.PlayedHandDTO;
 import com.villo.truco.application.dto.RoundStateDTO;
@@ -20,12 +21,14 @@ public final class MatchStateDTOAssembler {
 
   private final PublicActorResolver publicActorResolver;
   private final long idleTimeoutMillis;
+  private final long lobbyTimeoutMillis;
 
   public MatchStateDTOAssembler(final PublicActorResolver publicActorResolver,
-      final long idleTimeoutMillis) {
+      final long idleTimeoutMillis, final long lobbyTimeoutMillis) {
 
     this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
     this.idleTimeoutMillis = idleTimeoutMillis;
+    this.lobbyTimeoutMillis = lobbyTimeoutMillis;
   }
 
   public MatchStateDTO toDto(final Match match, final PlayerId requestingPlayer) {
@@ -35,6 +38,8 @@ public final class MatchStateDTOAssembler {
     final var roundState =
         match.getStatus() == MatchStatus.IN_PROGRESS && !match.isFinished() ? this.toRoundStateDto(
             match, requestingPlayer, actorNames) : null;
+
+    final var lobbyState = this.toLobbyStateDto(match);
 
     final var matchWinner = Optional.ofNullable(match.getMatchWinner()).map(actorNames::get)
         .orElse(null);
@@ -47,7 +52,22 @@ public final class MatchStateDTOAssembler {
     return new MatchStateDTO(match.getId().value().toString(), match.getStatus().name(), viewerSeat,
         playerOneUsername, playerTwoUsername, match.getGamesToPlay(), match.getScorePlayerOne(),
         match.getScorePlayerTwo(), match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(),
-        matchWinner, roundState, match.getStateVersion());
+        matchWinner, lobbyState, roundState, match.getStateVersion());
+  }
+
+  private LobbyStateDTO toLobbyStateDto(final Match match) {
+
+    if (match.getStatus() != MatchStatus.WAITING_FOR_PLAYERS
+        && match.getStatus() != MatchStatus.READY) {
+      return null;
+    }
+
+    final var deadline =
+        match.getLastActivityAt() != null ? match.getLastActivityAt().toEpochMilli()
+            + this.lobbyTimeoutMillis : null;
+
+    return new LobbyStateDTO(match.getVisibility().name(), match.getJoinCode().value(), deadline,
+        match.isReadyPlayerOne(), match.isReadyPlayerTwo());
   }
 
   private String resolveViewerSeat(final Match match, final PlayerId requestingPlayer) {
@@ -112,8 +132,9 @@ public final class MatchStateDTOAssembler {
     final var deadline = ActionDeadlineProjection.of(match, this.idleTimeoutMillis);
 
     return new RoundStateDTO(match.getStatus().name(), currentTurn, myCards, roundStatus,
-        currentTrucoCall, currentEnvidoCall, matchWinner, availableActions, playedHands, currentHand,
-        deadline.actionDeadline(), deadline.turnDurationMillis(), deadline.actionDeadlineSeat());
+        currentTrucoCall, currentEnvidoCall, matchWinner, availableActions, playedHands,
+        currentHand, deadline.actionDeadline(), deadline.turnDurationMillis(),
+        deadline.actionDeadlineSeat());
   }
 
 }

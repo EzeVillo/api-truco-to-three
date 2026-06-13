@@ -17,6 +17,9 @@ import com.villo.truco.application.ports.out.ResourceInvitationDomainEventHandle
 import com.villo.truco.application.ports.out.timeout.EntityType;
 import com.villo.truco.application.ports.out.timeout.TimeoutReconciliationSource;
 import com.villo.truco.application.ports.out.timeout.TimeoutScheduler;
+import com.villo.truco.application.timeout.CupTimeoutPhasePolicy;
+import com.villo.truco.application.timeout.LeagueTimeoutPhasePolicy;
+import com.villo.truco.application.timeout.MatchTimeoutPhasePolicy;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.cup.valueobjects.CupId;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
@@ -61,6 +64,9 @@ public class TimeoutEventHandlerConfiguration {
   private final MatchTimeoutProperties matchTimeoutProperties;
   private final CupTimeoutProperties cupTimeoutProperties;
   private final LeagueTimeoutProperties leagueTimeoutProperties;
+  private final MatchTimeoutPhasePolicy matchTimeoutPhasePolicy = new MatchTimeoutPhasePolicy();
+  private final LeagueTimeoutPhasePolicy leagueTimeoutPhasePolicy = new LeagueTimeoutPhasePolicy();
+  private final CupTimeoutPhasePolicy cupTimeoutPhasePolicy = new CupTimeoutPhasePolicy();
 
   public TimeoutEventHandlerConfiguration(
       @Lazy final TimeoutIdleMatchesUseCase timeoutIdleMatchesUseCase,
@@ -113,50 +119,65 @@ public class TimeoutEventHandlerConfiguration {
   MatchDomainEventHandler<MatchDomainEvent> matchTimeoutEventHandler(
       final TimeoutScheduler timeoutScheduler) {
 
-    final var idleTimeout = Duration.ofSeconds(this.matchTimeoutProperties.getIdleTimeoutSeconds());
-    return new MatchTimeoutEventHandler(timeoutScheduler, timeoutActionDispatcher(), idleTimeout);
+    return new MatchTimeoutEventHandler(timeoutScheduler, timeoutActionDispatcher(),
+        this.matchTimeoutPhasePolicy, matchLobbyTimeout(), matchPlayTimeout());
   }
 
   @Bean
   CupDomainEventHandler<CupDomainEvent> cupTimeoutEventHandler(
       final TimeoutScheduler timeoutScheduler) {
 
-    final var idleTimeout = Duration.ofSeconds(this.cupTimeoutProperties.getIdleTimeoutSeconds());
-    return new CupTimeoutEventHandler(timeoutScheduler, timeoutActionDispatcher(), idleTimeout);
+    return new CupTimeoutEventHandler(timeoutScheduler, timeoutActionDispatcher(),
+        this.cupTimeoutPhasePolicy, cupLobbyTimeout());
   }
 
   @Bean
   LeagueDomainEventHandler<LeagueDomainEvent> leagueTimeoutEventHandler(
       final TimeoutScheduler timeoutScheduler) {
 
-    final var idleTimeout = Duration.ofSeconds(
-        this.leagueTimeoutProperties.getIdleTimeoutSeconds());
-    return new LeagueTimeoutEventHandler(timeoutScheduler, timeoutActionDispatcher(), idleTimeout);
+    return new LeagueTimeoutEventHandler(timeoutScheduler, timeoutActionDispatcher(),
+        this.leagueTimeoutPhasePolicy, leagueLobbyTimeout());
   }
 
   @Bean
   TimeoutReconciliationSource matchTimeoutReconciliationSource() {
 
-    final var idleTimeout = Duration.ofSeconds(this.matchTimeoutProperties.getIdleTimeoutSeconds());
     return new MatchTimeoutReconciliationSource(this.matchRepository, timeoutActionDispatcher(),
-        idleTimeout);
+        this.matchTimeoutPhasePolicy, matchLobbyTimeout(), matchPlayTimeout());
   }
 
   @Bean
   TimeoutReconciliationSource cupTimeoutReconciliationSource() {
 
-    final var idleTimeout = Duration.ofSeconds(this.cupTimeoutProperties.getIdleTimeoutSeconds());
     return new CupTimeoutReconciliationSource(this.cupRepository, timeoutActionDispatcher(),
-        idleTimeout);
+        this.cupTimeoutPhasePolicy, cupLobbyTimeout());
   }
 
   @Bean
   TimeoutReconciliationSource leagueTimeoutReconciliationSource() {
 
-    final var idleTimeout = Duration.ofSeconds(
-        this.leagueTimeoutProperties.getIdleTimeoutSeconds());
     return new LeagueTimeoutReconciliationSource(this.leagueRepository, timeoutActionDispatcher(),
-        idleTimeout);
+        this.leagueTimeoutPhasePolicy, leagueLobbyTimeout());
+  }
+
+  private Duration matchLobbyTimeout() {
+
+    return Duration.ofSeconds(this.matchTimeoutProperties.getLobbyTimeoutSeconds());
+  }
+
+  private Duration matchPlayTimeout() {
+
+    return Duration.ofSeconds(this.matchTimeoutProperties.getPlayTimeoutSeconds());
+  }
+
+  private Duration leagueLobbyTimeout() {
+
+    return Duration.ofSeconds(this.leagueTimeoutProperties.getLobbyTimeoutSeconds());
+  }
+
+  private Duration cupLobbyTimeout() {
+
+    return Duration.ofSeconds(this.cupTimeoutProperties.getLobbyTimeoutSeconds());
   }
 
   @Bean

@@ -83,7 +83,7 @@ class GetMatchStateQueryHandlerTest {
     };
 
     this.handler = new GetMatchStateQueryHandler(queryRepo, TestPublicActorResolver.guestStyle(),
-        30_000L);
+        30_000L, 300_000L);
   }
 
   @Test

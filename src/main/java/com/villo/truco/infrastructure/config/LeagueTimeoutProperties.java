@@ -5,16 +5,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "truco.league")
 public class LeagueTimeoutProperties {
 
-  private int idleTimeoutSeconds = 600;
+  private int lobbyTimeoutSeconds = 600;
 
-  public int getIdleTimeoutSeconds() {
+  public int getLobbyTimeoutSeconds() {
 
-    return idleTimeoutSeconds;
+    return lobbyTimeoutSeconds;
   }
 
-  public void setIdleTimeoutSeconds(int idleTimeoutSeconds) {
+  public void setLobbyTimeoutSeconds(int lobbyTimeoutSeconds) {
 
-    this.idleTimeoutSeconds = idleTimeoutSeconds;
+    this.lobbyTimeoutSeconds = lobbyTimeoutSeconds;
   }
 
 }

@@ -1,6 +1,7 @@
 package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -101,8 +102,9 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   @Override
   public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
 
-    return this.springDataRepo.findActiveMatchesWithLastActivity().stream()
-        .map(row -> new MatchTimeoutEntry(new MatchId(row.getId()), row.getLastActivityAt()));
+    return this.springDataRepo.findActiveMatchesWithLastActivity().stream().map(
+        row -> new MatchTimeoutEntry(new MatchId(row.getId()), row.getLastActivityAt(),
+            MatchStatus.valueOf(row.getStatus())));
   }
 
   @Override

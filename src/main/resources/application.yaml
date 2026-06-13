@@ -38,7 +38,12 @@ truco:
       league: PT30M
       cup: PT30M
   match:
-    idle-timeout-seconds: 30
+    lobby-timeout-seconds: 300
+    play-timeout-seconds: 30
+  league:
+    lobby-timeout-seconds: 600
+  cup:
+    lobby-timeout-seconds: 600
   rematch:
     duration: PT2M
     batch-size: 50

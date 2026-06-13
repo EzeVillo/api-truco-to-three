@@ -358,6 +358,11 @@ Recursos REST principales:
   persiste `joinCode`, no aparece en lobby y al completar cupo conserva el inicio manual.
 - `PUBLIC`:
   tambien devuelve `joinCode`, aparece en lobby y al completar cupo autoinicia.
+- Reconexion a la sala:
+  el `GET` de estado (`/api/matches/{id}`, `/api/leagues/{id}`, `/api/cups/{id}`) devuelve, en fase
+  de espera, los datos para reconstruir el lobby (`visibility`, `joinCode`, deadline de la sala). En
+  match es un bloque `lobby` anidado, mutuamente excluyente con `roundGame`. Asi, volver a una sala
+  tras una desconexion no requiere haber guardado el `joinCode` de la respuesta de creacion.
 - Join unificado:
   tanto `PUBLIC` como `PRIVATE` se comparten y se resuelven por `POST /api/join/{joinCode}`.
   La resolucion del join se realiza contra un registro global (`join_code_registry`) y garantiza
@@ -405,6 +410,10 @@ WebSocket/STOMP:
 - timeouts instantaneos por entidad: cada timeout se programa en el instante exacto de vencimiento
   via `TimeoutScheduler`; al arrancar, `TimeoutReconciliationRunner` reconcilia el estado contra la
   BD y reprograma o dispara inmediatamente los pendientes
+- timeouts por fase: la sala de espera y el juego tienen relojes separados.
+  match: `lobby-timeout` (default 5 min, cancela la sala) vs `play-timeout` (default 30 s, forfeit
+  de turno). liga/copa: solo `lobby-timeout` (default 10 min) en la sala; el torneo en curso no
+  tiene timeout propio, el tiempo lo controlan los matches internos
 - red de seguridad cada 5 min (`TimeoutSafetyNetScheduler`) que reconcilia de nuevo ante caidas
   no detectadas; no reemplaza el mecanismo principal sino que actua como fallback
 - heartbeat de scheduler incluido en readiness (`/actuator/health/schedulerHeartbeat`)

@@ -11,6 +11,7 @@ import com.villo.truco.application.ports.out.LeagueDomainEventHandler;
 import com.villo.truco.application.ports.out.timeout.EntityType;
 import com.villo.truco.application.ports.out.timeout.TimeoutKey;
 import com.villo.truco.application.ports.out.timeout.TimeoutScheduler;
+import com.villo.truco.application.timeout.LeagueTimeoutPhasePolicy;
 import com.villo.truco.domain.model.league.events.LeagueCancelledEvent;
 import com.villo.truco.domain.model.league.events.LeagueDomainEvent;
 import com.villo.truco.domain.model.league.events.LeagueFinishedEvent;
@@ -42,7 +43,8 @@ class LeagueTimeoutEventHandlerTest {
     dispatcher.register(EntityType.LEAGUE, id -> () -> {
     });
 
-    handler = new LeagueTimeoutEventHandler(timeoutScheduler, dispatcher, IDLE_TIMEOUT);
+    handler = new LeagueTimeoutEventHandler(timeoutScheduler, dispatcher,
+        new LeagueTimeoutPhasePolicy(), IDLE_TIMEOUT);
   }
 
   @Test
@@ -84,15 +86,16 @@ class LeagueTimeoutEventHandlerTest {
   }
 
   @Test
-  @DisplayName("Debe programar timeout ante evento no terminal (LeagueStartedEvent)")
-  void scheduleTimeoutOnLeagueStarted() {
+  @DisplayName("Debe cancelar el timeout de torneo al arrancar (LeagueStartedEvent)")
+  void cancelTimeoutOnLeagueStarted() {
 
     final var event = new LeagueStartedEvent(leagueId, List.of(playerOne));
 
     handler.handle(event);
 
     final var expectedKey = TimeoutKey.of(EntityType.LEAGUE, leagueId.value().toString());
-    verify(timeoutScheduler).schedule(eq(expectedKey), any(Instant.class), any(Runnable.class));
+    verify(timeoutScheduler).cancel(expectedKey);
+    verify(timeoutScheduler, never()).schedule(any(), any(), any());
   }
 
   @Test

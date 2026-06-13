@@ -54,7 +54,7 @@ public class ApplicationEventConfiguration {
     this.messagingTemplate = messagingTemplate;
     this.eventNotifierHealthRegistry = eventNotifierHealthRegistry;
     this.meterRegistry = meterRegistry;
-    this.matchIdleTimeoutMillis = matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L;
+    this.matchIdleTimeoutMillis = matchTimeoutProperties.getPlayTimeoutSeconds() * 1000L;
   }
 
   @Bean

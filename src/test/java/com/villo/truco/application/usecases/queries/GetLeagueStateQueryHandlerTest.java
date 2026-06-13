@@ -87,7 +87,8 @@ class GetLeagueStateQueryHandlerTest {
     };
 
     final var resolver = new LeagueResolver(queryRepo);
-    this.handler = new GetLeagueStateQueryHandler(resolver, TestPublicActorResolver.guestStyle());
+    this.handler = new GetLeagueStateQueryHandler(resolver, TestPublicActorResolver.guestStyle(),
+        600_000L);
   }
 
   @Test
@@ -137,12 +138,12 @@ class GetLeagueStateQueryHandlerTest {
     assertThat(result.totalSlots()).isEqualTo(3);
     assertThat(result.occupiedSlots()).isEqualTo(3);
     assertThat(result.canStart()).isTrue();
-    assertThat(result.participants()).extracting(LeagueParticipantDTO::player).containsExactly(
-        TestPublicActorResolver.displayName(creator),
-        TestPublicActorResolver.displayName(participant),
-        TestPublicActorResolver.displayName(thirdParticipant));
-    assertThat(result.participants()).extracting(LeagueParticipantDTO::creator).containsExactly(
-        true, false, false);
+    assertThat(result.participants()).extracting(LeagueParticipantDTO::player)
+        .containsExactly(TestPublicActorResolver.displayName(creator),
+            TestPublicActorResolver.displayName(participant),
+            TestPublicActorResolver.displayName(thirdParticipant));
+    assertThat(result.participants()).extracting(LeagueParticipantDTO::creator)
+        .containsExactly(true, false, false);
     assertThat(result.standings()).isEmpty();
   }
 

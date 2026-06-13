@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.persistence.repositories;
 
 import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueId;
+import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.LeagueRepository;
@@ -102,8 +103,9 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   @Override
   public Stream<LeagueTimeoutEntry> findActiveWithTimeoutDeadline() {
 
-    return this.springDataRepo.findActiveLeaguesWithLastActivity().stream()
-        .map(row -> new LeagueTimeoutEntry(new LeagueId(row.getId()), row.getLastActivityAt()));
+    return this.springDataRepo.findActiveLeaguesWithLastActivity().stream().map(
+        row -> new LeagueTimeoutEntry(new LeagueId(row.getId()), row.getLastActivityAt(),
+            LeagueStatus.valueOf(row.getStatus())));
   }
 
   @Override

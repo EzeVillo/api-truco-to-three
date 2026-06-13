@@ -683,6 +683,7 @@ Response `200`:
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
   "stateVersion": 5,
+  "lobby": null,
   "roundGame": {
     "status": "IN_PROGRESS",
     "currentTurn": "juancho",
@@ -741,6 +742,26 @@ Response `200`:
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
   `match`
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
+- `lobby` es la **vista de sala de espera**: `null` salvo que la partida esté en
+  `WAITING_FOR_PLAYERS` o `READY`. Es mutuamente excluyente con `roundGame` (nunca ambos no-null).
+  Permite reconstruir la sala al reconectar sin haber guardado el `joinCode` de la respuesta de
+  creación. Shape cuando la partida está esperando:
+
+  ```json
+  "lobby": {
+    "visibility": "PRIVATE",
+    "joinCode": "ABCD2345",
+    "lobbyTimeoutDeadline": 1772768488123,
+    "readyPlayerOne": true,
+    "readyPlayerTwo": false
+  }
+  ```
+
+    - `joinCode` solo se devuelve a quien ya está sentado en la partida (el endpoint valida
+      pertenencia), por lo que no expone el código de un match privado a terceros.
+    - `lobbyTimeoutDeadline` (`epochMillis`, absoluto) es el instante en que la sala se cancela por
+      inactividad (`lastActivityAt + lobby-timeout`, 5 min por defecto). `null` si no corre reloj.
+      Es independiente del temporizador de turno (§4.18), que solo aplica en juego.
 - `myCards` contiene solo las cartas del jugador autenticado
 - `availableActions` refleja las acciones disponibles para el jugador autenticado
 - `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` describen el temporizador de
@@ -925,6 +946,13 @@ Errores:
 - `422` si el jugador no es participante de la sesion
 
 ### 4.18 Temporizador de turno (timeout por inactividad)
+
+El timeout de una partida tiene **dos relojes según la fase**, configurables por separado:
+
+| Fase                                           | Propiedad                           | Default     | Acción al vencer                                                                                 |
+|------------------------------------------------|-------------------------------------|-------------|--------------------------------------------------------------------------------------------------|
+| Sala de espera (`WAITING_FOR_PLAYERS`/`READY`) | `truco.match.lobby-timeout-seconds` | 300 (5 min) | La sala se **cancela** (`MATCH_CANCELLED`). Se expone como `lobby.lobbyTimeoutDeadline` (§4.14). |
+| En juego (`IN_PROGRESS`)                       | `truco.match.play-timeout-seconds`  | 30          | Forfeit del que debe actuar (`MATCH_FORFEITED`). Es el reloj de turno descrito abajo.            |
 
 Mientras la partida está `IN_PROGRESS`, el jugador que debe actuar (jugar carta o responder un
 canto) dispone de un plazo limitado. Si lo agota, el backend declara forfeit administrativo y emite
@@ -1180,24 +1208,30 @@ Response `200`:
         }
       ]
     }
-  ]
+  ],
+  "visibility": "PRIVATE",
+  "joinCode": "ABCD2345",
+  "lobbyTimeoutDeadline": null
 }
 ```
 
 Campos de nivel raíz:
 
-| Campo           | Tipo            | Descripción                                                            |
-|-----------------|-----------------|------------------------------------------------------------------------|
-| `leagueId`      | `string`        | ID de la liga.                                                         |
-| `status`        | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.                         |
-| `host`          | `string`        | Nombre visible del creador de la sala.                                 |
-| `totalSlots`    | `int`           | Cupo total de jugadores configurado para la liga.                      |
-| `occupiedSlots` | `int`           | Cantidad actual de participantes en la sala.                           |
-| `canStart`      | `boolean`       | `true` si el usuario autenticado puede iniciar la liga en este estado. |
-| `participants`  | `array`         | Participantes actuales de la sala, en orden de ingreso.                |
-| `standings`     | `array`         | Tabla de posiciones, ordenada por `wins` descendente.                  |
-| `winners`       | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                |
-| `matchdays`     | `array`         | Calendario completo, una entrada por jornada.                          |
+| Campo                  | Tipo            | Descripción                                                                                                             |
+|------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------|
+| `leagueId`             | `string`        | ID de la liga.                                                                                                          |
+| `status`               | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.                                                                          |
+| `host`                 | `string`        | Nombre visible del creador de la sala.                                                                                  |
+| `totalSlots`           | `int`           | Cupo total de jugadores configurado para la liga.                                                                       |
+| `occupiedSlots`        | `int`           | Cantidad actual de participantes en la sala.                                                                            |
+| `canStart`             | `boolean`       | `true` si el usuario autenticado puede iniciar la liga en este estado.                                                  |
+| `participants`         | `array`         | Participantes actuales de la sala, en orden de ingreso.                                                                 |
+| `standings`            | `array`         | Tabla de posiciones, ordenada por `wins` descendente.                                                                   |
+| `winners`              | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                                                                 |
+| `matchdays`            | `array`         | Calendario completo, una entrada por jornada.                                                                           |
+| `visibility`           | `string` (enum) | `PUBLIC` o `PRIVATE`. Para reconstruir la sala al reconectar.                                                           |
+| `joinCode`             | `string`        | Código para invitar/unirse. Solo visible para participantes.                                                            |
+| `lobbyTimeoutDeadline` | `epochMillis`   | Instante en que la sala expira por inactividad (`lobby-timeout`, 600 s por defecto). `null` fuera de la fase de espera. |
 
 Nota para sala de espera: `participants`, `totalSlots`, `occupiedSlots`, `host`
 y `canStart` son la fuente para renderizar la sala antes de iniciar. No inferir
@@ -1472,12 +1506,23 @@ Response `200`:
       ]
     }
   ],
-  "champion": null
+  "champion": null,
+  "visibility": "PRIVATE",
+  "joinCode": "ABCD2345",
+  "lobbyTimeoutDeadline": null
 }
 ```
 
 Cuando la copa finaliza, `status` es `FINISHED` y `champion` contiene el `displayName` del
 campeón.
+
+Campos de sala de espera (para reconstruir el lobby al reconectar):
+
+- `visibility` (`PUBLIC`/`PRIVATE`) y `joinCode` (solo visible para participantes) permiten
+  re-mostrar y compartir la sala sin haber guardado el código de la respuesta de creación.
+- `lobbyTimeoutDeadline` (`epochMillis`) es el instante en que la sala expira por inactividad
+  (`lobby-timeout`, 600 s por defecto); `null` fuera de la fase de espera. El torneo en curso no
+  tiene timeout propio: el tiempo lo controlan los matches internos.
 
 Errores:
 

@@ -158,7 +158,8 @@ public class MatchUseCaseConfiguration {
       final MatchTimeoutProperties matchTimeoutProperties) {
 
     return new GetMatchStateQueryHandler(this.matchQueryRepository, this.publicActorResolver,
-        matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L);
+        matchTimeoutProperties.getPlayTimeoutSeconds() * 1000L,
+        matchTimeoutProperties.getLobbyTimeoutSeconds() * 1000L);
   }
 
   @Bean

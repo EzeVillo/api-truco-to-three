@@ -11,6 +11,7 @@ import com.villo.truco.application.ports.out.CupDomainEventHandler;
 import com.villo.truco.application.ports.out.timeout.EntityType;
 import com.villo.truco.application.ports.out.timeout.TimeoutKey;
 import com.villo.truco.application.ports.out.timeout.TimeoutScheduler;
+import com.villo.truco.application.timeout.CupTimeoutPhasePolicy;
 import com.villo.truco.domain.model.cup.events.CupCancelledEvent;
 import com.villo.truco.domain.model.cup.events.CupDomainEvent;
 import com.villo.truco.domain.model.cup.events.CupFinishedEvent;
@@ -42,7 +43,8 @@ class CupTimeoutEventHandlerTest {
     dispatcher.register(EntityType.CUP, id -> () -> {
     });
 
-    handler = new CupTimeoutEventHandler(timeoutScheduler, dispatcher, IDLE_TIMEOUT);
+    handler = new CupTimeoutEventHandler(timeoutScheduler, dispatcher, new CupTimeoutPhasePolicy(),
+        IDLE_TIMEOUT);
   }
 
   @Test
@@ -84,15 +86,16 @@ class CupTimeoutEventHandlerTest {
   }
 
   @Test
-  @DisplayName("Debe programar timeout ante evento no terminal (CupStartedEvent)")
-  void scheduleTimeoutOnCupStarted() {
+  @DisplayName("Debe cancelar el timeout de torneo al arrancar (CupStartedEvent)")
+  void cancelTimeoutOnCupStarted() {
 
     final var event = new CupStartedEvent(cupId, List.of(playerOne));
 
     handler.handle(event);
 
     final var expectedKey = TimeoutKey.of(EntityType.CUP, cupId.value().toString());
-    verify(timeoutScheduler).schedule(eq(expectedKey), any(Instant.class), any(Runnable.class));
+    verify(timeoutScheduler).cancel(expectedKey);
+    verify(timeoutScheduler, never()).schedule(any(), any(), any());
   }
 
   @Test

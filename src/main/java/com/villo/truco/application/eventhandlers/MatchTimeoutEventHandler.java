@@ -3,26 +3,29 @@ package com.villo.truco.application.eventhandlers;
 import com.villo.truco.application.ports.out.MatchDomainEventHandler;
 import com.villo.truco.application.ports.out.timeout.EntityType;
 import com.villo.truco.application.ports.out.timeout.TimeoutScheduler;
+import com.villo.truco.application.timeout.MatchTimeoutPhasePolicy;
 import com.villo.truco.domain.model.match.events.ActionDeadlineClearedEvent;
 import com.villo.truco.domain.model.match.events.ActionDeadlineSetEvent;
-import com.villo.truco.domain.model.match.events.MatchAbandonedEvent;
-import com.villo.truco.domain.model.match.events.MatchCancelledEvent;
 import com.villo.truco.domain.model.match.events.MatchDomainEvent;
 import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
-import com.villo.truco.domain.model.match.events.MatchFinishedEvent;
-import com.villo.truco.domain.model.match.events.MatchForfeitedEvent;
 import java.time.Duration;
+import java.util.Objects;
 
 public class MatchTimeoutEventHandler extends AbstractTimeoutEventHandler implements
     MatchDomainEventHandler<MatchDomainEvent> {
 
-  private final Duration idleTimeout;
+  private final MatchTimeoutPhasePolicy phasePolicy;
+  private final Duration lobbyTimeout;
+  private final Duration playTimeout;
 
   public MatchTimeoutEventHandler(final TimeoutScheduler timeoutScheduler,
-      final TimeoutActionDispatcher dispatcher, final Duration idleTimeout) {
+      final TimeoutActionDispatcher dispatcher, final MatchTimeoutPhasePolicy phasePolicy,
+      final Duration lobbyTimeout, final Duration playTimeout) {
 
     super(timeoutScheduler, dispatcher);
-    this.idleTimeout = idleTimeout;
+    this.phasePolicy = Objects.requireNonNull(phasePolicy);
+    this.lobbyTimeout = Objects.requireNonNull(lobbyTimeout);
+    this.playTimeout = Objects.requireNonNull(playTimeout);
   }
 
   @Override
@@ -45,11 +48,11 @@ public class MatchTimeoutEventHandler extends AbstractTimeoutEventHandler implem
       return;
     }
 
-    if (inner instanceof MatchFinishedEvent || inner instanceof MatchForfeitedEvent
-        || inner instanceof MatchCancelledEvent || inner instanceof MatchAbandonedEvent) {
-      cancelTimeout(EntityType.MATCH, matchId);
-    } else {
-      scheduleTimeoutFromNow(EntityType.MATCH, matchId, idleTimeout);
+    final var phase = this.phasePolicy.phaseOf(inner);
+    switch (phase) {
+      case NONE -> cancelTimeout(EntityType.MATCH, matchId);
+      case LOBBY -> scheduleTimeoutFromNow(EntityType.MATCH, matchId, this.lobbyTimeout);
+      case PLAY -> scheduleTimeoutFromNow(EntityType.MATCH, matchId, this.playTimeout);
     }
   }
 

@@ -15,10 +15,12 @@ public final class GetMatchStateQueryHandler implements GetMatchStateUseCase {
   private final MatchStateDTOAssembler dtoAssembler;
 
   public GetMatchStateQueryHandler(final MatchQueryRepository queryRepository,
-      final PublicActorResolver publicActorResolver, final long idleTimeoutMillis) {
+      final PublicActorResolver publicActorResolver, final long idleTimeoutMillis,
+      final long lobbyTimeoutMillis) {
 
     this.queryRepository = Objects.requireNonNull(queryRepository);
-    this.dtoAssembler = new MatchStateDTOAssembler(publicActorResolver, idleTimeoutMillis);
+    this.dtoAssembler = new MatchStateDTOAssembler(publicActorResolver, idleTimeoutMillis,
+        lobbyTimeoutMillis);
   }
 
   @Override

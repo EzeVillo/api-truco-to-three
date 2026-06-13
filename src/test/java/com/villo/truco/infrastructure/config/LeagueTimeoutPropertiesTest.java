@@ -10,9 +10,9 @@ class LeagueTimeoutPropertiesTest {
   void hasMutableTimeoutValues() {
 
     final var properties = new LeagueTimeoutProperties();
-    properties.setIdleTimeoutSeconds(33);
+    properties.setLobbyTimeoutSeconds(33);
 
-    assertThat(properties.getIdleTimeoutSeconds()).isEqualTo(33);
+    assertThat(properties.getLobbyTimeoutSeconds()).isEqualTo(33);
   }
 
 }

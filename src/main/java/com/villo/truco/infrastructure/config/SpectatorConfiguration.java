@@ -48,8 +48,9 @@ public class SpectatorConfiguration {
 
   public SpectatorConfiguration(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
-      final CupQueryRepository cupQueryRepository, @Lazy final ApplicationEventPublisher eventPublisher,
-      final MatchEventMapper matchEventMapper, final PublicActorResolver publicActorResolver,
+      final CupQueryRepository cupQueryRepository,
+      @Lazy final ApplicationEventPublisher eventPublisher, final MatchEventMapper matchEventMapper,
+      final PublicActorResolver publicActorResolver,
       final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver,
       final MatchTimeoutProperties matchTimeoutProperties,
       final ObjectProvider<FriendAvailabilityChangeNotifier> friendAvailabilityChangeNotifierProvider,
@@ -62,7 +63,7 @@ public class SpectatorConfiguration {
     this.matchEventMapper = matchEventMapper;
     this.publicActorResolver = publicActorResolver;
     this.friendshipSpectateEligibilityResolver = friendshipSpectateEligibilityResolver;
-    this.idleTimeoutMillis = matchTimeoutProperties.getIdleTimeoutSeconds() * 1000L;
+    this.idleTimeoutMillis = matchTimeoutProperties.getPlayTimeoutSeconds() * 1000L;
     this.friendAvailabilityChangeNotifierProvider = friendAvailabilityChangeNotifierProvider;
     this.presenceNotifierProvider = presenceNotifierProvider;
   }
@@ -115,7 +116,8 @@ public class SpectatorConfiguration {
 
     return new SpectateMatchCommandHandler(this.matchQueryRepository, spectatorshipRepository(),
         spectatingEligibilityPolicy(), spectatorCountChangedPublisher(),
-        spectatorMatchStateDTOAssembler(), this.friendAvailabilityChangeNotifierProvider.getObject(),
+        spectatorMatchStateDTOAssembler(),
+        this.friendAvailabilityChangeNotifierProvider.getObject(),
         this.presenceNotifierProvider.getObject());
   }
 

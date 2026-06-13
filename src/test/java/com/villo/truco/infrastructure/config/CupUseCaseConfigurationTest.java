@@ -34,7 +34,7 @@ class CupUseCaseConfigurationTest {
         mock(PublicActorResolver.class), new UseCasePipeline(List.of()));
 
     assertThat(configuration.cupResolver()).isNotNull();
-    assertThat(configuration.getCupStateQueryHandler()).isNotNull();
+    assertThat(configuration.getCupStateQueryHandler(new CupTimeoutProperties())).isNotNull();
   }
 
 }

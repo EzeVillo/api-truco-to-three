@@ -34,7 +34,7 @@ class LeagueUseCaseConfigurationTest {
         mock(PublicActorResolver.class), new UseCasePipeline(List.of()));
 
     assertThat(configuration.leagueResolver()).isNotNull();
-    assertThat(configuration.getLeagueStateQueryHandler()).isNotNull();
+    assertThat(configuration.getLeagueStateQueryHandler(new LeagueTimeoutProperties())).isNotNull();
   }
 
 }

@@ -10,9 +10,9 @@ class CupTimeoutPropertiesTest {
   void hasMutableTimeoutValues() {
 
     final var properties = new CupTimeoutProperties();
-    properties.setIdleTimeoutSeconds(11);
+    properties.setLobbyTimeoutSeconds(11);
 
-    assertThat(properties.getIdleTimeoutSeconds()).isEqualTo(11);
+    assertThat(properties.getLobbyTimeoutSeconds()).isEqualTo(11);
   }
 
 }

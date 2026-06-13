@@ -23,7 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@SpringBootTest(properties = {"truco.match.idle-timeout-seconds=2"})
+@SpringBootTest(properties = {"truco.match.lobby-timeout-seconds=2"})
 @ActiveProfiles("test")
 @DisplayName("Timeout exacto de partida (integración)")
 class TimeoutExactnessMatchIT {

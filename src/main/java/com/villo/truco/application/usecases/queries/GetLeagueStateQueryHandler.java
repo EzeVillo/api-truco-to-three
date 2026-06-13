@@ -8,7 +8,10 @@ import com.villo.truco.application.dto.LeagueStateDTO;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.GetLeagueStateUseCase;
 import com.villo.truco.application.queries.GetLeagueStateQuery;
+import com.villo.truco.application.timeout.LeagueTimeoutPhasePolicy;
+import com.villo.truco.application.timeout.TimeoutPhase;
 import com.villo.truco.application.usecases.commands.LeagueResolver;
+import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Map;
@@ -19,18 +22,30 @@ public final class GetLeagueStateQueryHandler implements GetLeagueStateUseCase {
 
   private final LeagueResolver leagueResolver;
   private final PublicActorResolver publicActorResolver;
+  private final long lobbyTimeoutMillis;
+  private final LeagueTimeoutPhasePolicy phasePolicy = new LeagueTimeoutPhasePolicy();
 
   public GetLeagueStateQueryHandler(final LeagueResolver leagueResolver,
-      final PublicActorResolver publicActorResolver) {
+      final PublicActorResolver publicActorResolver, final long lobbyTimeoutMillis) {
 
     this.leagueResolver = Objects.requireNonNull(leagueResolver);
     this.publicActorResolver = Objects.requireNonNull(publicActorResolver);
+    this.lobbyTimeoutMillis = lobbyTimeoutMillis;
   }
 
   private static String displayNameOf(final Map<PlayerId, String> actorNames,
       final PlayerId playerId) {
 
     return playerId != null ? actorNames.get(playerId) : null;
+  }
+
+  private Long lobbyDeadlineOf(final League league) {
+
+    if (this.phasePolicy.phaseOf(league.getStatus()) != TimeoutPhase.LOBBY
+        || league.getLastActivityAt() == null) {
+      return null;
+    }
+    return league.getLastActivityAt().toEpochMilli() + this.lobbyTimeoutMillis;
   }
 
   @Override
@@ -68,7 +83,8 @@ public final class GetLeagueStateQueryHandler implements GetLeagueStateUseCase {
 
     return new LeagueStateDTO(league.getId().value().toString(), league.getStatus().name(), host,
         league.getNumberOfPlayers(), league.getParticipants().size(), canStart, participants,
-        standings, winners, matchdays);
+        standings, winners, matchdays, league.getVisibility().name(), league.getJoinCode().value(),
+        lobbyDeadlineOf(league));
   }
 
 }

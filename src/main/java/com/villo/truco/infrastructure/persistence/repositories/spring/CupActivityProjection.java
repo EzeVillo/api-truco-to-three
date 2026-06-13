@@ -9,4 +9,6 @@ public interface CupActivityProjection {
 
   Instant getLastActivityAt();
 
+  String getStatus();
+
 }
