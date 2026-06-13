@@ -56,7 +56,8 @@ class SpectatorCleanupOnMatchEndEventHandlerTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
     final MatchQueryRepository matchQueryRepository = new MatchQueryRepository() {
       @Override

@@ -118,6 +118,51 @@ class CreateBotMatchCommandHandlerTest {
   }
 
   @Test
+  @DisplayName("el match contra bot no forfeitea por inactividad (mismo camino que campaign)")
+  void botMatchDoesNotForfeitOnTimeout() {
+
+    final var humanPlayer = PlayerId.generate();
+    final var botPlayer = PlayerId.generate();
+    final var botRegistry = registryWith(botPlayer);
+    final var matchRepo = mock(MatchQueryRepository.class);
+    final var leagueRepo = mock(LeagueQueryRepository.class);
+    final var cupRepo = mock(CupQueryRepository.class);
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    final var playerAvailabilityChecker = new PlayerAvailabilityChecker(matchRepo, leagueRepo,
+        cupRepo, botRegistry, rematchRepo, NoOpQuickMatchQueuePort.INSTANCE,
+        NoOpSpectatorshipRepository.INSTANCE);
+
+    final MatchEventNotifier matchEventNotifier = events -> {
+    };
+    final var savedMatch = new AtomicReference<Match>();
+    final MatchRepository matchRepository = new MatchRepository() {
+      @Override
+      public void save(final Match match) {
+
+        savedMatch.set(match);
+      }
+
+      @Override
+      public Stream<MatchTimeoutEntry> findActiveWithTimeoutDeadline() {
+
+        return Stream.empty();
+      }
+    };
+    final var handler = new CreateBotMatchCommandHandler(matchRepository, matchEventNotifier,
+        botRegistry, playerAvailabilityChecker);
+
+    handler.handle(
+        new CreateBotMatchCommand(humanPlayer.value().toString(), 3, botPlayer.value().toString()));
+
+    final var match = savedMatch.get();
+    final var result = match.timeoutForfeit();
+
+    assertThat(result).isFalse();
+    assertThat(match.getStatus().name()).isEqualTo("IN_PROGRESS");
+  }
+
+  @Test
   @DisplayName("la consulta por parent sigue devolviendo chat para match humano")
   void getChatByParentStillReturnsHumanMatchChat() {
 

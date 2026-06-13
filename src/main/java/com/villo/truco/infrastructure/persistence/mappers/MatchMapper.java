@@ -42,6 +42,7 @@ public class MatchMapper {
     entity.setVisibility(snapshot.visibility().name());
     entity.setStatus(snapshot.status().name());
     entity.setGamesToWin(snapshot.rules().gamesToWin());
+    entity.setForfeitsOnInactivity(snapshot.rules().forfeitsOnInactivity());
     entity.setGamesWonPlayerOne(snapshot.gamesWonPlayerOne());
     entity.setGamesWonPlayerTwo(snapshot.gamesWonPlayerTwo());
     entity.setGameNumber(snapshot.gameNumber());
@@ -68,7 +69,8 @@ public class MatchMapper {
     final var snapshot = new MatchSnapshot(new MatchId(entity.getId()),
         new PlayerId(entity.getPlayerOne()),
         entity.getPlayerTwo() != null ? new PlayerId(entity.getPlayerTwo()) : null,
-        JoinCode.of(entity.getJoinCode()), new MatchRules(entity.getGamesToWin()),
+        JoinCode.of(entity.getJoinCode()),
+        new MatchRules(entity.getGamesToWin(), entity.isForfeitsOnInactivity()),
         Visibility.valueOf(entity.getVisibility()), MatchStatus.valueOf(entity.getStatus()),
         entity.getGamesWonPlayerOne(), entity.getGamesWonPlayerTwo(), entity.getGameNumber(),
         entity.getScorePlayerOne(), entity.getScorePlayerTwo(), entity.getRoundNumber(),

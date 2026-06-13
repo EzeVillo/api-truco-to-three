@@ -39,7 +39,7 @@ class SpectatorCleanupOnFriendshipRemovedEventHandlerTest {
     final var playerTwo = PlayerId.generate();
     final var spectator = PlayerId.generate();
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
 

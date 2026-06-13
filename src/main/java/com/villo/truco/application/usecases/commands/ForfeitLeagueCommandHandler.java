@@ -31,7 +31,7 @@ public final class ForfeitLeagueCommandHandler implements ForfeitLeagueUseCase {
 
     final var league = this.leagueResolver.resolve(command.leagueId());
 
-    final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
+    final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay(), true);
 
     for (final var activation : league.forfeitPlayer(command.forfeiter())) {
       final var match = Match.createReady(activation.playerOne(), activation.playerTwo(),

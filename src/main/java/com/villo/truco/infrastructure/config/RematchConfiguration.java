@@ -101,7 +101,7 @@ public class RematchConfiguration {
       @Lazy final RematchSessionEventNotifier rematchSessionEventNotifier) {
 
     return new RematchSessionConfirmedMatchCreator(this.matchRepository, this.matchEventNotifier,
-        this.rematchSessionRepository, rematchSessionEventNotifier);
+        this.rematchSessionRepository, rematchSessionEventNotifier, this.botRegistry);
   }
 
   @Bean

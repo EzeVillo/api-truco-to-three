@@ -16,7 +16,7 @@ final class CupMatchActivationSupport {
   static void createAndLinkMatches(final Cup cup, final MatchRepository matchRepository,
       final List<BoutPairing> pairings) {
 
-    final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay());
+    final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay(), true);
 
     for (final var pairing : pairings) {
       final var match = Match.createReady(pairing.playerOne(), pairing.playerTwo(), matchRules);

@@ -45,14 +45,14 @@ class TimeoutIdleMatchesCommandHandlerTest {
 
   private Match waitingMatch() {
 
-    return Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+    return Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
         Visibility.PRIVATE);
   }
 
   private Match readyMatch() {
 
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     match.clearDomainEvents();
     return match;
   }
@@ -60,7 +60,7 @@ class TimeoutIdleMatchesCommandHandlerTest {
   private Match inProgressMatch() {
 
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
     match.clearDomainEvents();

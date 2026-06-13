@@ -32,7 +32,7 @@ public final class ForfeitCupCommandHandler implements ForfeitCupUseCase {
 
     final var result = cup.forfeitPlayer(command.forfeiter());
 
-    final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay());
+    final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay(), true);
 
     for (final var pairing : result.pendingPairings()) {
       final var match = Match.createReady(pairing.playerOne(), pairing.playerTwo(), matchRules);

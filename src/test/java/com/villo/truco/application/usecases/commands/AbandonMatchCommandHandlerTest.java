@@ -46,7 +46,7 @@ class AbandonMatchCommandHandlerTest {
   private Match matchInProgress() {
 
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
     match.clearDomainEvents();

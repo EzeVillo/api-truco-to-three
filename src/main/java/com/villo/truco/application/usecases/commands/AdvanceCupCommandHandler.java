@@ -32,7 +32,7 @@ public final class AdvanceCupCommandHandler implements AdvanceCupUseCase {
 
     final var result = cup.recordMatchWinner(command.matchId(), command.winner());
 
-    final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay());
+    final var matchRules = MatchRules.fromGamesToPlay(cup.getGamesToPlay(), true);
 
     for (final var pairing : result.pendingPairings()) {
       final var match = Match.createReady(pairing.playerOne(), pairing.playerTwo(), matchRules);

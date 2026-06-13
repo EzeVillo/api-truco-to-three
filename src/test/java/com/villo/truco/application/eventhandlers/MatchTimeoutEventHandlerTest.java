@@ -78,8 +78,9 @@ class MatchTimeoutEventHandlerTest {
   }
 
   @Test
-  @DisplayName("La fase se deriva del status, no del tipo de evento: un evento de lobby en un match "
-      + "en curso usa la duracion de turno")
+  @DisplayName(
+      "La fase se deriva del status, no del tipo de evento: un evento de lobby en un match "
+          + "en curso usa la duracion de turno")
   void phaseFollowsStatusNotEventType() {
 
     final var before = Instant.now();
@@ -107,8 +108,22 @@ class MatchTimeoutEventHandlerTest {
   @DisplayName("Debe cancelar timeout cuando el match esta cancelado")
   void cancelTimeoutWhenMatchCancelled() {
 
-    handler.handle(stamped(new GameStartedEvent(matchId, playerOne, playerTwo, 1),
-        MatchStatus.CANCELLED));
+    handler.handle(
+        stamped(new GameStartedEvent(matchId, playerOne, playerTwo, 1), MatchStatus.CANCELLED));
+
+    verify(timeoutScheduler).cancel(expectedKey());
+    verify(timeoutScheduler, never()).schedule(any(), any(), any());
+  }
+
+  @Test
+  @DisplayName("No programa timeout y cancela cuando el match no forfeitea por inactividad (vs bot)")
+  void cancelsAndDoesNotScheduleWhenNoInactivityForfeit() {
+
+    final var event = new GameStartedEvent(matchId, playerOne, playerTwo, 1);
+    event.setMatchStatus(MatchStatus.IN_PROGRESS);
+    event.setForfeitsOnInactivity(false);
+
+    handler.handle(event);
 
     verify(timeoutScheduler).cancel(expectedKey());
     verify(timeoutScheduler, never()).schedule(any(), any(), any());
@@ -118,8 +133,9 @@ class MatchTimeoutEventHandlerTest {
   @DisplayName("Ignora los eventos de deadline derivados")
   void ignoresDerivedDeadlineEvents() {
 
-    handler.handle(stamped(new ActionDeadlineSetEvent(matchId, playerOne, playerTwo,
-        PlayerSeat.PLAYER_ONE), MatchStatus.IN_PROGRESS));
+    handler.handle(
+        stamped(new ActionDeadlineSetEvent(matchId, playerOne, playerTwo, PlayerSeat.PLAYER_ONE),
+            MatchStatus.IN_PROGRESS));
 
     verify(timeoutScheduler, never()).schedule(any(), any(), any());
     verify(timeoutScheduler, never()).cancel(any());

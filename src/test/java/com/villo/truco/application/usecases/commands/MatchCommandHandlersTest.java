@@ -112,7 +112,8 @@ class MatchCommandHandlersTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(p1);
     match.startMatch(p2);
 
@@ -136,7 +137,8 @@ class MatchCommandHandlersTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(p1);
     match.startMatch(p2);
 
@@ -161,7 +163,8 @@ class MatchCommandHandlersTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(p1);
     match.startMatch(p2);
 
@@ -189,7 +192,8 @@ class MatchCommandHandlersTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(p1);
     match.startMatch(p2);
 
@@ -219,7 +223,8 @@ class MatchCommandHandlersTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(p1);
     match.startMatch(p2);
 
@@ -249,7 +254,8 @@ class MatchCommandHandlersTest {
 
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
-    final var match = Match.createReady(p1, p2, MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+    final var match = Match.createReady(p1, p2,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(p1);
     match.startMatch(p2);
 

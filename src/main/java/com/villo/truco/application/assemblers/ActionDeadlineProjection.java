@@ -15,7 +15,7 @@ record ActionDeadlineProjection(Long actionDeadline, Long turnDurationMillis,
   static ActionDeadlineProjection of(final Match match, final long idleTimeoutMillis) {
 
     final var currentTurn = match.getCurrentTurn();
-    if (currentTurn == null || match.getLastActivityAt() == null) {
+    if (!match.forfeitsOnInactivity() || currentTurn == null || match.getLastActivityAt() == null) {
       return new ActionDeadlineProjection(null, null, null);
     }
 

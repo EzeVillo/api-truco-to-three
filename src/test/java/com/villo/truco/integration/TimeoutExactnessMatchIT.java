@@ -56,11 +56,12 @@ class TimeoutExactnessMatchIT {
 
     jdbcTemplate.update(
         "INSERT INTO matches (id, player_one, player_two, join_code, visibility, status, "
-            + "games_to_win, games_won_player_one, games_won_player_two, game_number, "
-            + "score_player_one, score_player_two, round_number, "
+            + "games_to_win, forfeits_on_inactivity, games_won_player_one, games_won_player_two, "
+            + "game_number, score_player_one, score_player_two, round_number, "
             + "ready_player_one, ready_player_two, last_activity_at, version, state_version) "
-            + "VALUES (?, ?, null, ?, 'PRIVATE', 'WAITING_FOR_PLAYERS', 3, 0, 0, 0, 0, 0, 0, false, false, ?, 0, 0)",
-        matchId, playerId, "TEST-" + matchId.toString().substring(0, 6), pastActivityAt);
+            + "VALUES (?, ?, null, ?, 'PRIVATE', 'WAITING_FOR_PLAYERS', 3, true, 0, 0, 0, 0, 0, 0, "
+            + "false, false, ?, 0, 0)", matchId, playerId,
+        "TEST-" + matchId.toString().substring(0, 6), pastActivityAt);
 
     final var domainMatchId = new MatchId(matchId);
     reconciliationRunner.reconcile("test");

@@ -42,7 +42,7 @@ class JpaMatchRepositoryAdapterTest {
         joinCodeRegistryRepository);
 
     final var match = Match.create(PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE);
     final var entity = new MatchJpaEntity();
     entity.setVersion(7);
     when(mapper.toEntity(match)).thenReturn(entity);
@@ -62,7 +62,7 @@ class JpaMatchRepositoryAdapterTest {
     final var adapter = new JpaMatchRepositoryAdapter(springRepo, mapper,
         mock(JoinCodeRegistryRepository.class));
     final var match = Match.create(PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE);
     when(mapper.toEntity(match)).thenReturn(new MatchJpaEntity());
     when(springRepo.saveAndFlush(any())).thenThrow(
         new ObjectOptimisticLockingFailureException("Match", match.getId().value()));

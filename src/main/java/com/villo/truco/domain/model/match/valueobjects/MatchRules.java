@@ -3,7 +3,7 @@ package com.villo.truco.domain.model.match.valueobjects;
 import com.villo.truco.domain.model.match.exceptions.InvalidMatchRulesException;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 
-public record MatchRules(int gamesToWin) {
+public record MatchRules(int gamesToWin, boolean forfeitsOnInactivity) {
 
   public MatchRules {
 
@@ -13,10 +13,11 @@ public record MatchRules(int gamesToWin) {
 
   }
 
-  public static MatchRules fromGamesToPlay(final GamesToPlay gamesToPlay) {
+  public static MatchRules fromGamesToPlay(final GamesToPlay gamesToPlay,
+      final boolean forfeitsOnInactivity) {
 
     final var gamesToWin = gamesToPlay.value() / 2 + 1;
-    return new MatchRules(gamesToWin);
+    return new MatchRules(gamesToWin, forfeitsOnInactivity);
   }
 
 }

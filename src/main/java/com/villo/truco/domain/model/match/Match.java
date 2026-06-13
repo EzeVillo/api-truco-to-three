@@ -189,6 +189,10 @@ public final class Match extends AggregateBase<MatchId> {
 
   private void refreshActionDeadline() {
 
+    if (!this.rules.forfeitsOnInactivity()) {
+      return;
+    }
+
     final var currentTurn = this.getCurrentTurn();
     if (this.status == MatchStatus.IN_PROGRESS && currentTurn != null) {
       this.addDerivedEvent(new ActionDeadlineSetEvent(this.id, this.playerOne, this.playerTwo,
@@ -495,6 +499,9 @@ public final class Match extends AggregateBase<MatchId> {
 
   public boolean timeoutForfeit() {
 
+    if (!this.rules.forfeitsOnInactivity()) {
+      return false;
+    }
     if (this.isFinished()) {
       return false;
     }
@@ -688,9 +695,9 @@ public final class Match extends AggregateBase<MatchId> {
 
   public List<MatchDomainEvent> getMatchDomainEvents() {
 
-    return getDomainEvents().stream().map(MatchDomainEvent.class::cast).map(event -> {
+    return getDomainEvents().stream().map(MatchDomainEvent.class::cast).peek(event -> {
       event.setMatchStatus(this.status);
-      return event;
+      event.setForfeitsOnInactivity(this.rules.forfeitsOnInactivity());
     }).toList();
   }
 
@@ -875,6 +882,11 @@ public final class Match extends AggregateBase<MatchId> {
   MatchRules getRules() {
 
     return this.rules;
+  }
+
+  public boolean forfeitsOnInactivity() {
+
+    return this.rules.forfeitsOnInactivity();
   }
 
   public int getGamesToPlay() {

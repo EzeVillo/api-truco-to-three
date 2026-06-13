@@ -37,7 +37,7 @@ public final class CreateBotMatchCommandHandler implements CreateBotMatchUseCase
 
     this.playerAvailabilityChecker.ensureAvailable(command.humanPlayerId());
 
-    final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay());
+    final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay(), false);
     final var match = Match.createReady(command.humanPlayerId(), command.botPlayerId(), rules);
 
     match.startMatch(command.humanPlayerId());

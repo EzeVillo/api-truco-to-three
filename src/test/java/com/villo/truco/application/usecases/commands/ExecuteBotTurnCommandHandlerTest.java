@@ -116,7 +116,7 @@ class ExecuteBotTurnCommandHandlerTest {
       final PlayerId rivalPlayer) {
 
     final var match = Match.createReady(botPlayer, rivalPlayer,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     match.startMatch(botPlayer);
     match.startMatch(rivalPlayer);
 
@@ -193,7 +193,7 @@ class ExecuteBotTurnCommandHandlerTest {
     final var botPlayer = PlayerId.generate();
     final var rivalPlayer = PlayerId.generate();
     final var match = Match.createReady(botPlayer, rivalPlayer,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     match.startMatch(botPlayer);
     match.startMatch(rivalPlayer);
 

@@ -32,7 +32,7 @@ class PublicMatchLobbyEventTranslatorTest {
   void publicCreationPublishesGlobalUpsert() {
 
     final var creator = PlayerId.generate();
-    final var match = Match.create(creator, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
+    final var match = Match.create(creator, MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
         Visibility.PUBLIC);
     final var queryRepository = repositoryReturning(match);
     final var published = new ArrayList<ApplicationEvent>();
@@ -54,7 +54,7 @@ class PublicMatchLobbyEventTranslatorTest {
 
     final var creator = PlayerId.generate();
     final var joiner = PlayerId.generate();
-    final var match = Match.create(creator, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
+    final var match = Match.create(creator, MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
         Visibility.PUBLIC);
     match.join(joiner);
 

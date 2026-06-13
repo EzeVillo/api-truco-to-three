@@ -47,6 +47,10 @@ public class MatchTimeoutEventHandler extends AbstractTimeoutEventHandler implem
     if (inner instanceof ActionDeadlineSetEvent || inner instanceof ActionDeadlineClearedEvent) {
       return;
     }
+    if (!event.forfeitsOnInactivity()) {
+      cancelTimeout(EntityType.MATCH, matchId);
+      return;
+    }
     final var status = event.getMatchStatus();
     if (status == null) {
       return;

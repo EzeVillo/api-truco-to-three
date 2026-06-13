@@ -55,7 +55,7 @@ public final class EnqueueForQuickMatchCommandHandler implements EnqueueForQuick
 
     final var opponent = this.queuePort.tryMatchOpponent(playerId, command.gamesToPlay());
     if (opponent.isPresent()) {
-      final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay());
+      final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay(), true);
       final var match = Match.quickMatch(opponent.get().playerId(), playerId, rules);
       this.matchRepository.save(match);
       this.matchEventNotifier.publishDomainEvents(match.getMatchDomainEvents());

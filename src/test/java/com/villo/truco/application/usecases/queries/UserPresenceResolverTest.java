@@ -42,7 +42,7 @@ class UserPresenceResolverTest {
   private static Match unfinishedMatch(final PlayerId player) {
 
     return Match.createReady(player, PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
   }
 
   private static League waitingLeague(final PlayerId player) {

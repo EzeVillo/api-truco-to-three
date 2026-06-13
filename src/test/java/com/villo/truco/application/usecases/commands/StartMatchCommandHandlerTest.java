@@ -232,7 +232,7 @@ class StartMatchCommandHandlerTest {
   @DisplayName("lanza MatchNotFullException cuando playerTwo no se unió")
   void throwsMatchNotFullExceptionWhenPlayerTwoIsAbsent() {
 
-    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
         Visibility.PRIVATE);
     final var savedMatch = new AtomicReference<Match>();
     final var publishedEvents = new ArrayList<MatchDomainEvent>();

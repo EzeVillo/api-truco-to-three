@@ -16,7 +16,7 @@ class MatchStateVersionTest {
   void stateVersionStartsAtZero() {
 
     final var match = Match.create(PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE);
 
     assertThat(match.getStateVersion()).isZero();
   }
@@ -28,7 +28,7 @@ class MatchStateVersionTest {
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
     assertThat(match.getStateVersion()).isZero();
 
@@ -52,7 +52,7 @@ class MatchStateVersionTest {
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
     match.startMatch(playerOne);
 
@@ -68,7 +68,7 @@ class MatchStateVersionTest {
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
     final var original = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     original.startMatch(playerOne);
     original.startMatch(playerTwo);
 
@@ -85,7 +85,7 @@ class MatchStateVersionTest {
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
     match.startMatch(playerOne);
     final var v1 = match.getStateVersion();
@@ -102,7 +102,7 @@ class MatchStateVersionTest {
   void publicLobbyEventDoesNotIncrementStateVersion() {
 
     final var playerOne = PlayerId.generate();
-    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
+    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
         Visibility.PUBLIC);
 
     assertThat(match.getStateVersion()).isZero();

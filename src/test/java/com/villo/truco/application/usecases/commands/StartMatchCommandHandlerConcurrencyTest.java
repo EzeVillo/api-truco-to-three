@@ -282,7 +282,8 @@ class StartMatchCommandHandlerConcurrencyTest {
 
     playerOne = PlayerId.generate();
     playerTwo = PlayerId.generate();
-    match = Match.createReady(playerOne, playerTwo, MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+    match = Match.createReady(playerOne, playerTwo,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     store.put(match.getId(), match);
     versions.put(match.getId(), new AtomicLong(0));
   }

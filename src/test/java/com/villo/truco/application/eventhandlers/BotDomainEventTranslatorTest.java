@@ -147,7 +147,7 @@ class BotDomainEventTranslatorTest {
     final var botPlayer = PlayerId.generate();
     final var translator = new BotDomainEventTranslator(registryWith(botPlayer), publisher);
     final var match = Match.createReady(humanPlayer, botPlayer,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), false));
 
     match.startMatch(humanPlayer);
     match.startMatch(botPlayer);

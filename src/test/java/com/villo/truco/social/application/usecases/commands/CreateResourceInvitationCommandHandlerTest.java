@@ -64,7 +64,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenAnswer(inv -> {
       final Set<PlayerId> ids = inv.getArgument(0);
@@ -107,7 +107,7 @@ class CreateResourceInvitationCommandHandlerTest {
   void rejectsUnknownRecipientUsername() {
 
     final var sender = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(sender, "juancho"));
 
@@ -126,7 +126,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(
         Map.of(sender, "juancho", recipient, "martina"));
@@ -147,7 +147,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(
         Map.of(sender, "juancho", recipient, "martina"));
@@ -171,7 +171,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(
         Map.of(sender, "juancho", recipient, "martina"));
@@ -199,7 +199,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(
         Map.of(sender, "juancho", recipient, "martina"));
@@ -228,7 +228,7 @@ class CreateResourceInvitationCommandHandlerTest {
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
     final var thirdPlayer = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var league = League.create(recipient, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     league.join(sender);
     league.join(thirdPlayer);
@@ -260,7 +260,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var waitingLeague = League.create(recipient, 3, GamesToPlay.of(3), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(
@@ -291,7 +291,7 @@ class CreateResourceInvitationCommandHandlerTest {
     final var recipient = PlayerId.generate();
     final var thirdPlayer = PlayerId.generate();
     final var fourthPlayer = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var cup = Cup.create(recipient, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     cup.join(sender);
     cup.join(thirdPlayer);
@@ -324,7 +324,7 @@ class CreateResourceInvitationCommandHandlerTest {
 
     final var sender = PlayerId.generate();
     final var recipient = PlayerId.generate();
-    final var match = Match.create(sender, new MatchRules(2), Visibility.PRIVATE);
+    final var match = Match.create(sender, new MatchRules(2, true), Visibility.PRIVATE);
     final var waitingCup = Cup.create(recipient, 4, GamesToPlay.of(3), Visibility.PRIVATE);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(

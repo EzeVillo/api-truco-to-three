@@ -23,7 +23,7 @@ class SpectatingEligibilityPolicyTest {
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
     return match;
@@ -101,7 +101,7 @@ class SpectatingEligibilityPolicyTest {
   void rejectsMatchNotInProgress() {
 
     final var match = Match.createReady(PlayerId.generate(), PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     final var policy = new SpectatingEligibilityPolicy((matchId, playerId) -> true,
         (m, spectatorId) -> true);
 

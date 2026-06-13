@@ -22,7 +22,7 @@ public final class FriendActivityTestFixtures {
   public static Match startedMatch(final PlayerId playerOne, final PlayerId playerTwo) {
 
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
     return match;

@@ -29,7 +29,7 @@ public final class CreateMatchCommandHandler implements CreateMatchUseCase {
 
     this.playerAvailabilityChecker.ensureAvailable(command.playerId());
 
-    final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay());
+    final var rules = MatchRules.fromGamesToPlay(command.gamesToPlay(), true);
     final var match = Match.create(command.playerId(), rules, command.visibility());
 
     this.matchRepository.save(match);

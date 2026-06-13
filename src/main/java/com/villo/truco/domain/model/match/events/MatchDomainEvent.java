@@ -14,6 +14,7 @@ public abstract class MatchDomainEvent extends DomainEventBase {
   private final PlayerId playerTwo;
   private long stateVersion;
   private MatchStatus matchStatus;
+  private boolean forfeitsOnInactivity = true;
 
   protected MatchDomainEvent(final String eventType, final MatchId matchId,
       final PlayerId playerOne, final PlayerId playerTwo) {
@@ -57,6 +58,16 @@ public abstract class MatchDomainEvent extends DomainEventBase {
   public void setMatchStatus(final MatchStatus matchStatus) {
 
     this.matchStatus = matchStatus;
+  }
+
+  public boolean forfeitsOnInactivity() {
+
+    return forfeitsOnInactivity;
+  }
+
+  public void setForfeitsOnInactivity(final boolean forfeitsOnInactivity) {
+
+    this.forfeitsOnInactivity = forfeitsOnInactivity;
   }
 
   public PlayerId resolvePlayer(final PlayerSeat seat) {

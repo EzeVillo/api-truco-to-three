@@ -22,10 +22,10 @@ class MatchVisibilityTest {
 
     final var player = PlayerId.generate();
 
-    final var publicMatch = Match.create(player, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
-        Visibility.PUBLIC);
-    final var privateMatch = Match.create(player, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
-        Visibility.PRIVATE);
+    final var publicMatch = Match.create(player,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PUBLIC);
+    final var privateMatch = Match.create(player,
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE);
 
     assertThat(publicMatch.getJoinCode()).isNotNull();
     assertThat(privateMatch.getJoinCode()).isNotNull();
@@ -40,7 +40,7 @@ class MatchVisibilityTest {
   void joinKeepsPrivateMatchManualFlow() {
 
     final var match = Match.create(PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE);
 
     match.join(PlayerId.generate());
 
@@ -55,7 +55,7 @@ class MatchVisibilityTest {
 
     final var playerOne = PlayerId.generate();
     final var playerTwo = PlayerId.generate();
-    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
+    final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
         Visibility.PUBLIC);
 
     match.join(playerTwo);
@@ -75,7 +75,7 @@ class MatchVisibilityTest {
   void publicLobbyOpenDependsOnlyOnAggregateState() {
 
     final var match = Match.create(PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PUBLIC);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PUBLIC);
 
     assertThat(match.isPublicLobbyOpen()).isTrue();
 

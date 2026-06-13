@@ -37,6 +37,9 @@ public class MatchJpaEntity {
   @Column(name = "games_to_win", nullable = false)
   private int gamesToWin;
 
+  @Column(name = "forfeits_on_inactivity", nullable = false)
+  private boolean forfeitsOnInactivity;
+
   @Column(name = "games_won_player_one", nullable = false)
   private int gamesWonPlayerOne;
 
@@ -161,6 +164,16 @@ public class MatchJpaEntity {
   public void setGamesToWin(int gamesToWin) {
 
     this.gamesToWin = gamesToWin;
+  }
+
+  public boolean isForfeitsOnInactivity() {
+
+    return forfeitsOnInactivity;
+  }
+
+  public void setForfeitsOnInactivity(boolean forfeitsOnInactivity) {
+
+    this.forfeitsOnInactivity = forfeitsOnInactivity;
   }
 
   public int getGamesWonPlayerOne() {

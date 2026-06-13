@@ -309,7 +309,7 @@ class SpectateMatchCommandHandlerTest {
     this.playerTwo = PlayerId.generate();
     this.spectator = PlayerId.generate();
     this.match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     this.match.startMatch(playerOne);
     this.match.startMatch(playerTwo);
 
@@ -370,7 +370,7 @@ class SpectateMatchCommandHandlerTest {
   void failsWhenMatchNotInProgress() {
 
     final var readyMatch = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     final var matchRepo = stubMatchRepo(readyMatch);
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),

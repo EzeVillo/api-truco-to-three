@@ -14,7 +14,7 @@ class MatchRulesTest {
   @DisplayName("falla si gamesToWin es menor o igual a cero")
   void failsWhenGamesToWinIsNotPositive() {
 
-    assertThatThrownBy(() -> new MatchRules(0)).isInstanceOf(InvalidMatchRulesException.class)
+    assertThatThrownBy(() -> new MatchRules(0, true)).isInstanceOf(InvalidMatchRulesException.class)
         .hasMessage("gamesToWin must be greater than zero");
   }
 
@@ -22,9 +22,9 @@ class MatchRulesTest {
   @DisplayName("fromGamesToPlay convierte 1, 3 y 5 al gamesToWin esperado")
   void fromGamesToPlayConvertsToExpectedGamesToWin() {
 
-    assertThat(MatchRules.fromGamesToPlay(GamesToPlay.of(1)).gamesToWin()).isEqualTo(1);
-    assertThat(MatchRules.fromGamesToPlay(GamesToPlay.of(3)).gamesToWin()).isEqualTo(2);
-    assertThat(MatchRules.fromGamesToPlay(GamesToPlay.of(5)).gamesToWin()).isEqualTo(3);
+    assertThat(MatchRules.fromGamesToPlay(GamesToPlay.of(1), true).gamesToWin()).isEqualTo(1);
+    assertThat(MatchRules.fromGamesToPlay(GamesToPlay.of(3), true).gamesToWin()).isEqualTo(2);
+    assertThat(MatchRules.fromGamesToPlay(GamesToPlay.of(5), true).gamesToWin()).isEqualTo(3);
   }
 
   @Test

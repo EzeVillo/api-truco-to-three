@@ -56,7 +56,7 @@ class MatchTest {
   private Match matchInProgress() {
 
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
     match.startMatch(playerOne);
     match.startMatch(playerTwo);
     return match;
@@ -152,8 +152,8 @@ class MatchTest {
   private Match matchInProgressWithRound(final Round round) {
 
     return Match.reconstruct(MatchId.generate(), this.playerOne, this.playerTwo, null,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), Visibility.PRIVATE, MatchStatus.IN_PROGRESS,
-        0, 0, 1, 0, 0, 1, true, true, this.playerOne, round, null, 0L);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE,
+        MatchStatus.IN_PROGRESS, 0, 0, 1, 0, 0, 1, true, true, this.playerOne, round, null, 0L);
   }
 
   @Nested
@@ -164,7 +164,7 @@ class MatchTest {
     @DisplayName("crea el match en WAITING_FOR_PLAYERS")
     void createsMatchInWaitingState() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
 
       assertThat(match.getStatus()).isEqualTo(MatchStatus.WAITING_FOR_PLAYERS);
@@ -174,7 +174,7 @@ class MatchTest {
     @DisplayName("inicializa juegos ganados en 0")
     void initializesWinsAtZero() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
 
       assertThat(match.getGamesWonPlayerOne()).isZero();
@@ -185,16 +185,15 @@ class MatchTest {
     @DisplayName("no tiene ganador al crearse")
     void hasNoWinnerOnCreation() {
 
-      assertThat(
-          Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)), Visibility.PRIVATE)
-              .getMatchWinner()).isNull();
+      assertThat(Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
+          Visibility.PRIVATE).getMatchWinner()).isNull();
     }
 
     @Test
     @DisplayName("permite crear match con reglas custom")
     void createsMatchWithCustomRules() {
 
-      final var match = Match.create(playerOne, new MatchRules(1), Visibility.PRIVATE);
+      final var match = Match.create(playerOne, new MatchRules(1, true), Visibility.PRIVATE);
       match.join(playerTwo, match.getJoinCode());
       match.startMatch(playerOne);
       match.startMatch(playerTwo);
@@ -215,7 +214,7 @@ class MatchTest {
     @DisplayName("no arranca el juego todavía — no hay turno asignado")
     void doesNotStartGame() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
       match.join(playerTwo, match.getJoinCode());
 
@@ -226,7 +225,7 @@ class MatchTest {
     @DisplayName("transiciona el estado a READY")
     void transitionsToReady() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
           Visibility.PRIVATE);
       match.join(playerTwo, match.getJoinCode());
 
@@ -237,7 +236,7 @@ class MatchTest {
     @DisplayName("falla si el mismo jugador intenta hacer join")
     void failsIfSamePlayer() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
       assertThatThrownBy(() -> match.join(playerOne, match.getJoinCode())).isInstanceOf(
           SamePlayerMatchException.class);
@@ -247,7 +246,7 @@ class MatchTest {
     @DisplayName("falla si el joinCode no coincide con el esperado")
     void failsIfWrongJoinCode() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
 
       assertThatThrownBy(() -> match.join(playerTwo, JoinCode.generate())).isInstanceOf(
@@ -264,7 +263,7 @@ class MatchTest {
     @DisplayName("lanza MatchNotFullException si no se hizo join antes")
     void failsIfNoJoin() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
           Visibility.PRIVATE);
 
       assertThatThrownBy(() -> match.startMatch(playerOne)).isInstanceOf(
@@ -275,7 +274,7 @@ class MatchTest {
     @DisplayName("un solo jugador ready no inicia el match")
     void singleReadyDoesNotStart() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
       match.join(playerTwo, match.getJoinCode());
       match.startMatch(playerOne);
@@ -309,7 +308,7 @@ class MatchTest {
     @DisplayName("startMatch es idempotente")
     void startMatchIsIdempotent() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
       match.join(playerTwo, match.getJoinCode());
       match.startMatch(playerOne);
@@ -939,7 +938,7 @@ class MatchTest {
     @DisplayName("forfeit en WAITING_FOR_PLAYERS lanza InvalidMatchStateException")
     void forfeitInWaitingForPlayersThrows() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
 
       assertThatThrownBy(() -> match.forfeit(playerOne)).isInstanceOf(
@@ -981,7 +980,7 @@ class MatchTest {
     @DisplayName("cancela un match en WAITING_FOR_PLAYERS")
     void cancelsMatchInWaitingForPlayers() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
 
       match.cancel();
@@ -993,7 +992,7 @@ class MatchTest {
     @DisplayName("emite MatchCancelledEvent al cancelar")
     void emitsMatchCancelledEvent() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
       match.clearDomainEvents();
 
@@ -1006,7 +1005,7 @@ class MatchTest {
     @DisplayName("cancel cuando ya está CANCELLED es idempotente")
     void cancelWhenAlreadyCancelledIsIdempotent() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
       match.cancel();
       match.clearDomainEvents();
@@ -1022,7 +1021,7 @@ class MatchTest {
     void cancelInReadyThrows() {
 
       final var match = Match.createReady(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
 
       assertThatThrownBy(match::cancel).isInstanceOf(InvalidMatchStateException.class);
     }
@@ -1061,7 +1060,7 @@ class MatchTest {
     void readyAbandonThrows() {
 
       final var match = Match.createReady(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
       match.clearDomainEvents();
 
       assertThatThrownBy(() -> match.abandon(playerOne)).isInstanceOf(
@@ -1116,7 +1115,7 @@ class MatchTest {
     @DisplayName("estado WAITING_FOR_PLAYERS → se cancela, retorna true")
     void waitingMatchIsCancelledAndReturnsTrue() {
 
-      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5)),
+      final var match = Match.create(playerOne, MatchRules.fromGamesToPlay(GamesToPlay.of(5), true),
           Visibility.PRIVATE);
 
       final var result = match.timeoutForfeit();
@@ -1147,7 +1146,7 @@ class MatchTest {
     void readyWithP1NotReadyMakesP2Win() {
 
       final var match = Match.createReady(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(5)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5), true));
 
       final var result = match.timeoutForfeit();
 
@@ -1169,6 +1168,36 @@ class MatchTest {
 
       assertThat(result).isFalse();
       assertThat(match.getDomainEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("rules con forfeitsOnInactivity=false → retorna false, no forfeitea aunque sea el turno")
+    void doesNotForfeitWhenInactivityForfeitDisabled() {
+
+      final var match = Match.createReady(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5), false));
+      match.startMatch(playerOne);
+      match.startMatch(playerTwo);
+      match.clearDomainEvents();
+
+      final var result = match.timeoutForfeit();
+
+      assertThat(result).isFalse();
+      assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
+      assertThat(match.getDomainEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("rules con forfeitsOnInactivity=false → no emite ningún evento de deadline")
+    void doesNotEmitActionDeadlineWhenInactivityForfeitDisabled() {
+
+      final var match = Match.createReady(playerOne, playerTwo,
+          MatchRules.fromGamesToPlay(GamesToPlay.of(5), false));
+      match.startMatch(playerOne);
+      match.startMatch(playerTwo);
+
+      assertThat(match.getDomainEvents()).noneMatch(e -> e instanceof ActionDeadlineSetEvent);
+      assertThat(match.getDomainEvents()).noneMatch(e -> e instanceof ActionDeadlineClearedEvent);
     }
 
   }
@@ -1209,7 +1238,7 @@ class MatchTest {
     void createsInProgressPrivateMatch() {
 
       final var match = Match.quickMatch(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
       assertThat(match.getStatus()).isEqualTo(MatchStatus.IN_PROGRESS);
       assertThat(match.getVisibility()).isEqualTo(Visibility.PRIVATE);
@@ -1220,7 +1249,7 @@ class MatchTest {
     void bothPlayersAssigned() {
 
       final var match = Match.quickMatch(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
       assertThat(match.getPlayerOne()).isEqualTo(playerOne);
       assertThat(match.getPlayerTwo()).isEqualTo(playerTwo);
@@ -1231,7 +1260,7 @@ class MatchTest {
     void notInPublicLobby() {
 
       final var match = Match.quickMatch(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
       assertThat(match.isPublicLobbyOpen()).isFalse();
     }
@@ -1241,7 +1270,7 @@ class MatchTest {
     void producesGameStartedEventOnly() {
 
       final var match = Match.quickMatch(playerOne, playerTwo,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
       final var events = match.getMatchDomainEvents();
 
       assertThat(events).anyMatch(
@@ -1255,7 +1284,7 @@ class MatchTest {
     void samePlayerThrows() {
 
       assertThatThrownBy(() -> Match.quickMatch(playerOne, playerOne,
-          MatchRules.fromGamesToPlay(GamesToPlay.of(3)))).isInstanceOf(
+          MatchRules.fromGamesToPlay(GamesToPlay.of(3), true))).isInstanceOf(
           SamePlayerMatchException.class);
     }
 

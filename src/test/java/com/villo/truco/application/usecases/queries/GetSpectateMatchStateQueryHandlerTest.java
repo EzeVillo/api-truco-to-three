@@ -39,7 +39,7 @@ class GetSpectateMatchStateQueryHandlerTest {
     final var playerTwo = PlayerId.generate();
     this.spectator = PlayerId.generate();
     this.match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     this.match.startMatch(playerOne);
     this.match.startMatch(playerTwo);
 

@@ -44,7 +44,7 @@ class StopSpectatingMatchCommandHandlerTest {
     final var playerTwo = PlayerId.generate();
     this.spectator = PlayerId.generate();
     final var match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     this.matchId = match.getId();
 
     this.repository = new InMemorySpectatorshipRepository();

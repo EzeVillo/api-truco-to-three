@@ -16,7 +16,7 @@ final class LeagueMatchActivationSupport {
   static void createAndLinkInitialMatches(final League league,
       final MatchRepository matchRepository, final List<FixtureActivation> activations) {
 
-    final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay());
+    final var matchRules = MatchRules.fromGamesToPlay(league.getGamesToPlay(), true);
 
     for (final var activation : activations) {
       final var match = Match.createReady(activation.playerOne(), activation.playerTwo(),

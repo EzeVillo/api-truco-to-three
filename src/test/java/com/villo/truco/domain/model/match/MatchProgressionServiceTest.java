@@ -16,7 +16,7 @@ class MatchProgressionServiceTest {
     final var playerTwo = PlayerId.generate();
 
     final var result = MatchProgressionService.applyPoints(1, 0, 0, 0, playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), playerOne, 1);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), playerOne, 1);
 
     assertThat(result.scorePlayerOne()).isEqualTo(2);
     assertThat(result.scorePlayerTwo()).isEqualTo(0);
@@ -34,7 +34,7 @@ class MatchProgressionServiceTest {
     final var playerTwo = PlayerId.generate();
 
     final var result = MatchProgressionService.applyPoints(2, 1, 0, 0, playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), playerOne, 1);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), playerOne, 1);
 
     assertThat(result.scorePlayerOne()).isEqualTo(3);
     assertThat(result.scorePlayerTwo()).isEqualTo(1);
@@ -52,7 +52,7 @@ class MatchProgressionServiceTest {
     final var playerTwo = PlayerId.generate();
 
     final var result = MatchProgressionService.applyPoints(2, 2, 0, 0, playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), playerOne, 2);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), playerOne, 2);
 
     assertThat(result.scorePlayerOne()).isEqualTo(4);
     assertThat(result.scorePlayerTwo()).isEqualTo(2);
@@ -70,7 +70,7 @@ class MatchProgressionServiceTest {
     final var playerTwo = PlayerId.generate();
 
     final var result = MatchProgressionService.applyPoints(2, 0, 1, 0, playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)), playerOne, 1);
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), playerOne, 1);
 
     assertThat(result.scorePlayerOne()).isEqualTo(3);
     assertThat(result.scorePlayerTwo()).isEqualTo(0);

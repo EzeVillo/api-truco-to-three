@@ -1,5 +1,6 @@
 package com.villo.truco.application.eventhandlers;
 
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.out.RematchSessionDomainEventHandler;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
@@ -22,16 +23,19 @@ public final class RematchSessionConfirmedMatchCreator implements
   private final MatchEventNotifier matchEventNotifier;
   private final RematchSessionRepository rematchSessionRepository;
   private final RematchSessionEventNotifier rematchSessionEventNotifier;
+  private final BotRegistry botRegistry;
 
   public RematchSessionConfirmedMatchCreator(final MatchRepository matchRepository,
       final MatchEventNotifier matchEventNotifier,
       final RematchSessionRepository rematchSessionRepository,
-      final RematchSessionEventNotifier rematchSessionEventNotifier) {
+      final RematchSessionEventNotifier rematchSessionEventNotifier,
+      final BotRegistry botRegistry) {
 
     this.matchRepository = Objects.requireNonNull(matchRepository);
     this.matchEventNotifier = Objects.requireNonNull(matchEventNotifier);
     this.rematchSessionRepository = Objects.requireNonNull(rematchSessionRepository);
     this.rematchSessionEventNotifier = Objects.requireNonNull(rematchSessionEventNotifier);
+    this.botRegistry = Objects.requireNonNull(botRegistry);
   }
 
   @Override
@@ -56,7 +60,10 @@ public final class RematchSessionConfirmedMatchCreator implements
       return;
     }
 
-    final var rules = new MatchRules(confirmed.getGamesToWin());
+    final var forfeitsOnInactivity =
+        !this.botRegistry.isBot(confirmed.getNewPlayerOneId()) && !this.botRegistry.isBot(
+            confirmed.getNewPlayerTwoId());
+    final var rules = new MatchRules(confirmed.getGamesToWin(), forfeitsOnInactivity);
     final var match = Match.createReady(confirmed.getNewMatchId(), confirmed.getNewPlayerOneId(),
         confirmed.getNewPlayerTwoId(), rules);
 

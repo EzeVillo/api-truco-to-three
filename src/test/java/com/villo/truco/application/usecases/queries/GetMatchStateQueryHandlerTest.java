@@ -35,7 +35,7 @@ class GetMatchStateQueryHandlerTest {
     this.playerOne = PlayerId.generate();
     this.playerTwo = PlayerId.generate();
     this.match = Match.createReady(playerOne, playerTwo,
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3)));
+        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
     final MatchQueryRepository queryRepo = new MatchQueryRepository() {
 
