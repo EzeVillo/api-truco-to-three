@@ -10,7 +10,8 @@ public final class CampaignProgressRehydrator {
 
     return CampaignProgress.reconstruct(snapshot.playerId(), snapshot.points(),
         snapshot.activeChallenge(), snapshot.rivalRecords(), snapshot.topOneReached(),
-        snapshot.allRivalsDefeated());
+        snapshot.allRivalsDefeated(), snapshot.unlockedCasualBots(),
+        snapshot.allCasualBotsUnlocked());
   }
 
 }

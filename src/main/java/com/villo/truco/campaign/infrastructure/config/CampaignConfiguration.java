@@ -7,6 +7,7 @@ import com.villo.truco.campaign.application.ports.out.CampaignDomainEventHandler
 import com.villo.truco.campaign.application.services.CampaignChallengeResolutionService;
 import com.villo.truco.campaign.application.services.CampaignHiddenBotIdsProvider;
 import com.villo.truco.campaign.application.services.CampaignRematchVeto;
+import com.villo.truco.campaign.application.services.CampaignRevealedBotIdsProvider;
 import com.villo.truco.campaign.application.services.CampaignUserGuard;
 import com.villo.truco.campaign.application.usecases.commands.StartCampaignChallengeCommandHandler;
 import com.villo.truco.campaign.application.usecases.commands.StartCampaignChallengeUseCase;
@@ -91,6 +92,12 @@ public class CampaignConfiguration {
   CampaignHiddenBotIdsProvider campaignHiddenBotIdsProvider() {
 
     return new CampaignHiddenBotIdsProvider(campaignBotCatalog());
+  }
+
+  @Bean
+  CampaignRevealedBotIdsProvider campaignRevealedBotIdsProvider() {
+
+    return new CampaignRevealedBotIdsProvider(this.campaignProgressRepository);
   }
 
   @Bean

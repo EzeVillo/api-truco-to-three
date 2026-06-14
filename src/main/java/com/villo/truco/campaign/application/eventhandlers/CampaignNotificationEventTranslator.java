@@ -3,6 +3,7 @@ package com.villo.truco.campaign.application.eventhandlers;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.campaign.application.events.CampaignEventNotification;
 import com.villo.truco.campaign.application.ports.out.CampaignDomainEventHandler;
+import com.villo.truco.campaign.domain.model.events.CampaignBotUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeLostEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeWonEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignDomainEvent;
@@ -17,6 +18,7 @@ public final class CampaignNotificationEventTranslator implements
     CampaignDomainEventHandler<CampaignDomainEvent> {
 
   private static final String MATCH_POINTS_EVENT_TYPE = "CAMPAIGN_MATCH_POINTS";
+  private static final String BOT_UNLOCKED_EVENT_TYPE = "CAMPAIGN_BOT_UNLOCKED";
 
   private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -43,9 +45,24 @@ public final class CampaignNotificationEventTranslator implements
       case CampaignChallengeLostEvent e ->
           this.publish(e.getPlayerId(), e.getTimestamp(), e.getRivalId(), e.getMatchId(), false, 0,
               e.getTotalPoints(), e.getPreviousPosition(), e.getNewPosition());
+      case CampaignBotUnlockedForCasualEvent e ->
+          this.publishBotUnlocked(e.getPlayerId(), e.getTimestamp(), e.getRivalId(),
+              e.getMatchId());
       default -> {
       }
     }
+  }
+
+  private void publishBotUnlocked(final PlayerId playerId, final long timestamp,
+      final PlayerId rivalId, final MatchId matchId) {
+
+    final Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("botId", rivalId.value().toString());
+    payload.put("matchId", matchId.value().toString());
+
+    this.applicationEventPublisher.publish(
+        new CampaignEventNotification(List.of(playerId), BOT_UNLOCKED_EVENT_TYPE, timestamp,
+            payload));
   }
 
   private void publish(final PlayerId playerId, final long timestamp, final PlayerId rivalId,

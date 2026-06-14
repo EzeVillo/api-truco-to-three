@@ -3,7 +3,9 @@ package com.villo.truco.campaign.domain.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.villo.truco.campaign.domain.model.events.AllCampaignBotsUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignAllRivalsDefeatedEvent;
+import com.villo.truco.campaign.domain.model.events.CampaignBotUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeLostEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeStartedEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeWonEvent;
@@ -221,6 +223,91 @@ class CampaignProgressTest {
     progress.startChallenge(bottom, MatchId.generate(), ladder);
 
     assertThat(progress.getActiveChallenge().rivalId()).isEqualTo(bottom.playerId());
+  }
+
+  @Test
+  @DisplayName("un bot se desbloquea para casual al llegar a neto +3 a favor, una sola vez")
+  void botUnlockedForCasualWhenNetReachesThree() {
+
+    final var progress = CampaignProgress.create(playerId);
+    reachTopOne(progress);
+
+    beatRivalOn(progress, bottom, ladder);
+    progress.clearDomainEvents();
+    assertThat(progress.getUnlockedCasualBots()).doesNotContain(bottom.playerId());
+
+    beatRivalOn(progress, bottom, ladder);
+
+    assertThat(progress.getUnlockedCasualBots()).contains(bottom.playerId());
+    assertThat(progress.getCampaignDomainEvents()).filteredOn(
+            CampaignBotUnlockedForCasualEvent.class::isInstance).singleElement()
+        .isInstanceOfSatisfying(CampaignBotUnlockedForCasualEvent.class,
+            event -> assertThat(event.getRivalId()).isEqualTo(bottom.playerId()));
+
+    progress.clearDomainEvents();
+    beatRivalOn(progress, bottom, ladder);
+
+    assertThat(progress.getCampaignDomainEvents()).filteredOn(
+        CampaignBotUnlockedForCasualEvent.class::isInstance).isEmpty();
+  }
+
+  @Test
+  @DisplayName("perder tras desbloquear un bot no revierte el desbloqueo aunque el neto baje de 3")
+  void unlockIsPermanentEvenIfNetDropsBelowThree() {
+
+    final var progress = CampaignProgress.create(playerId);
+    reachTopOne(progress);
+    beatRivalOn(progress, bottom, ladder);
+    beatRivalOn(progress, bottom, ladder);
+
+    assertThat(progress.getUnlockedCasualBots()).contains(bottom.playerId());
+
+    final var lossMatch = MatchId.generate();
+    progress.startChallenge(bottom, lossMatch, ladder);
+    progress.resolveChallengeLost(lossMatch, ladder);
+
+    assertThat(progress.getRivalRecords().get(bottom.playerId()).net()).isLessThan(3);
+    assertThat(progress.getUnlockedCasualBots()).contains(bottom.playerId());
+  }
+
+  @Test
+  @DisplayName("desbloquear a todos los rivales emite el evento de todos desbloqueados una sola vez")
+  void allBotsUnlockedEmittedOnce() {
+
+    final var progress = CampaignProgress.create(playerId);
+    reachTopOne(progress);
+
+    grindToUnlock(progress, bottom);
+    grindToUnlock(progress, middle);
+    assertThat(progress.isAllCasualBotsUnlocked()).isFalse();
+
+    grindToUnlock(progress, top);
+
+    assertThat(progress.isAllCasualBotsUnlocked()).isTrue();
+    assertThat(progress.getCampaignDomainEvents()).filteredOn(
+        AllCampaignBotsUnlockedForCasualEvent.class::isInstance).hasSize(1);
+
+    progress.clearDomainEvents();
+    beatRivalOn(progress, bottom, ladder);
+
+    assertThat(progress.getCampaignDomainEvents()).filteredOn(
+        AllCampaignBotsUnlockedForCasualEvent.class::isInstance).isEmpty();
+  }
+
+  private void reachTopOne(final CampaignProgress progress) {
+
+    beatRival(progress, bottom, 3, 0);
+    beatRival(progress, middle, 3, 0);
+    beatRival(progress, top, 3, 0);
+    beatRival(progress, top, 3, 0);
+    progress.clearDomainEvents();
+  }
+
+  private void grindToUnlock(final CampaignProgress progress, final CampaignBot rival) {
+
+    while (!progress.getUnlockedCasualBots().contains(rival.playerId())) {
+      beatRivalOn(progress, rival, ladder);
+    }
   }
 
   private void beatRival(final CampaignProgress progress, final CampaignBot rival,

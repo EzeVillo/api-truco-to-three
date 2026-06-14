@@ -28,4 +28,14 @@ public record CampaignRivalRecord(int wins, int losses) {
     return this.wins > 0;
   }
 
+  public int net() {
+
+    return this.wins - this.losses;
+  }
+
+  public boolean isFavorableBy(final int threshold) {
+
+    return this.net() >= threshold;
+  }
+
 }

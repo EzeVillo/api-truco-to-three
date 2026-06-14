@@ -1,5 +1,6 @@
 package com.villo.truco.profile.application.services;
 
+import com.villo.truco.campaign.domain.model.events.AllCampaignBotsUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignAllRivalsDefeatedEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignDomainEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignTopOneReachedEvent;
@@ -30,6 +31,9 @@ public final class ProfileCampaignAchievementService {
           this.unlock(e, AchievementCode.REACH_CAMPAIGN_TOP_ONE, e.getMatchId(), e.getGameNumber());
       case CampaignAllRivalsDefeatedEvent e ->
           this.unlock(e, AchievementCode.DEFEAT_ALL_CAMPAIGN_RIVALS, e.getMatchId(),
+              e.getGameNumber());
+      case AllCampaignBotsUnlockedForCasualEvent e ->
+          this.unlock(e, AchievementCode.UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL, e.getMatchId(),
               e.getGameNumber());
       default -> {
       }

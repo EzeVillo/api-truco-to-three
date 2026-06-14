@@ -11,7 +11,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -37,10 +39,18 @@ public class CampaignProgressJpaEntity {
   @Column(name = "all_rivals_defeated", nullable = false)
   private boolean allRivalsDefeated;
 
+  @Column(name = "all_casual_bots_unlocked", nullable = false)
+  private boolean allCasualBotsUnlocked;
+
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "campaign_rival_records", joinColumns = @JoinColumn(name = "player_id"), uniqueConstraints = @UniqueConstraint(columnNames = {
       "player_id", "rival_id"}))
   private List<CampaignRivalRecordJpaEmbeddable> rivalRecords = new ArrayList<>();
+
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "campaign_unlocked_casual_bots", joinColumns = @JoinColumn(name = "player_id"))
+  @Column(name = "bot_id", nullable = false)
+  private Set<UUID> unlockedCasualBots = new LinkedHashSet<>();
 
   @Version
   private int version;
@@ -105,6 +115,16 @@ public class CampaignProgressJpaEntity {
     this.allRivalsDefeated = allRivalsDefeated;
   }
 
+  public boolean isAllCasualBotsUnlocked() {
+
+    return this.allCasualBotsUnlocked;
+  }
+
+  public void setAllCasualBotsUnlocked(final boolean allCasualBotsUnlocked) {
+
+    this.allCasualBotsUnlocked = allCasualBotsUnlocked;
+  }
+
   public List<CampaignRivalRecordJpaEmbeddable> getRivalRecords() {
 
     return this.rivalRecords;
@@ -113,6 +133,16 @@ public class CampaignProgressJpaEntity {
   public void setRivalRecords(final List<CampaignRivalRecordJpaEmbeddable> rivalRecords) {
 
     this.rivalRecords = rivalRecords;
+  }
+
+  public Set<UUID> getUnlockedCasualBots() {
+
+    return this.unlockedCasualBots;
+  }
+
+  public void setUnlockedCasualBots(final Set<UUID> unlockedCasualBots) {
+
+    this.unlockedCasualBots = unlockedCasualBots;
   }
 
   public int getVersion() {

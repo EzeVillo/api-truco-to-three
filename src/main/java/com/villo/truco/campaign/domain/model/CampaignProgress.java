@@ -1,6 +1,8 @@
 package com.villo.truco.campaign.domain.model;
 
+import com.villo.truco.campaign.domain.model.events.AllCampaignBotsUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignAllRivalsDefeatedEvent;
+import com.villo.truco.campaign.domain.model.events.CampaignBotUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeLostEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeStartedEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeWonEvent;
@@ -17,18 +19,24 @@ import com.villo.truco.domain.shared.AggregateBase;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 public final class CampaignProgress extends AggregateBase<PlayerId> {
 
+  static final int CASUAL_UNLOCK_THRESHOLD = 3;
+
   private final Map<PlayerId, CampaignRivalRecord> rivalRecords = new LinkedHashMap<>();
+  private final Set<PlayerId> unlockedCasualBots = new LinkedHashSet<>();
   private CampaignPoints points = CampaignPoints.ZERO;
   private CampaignChallenge activeChallenge;
   private boolean topOneReached;
   private boolean allRivalsDefeated;
+  private boolean allCasualBotsUnlocked;
 
   private CampaignProgress(final PlayerId playerId) {
 
@@ -43,7 +51,8 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
   static CampaignProgress reconstruct(final PlayerId playerId, final CampaignPoints points,
       final CampaignChallenge activeChallenge,
       final Map<PlayerId, CampaignRivalRecord> rivalRecords, final boolean topOneReached,
-      final boolean allRivalsDefeated) {
+      final boolean allRivalsDefeated, final Set<PlayerId> unlockedCasualBots,
+      final boolean allCasualBotsUnlocked) {
 
     final var progress = new CampaignProgress(playerId);
     progress.points = Objects.requireNonNull(points);
@@ -51,6 +60,8 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
     progress.rivalRecords.putAll(rivalRecords);
     progress.topOneReached = topOneReached;
     progress.allRivalsDefeated = allRivalsDefeated;
+    progress.unlockedCasualBots.addAll(unlockedCasualBots);
+    progress.allCasualBotsUnlocked = allCasualBotsUnlocked;
     return progress;
   }
 
@@ -135,6 +146,28 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
       this.allRivalsDefeated = true;
       this.addDomainEvent(new CampaignAllRivalsDefeatedEvent(this.id, matchId, decidingGameNumber));
     }
+
+    this.evaluateCasualUnlocks(challenge.rivalId(), matchId, decidingGameNumber, ladder);
+  }
+
+  private void evaluateCasualUnlocks(final PlayerId rivalId, final MatchId matchId,
+      final int decidingGameNumber, final CampaignLadder ladder) {
+
+    final var record = this.rivalRecords.getOrDefault(rivalId, CampaignRivalRecord.EMPTY);
+    if (!record.isFavorableBy(CASUAL_UNLOCK_THRESHOLD) || this.unlockedCasualBots.contains(
+        rivalId)) {
+      return;
+    }
+
+    this.unlockedCasualBots.add(rivalId);
+    this.addDomainEvent(
+        new CampaignBotUnlockedForCasualEvent(this.id, rivalId, matchId, decidingGameNumber));
+
+    if (!this.allCasualBotsUnlocked && this.unlockedCasualBots.size() == ladder.bots().size()) {
+      this.allCasualBotsUnlocked = true;
+      this.addDomainEvent(
+          new AllCampaignBotsUnlockedForCasualEvent(this.id, matchId, decidingGameNumber));
+    }
   }
 
   public void resolveChallengeLost(final MatchId matchId, final CampaignLadder ladder) {
@@ -199,6 +232,16 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
     return this.allRivalsDefeated;
   }
 
+  public Set<PlayerId> getUnlockedCasualBots() {
+
+    return Set.copyOf(this.unlockedCasualBots);
+  }
+
+  public boolean isAllCasualBotsUnlocked() {
+
+    return this.allCasualBotsUnlocked;
+  }
+
   public List<CampaignDomainEvent> getCampaignDomainEvents() {
 
     return this.getDomainEvents().stream().map(CampaignDomainEvent.class::cast).toList();
@@ -207,7 +250,8 @@ public final class CampaignProgress extends AggregateBase<PlayerId> {
   public CampaignProgressSnapshot snapshot() {
 
     return new CampaignProgressSnapshot(this.id, this.points, this.activeChallenge,
-        new LinkedHashMap<>(this.rivalRecords), this.topOneReached, this.allRivalsDefeated);
+        new LinkedHashMap<>(this.rivalRecords), this.topOneReached, this.allRivalsDefeated,
+        new LinkedHashSet<>(this.unlockedCasualBots), this.allCasualBotsUnlocked);
   }
 
 }

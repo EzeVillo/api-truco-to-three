@@ -4,8 +4,9 @@ import com.villo.truco.application.commands.CreateBotMatchCommand;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
 import com.villo.truco.application.queries.GetBotsQuery;
+import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.http.dto.request.CreateBotMatchRequest;
-import com.villo.truco.infrastructure.http.dto.response.BotProfileResponse;
+import com.villo.truco.infrastructure.http.dto.response.BotCatalogResponse;
 import com.villo.truco.infrastructure.http.dto.response.CreateBotMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Objects;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,14 +42,13 @@ public class BotController {
   }
 
   @GetMapping("/bots")
-  @Operation(summary = "Listar bots disponibles", description = "Devuelve todos los bots predefinidos con sus stats de personalidad", security = @SecurityRequirement(name = "bearerAuth"))
+  @Operation(summary = "Listar bots disponibles", description = "Devuelve los bots casuales y los bots de campaña desbloqueados por el jugador (historial neto ≥ 3 a favor)", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Lista de bots", content = @Content(schema = @Schema(implementation = BotProfileResponse.class)))})
-  public ResponseEntity<List<BotProfileResponse>> getBots() {
+      @ApiResponse(responseCode = "200", description = "Catálogo de bots", content = @Content(schema = @Schema(implementation = BotCatalogResponse.class)))})
+  public ResponseEntity<BotCatalogResponse> getBots(@AuthenticationPrincipal final Jwt jwt) {
 
-    final var bots = this.getBots.handle(new GetBotsQuery()).stream().map(BotProfileResponse::from)
-        .toList();
-    return ResponseEntity.ok(bots);
+    final var catalog = this.getBots.handle(new GetBotsQuery(PlayerId.of(jwt.getSubject())));
+    return ResponseEntity.ok(BotCatalogResponse.from(catalog));
   }
 
   @PostMapping("/matches/bot")

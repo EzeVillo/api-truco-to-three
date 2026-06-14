@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.config;
 import com.villo.truco.application.eventhandlers.BotDomainEventTranslator;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.HiddenBotIdsProvider;
+import com.villo.truco.application.ports.RevealedBotIdsProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
@@ -107,9 +108,11 @@ public class BotConfiguration {
   }
 
   @Bean
-  GetBotsUseCase getBotsQueryHandler(final List<HiddenBotIdsProvider> hiddenBotIdsProviders) {
+  GetBotsUseCase getBotsQueryHandler(final List<HiddenBotIdsProvider> hiddenBotIdsProviders,
+      final List<RevealedBotIdsProvider> revealedBotIdsProviders) {
 
-    return new GetBotsQueryHandler(this.botRegistry, hiddenBotIdsProviders);
+    return new GetBotsQueryHandler(this.botRegistry, hiddenBotIdsProviders,
+        revealedBotIdsProviders);
   }
 
   @Bean

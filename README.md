@@ -116,7 +116,10 @@ games.
   total acumulado y el movimiento de posicion. Desbloquea los logros `REACH_CAMPAIGN_TOP_ONE`
   (llegar al `#1`) y `DEFEAT_ALL_CAMPAIGN_RIVALS` (ganarle al menos una vez a cada uno de los `100`
   bots; como subir el ranking puede saltear rivales, exige volver despues del `#1` por los
-  pendientes).
+  pendientes). Ademas, tener historial neto `>= 3` a favor (`wins - losses`) contra un bot lo
+  **desbloquea de forma permanente para el modo casual** (aparece en la lista `campaignUnlocked` de
+  `GET /api/bots` y emite `CAMPAIGN_BOT_UNLOCKED`); las partidas casuales no afectan el head-to-head
+  de campaña. Desbloquear los `100` otorga `UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL`.
 - Quick Match:
   emparejamiento automatico por `gamesToPlay`. El jugador entra a una cola efimera en memoria; si
   ya hay un oponente esperando con la misma configuracion, se crea una partida `PRIVATE` que arranca
@@ -338,7 +341,8 @@ Recursos REST principales:
 - `/api/cups`
 - `/api/chats`
 - `/api/social`
-- `/api/bots`
+- `/api/bots` — `GET` devuelve `{ casual, campaignUnlocked }`: los bots casuales y los bots de
+  campaña que el jugador desbloqueó (historial neto `>= 3` a favor)
 - `/api/campaign` — modo campaña: `GET` devuelve el ranking de `100` bots + el jugador y su
   progreso; `POST /api/campaign/challenges` crea el match al mejor de `5` contra el rival
   desafiable (el inmediato superior, o cualquiera si ya se alcanzó el `#1`)

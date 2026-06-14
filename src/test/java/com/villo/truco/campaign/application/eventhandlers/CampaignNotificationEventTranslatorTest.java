@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.villo.truco.application.events.ApplicationEvent;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.campaign.application.events.CampaignEventNotification;
+import com.villo.truco.campaign.domain.model.events.CampaignBotUnlockedForCasualEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeLostEvent;
 import com.villo.truco.campaign.domain.model.events.CampaignChallengeWonEvent;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
@@ -57,6 +58,24 @@ class CampaignNotificationEventTranslatorTest {
           assertThat(notification.payload()).containsEntry("won", false)
               .containsEntry("pointsAwarded", 0).containsEntry("totalPoints", 100)
               .containsEntry("previousPosition", 3).containsEntry("newPosition", 3);
+        });
+  }
+
+  @Test
+  @DisplayName("desbloquear un bot para casual emite CAMPAIGN_BOT_UNLOCKED con botId y matchId")
+  void botUnlockedPublishesNotification() {
+
+    final var publisher = new RecordingPublisher();
+    final var translator = new CampaignNotificationEventTranslator(publisher);
+
+    translator.handle(new CampaignBotUnlockedForCasualEvent(playerId, rivalId, matchId, 5));
+
+    assertThat(publisher.events()).singleElement()
+        .isInstanceOfSatisfying(CampaignEventNotification.class, notification -> {
+          assertThat(notification.recipients()).containsExactly(playerId);
+          assertThat(notification.eventType()).isEqualTo("CAMPAIGN_BOT_UNLOCKED");
+          assertThat(notification.payload()).containsEntry("botId", rivalId.value().toString())
+              .containsEntry("matchId", matchId.value().toString());
         });
   }
 

@@ -11,7 +11,10 @@ import com.villo.truco.campaign.infrastructure.persistence.entities.CampaignRiva
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -39,8 +42,11 @@ public class CampaignProgressMapper {
     }
     entity.setTopOneReached(snapshot.topOneReached());
     entity.setAllRivalsDefeated(snapshot.allRivalsDefeated());
+    entity.setAllCasualBotsUnlocked(snapshot.allCasualBotsUnlocked());
     entity.setRivalRecords(snapshot.rivalRecords().entrySet().stream()
         .map(entry -> toEmbeddable(entry.getKey(), entry.getValue())).toList());
+    entity.setUnlockedCasualBots(snapshot.unlockedCasualBots().stream().map(PlayerId::value)
+        .collect(Collectors.toCollection(LinkedHashSet::new)));
     entity.setVersion((int) progress.getVersion());
     return entity;
   }
@@ -57,9 +63,13 @@ public class CampaignProgressMapper {
         : new CampaignChallenge(new MatchId(entity.getActiveChallengeMatchId()),
             new PlayerId(entity.getActiveChallengeRivalId()));
 
+    final Set<PlayerId> unlockedCasualBots = entity.getUnlockedCasualBots().stream()
+        .map(PlayerId::new).collect(Collectors.toCollection(LinkedHashSet::new));
+
     final var snapshot = new CampaignProgressSnapshot(new PlayerId(entity.getPlayerId()),
         new CampaignPoints(entity.getPoints()), activeChallenge, rivalRecords,
-        entity.isTopOneReached(), entity.isAllRivalsDefeated());
+        entity.isTopOneReached(), entity.isAllRivalsDefeated(), unlockedCasualBots,
+        entity.isAllCasualBotsUnlocked());
     final var progress = CampaignProgressRehydrator.rehydrate(snapshot);
     progress.setVersion(entity.getVersion());
     return progress;
