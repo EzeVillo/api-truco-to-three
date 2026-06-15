@@ -347,6 +347,18 @@ nunca dentro de la transacción. Se logra implementando `PostCommitApplicationEv
 atómicas en otro agregado (avance de liga/copa, logros, creación de sesión de rematch) NO se mueven
 a post-commit — partirían la atomicidad. Solo la notificación derivada va post-commit.
 
+### Registro de partidas: decorator post-commit por fuera del pipeline
+
+El registro de cada decisión jugable (`match_action_log`, feature 015) se captura con
+`GameplayRecordingDecorator`, que envuelve a los 6 use cases de acción **por fuera** del
+`retryTransactionalPipeline` en `MatchUseCaseConfiguration`
+(`recordingDecorator.decorate(retryTransactionalPipeline.wrap(handler))`). Así su lógica corre
+**después del commit** de la jugada y el adapter (`JpaGameplayRecorderAdapter`) escribe en su **propia
+transacción**; un fallo de registro se traga y loguea (FR-010), nunca revierte ni interrumpe la jugada.
+Como humano y bot ejecutan a través de esos mismos beans, ambos quedan registrados sin instrumentación
+específica del bot. El estado se reusa del read-model `MatchSnapshot` (no es un agregado nuevo). No
+mover esa captura dentro del pipeline ni al `ExecuteBotTurnUseCase` (orquestador).
+
 ### Fase de timeout: derivar del MatchStatus, no del tipo de evento
 
 La fase de timeout de un match (LOBBY / PLAY / NONE) DEBE derivarse del `MatchStatus` real,

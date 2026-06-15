@@ -30,8 +30,8 @@ Backend único Hexagonal + DDD: código en `src/main/java/com/villo/truco/`, tes
 
 **Purpose**: Confirmar baseline verde y anclar el número de migración antes de tocar código.
 
-- [ ] T001 Ejecutar `./gradlew test` y confirmar suite verde (incl. `CleanArchitectureTest` y JaCoCo ≥70%) como línea base
-- [ ] T002 Confirmar que la última migración Flyway es `V21__campaign_unlocked_casual_bots.sql` en `src/main/resources/db/migration/`, de modo que la nueva sea `V22` (reverificar contra la branch antes de crear el archivo)
+- [X] T001 Ejecutar `./gradlew test` y confirmar suite verde (incl. `CleanArchitectureTest` y JaCoCo ≥70%) como línea base
+- [X] T002 Confirmar que la última migración Flyway es `V21__campaign_unlocked_casual_bots.sql` en `src/main/resources/db/migration/`, de modo que la nueva sea `V22` (reverificar contra la branch antes de crear el archivo)
 
 ---
 
@@ -41,14 +41,14 @@ Backend único Hexagonal + DDD: código en `src/main/java/com/villo/truco/`, tes
 
 **⚠️ CRITICAL**: Ninguna user story puede empezar hasta completar esta fase.
 
-- [ ] T003 [P] Crear enum `RecordedActionType` (`PLAY_CARD`, `CALL_TRUCO`, `RESPOND_TRUCO`, `CALL_ENVIDO`, `RESPOND_ENVIDO`, `FOLD`) en `src/main/java/com/villo/truco/domain/model/gameplay/RecordedActionType.java`
-- [ ] T004 [P] Crear enum `ActorType` (`HUMAN`, `BOT`) en `src/main/java/com/villo/truco/domain/model/gameplay/ActorType.java`
-- [ ] T005 [P] Crear enum `ActorSeat` (`PLAYER_ONE`, `PLAYER_TWO`) en `src/main/java/com/villo/truco/domain/model/gameplay/ActorSeat.java`
-- [ ] T006 [P] Crear VO `RecordedAction` (`type: RecordedActionType` + `detail` mínimo nullable) en `src/main/java/com/villo/truco/domain/model/gameplay/RecordedAction.java` (usa T003)
-- [ ] T007 Crear VO `RecordedDecision` (matchId, stateVersion, gameNumber, roundNumber, actorSeat, actorType, action, snapshot `MatchSnapshot`, occurredAt, schemaVersion) en `src/main/java/com/villo/truco/domain/model/gameplay/RecordedDecision.java` (usa T004, T005, T006 y `MatchSnapshot`)
-- [ ] T008 Crear puerto de salida `GameplayRecorderPort` (`void record(RecordedDecision)`) en `src/main/java/com/villo/truco/domain/ports/GameplayRecorderPort.java` (usa T007)
-- [ ] T009 Crear marker interface `MatchActionCommand` (`MatchId matchId()`, `PlayerId playerId()`) en `src/main/java/com/villo/truco/application/commands/MatchActionCommand.java`
-- [ ] T010 Hacer que los 6 commands implementen `MatchActionCommand` (`implements MatchActionCommand`, ya exponen `matchId()`/`playerId()`) en `PlayCardCommand.java`, `CallTrucoCommand.java`, `RespondTrucoCommand.java`, `CallEnvidoCommand.java`, `RespondEnvidoCommand.java`, `FoldCommand.java` de `src/main/java/com/villo/truco/application/commands/` (usa T009)
+- [X] T003 [P] Crear enum `RecordedActionType` (`PLAY_CARD`, `CALL_TRUCO`, `RESPOND_TRUCO`, `CALL_ENVIDO`, `RESPOND_ENVIDO`, `FOLD`) en `src/main/java/com/villo/truco/domain/model/gameplay/RecordedActionType.java`
+- [X] T004 [P] Crear enum `ActorType` (`HUMAN`, `BOT`) en `src/main/java/com/villo/truco/domain/model/gameplay/ActorType.java`
+- [X] T005 [P] Crear enum `ActorSeat` (`PLAYER_ONE`, `PLAYER_TWO`) en `src/main/java/com/villo/truco/domain/model/gameplay/ActorSeat.java`
+- [X] T006 [P] Crear VO `RecordedAction` (`type: RecordedActionType` + `detail` mínimo nullable) en `src/main/java/com/villo/truco/domain/model/gameplay/RecordedAction.java` (usa T003)
+- [X] T007 Crear VO `RecordedDecision` (matchId, stateVersion, gameNumber, roundNumber, actorSeat, actorType, action, snapshot `MatchSnapshot`, occurredAt, schemaVersion) en `src/main/java/com/villo/truco/domain/model/gameplay/RecordedDecision.java` (usa T004, T005, T006 y `MatchSnapshot`)
+- [X] T008 Crear puerto de salida `GameplayRecorderPort` (`void record(RecordedDecision)`) en `src/main/java/com/villo/truco/domain/ports/GameplayRecorderPort.java` (usa T007)
+- [X] T009 Crear marker interface `MatchActionCommand` (`MatchId matchId()`, `PlayerId playerId()`) en `src/main/java/com/villo/truco/application/commands/MatchActionCommand.java`
+- [X] T010 Hacer que los 6 commands implementen `MatchActionCommand` (`implements MatchActionCommand`, ya exponen `matchId()`/`playerId()`) en `PlayCardCommand.java`, `CallTrucoCommand.java`, `RespondTrucoCommand.java`, `CallEnvidoCommand.java`, `RespondEnvidoCommand.java`, `FoldCommand.java` de `src/main/java/com/villo/truco/application/commands/` (usa T009)
 
 **Checkpoint**: Dominio + puerto + marker listos — las user stories pueden comenzar.
 
@@ -64,20 +64,20 @@ Backend único Hexagonal + DDD: código en `src/main/java/com/villo/truco/`, tes
 
 > Escribir estos tests PRIMERO y verificar que FALLAN antes de implementar.
 
-- [ ] T011 [P] [US1] Test de `RecordedActionFactory`: mapea cada uno de los 6 commands a su `RecordedActionType` + detalle, en `src/test/java/com/villo/truco/application/usecases/recording/RecordedActionFactoryTest.java`
-- [ ] T012 [P] [US1] Test de `GameplayRecordingDecorator`: registra tras `handle` exitoso; deriva `actorType` (vía `BotRegistry`) y `actorSeat` (comparando con `snapshot`); NO registra si el delegate lanza; **traga y loguea** si el puerto lanza, en `src/test/java/com/villo/truco/application/usecases/recording/GameplayRecordingDecoratorTest.java`
-- [ ] T013 [P] [US1] Test de integración (H2) de `JpaGameplayRecorderAdapter`: inserta una fila append-only con `match_state`/`action_detail` JSONB, en `src/test/java/com/villo/truco/infrastructure/persistence/adapters/JpaGameplayRecorderAdapterTest.java`
+- [X] T011 [P] [US1] Test de `RecordedActionFactory`: mapea cada uno de los 6 commands a su `RecordedActionType` + detalle, en `src/test/java/com/villo/truco/application/usecases/recording/RecordedActionFactoryTest.java`
+- [X] T012 [P] [US1] Test de `GameplayRecordingDecorator`: registra tras `handle` exitoso; deriva `actorType` (vía `BotRegistry`) y `actorSeat` (comparando con `snapshot`); NO registra si el delegate lanza; **traga y loguea** si el puerto lanza, en `src/test/java/com/villo/truco/application/usecases/recording/GameplayRecordingDecoratorTest.java`
+- [X] T013 [P] [US1] Test (mock-based, estilo `JpaMatchRepositoryAdapterTest`) de `JpaGameplayRecorderAdapter`: mapea estado/acción a JSONB y persiste append-only, en `src/test/java/com/villo/truco/infrastructure/persistence/repositories/JpaGameplayRecorderAdapterTest.java`
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Implementar `RecordedActionFactory` (`from(MatchActionCommand) -> RecordedAction`, switch por tipo) en `src/main/java/com/villo/truco/application/usecases/recording/RecordedActionFactory.java`
-- [ ] T015 [P] [US1] Crear migración `V22__create_match_action_log.sql` (tabla append-only con columnas JSONB `match_state`/`action_detail`, `schema_version`, `UNIQUE(match_id, state_version)`) en `src/main/resources/db/migration/V22__create_match_action_log.sql`
-- [ ] T016 [P] [US1] Crear entidad JPA `MatchActionLogJpaEntity` (mapea la tabla; `match_state`/`action_detail` como JSONB al estilo `MatchJpaEntity.current_round`) en `src/main/java/com/villo/truco/infrastructure/persistence/entities/MatchActionLogJpaEntity.java`
-- [ ] T017 [US1] Crear `MatchActionLogJpaRepository` (Spring Data) en `src/main/java/com/villo/truco/infrastructure/persistence/repositories/MatchActionLogJpaRepository.java` (usa T016)
-- [ ] T018 [US1] Implementar `JpaGameplayRecorderAdapter` (`@Transactional` nueva tx; `INSERT ... ON CONFLICT (match_id, state_version) DO NOTHING`; serializa snapshot/acción a JSONB) en `src/main/java/com/villo/truco/infrastructure/persistence/adapters/JpaGameplayRecorderAdapter.java` (usa T008, T016, T017)
-- [ ] T019 [US1] Implementar `GameplayRecordingDecorator` (`UseCase<C extends MatchActionCommand, MatchId>`: delega→commit, re-lee vía `MatchQueryRepository`, extrae `MatchSnapshot` con `MatchSnapshotExtractor`, deriva actor con `BotRegistry`, arma `RecordedDecision` y llama al puerto en try/catch) en `src/main/java/com/villo/truco/application/usecases/recording/GameplayRecordingDecorator.java` (usa T008, T014, T018)
-- [ ] T020 [US1] Cablear el decorator POR FUERA del pipeline sobre los 6 beans (`recordingDecorator.decorate(retryTransactionalPipeline.wrap(handler))::handle`) para `playCard`, `callTruco`, `respondTruco`, `callEnvido`, `respondEnvido`, `fold` en `src/main/java/com/villo/truco/infrastructure/config/MatchUseCaseConfiguration.java` (usa T019)
-- [ ] T021 [US1] Correr `./gradlew test --tests "*GameplayRecordingDecoratorTest" --tests "*RecordedActionFactoryTest" --tests "*JpaGameplayRecorderAdapterTest" --tests "*CleanArchitectureTest"` y confirmar verde
+- [X] T014 [P] [US1] Implementar `RecordedActionFactory` (`from(MatchActionCommand) -> RecordedAction`, switch por tipo) en `src/main/java/com/villo/truco/application/usecases/recording/RecordedActionFactory.java`
+- [X] T015 [P] [US1] Crear migración `V22__create_match_action_log.sql` (tabla append-only con columnas JSONB `match_state`/`action_detail`, `schema_version`, `UNIQUE(match_id, state_version)`) en `src/main/resources/db/migration/V22__create_match_action_log.sql`
+- [X] T016 [P] [US1] Crear entidad JPA `MatchActionLogJpaEntity` (mapea la tabla; `match_state`/`action_detail` como JSONB al estilo `MatchJpaEntity.current_round`) en `src/main/java/com/villo/truco/infrastructure/persistence/entities/MatchActionLogJpaEntity.java`
+- [X] T017 [US1] Crear `SpringDataMatchActionLogRepository` (Spring Data, con `existsByMatchIdAndStateVersion`) en `src/main/java/com/villo/truco/infrastructure/persistence/repositories/spring/SpringDataMatchActionLogRepository.java` (usa T016)
+- [X] T018 [US1] Implementar `JpaGameplayRecorderAdapter` (`@Transactional` nueva tx; idempotencia por chequeo de existencia + `UNIQUE(match_id, state_version)` como garantía dura, portable a H2/Postgres; serializa snapshot/acción a JSONB) en `src/main/java/com/villo/truco/infrastructure/persistence/repositories/JpaGameplayRecorderAdapter.java` (usa T008, T016, T017)
+- [X] T019 [US1] Implementar `GameplayRecordingDecorator` (`UseCase<C extends MatchActionCommand, MatchId>`: delega→commit, re-lee vía `MatchQueryRepository`, extrae `MatchSnapshot` con `MatchSnapshotExtractor`, deriva actor con `BotRegistry`, arma `RecordedDecision` y llama al puerto en try/catch) en `src/main/java/com/villo/truco/application/usecases/recording/GameplayRecordingDecorator.java` (usa T008, T014, T018)
+- [X] T020 [US1] Cablear el decorator POR FUERA del pipeline sobre los 6 beans (`recordingDecorator.decorate(retryTransactionalPipeline.wrap(handler))::handle`) para `playCard`, `callTruco`, `respondTruco`, `callEnvido`, `respondEnvido`, `fold` en `src/main/java/com/villo/truco/infrastructure/config/MatchUseCaseConfiguration.java` (usa T019)
+- [X] T021 [US1] Correr `./gradlew test --tests "*GameplayRecordingDecoratorTest" --tests "*RecordedActionFactoryTest" --tests "*JpaGameplayRecorderAdapterTest" --tests "*CleanArchitectureTest"` y confirmar verde
 
 **Checkpoint**: US1 funcional — cada jugada (humana y de bot) queda registrada sin alterar el juego. MVP entregable.
 
@@ -89,7 +89,7 @@ Backend único Hexagonal + DDD: código en `src/main/java/com/villo/truco/`, tes
 
 **Independent Test**: Con varias partidas registradas, ejecutar la consulta SQL de exportación y verificar una entrada por decisión, cada una autocontenida (estado + acción + actor + metadatos).
 
-- [ ] T022 [US2] Documentar el acceso por SQL (una fila por decisión, autocontenida) y la restricción admin/operador de acceso a la base en `README.md` y enlazar a las consultas de `specs/015-gameplay-recording/quickstart.md`
+- [X] T022 [US2] Documentar el acceso por SQL (una fila por decisión, autocontenida) y la restricción admin/operador de acceso a la base en `README.md` y enlazar a las consultas de `specs/015-gameplay-recording/quickstart.md`
 - [ ] T023 [US2] Validar manualmente con `quickstart.md` que la consulta `SELECT ... FROM match_action_log WHERE match_id = ... ORDER BY state_version` devuelve una entrada por decisión con estado completo (ambas manos), acción y actor
 
 **Checkpoint**: Los datos recopilados son extraíbles y autocontenidos vía SQL (FR-011/FR-012 satisfechos sin tooling).
@@ -104,11 +104,11 @@ Backend único Hexagonal + DDD: código en `src/main/java/com/villo/truco/`, tes
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T024 [US3] Agregar al test del adapter las aserciones de idempotencia (`ON CONFLICT DO NOTHING` no duplica ante misma `(match_id, state_version)`) e inmutabilidad (filas previas no se modifican), y que `schema_version` queda persistido, en `src/test/java/com/villo/truco/infrastructure/persistence/adapters/JpaGameplayRecorderAdapterTest.java`
+- [X] T024 [US3] Agregar al test del adapter las aserciones de idempotencia (`ON CONFLICT DO NOTHING` no duplica ante misma `(match_id, state_version)`) e inmutabilidad (filas previas no se modifican), y que `schema_version` queda persistido, en `src/test/java/com/villo/truco/infrastructure/persistence/adapters/JpaGameplayRecorderAdapterTest.java`
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Definir `schemaVersion` constante = 1 al construir `RecordedDecision` en `src/main/java/com/villo/truco/application/usecases/recording/GameplayRecordingDecorator.java` y confirmar que el adapter es solo-INSERT (sin UPDATE/DELETE) en `src/main/java/com/villo/truco/infrastructure/persistence/adapters/JpaGameplayRecorderAdapter.java` (append-only, FR-007/FR-008)
+- [X] T025 [US3] Definir `schemaVersion` constante = 1 al construir `RecordedDecision` en `src/main/java/com/villo/truco/application/usecases/recording/GameplayRecordingDecorator.java` y confirmar que el adapter es solo-INSERT (sin UPDATE/DELETE) en `src/main/java/com/villo/truco/infrastructure/persistence/adapters/JpaGameplayRecorderAdapter.java` (append-only, FR-007/FR-008)
 
 **Checkpoint**: Dataset inmutable, idempotente y versionado.
 
@@ -118,9 +118,9 @@ Backend único Hexagonal + DDD: código en `src/main/java/com/villo/truco/`, tes
 
 **Purpose**: Documentación, gates de arquitectura/cobertura y validación end-to-end.
 
-- [ ] T026 [P] Actualizar `README.md` con la tabla `match_action_log` y la capacidad "registro de partidas para entrenamiento de bots" (si el README lista tablas/capacidades)
-- [ ] T027 [P] Agregar nota en `AGENTS.md` ("Decisiones de dominio y patrones clave") sobre el registro post-commit vía decorator externo al pipeline transaccional
-- [ ] T028 Correr `./gradlew test` completo y confirmar `CleanArchitectureTest` (ArchUnit) verde y JaCoCo ≥70%
+- [X] T026 [P] Actualizar `README.md` con la tabla `match_action_log` y la capacidad "registro de partidas para entrenamiento de bots" (si el README lista tablas/capacidades)
+- [X] T027 [P] Agregar nota en `AGENTS.md` ("Decisiones de dominio y patrones clave") sobre el registro post-commit vía decorator externo al pipeline transaccional
+- [X] T028 Correr `./gradlew test` completo y confirmar `CleanArchitectureTest` (ArchUnit) verde y JaCoCo ≥70%
 - [ ] T029 Ejecutar la validación end-to-end de `specs/015-gameplay-recording/quickstart.md` (jugar partida vs bot y verificar el registro por SQL)
 
 ---

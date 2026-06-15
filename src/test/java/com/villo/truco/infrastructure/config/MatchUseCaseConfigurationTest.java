@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.GameplayRecorderPort;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -32,7 +33,8 @@ class MatchUseCaseConfigurationTest {
         mock(MatchRepository.class), mock(MatchEventNotifier.class),
         availabilityConfiguration.playerAvailabilityChecker(), mock(PublicActorResolver.class),
         new UseCasePipeline(List.of()), mock(CupQueryRepository.class),
-        mock(LeagueQueryRepository.class));
+        mock(LeagueQueryRepository.class), mock(BotRegistry.class),
+        mock(GameplayRecorderPort.class));
 
     assertThat(configuration.matchResolver()).isNotNull();
     assertThat(configuration.getMatchStateQueryHandler(mock(MatchTimeoutProperties.class)))

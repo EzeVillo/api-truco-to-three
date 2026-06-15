@@ -1,5 +1,6 @@
 package com.villo.truco.infrastructure.config;
 
+import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.in.AbandonMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
@@ -27,7 +28,10 @@ import com.villo.truco.application.usecases.commands.RespondTrucoCommandHandler;
 import com.villo.truco.application.usecases.commands.StartMatchCommandHandler;
 import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetPublicMatchesQueryHandler;
+import com.villo.truco.application.usecases.recording.GameplayRecordingDecorator;
+import com.villo.truco.application.usecases.recording.RecordedActionFactory;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.GameplayRecorderPort;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -48,6 +52,7 @@ public class MatchUseCaseConfiguration {
   private final UseCasePipeline retryTransactionalPipeline;
   private final CupQueryRepository cupQueryRepository;
   private final LeagueQueryRepository leagueQueryRepository;
+  private final GameplayRecordingDecorator gameplayRecordingDecorator;
 
   public MatchUseCaseConfiguration(final MatchQueryRepository matchQueryRepository,
       final MatchRepository matchRepository, final MatchEventNotifier matchEventNotifier,
@@ -55,7 +60,8 @@ public class MatchUseCaseConfiguration {
       final PublicActorResolver publicActorResolver,
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       final CupQueryRepository cupQueryRepository,
-      final LeagueQueryRepository leagueQueryRepository) {
+      final LeagueQueryRepository leagueQueryRepository, final BotRegistry botRegistry,
+      final GameplayRecorderPort gameplayRecorderPort) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.matchRepository = matchRepository;
@@ -65,6 +71,8 @@ public class MatchUseCaseConfiguration {
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.cupQueryRepository = cupQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;
+    this.gameplayRecordingDecorator = new GameplayRecordingDecorator(matchQueryRepository,
+        botRegistry, new RecordedActionFactory(), gameplayRecorderPort);
   }
 
   @Bean
@@ -94,7 +102,8 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new PlayCardCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
-    return this.retryTransactionalPipeline.wrap(handler)::handle;
+    return this.gameplayRecordingDecorator.decorate(
+        this.retryTransactionalPipeline.wrap(handler))::handle;
   }
 
   @Bean
@@ -102,7 +111,8 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new CallTrucoCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
-    return this.retryTransactionalPipeline.wrap(handler)::handle;
+    return this.gameplayRecordingDecorator.decorate(
+        this.retryTransactionalPipeline.wrap(handler))::handle;
   }
 
   @Bean
@@ -110,7 +120,8 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new RespondTrucoCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
-    return this.retryTransactionalPipeline.wrap(handler)::handle;
+    return this.gameplayRecordingDecorator.decorate(
+        this.retryTransactionalPipeline.wrap(handler))::handle;
   }
 
   @Bean
@@ -118,7 +129,8 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new CallEnvidoCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
-    return this.retryTransactionalPipeline.wrap(handler)::handle;
+    return this.gameplayRecordingDecorator.decorate(
+        this.retryTransactionalPipeline.wrap(handler))::handle;
   }
 
   @Bean
@@ -126,7 +138,8 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new RespondEnvidoCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
-    return this.retryTransactionalPipeline.wrap(handler)::handle;
+    return this.gameplayRecordingDecorator.decorate(
+        this.retryTransactionalPipeline.wrap(handler))::handle;
   }
 
   @Bean
@@ -150,7 +163,8 @@ public class MatchUseCaseConfiguration {
 
     final var handler = new FoldCommandHandler(this.matchResolver(), this.matchRepository,
         this.matchEventNotifier);
-    return this.retryTransactionalPipeline.wrap(handler)::handle;
+    return this.gameplayRecordingDecorator.decorate(
+        this.retryTransactionalPipeline.wrap(handler))::handle;
   }
 
   @Bean

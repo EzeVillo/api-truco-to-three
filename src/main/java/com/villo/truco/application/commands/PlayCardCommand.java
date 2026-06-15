@@ -7,7 +7,8 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 
-public record PlayCardCommand(MatchId matchId, PlayerId playerId, Card card) {
+public record PlayCardCommand(MatchId matchId, PlayerId playerId, Card card)
+    implements MatchActionCommand {
 
   public PlayCardCommand {
 
