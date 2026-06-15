@@ -4,8 +4,8 @@ import com.villo.truco.infrastructure.persistence.entities.MatchActionLogJpaEnti
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SpringDataMatchActionLogRepository
-    extends JpaRepository<MatchActionLogJpaEntity, Long> {
+public interface SpringDataMatchActionLogRepository extends
+    JpaRepository<MatchActionLogJpaEntity, Long> {
 
   boolean existsByMatchIdAndStateVersion(UUID matchId, long stateVersion);
 

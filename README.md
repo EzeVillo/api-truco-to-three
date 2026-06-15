@@ -435,11 +435,14 @@ componentes puntuales del sistema.
 ### Registro de partidas para entrenamiento de bots
 
 La tabla append-only `match_action_log` (migracion `V22`) guarda, por cada accion jugable que cambia
-el estado de una partida (humano y bot: jugar carta, cantar/responder truco, cantar/responder envido,
+el estado de una partida (humano y bot: jugar carta, cantar/responder truco, cantar/responder
+envido,
 irse al mazo), el `MatchSnapshot` completo y sin redactar resultante (columna `match_state` JSONB)
-junto con la accion (`action_type` + `action_detail`), el actor (`actor_type` HUMAN/BOT, `actor_seat`)
+junto con la accion (`action_type` + `action_detail`), el actor (`actor_type` HUMAN/BOT,
+`actor_seat`)
 y la `schema_version`. El registro corre **post-commit y en su propia transaccion** via un decorator
-transparente sobre los 6 use cases de accion, por lo que un fallo de registro nunca afecta la jugada.
+transparente sobre los 6 use cases de accion, por lo que un fallo de registro nunca afecta la
+jugada.
 Es append-only e idempotente por `UNIQUE (match_id, state_version)`. No hay endpoint ni export: el
 acceso es por consulta SQL directa (rol administrativo/operador de la base), p. ej.
 `SELECT ... FROM match_action_log WHERE match_id = :id ORDER BY state_version`.

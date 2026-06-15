@@ -29,10 +29,10 @@ Adminer disponible en `http://localhost:8081` (o consultar PostgreSQL con cualqu
    ```
 
    **Esperado**:
-   - Una fila por cada acción jugable (tuya y del bot).
-   - `actor_type` alterna `HUMAN` / `BOT` según quién jugó.
-   - `state_version` estrictamente creciente, **sin huecos ni repetidos**.
-   - `action_type` y `action_detail` reflejan la acción real (p. ej. `PLAY_CARD` con la carta).
+    - Una fila por cada acción jugable (tuya y del bot).
+    - `actor_type` alterna `HUMAN` / `BOT` según quién jugó.
+    - `state_version` estrictamente creciente, **sin huecos ni repetidos**.
+    - `action_type` y `action_detail` reflejan la acción real (p. ej. `PLAY_CARD` con la carta).
 
 3. **Verificar el estado completo capturado** (incluye ambas manos, sin redactar):
 
@@ -49,15 +49,15 @@ Adminer disponible en `http://localhost:8081` (o consultar PostgreSQL con cualqu
 
 ## Verificaciones de criterios de aceptación
 
-| Criterio | Cómo verificar |
-|----------|----------------|
-| SC-001 (100% de acciones registradas) | Comparar la cantidad de acciones jugadas con la cantidad de filas de la partida. |
-| SC-002 (secuencia sin huecos/duplicados) | `state_version` consecutivo por `match_id`. |
-| SC-003 (sin impacto en el juego) | La partida transcurre normal; sin latencia perceptible. |
-| SC-005 (inmutabilidad) | Re-consultar tras más jugadas: las filas previas no cambian. |
-| FR-005 (acción concreta) | `action_type` + `action_detail` por fila. |
-| FR-010 (fallo no afecta jugada) | Test automatizado: forzar excepción del adapter y verificar que la jugada igual se completa y no hay rollback. |
-| FR-013 (rechazos no registran) | Intentar una acción inválida: no aparece fila nueva. |
+| Criterio                                 | Cómo verificar                                                                                                 |
+|------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| SC-001 (100% de acciones registradas)    | Comparar la cantidad de acciones jugadas con la cantidad de filas de la partida.                               |
+| SC-002 (secuencia sin huecos/duplicados) | `state_version` consecutivo por `match_id`.                                                                    |
+| SC-003 (sin impacto en el juego)         | La partida transcurre normal; sin latencia perceptible.                                                        |
+| SC-005 (inmutabilidad)                   | Re-consultar tras más jugadas: las filas previas no cambian.                                                   |
+| FR-005 (acción concreta)                 | `action_type` + `action_detail` por fila.                                                                      |
+| FR-010 (fallo no afecta jugada)          | Test automatizado: forzar excepción del adapter y verificar que la jugada igual se completa y no hay rollback. |
+| FR-013 (rechazos no registran)           | Intentar una acción inválida: no aparece fila nueva.                                                           |
 
 ## Pruebas automatizadas a incluir (resumen)
 

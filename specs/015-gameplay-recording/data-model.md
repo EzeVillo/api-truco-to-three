@@ -8,32 +8,34 @@
 
 Representa una decisión jugable registrada. Inmutable.
 
-| Campo | Tipo | Notas |
-|-------|------|-------|
-| `matchId` | `MatchId` | Partida a la que pertenece. |
-| `stateVersion` | `long` | Versión resultante de la transición; cursor de orden por partida. |
-| `gameNumber` | `int` | Número de juego dentro de la serie (de `MatchSnapshot`). |
-| `roundNumber` | `int` | Número de mano/ronda (de `MatchSnapshot`). |
-| `actorSeat` | `ActorSeat` | `PLAYER_ONE` / `PLAYER_TWO`. |
-| `actorType` | `ActorType` | `HUMAN` / `BOT`. |
-| `action` | `RecordedAction` | Acción concreta tomada. |
-| `snapshot` | `MatchSnapshot` | Estado completo y sin redactar tras la transición. |
-| `occurredAt` | `Instant` | Momento de la decisión. |
-| `schemaVersion` | `int` | Versión del esquema de captura (inicial = 1). |
+| Campo           | Tipo             | Notas                                                             |
+|-----------------|------------------|-------------------------------------------------------------------|
+| `matchId`       | `MatchId`        | Partida a la que pertenece.                                       |
+| `stateVersion`  | `long`           | Versión resultante de la transición; cursor de orden por partida. |
+| `gameNumber`    | `int`            | Número de juego dentro de la serie (de `MatchSnapshot`).          |
+| `roundNumber`   | `int`            | Número de mano/ronda (de `MatchSnapshot`).                        |
+| `actorSeat`     | `ActorSeat`      | `PLAYER_ONE` / `PLAYER_TWO`.                                      |
+| `actorType`     | `ActorType`      | `HUMAN` / `BOT`.                                                  |
+| `action`        | `RecordedAction` | Acción concreta tomada.                                           |
+| `snapshot`      | `MatchSnapshot`  | Estado completo y sin redactar tras la transición.                |
+| `occurredAt`    | `Instant`        | Momento de la decisión.                                           |
+| `schemaVersion` | `int`            | Versión del esquema de captura (inicial = 1).                     |
 
 **Reglas/invariantes**:
+
 - Todos los campos no nulos (la acción siempre corresponde a uno de los 6 tipos).
 - El VO no contiene lógica de juego; es un contenedor de datos para el puerto de salida.
 - Reutiliza `MatchSnapshot` existente (no se redefine el estado).
 
 ### `RecordedAction` (VO, `domain.model.gameplay`)
 
-| Campo | Tipo | Notas |
-|-------|------|-------|
-| `type` | `RecordedActionType` | Discriminador. |
-| `detail` | detalle mínimo | Carta jugada / canto / respuesta, según `type`; nulo para acciones sin parámetro (p. ej. `FOLD`, `CALL_TRUCO`). |
+| Campo    | Tipo                 | Notas                                                                                                           |
+|----------|----------------------|-----------------------------------------------------------------------------------------------------------------|
+| `type`   | `RecordedActionType` | Discriminador.                                                                                                  |
+| `detail` | detalle mínimo       | Carta jugada / canto / respuesta, según `type`; nulo para acciones sin parámetro (p. ej. `FOLD`, `CALL_TRUCO`). |
 
-> El detalle puede modelarse con los VOs de dominio ya existentes (`Card`, respuestas de truco/envido,
+> El detalle puede modelarse con los VOs de dominio ya existentes (`Card`, respuestas de
+> truco/envido,
 > tipo de canto de envido). La infraestructura lo serializa a JSONB en `action_detail`.
 
 ### Enums (`domain.model.gameplay`)
@@ -49,7 +51,9 @@ Representa una decisión jugable registrada. Inmutable.
 
 ```java
 public interface GameplayRecorderPort {
+
   void record(RecordedDecision decision);
+
 }
 ```
 
@@ -63,8 +67,11 @@ public interface GameplayRecorderPort {
 
 ```java
 public interface MatchActionCommand {
+
   MatchId matchId();
+
   PlayerId playerId();
+
 }
 ```
 
@@ -82,23 +89,24 @@ public interface MatchActionCommand {
 > `V21__campaign_unlocked_casual_bots.sql`; **re-verificar el número contra la branch** antes de
 > crear el archivo, por si entra otra migración).
 
-| Columna | Tipo (PostgreSQL) | Restricciones |
-|---------|-------------------|---------------|
-| `id` | `BIGINT GENERATED ALWAYS AS IDENTITY` | PK |
-| `match_id` | `UUID` | NOT NULL |
-| `state_version` | `BIGINT` | NOT NULL |
-| `game_number` | `INT` | NOT NULL |
-| `round_number` | `INT` | NOT NULL |
-| `actor_seat` | `VARCHAR(16)` | NOT NULL (`PLAYER_ONE`/`PLAYER_TWO`) |
-| `actor_type` | `VARCHAR(8)` | NOT NULL (`HUMAN`/`BOT`) |
-| `action_type` | `VARCHAR(24)` | NOT NULL |
-| `action_detail` | `JSONB` | NULL (detalle de la acción) |
-| `match_state` | `JSONB` | NOT NULL (snapshot completo, sin redactar) |
-| `schema_version` | `INT` | NOT NULL |
-| `occurred_at` | `TIMESTAMPTZ` | NOT NULL |
-| `recorded_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT `now()` |
+| Columna          | Tipo (PostgreSQL)                     | Restricciones                              |
+|------------------|---------------------------------------|--------------------------------------------|
+| `id`             | `BIGINT GENERATED ALWAYS AS IDENTITY` | PK                                         |
+| `match_id`       | `UUID`                                | NOT NULL                                   |
+| `state_version`  | `BIGINT`                              | NOT NULL                                   |
+| `game_number`    | `INT`                                 | NOT NULL                                   |
+| `round_number`   | `INT`                                 | NOT NULL                                   |
+| `actor_seat`     | `VARCHAR(16)`                         | NOT NULL (`PLAYER_ONE`/`PLAYER_TWO`)       |
+| `actor_type`     | `VARCHAR(8)`                          | NOT NULL (`HUMAN`/`BOT`)                   |
+| `action_type`    | `VARCHAR(24)`                         | NOT NULL                                   |
+| `action_detail`  | `JSONB`                               | NULL (detalle de la acción)                |
+| `match_state`    | `JSONB`                               | NOT NULL (snapshot completo, sin redactar) |
+| `schema_version` | `INT`                                 | NOT NULL                                   |
+| `occurred_at`    | `TIMESTAMPTZ`                         | NOT NULL                                   |
+| `recorded_at`    | `TIMESTAMPTZ`                         | NOT NULL DEFAULT `now()`                   |
 
 **Índices / constraints**:
+
 - `UNIQUE (match_id, state_version)` — orden e idempotencia (FR-006, FR-013).
 - Índice implícito por el UNIQUE cubre consultas por partida ordenadas por `state_version`.
 

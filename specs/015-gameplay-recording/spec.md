@@ -14,7 +14,8 @@ más adelante analizar y mejorar los bots."
 ## Overview
 
 Hoy, cada acción jugable de una partida (jugar carta, cantar/responder truco, cantar/responder
-envido, irse al mazo) produce información de estado que se usa en tiempo real y luego **se descarta**.
+envido, irse al mazo) produce información de estado que se usa en tiempo real y luego **se descarta
+**.
 No queda registro histórico de cómo se jugó una partida.
 
 Esta feature introduce un **registro histórico append-only** ("log de partidas"): por cada decisión

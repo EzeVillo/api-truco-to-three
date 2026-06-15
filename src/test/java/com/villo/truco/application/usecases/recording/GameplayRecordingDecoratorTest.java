@@ -11,15 +11,15 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.commands.FoldCommand;
+import com.villo.truco.application.events.RecordedDecisionCaptured;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.in.UseCase;
-import com.villo.truco.domain.model.gameplay.ActorSeat;
-import com.villo.truco.domain.model.gameplay.ActorType;
-import com.villo.truco.domain.model.gameplay.RecordedActionType;
-import com.villo.truco.domain.model.gameplay.RecordedDecision;
+import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.domain.model.gameplay.valueobjects.ActorSeat;
+import com.villo.truco.domain.model.gameplay.valueobjects.ActorType;
+import com.villo.truco.domain.model.gameplay.valueobjects.RecordedActionType;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
-import com.villo.truco.domain.ports.GameplayRecorderPort;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -34,21 +34,22 @@ class GameplayRecordingDecoratorTest {
 
   private final MatchQueryRepository matchQueryRepository = mock(MatchQueryRepository.class);
   private final BotRegistry botRegistry = mock(BotRegistry.class);
-  private final GameplayRecorderPort gameplayRecorderPort = mock(GameplayRecorderPort.class);
+  private final ApplicationEventPublisher applicationEventPublisher = mock(
+      ApplicationEventPublisher.class);
 
   private final GameplayRecordingDecorator decorator = new GameplayRecordingDecorator(
       this.matchQueryRepository, this.botRegistry, new RecordedActionFactory(),
-      this.gameplayRecorderPort);
+      this.applicationEventPublisher);
 
   private Match newMatch() {
 
-    return Match.create(PlayerId.generate(),
-        MatchRules.fromGamesToPlay(GamesToPlay.of(3), true), Visibility.PRIVATE);
+    return Match.create(PlayerId.generate(), MatchRules.fromGamesToPlay(GamesToPlay.of(3), true),
+        Visibility.PRIVATE);
   }
 
   @Test
-  @DisplayName("registra la decisión tras una jugada exitosa del humano")
-  void recordsHumanDecisionAfterSuccess() {
+  @DisplayName("publica la decisión capturada tras una jugada exitosa del humano")
+  void publishesHumanDecisionAfterSuccess() {
 
     final var match = this.newMatch();
     final var playerId = match.getPlayerOne();
@@ -60,9 +61,9 @@ class GameplayRecordingDecoratorTest {
 
     this.decorator.decorate(delegate).handle(command);
 
-    final var captor = ArgumentCaptor.forClass(RecordedDecision.class);
-    verify(this.gameplayRecorderPort).record(captor.capture());
-    final var decision = captor.getValue();
+    final var captor = ArgumentCaptor.forClass(RecordedDecisionCaptured.class);
+    verify(this.applicationEventPublisher).publish(captor.capture());
+    final var decision = captor.getValue().decision();
     assertThat(decision.matchId()).isEqualTo(match.getId());
     assertThat(decision.stateVersion()).isEqualTo(match.getStateVersion());
     assertThat(decision.actorType()).isEqualTo(ActorType.HUMAN);
@@ -73,7 +74,7 @@ class GameplayRecordingDecoratorTest {
 
   @Test
   @DisplayName("marca la decisión como BOT cuando el actor es un bot")
-  void recordsBotActor() {
+  void publishesBotActor() {
 
     final var match = this.newMatch();
     final var playerId = match.getPlayerOne();
@@ -83,14 +84,14 @@ class GameplayRecordingDecoratorTest {
 
     this.decorator.decorate((UseCase<FoldCommand, Void>) c -> null).handle(command);
 
-    final var captor = ArgumentCaptor.forClass(RecordedDecision.class);
-    verify(this.gameplayRecorderPort).record(captor.capture());
-    assertThat(captor.getValue().actorType()).isEqualTo(ActorType.BOT);
+    final var captor = ArgumentCaptor.forClass(RecordedDecisionCaptured.class);
+    verify(this.applicationEventPublisher).publish(captor.capture());
+    assertThat(captor.getValue().decision().actorType()).isEqualTo(ActorType.BOT);
   }
 
   @Test
-  @DisplayName("no registra si la jugada delegada falla y propaga el error")
-  void doesNotRecordWhenDelegateThrows() {
+  @DisplayName("no captura si la jugada delegada falla y propaga el error")
+  void doesNotCaptureWhenDelegateThrows() {
 
     final var match = this.newMatch();
     final var command = new FoldCommand(match.getId(), match.getPlayerOne());
@@ -99,23 +100,24 @@ class GameplayRecordingDecoratorTest {
       throw new IllegalStateException("jugada inválida");
     };
 
-    assertThatThrownBy(() -> this.decorator.decorate(delegate).handle(command))
-        .isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> this.decorator.decorate(delegate).handle(command)).isInstanceOf(
+        IllegalStateException.class);
 
-    verifyNoInteractions(this.gameplayRecorderPort);
+    verifyNoInteractions(this.applicationEventPublisher);
     verify(this.matchQueryRepository, never()).findById(any());
   }
 
   @Test
-  @DisplayName("traga y no propaga si el puerto de registro falla")
-  void swallowsRecorderFailure() {
+  @DisplayName("traga y no propaga si la captura falla")
+  void swallowsCaptureFailure() {
 
     final var match = this.newMatch();
     final var playerId = match.getPlayerOne();
     final var command = new FoldCommand(match.getId(), playerId);
     when(this.matchQueryRepository.findById(match.getId())).thenReturn(Optional.of(match));
     when(this.botRegistry.isBot(playerId)).thenReturn(false);
-    doThrow(new RuntimeException("db caída")).when(this.gameplayRecorderPort).record(any());
+    doThrow(new RuntimeException("publicación caída")).when(this.applicationEventPublisher)
+        .publish(any());
 
     final UseCase<FoldCommand, Void> delegate = c -> null;
 

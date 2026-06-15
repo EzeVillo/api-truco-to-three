@@ -114,11 +114,11 @@ WebSocket/STOMP para actualizaciones del juego:
 Todos los defaults están en `src/main/resources/application.yaml`. Variables de entorno clave (todas
 tienen defaults funcionales para dev local):
 
-| Variable            | Default                               | Propósito       |
-|---------------------|---------------------------------------|-----------------|
-| `TRUCO_DB_USER`     | `truco`                               | Usuario DB      |
-| `TRUCO_DB_PASSWORD` | `truco`                               | Password DB     |
-| `TRUCO_JWT_SECRET`  | `truco-local-dev-secret-key-32-bytes` | Clave JWT       |
+| Variable            | Default                               | Propósito   |
+|---------------------|---------------------------------------|-------------|
+| `TRUCO_DB_USER`     | `truco`                               | Usuario DB  |
+| `TRUCO_DB_PASSWORD` | `truco`                               | Password DB |
+| `TRUCO_JWT_SECRET`  | `truco-local-dev-secret-key-32-bytes` | Clave JWT   |
 
 Docker Compose levanta PostgreSQL en el puerto `5432` y Adminer en `8081`.
 
@@ -337,6 +337,7 @@ nunca dentro de la transacción. Se logra implementando `PostCommitApplicationEv
 (el `TransactionalApplicationEventPublisher` lo difiere a `afterCommit`).
 
 **Dos categorías de race condition que esto evita:**
+
 - **Categoría A (404):** el cliente recibe el push, hace GET del recurso y recibe 404 porque la tx
   aún no commiteó. Reproducido en: partida rápida, rematch confirmado, inicio de liga/copa.
 - **Categoría B (fantasma/duplicado):** el push sale antes del commit; si hay rollback o reintento
@@ -353,9 +354,11 @@ El registro de cada decisión jugable (`match_action_log`, feature 015) se captu
 `GameplayRecordingDecorator`, que envuelve a los 6 use cases de acción **por fuera** del
 `retryTransactionalPipeline` en `MatchUseCaseConfiguration`
 (`recordingDecorator.decorate(retryTransactionalPipeline.wrap(handler))`). Así su lógica corre
-**después del commit** de la jugada y el adapter (`JpaGameplayRecorderAdapter`) escribe en su **propia
-transacción**; un fallo de registro se traga y loguea (FR-010), nunca revierte ni interrumpe la jugada.
-Como humano y bot ejecutan a través de esos mismos beans, ambos quedan registrados sin instrumentación
+**después del commit** de la jugada y el adapter (`JpaGameplayRecorderAdapter`) escribe en su *
+*propia transacción**; un fallo de registro se traga y loguea (FR-010), nunca revierte ni interrumpe
+la jugada.
+Como humano y bot ejecutan a través de esos mismos beans, ambos quedan registrados sin
+instrumentación
 específica del bot. El estado se reusa del read-model `MatchSnapshot` (no es un agregado nuevo). No
 mover esa captura dentro del pipeline ni al `ExecuteBotTurnUseCase` (orquestador).
 
@@ -388,12 +391,12 @@ Para detectar que un jugador humano pasa a estar ocupado en una partida, no alca
 Solo `MatchFinishedEvent` dispara creación de sesión de rematch. Causas alternativas de
 terminación NO generan sesión:
 
-| Motivo             | Evento                | Rematch |
-|--------------------|-----------------------|---------|
-| Victoria normal    | `MatchFinishedEvent`  | ✅ SÍ   |
-| Abandono           | `MatchAbandonedEvent` | ❌ NO   |
-| Timeout (idle)     | `MatchForfeitedEvent` | ❌ NO   |
-| Cancelación        | `MatchCancelledEvent` | ❌ NO   |
+| Motivo          | Evento                | Rematch |
+|-----------------|-----------------------|---------|
+| Victoria normal | `MatchFinishedEvent`  | ✅ SÍ    |
+| Abandono        | `MatchAbandonedEvent` | ❌ NO    |
+| Timeout (idle)  | `MatchForfeitedEvent` | ❌ NO    |
+| Cancelación     | `MatchCancelledEvent` | ❌ NO    |
 
 Los matches de **liga/copa** y **campaña** tampoco generan rematch (vetados por `RematchVeto`
 implementations). TTL configurable: `truco.rematch.duration=PT2M`.

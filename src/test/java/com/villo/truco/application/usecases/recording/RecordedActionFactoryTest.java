@@ -8,7 +8,7 @@ import com.villo.truco.application.commands.FoldCommand;
 import com.villo.truco.application.commands.PlayCardCommand;
 import com.villo.truco.application.commands.RespondEnvidoCommand;
 import com.villo.truco.application.commands.RespondTrucoCommand;
-import com.villo.truco.domain.model.gameplay.RecordedActionType;
+import com.villo.truco.domain.model.gameplay.valueobjects.RecordedActionType;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoCall;
 import com.villo.truco.domain.model.match.valueobjects.EnvidoResponse;
 import com.villo.truco.domain.model.match.valueobjects.TrucoResponse;
@@ -55,8 +55,8 @@ class RecordedActionFactoryTest {
 
     final var response = TrucoResponse.values()[0];
 
-    final var action =
-        this.factory.from(new RespondTrucoCommand(this.matchId, this.playerId, response));
+    final var action = this.factory.from(
+        new RespondTrucoCommand(this.matchId, this.playerId, response));
 
     assertThat(action.type()).isEqualTo(RecordedActionType.RESPOND_TRUCO);
     assertThat(action.detail()).isEqualTo(response);
@@ -80,8 +80,8 @@ class RecordedActionFactoryTest {
 
     final var response = EnvidoResponse.values()[0];
 
-    final var action =
-        this.factory.from(new RespondEnvidoCommand(this.matchId, this.playerId, response));
+    final var action = this.factory.from(
+        new RespondEnvidoCommand(this.matchId, this.playerId, response));
 
     assertThat(action.type()).isEqualTo(RecordedActionType.RESPOND_ENVIDO);
     assertThat(action.detail()).isEqualTo(response);

@@ -17,10 +17,11 @@ Este documento consolida las decisiones de diseño y las alternativas evaluadas.
   riesgo y costo de tests, para un beneficio que el log append-only ya entrega. Cumple Principio V
   (YAGNI).
 - **Alternativas**:
-  - *Event sourcing completo*: rechazado por complejidad/riesgo desproporcionados.
-  - *Persistir los `DomainEvent` crudos*: hoy se emiten y se descartan (`clearDomainEvents()`);
-    persistirlos daría la acción pero no el estado-de-decisión completo y sin redactar. Se prefiere
-    el snapshot (ver D2).
+    - *Event sourcing completo*: rechazado por complejidad/riesgo desproporcionados.
+    - *Persistir los `DomainEvent` crudos*: hoy se emiten y se descartan (`clearDomainEvents()`);
+      persistirlos daría la acción pero no el estado-de-decisión completo y sin redactar. Se
+      prefiere
+      el snapshot (ver D2).
 
 ## D2 — Captura del estado: snapshot resultante keyado por `stateVersion`
 
@@ -31,9 +32,9 @@ Este documento consolida las decisiones de diseño y las alternativas evaluadas.
   manos vía `MatchSnapshotExtractor.extractHand(handPlayerOne/Two)`), vive server-side y nunca viaja
   al cliente. `stateVersion` es un contador monótono por partida → cursor sin huecos ni duplicados.
 - **Alternativas**:
-  - *Serializar a mano una "vista de decisión" nueva*: redundante; `MatchSnapshot` ya lo cubre.
-  - *Guardar solo el evento y reconstruir por replay*: más trabajo al consumir y más frágil. El
-    usuario pidió explícitamente "snapshot del momento".
+    - *Serializar a mano una "vista de decisión" nueva*: redundante; `MatchSnapshot` ya lo cubre.
+    - *Guardar solo el evento y reconstruir por replay*: más trabajo al consumir y más frágil. El
+      usuario pidió explícitamente "snapshot del momento".
 
 ## D3 — Punto de captura: decorator sobre los 6 use cases, POR FUERA del pipeline
 
@@ -42,22 +43,26 @@ Este documento consolida las decisiones de diseño y las alternativas evaluadas.
   `retryTransactionalPipeline`. En la `@Configuration`:
   `recordingDecorator.decorate( retryTransactionalPipeline.wrap(handler) )::handle`.
 - **Rationale**:
-  - El pipeline (`OptimisticLockRetry` + `Transactional`) envuelve al handler. Colocar el decorator
-    **por fuera** garantiza que su lógica de registro corra **después del commit** y en su **propia
-    transacción**, satisfaciendo FR-009/FR-010 (no altera ni revierte la jugada).
-  - Tanto el humano (vía controller) como el bot (vía `ExecuteBotTurnCommandHandler`, que inyecta los
-    mismos beans `PlayCardUseCase`, etc.) pasan por estos 6 beans → ambos se registran sin código
-    específico de bot (FR-004).
-  - No se decora `ExecuteBotTurnUseCase` (es orquestador: delega en los 6 atómicos; decorarlo daría
-    filas redundantes/vacías).
+    - El pipeline (`OptimisticLockRetry` + `Transactional`) envuelve al handler. Colocar el
+      decorator
+      **por fuera** garantiza que su lógica de registro corra **después del commit** y en su *
+      *propia
+      transacción**, satisfaciendo FR-009/FR-010 (no altera ni revierte la jugada).
+    - Tanto el humano (vía controller) como el bot (vía `ExecuteBotTurnCommandHandler`, que inyecta
+      los
+      mismos beans `PlayCardUseCase`, etc.) pasan por estos 6 beans → ambos se registran sin código
+      específico de bot (FR-004).
+    - No se decora `ExecuteBotTurnUseCase` (es orquestador: delega en los 6 atómicos; decorarlo
+      daría
+      filas redundantes/vacías).
 - **Alternativas**:
-  - *`PipelineBehavior` global en `retryTransactionalPipeline`*: aplicaría a TODOS los use cases
-    (Create/Start/Abandon/Leave), sobre-capturando. Rechazado por scope.
-  - *`PipelineBehavior` en un pipeline dedicado `[Retry, Recording, Transactional]`*: viable e
-    idiomático, pero el decorator surgical sobre los 6 beans es más explícito y acotado. Rechazado
-    por simplicidad de lectura; se documenta como opción válida si en el futuro se prefiere.
-  - *Una línea `recorder.record(match)` dentro de cada handler*: invade 6 handlers y correría
-    dentro de la transacción de la jugada (no post-commit). Rechazado.
+    - *`PipelineBehavior` global en `retryTransactionalPipeline`*: aplicaría a TODOS los use cases
+      (Create/Start/Abandon/Leave), sobre-capturando. Rechazado por scope.
+    - *`PipelineBehavior` en un pipeline dedicado `[Retry, Recording, Transactional]`*: viable e
+      idiomático, pero el decorator surgical sobre los 6 beans es más explícito y acotado. Rechazado
+      por simplicidad de lectura; se documenta como opción válida si en el futuro se prefiere.
+    - *Una línea `recorder.record(match)` dentro de cada handler*: invade 6 handlers y correría
+      dentro de la transacción de la jugada (no post-commit). Rechazado.
 
 ## D4 — Aislamiento transaccional y tolerancia a fallos
 
@@ -70,7 +75,8 @@ Este documento consolida las decisiones de diseño y las alternativas evaluadas.
 ## D5 — Derivación de `actorType` y `actorSeat`
 
 - **Decisión**: `actorType` = `BotRegistry.isBot(command.playerId())` → `BOT` / `HUMAN`. `actorSeat`
-  = comparar `command.playerId()` con `snapshot.playerOne()/playerTwo()` → `PLAYER_ONE`/`PLAYER_TWO`.
+  = comparar `command.playerId()` con `snapshot.playerOne()/playerTwo()` → `PLAYER_ONE`/
+  `PLAYER_TWO`.
 - **Rationale**: `BotRegistry.isBot(PlayerId)` ya existe (puerto de application). El snapshot expone
   ambos `PlayerId`. No hace falta nuevo estado ni columnas en el match.
 
@@ -78,11 +84,13 @@ Este documento consolida las decisiones de diseño y las alternativas evaluadas.
 
 - **Decisión**: VO de dominio `RecordedAction` = `RecordedActionType` (enum: `PLAY_CARD`,
   `CALL_TRUCO`, `RESPOND_TRUCO`, `CALL_ENVIDO`, `RESPOND_ENVIDO`, `FOLD`) + un detalle mínimo
-  (la carta jugada, el canto o la respuesta, según el tipo). Un `RecordedActionFactory` (application)
+  (la carta jugada, el canto o la respuesta, según el tipo). Un `RecordedActionFactory` (
+  application)
   mapea cada uno de los 6 commands → `RecordedAction`. La infra serializa el detalle a JSONB.
 - **Rationale**: aunque la acción es parcialmente recuperable del snapshot resultante (la carta
   aparece en `currentRound.currentHandCards`, los cantos en el truco/envido state), guardar
-  `action_type` como columna + `action_detail` JSONB hace el dataset trivialmente consultable por SQL
+  `action_type` como columna + `action_detail` JSONB hace el dataset trivialmente consultable por
+  SQL
   (FR-005) sin parsear el snapshot.
 - **Alternativas**: *solo `action_type` + derivar detalle del snapshot*: más barato pero menos
   cómodo de consultar. Rechazado: el detalle es chico y el costo marginal.

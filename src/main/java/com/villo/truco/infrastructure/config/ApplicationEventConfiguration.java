@@ -6,6 +6,7 @@ import com.villo.truco.application.eventhandlers.CompetitionDomainEventTranslato
 import com.villo.truco.application.eventhandlers.CupEventMapper;
 import com.villo.truco.application.eventhandlers.CupInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.CupNotificationEventTranslator;
+import com.villo.truco.application.eventhandlers.GameplayRecordingEventHandler;
 import com.villo.truco.application.eventhandlers.LeagueEventMapper;
 import com.villo.truco.application.eventhandlers.LeagueInvitationExpirationEventTranslator;
 import com.villo.truco.application.eventhandlers.LeagueNotificationEventTranslator;
@@ -16,6 +17,7 @@ import com.villo.truco.application.eventhandlers.MatchRecipientResolver;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.out.ApplicationEventHandler;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.domain.ports.GameplayRecorderPort;
 import com.villo.truco.infrastructure.actuator.health.EventNotifierHealthRegistry;
 import com.villo.truco.infrastructure.actuator.metrics.ChatEventMetricsEventHandler;
 import com.villo.truco.infrastructure.actuator.metrics.CupEventMetricsEventHandler;
@@ -228,6 +230,13 @@ public class ApplicationEventConfiguration {
       final ApplicationEventPublisher publisher) {
 
     return new LeagueInvitationExpirationEventTranslator(publisher);
+  }
+
+  @Bean
+  GameplayRecordingEventHandler gameplayRecordingEventHandler(
+      final GameplayRecorderPort gameplayRecorderPort) {
+
+    return new GameplayRecordingEventHandler(gameplayRecorderPort);
   }
 
   @Bean

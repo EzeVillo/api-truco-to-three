@@ -8,11 +8,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.villo.truco.domain.model.gameplay.ActorSeat;
-import com.villo.truco.domain.model.gameplay.ActorType;
-import com.villo.truco.domain.model.gameplay.RecordedAction;
-import com.villo.truco.domain.model.gameplay.RecordedActionType;
-import com.villo.truco.domain.model.gameplay.RecordedDecision;
+import com.villo.truco.domain.model.gameplay.valueobjects.ActorSeat;
+import com.villo.truco.domain.model.gameplay.valueobjects.ActorType;
+import com.villo.truco.domain.model.gameplay.valueobjects.RecordedAction;
+import com.villo.truco.domain.model.gameplay.valueobjects.RecordedActionType;
+import com.villo.truco.domain.model.gameplay.valueobjects.RecordedDecision;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.MatchSnapshot;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
@@ -32,11 +32,11 @@ import org.mockito.ArgumentCaptor;
 @DisplayName("JpaGameplayRecorderAdapter")
 class JpaGameplayRecorderAdapterTest {
 
-  private final SpringDataMatchActionLogRepository repository =
-      mock(SpringDataMatchActionLogRepository.class);
+  private final SpringDataMatchActionLogRepository repository = mock(
+      SpringDataMatchActionLogRepository.class);
 
-  private final JpaGameplayRecorderAdapter adapter =
-      new JpaGameplayRecorderAdapter(this.repository);
+  private final JpaGameplayRecorderAdapter adapter = new JpaGameplayRecorderAdapter(
+      this.repository);
 
   private MatchSnapshot snapshot() {
 

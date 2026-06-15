@@ -6,8 +6,8 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 
-public record RespondTrucoCommand(MatchId matchId, PlayerId playerId, TrucoResponse response)
-    implements MatchActionCommand {
+public record RespondTrucoCommand(MatchId matchId, PlayerId playerId,
+                                  TrucoResponse response) implements MatchActionCommand {
 
   public RespondTrucoCommand {
 

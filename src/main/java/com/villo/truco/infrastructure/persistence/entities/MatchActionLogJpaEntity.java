@@ -14,14 +14,9 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/**
- * Entidad JPA de la tabla append-only {@code match_action_log}. {@code match_state} y
- * {@code action_detail} se almacenan como JSONB con el mismo enfoque que
- * {@code MatchJpaEntity.current_round}.
- */
 @Entity
-@Table(name = "match_action_log", uniqueConstraints = @UniqueConstraint(
-    name = "uq_match_action_log_match_state_version", columnNames = {"match_id", "state_version"}))
+@Table(name = "match_action_log", uniqueConstraints = @UniqueConstraint(name = "uq_match_action_log_match_state_version", columnNames = {
+    "match_id", "state_version"}))
 public class MatchActionLogJpaEntity {
 
   @Id
