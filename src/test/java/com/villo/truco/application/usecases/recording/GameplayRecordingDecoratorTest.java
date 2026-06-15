@@ -38,7 +38,7 @@ class GameplayRecordingDecoratorTest {
 
   private final GameplayRecordingDecorator decorator = new GameplayRecordingDecorator(
       this.matchQueryRepository, this.botRegistry, new RecordedActionFactory(),
-      this.applicationEventPublisher);
+      this.applicationEventPublisher, true);
 
   private Match newMatch() {
 
@@ -124,6 +124,25 @@ class GameplayRecordingDecoratorTest {
     final UseCase<FoldCommand, Void> delegate = c -> null;
 
     assertThat(this.decorator.decorate(delegate).handle(command)).isNull();
+  }
+
+  @Test
+  @DisplayName("no lee ni captura cuando el flag de grabación está deshabilitado")
+  void skipsReadAndCaptureWhenDisabled() {
+
+    final var disabledDecorator = new GameplayRecordingDecorator(this.matchQueryRepository,
+        this.botRegistry, new RecordedActionFactory(), this.applicationEventPublisher, false);
+
+    final var match = this.newMatch();
+    final var command = new FoldCommand(match.getId(), match.getPlayerOne());
+    final var delegateResult = new Object();
+
+    final UseCase<FoldCommand, Object> delegate = c -> delegateResult;
+
+    assertThat(disabledDecorator.decorate(delegate).handle(command)).isSameAs(delegateResult);
+
+    verifyNoInteractions(this.matchQueryRepository);
+    verifyNoInteractions(this.applicationEventPublisher);
   }
 
 }

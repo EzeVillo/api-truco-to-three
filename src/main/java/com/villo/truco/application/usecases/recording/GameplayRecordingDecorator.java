@@ -34,81 +34,23 @@ public final class GameplayRecordingDecorator {
   private final BotRegistry botRegistry;
   private final RecordedActionFactory recordedActionFactory;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final boolean enabled;
 
   public GameplayRecordingDecorator(final MatchQueryRepository matchQueryRepository,
       final BotRegistry botRegistry, final RecordedActionFactory recordedActionFactory,
-      final ApplicationEventPublisher applicationEventPublisher) {
+      final ApplicationEventPublisher applicationEventPublisher, final boolean enabled) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.botRegistry = Objects.requireNonNull(botRegistry);
     this.recordedActionFactory = Objects.requireNonNull(recordedActionFactory);
     this.applicationEventPublisher = Objects.requireNonNull(applicationEventPublisher);
+    this.enabled = enabled;
   }
 
-  public <C extends MatchActionCommand, R> UseCase<C, R> decorate(final UseCase<C, R> delegate) {
-
-    Objects.requireNonNull(delegate, "delegate is required");
-
-    return command -> {
-      final var before = this.safeRead(command.matchId());
-      final R result = delegate.handle(command);
-      this.safeCapture(command, before);
-      return result;
-    };
-  }
-
-  private Match safeRead(final MatchId matchId) {
-
-    try {
-      return this.matchQueryRepository.findById(matchId).orElse(null);
-    } catch (final RuntimeException exception) {
-      LOGGER.warn("No se pudo leer el estado previo de la partida {}: {}",
-          matchId != null ? matchId.value() : null, exception.getMessage(), exception);
-      return null;
-    }
-  }
-
-  private void safeCapture(final MatchActionCommand command, final Match before) {
-
-    if (before == null) {
-      return;
-    }
-
-    final var matchId = command.matchId();
-
-    try {
-      this.matchQueryRepository.findById(matchId).ifPresent(after -> this.applicationEventPublisher
-          .publish(new RecordedDecisionCaptured(this.toDecision(command, before, after))));
-    } catch (final RuntimeException exception) {
-      LOGGER.warn("No se pudo capturar la decisión de la partida {}: {}",
-          matchId != null ? matchId.value() : null, exception.getMessage(), exception);
-    }
-  }
-
-  private RecordedDecision toDecision(final MatchActionCommand command, final Match before,
-      final Match after) {
-
-    final var playerId = command.playerId();
-    final var beforeSnapshot = MatchSnapshotExtractor.extract(before);
-    final var afterSnapshot = MatchSnapshotExtractor.extract(after);
-
-    final var actorType = this.botRegistry.isBot(playerId) ? ActorType.BOT : ActorType.HUMAN;
-    final var isPlayerOne = playerId.equals(beforeSnapshot.playerOne());
-    final var actorSeat = isPlayerOne ? ActorSeat.PLAYER_ONE : ActorSeat.PLAYER_TWO;
-    final var rivalId = isPlayerOne ? before.getPlayerTwo() : before.getPlayerOne();
-
-    final var context = buildContext(before, beforeSnapshot, afterSnapshot, playerId, rivalId,
-        isPlayerOne, actorSeat);
-
-    return new RecordedDecision(afterSnapshot.id(), afterSnapshot.stateVersion(),
-        beforeSnapshot.gameNumber(), beforeSnapshot.roundNumber(), actorSeat, actorType,
-        this.recordedActionFactory.from(command), beforeSnapshot, afterSnapshot, context,
-        Instant.now(), SCHEMA_VERSION);
-  }
-
-  private static DecisionContext buildContext(final Match before, final MatchSnapshot beforeSnapshot,
-      final MatchSnapshot afterSnapshot, final PlayerId playerId, final PlayerId rivalId,
-      final boolean isPlayerOne, final ActorSeat actorSeat) {
+  private static DecisionContext buildContext(final Match before,
+      final MatchSnapshot beforeSnapshot, final MatchSnapshot afterSnapshot,
+      final PlayerId playerId, final PlayerId rivalId, final boolean isPlayerOne,
+      final ActorSeat actorSeat) {
 
     final var scoreActorBefore =
         isPlayerOne ? beforeSnapshot.scorePlayerOne() : beforeSnapshot.scorePlayerTwo();
@@ -133,13 +75,13 @@ public final class GameplayRecordingDecorator {
 
     final var availableActions = before.getAvailableActions(playerId);
     final var forced = availableActions.size() == 1;
-    final var quieroYMeVoyDisponible = availableActions.stream()
-        .anyMatch(action -> action.type() == ActionType.RESPOND_TRUCO
+    final var quieroYMeVoyDisponible = availableActions.stream().anyMatch(
+        action -> action.type() == ActionType.RESPOND_TRUCO
             && TrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO.name().equals(action.parameter()));
-    final var puedeIrseAlMazo =
-        availableActions.stream().anyMatch(action -> action.type() == ActionType.FOLD);
-    final var envidoDisponible =
-        availableActions.stream().anyMatch(action -> action.type() == ActionType.CALL_ENVIDO);
+    final var puedeIrseAlMazo = availableActions.stream()
+        .anyMatch(action -> action.type() == ActionType.FOLD);
+    final var envidoDisponible = availableActions.stream()
+        .anyMatch(action -> action.type() == ActionType.CALL_ENVIDO);
     final var availableActionLabels = availableActions.stream()
         .map(GameplayRecordingDecorator::label).toList();
 
@@ -169,6 +111,72 @@ public final class GameplayRecordingDecorator {
       return null;
     }
     return playerId.equals(snapshot.playerOne()) ? ActorSeat.PLAYER_ONE : ActorSeat.PLAYER_TWO;
+  }
+
+  public <C extends MatchActionCommand, R> UseCase<C, R> decorate(final UseCase<C, R> delegate) {
+
+    Objects.requireNonNull(delegate, "delegate is required");
+
+    if (!this.enabled) {
+      return delegate;
+    }
+
+    return command -> {
+      final var before = this.safeRead(command.matchId());
+      final R result = delegate.handle(command);
+      this.safeCapture(command, before);
+      return result;
+    };
+  }
+
+  private Match safeRead(final MatchId matchId) {
+
+    try {
+      return this.matchQueryRepository.findById(matchId).orElse(null);
+    } catch (final RuntimeException exception) {
+      LOGGER.warn("No se pudo leer el estado previo de la partida {}: {}",
+          matchId != null ? matchId.value() : null, exception.getMessage(), exception);
+      return null;
+    }
+  }
+
+  private void safeCapture(final MatchActionCommand command, final Match before) {
+
+    if (before == null) {
+      return;
+    }
+
+    final var matchId = command.matchId();
+
+    try {
+      this.matchQueryRepository.findById(matchId).ifPresent(
+          after -> this.applicationEventPublisher.publish(
+              new RecordedDecisionCaptured(this.toDecision(command, before, after))));
+    } catch (final RuntimeException exception) {
+      LOGGER.warn("No se pudo capturar la decisión de la partida {}: {}",
+          matchId != null ? matchId.value() : null, exception.getMessage(), exception);
+    }
+  }
+
+  private RecordedDecision toDecision(final MatchActionCommand command, final Match before,
+      final Match after) {
+
+    final var playerId = command.playerId();
+    final var beforeSnapshot = MatchSnapshotExtractor.extract(before);
+    final var afterSnapshot = MatchSnapshotExtractor.extract(after);
+
+    final var actorType = this.botRegistry.isBot(playerId) ? ActorType.BOT : ActorType.HUMAN;
+    final var isPlayerOne = playerId.equals(beforeSnapshot.playerOne());
+    final var actorSeat = isPlayerOne ? ActorSeat.PLAYER_ONE : ActorSeat.PLAYER_TWO;
+    final var rivalId = isPlayerOne ? before.getPlayerTwo() : before.getPlayerOne();
+
+    final var context = buildContext(before, beforeSnapshot, afterSnapshot, playerId, rivalId,
+        isPlayerOne, actorSeat);
+
+    return new RecordedDecision(afterSnapshot.id(), afterSnapshot.stateVersion(),
+        beforeSnapshot.gameNumber(), beforeSnapshot.roundNumber(), actorSeat, actorType,
+        this.recordedActionFactory.from(command), beforeSnapshot, afterSnapshot, context,
+        Instant.now(), SCHEMA_VERSION);
   }
 
 }

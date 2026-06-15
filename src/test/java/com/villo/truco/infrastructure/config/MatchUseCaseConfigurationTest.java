@@ -34,7 +34,7 @@ class MatchUseCaseConfigurationTest {
         availabilityConfiguration.playerAvailabilityChecker(), mock(PublicActorResolver.class),
         new UseCasePipeline(List.of()), mock(CupQueryRepository.class),
         mock(LeagueQueryRepository.class), mock(BotRegistry.class),
-        mock(ApplicationEventPublisher.class));
+        mock(ApplicationEventPublisher.class), new GameplayRecordingProperties());
 
     assertThat(configuration.matchResolver()).isNotNull();
     assertThat(

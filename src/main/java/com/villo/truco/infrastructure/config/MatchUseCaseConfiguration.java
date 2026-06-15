@@ -61,7 +61,8 @@ public class MatchUseCaseConfiguration {
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       final CupQueryRepository cupQueryRepository,
       final LeagueQueryRepository leagueQueryRepository, final BotRegistry botRegistry,
-      final ApplicationEventPublisher applicationEventPublisher) {
+      final ApplicationEventPublisher applicationEventPublisher,
+      final GameplayRecordingProperties gameplayRecordingProperties) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.matchRepository = matchRepository;
@@ -72,7 +73,8 @@ public class MatchUseCaseConfiguration {
     this.cupQueryRepository = cupQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;
     this.gameplayRecordingDecorator = new GameplayRecordingDecorator(matchQueryRepository,
-        botRegistry, new RecordedActionFactory(), applicationEventPublisher);
+        botRegistry, new RecordedActionFactory(), applicationEventPublisher,
+        gameplayRecordingProperties.isEnabled());
   }
 
   @Bean
