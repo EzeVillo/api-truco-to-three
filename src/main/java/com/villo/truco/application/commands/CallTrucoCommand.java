@@ -4,7 +4,7 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Objects;
 
-public record CallTrucoCommand(MatchId matchId, PlayerId playerId) {
+public record CallTrucoCommand(MatchId matchId, PlayerId playerId) implements MatchActionCommand {
 
   public CallTrucoCommand {
 

@@ -40,6 +40,8 @@ truco:
   match:
     lobby-timeout-seconds: 300
     play-timeout-seconds: 30
+  recording:
+    enabled: ${TRUCO_RECORDING_ENABLED:false}
   league:
     lobby-timeout-seconds: 600
   cup:
