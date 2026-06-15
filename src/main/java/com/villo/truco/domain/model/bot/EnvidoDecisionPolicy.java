@@ -1,6 +1,7 @@
 package com.villo.truco.domain.model.bot;
 
 import com.villo.truco.domain.model.bot.exceptions.PendingEnvidoCallRequiredException;
+import com.villo.truco.domain.model.bot.valueobjects.BotCard;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoCall;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoLevel;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoResponse;
@@ -18,6 +19,7 @@ final class EnvidoDecisionPolicy {
   private static final int SUICIDAL_TRAP_MAX_ENVIDO = 19;
   private static final double CALL_BASE = 0.15;
   private static final double RESPOND_ACCEPT_BASE = 0.40;
+  private static final double BOTH_AT_MATCH_POINT_THRESHOLD = 0.5;
 
   private final BotPersonality personality;
   private final Random random;
@@ -30,10 +32,19 @@ final class EnvidoDecisionPolicy {
 
   Optional<BotEnvidoCall> decideCall(final List<BotEnvidoCall> availableCalls,
       final int envidoScore, final int myScore, final int rivalScore, final int pointsToWin,
-      final boolean isMano, final boolean isFirstCall) {
+      final boolean isMano, final boolean isFirstCall, final List<BotCard> myCards,
+      final BotCard rivalCardPlayed) {
 
     if (availableCalls.isEmpty()) {
       return Optional.empty();
+    }
+
+    if (isFirstCall && myScore == pointsToWin - 1 && rivalScore == pointsToWin - 1) {
+      final var forced = decideBothAtMatchPoint(availableCalls, myCards, envidoScore, isMano,
+          rivalCardPlayed);
+      if (forced.isPresent()) {
+        return forced;
+      }
     }
 
     final var safeCalls = availableCalls.stream().filter(
@@ -181,6 +192,39 @@ final class EnvidoDecisionPolicy {
       return availableCalls.stream().filter(o -> o.level() == BotEnvidoLevel.ENVIDO).findFirst();
     }
     return Optional.empty();
+  }
+
+  /**
+   * Empate en punto de partida (típicamente 2-2 en una partida a 3). Por la regla de punto exacto,
+   * el envido empuja a 4 y revienta a quien lo gana, mientras que la falta hace llegar a 3 al
+   * ganador. Por eso el bot SIEMPRE canta, eligiendo según la probabilidad real de ganar el tanto
+   * (calculada en vivo con sus cartas): si es favorito (≥ 0,5) canta falta para ganar; si no, canta
+   * envido como trampa para que el rival gane el tanto y se pase. La personalidad no interviene.
+   *
+   * <p>Como mano entra siempre. Como pie solo entra si el rival ya jugó una carta que el bot no
+   * puede matar (si la puede matar, conserva chances de truco y cae en la lógica habitual).
+   */
+  private Optional<BotEnvidoCall> decideBothAtMatchPoint(final List<BotEnvidoCall> availableCalls,
+      final List<BotCard> myCards, final int envidoScore, final boolean isMano,
+      final BotCard rivalCardPlayed) {
+
+    if (!isMano) {
+      if (rivalCardPlayed == null) {
+        return Optional.empty();
+      }
+      final var canBeatRivalCard = myCards.stream()
+          .anyMatch(card -> card.trucoRank() > rivalCardPlayed.trucoRank());
+      if (canBeatRivalCard) {
+        return Optional.empty();
+      }
+    }
+
+    final var winProbability = EnvidoProbabilityCalculator.probabilityBotWinsTanto(myCards,
+        envidoScore, isMano, rivalCardPlayed);
+    final var targetLevel = winProbability >= BOTH_AT_MATCH_POINT_THRESHOLD
+        ? BotEnvidoLevel.FALTA_ENVIDO : BotEnvidoLevel.ENVIDO;
+
+    return availableCalls.stream().filter(call -> call.level() == targetLevel).findFirst();
   }
 
   private Optional<BotEnvidoCall> pickJustifiedLevel(final List<BotEnvidoCall> availableCalls,

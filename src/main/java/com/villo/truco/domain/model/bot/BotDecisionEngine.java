@@ -78,7 +78,8 @@ public final class BotDecisionEngine {
 
       if (envido.canCall()) {
         final var envidoCall = this.envidoPolicy.decideCall(envido.availableCalls(), envidoScore,
-            myScore, rivalScore, pointsToWin, game.isMano(), true);
+            myScore, rivalScore, pointsToWin, game.isMano(), true, game.myCards(),
+            game.rivalCardPlayed());
         if (envidoCall.isPresent()) {
           return new BotAction.CallEnvido(envidoCall.get());
         }
@@ -110,7 +111,8 @@ public final class BotDecisionEngine {
     if (envido.mustRespond()) {
       if (envido.canCall()) {
         final var raise = this.envidoPolicy.decideCall(envido.availableCalls(), envidoScore,
-            myScore, rivalScore, pointsToWin, game.isMano(), false);
+            myScore, rivalScore, pointsToWin, game.isMano(), false, game.myCards(),
+            game.rivalCardPlayed());
         if (raise.isPresent()) {
           return new BotAction.CallEnvido(raise.get());
         }
@@ -122,7 +124,8 @@ public final class BotDecisionEngine {
 
     if (envido.canCall()) {
       final var envidoCall = this.envidoPolicy.decideCall(envido.availableCalls(), envidoScore,
-          myScore, rivalScore, pointsToWin, game.isMano(), true);
+          myScore, rivalScore, pointsToWin, game.isMano(), true, game.myCards(),
+          game.rivalCardPlayed());
       if (envidoCall.isPresent()) {
         return new BotAction.CallEnvido(envidoCall.get());
       }
