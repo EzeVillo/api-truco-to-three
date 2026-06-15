@@ -9,6 +9,7 @@ import com.villo.truco.infrastructure.persistence.repositories.spring.SpringData
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
@@ -24,7 +25,7 @@ public class JpaGameplayRecorderAdapter implements GameplayRecorderPort {
   }
 
   @Override
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void record(final RecordedDecision decision) {
 
     final UUID matchId = decision.matchId().value();
