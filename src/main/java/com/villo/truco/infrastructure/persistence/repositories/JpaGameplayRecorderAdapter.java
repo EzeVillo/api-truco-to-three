@@ -34,6 +34,8 @@ public class JpaGameplayRecorderAdapter implements GameplayRecorderPort {
       return;
     }
 
+    final var context = decision.context();
+
     final var entity = new MatchActionLogJpaEntity();
     entity.setMatchId(matchId);
     entity.setStateVersion(decision.stateVersion());
@@ -43,7 +45,17 @@ public class JpaGameplayRecorderAdapter implements GameplayRecorderPort {
     entity.setActorType(decision.actorType().name());
     entity.setActionType(decision.action().type().name());
     entity.setActionDetail(this.toJson(decision.action().detail()));
-    entity.setMatchState(OBJECT_MAPPER.valueToTree(decision.snapshot()));
+    entity.setMatchStateBefore(OBJECT_MAPPER.valueToTree(decision.snapshotBefore()));
+    entity.setMatchStateAfter(OBJECT_MAPPER.valueToTree(decision.snapshotAfter()));
+    entity.setDecisionContext(OBJECT_MAPPER.valueToTree(context));
+    entity.setScoreActorBefore(context.scoreActorBefore());
+    entity.setScoreActorAfter(context.scoreActorAfter());
+    entity.setScoreOppBefore(context.scoreOppBefore());
+    entity.setScoreOppAfter(context.scoreOppAfter());
+    entity.setTantosActor(context.tantosActor());
+    entity.setTantosOpp(context.tantosOpp());
+    entity.setMano(context.isMano());
+    entity.setForced(context.forced());
     entity.setSchemaVersion(decision.schemaVersion());
     entity.setOccurredAt(decision.occurredAt());
 

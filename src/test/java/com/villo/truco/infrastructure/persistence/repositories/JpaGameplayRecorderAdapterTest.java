@@ -10,10 +10,12 @@ import static org.mockito.Mockito.when;
 
 import com.villo.truco.domain.model.gameplay.valueobjects.ActorSeat;
 import com.villo.truco.domain.model.gameplay.valueobjects.ActorType;
+import com.villo.truco.domain.model.gameplay.valueobjects.DecisionContext;
 import com.villo.truco.domain.model.gameplay.valueobjects.RecordedAction;
 import com.villo.truco.domain.model.gameplay.valueobjects.RecordedActionType;
 import com.villo.truco.domain.model.gameplay.valueobjects.RecordedDecision;
 import com.villo.truco.domain.model.match.Match;
+import com.villo.truco.domain.model.match.MatchPlayerDecisionView;
 import com.villo.truco.domain.model.match.MatchSnapshot;
 import com.villo.truco.domain.model.match.MatchSnapshotExtractor;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
@@ -25,6 +27,7 @@ import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.persistence.entities.MatchActionLogJpaEntity;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataMatchActionLogRepository;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,9 +50,11 @@ class JpaGameplayRecorderAdapterTest {
 
   private RecordedDecision decision(final MatchSnapshot snapshot, final RecordedAction action) {
 
+    final var context = new DecisionContext(0, 0, 0, 0, 0, 0, 0, 0, false, null, null, false,
+        List.of(), false, false, false, MatchPlayerDecisionView.empty(0, 0));
     return new RecordedDecision(snapshot.id(), snapshot.stateVersion(), snapshot.gameNumber(),
-        snapshot.roundNumber(), ActorSeat.PLAYER_ONE, ActorType.BOT, action, snapshot,
-        Instant.now(), 1);
+        snapshot.roundNumber(), ActorSeat.PLAYER_ONE, ActorType.BOT, action, snapshot, snapshot,
+        context, Instant.now(), 2);
   }
 
   @Test
@@ -72,8 +77,10 @@ class JpaGameplayRecorderAdapterTest {
     assertThat(entity.getActorSeat()).isEqualTo("PLAYER_ONE");
     assertThat(entity.getActionType()).isEqualTo("PLAY_CARD");
     assertThat(entity.getActionDetail()).isNotNull();
-    assertThat(entity.getMatchState()).isNotNull();
-    assertThat(entity.getSchemaVersion()).isEqualTo(1);
+    assertThat(entity.getMatchStateBefore()).isNotNull();
+    assertThat(entity.getMatchStateAfter()).isNotNull();
+    assertThat(entity.getDecisionContext()).isNotNull();
+    assertThat(entity.getSchemaVersion()).isEqualTo(2);
     assertThat(entity.getOccurredAt()).isNotNull();
   }
 

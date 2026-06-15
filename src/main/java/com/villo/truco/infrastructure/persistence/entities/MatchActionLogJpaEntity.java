@@ -49,8 +49,40 @@ public class MatchActionLogJpaEntity {
   private JsonNode actionDetail;
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "match_state", columnDefinition = "jsonb", nullable = false)
-  private JsonNode matchState;
+  @Column(name = "match_state_before", columnDefinition = "jsonb", nullable = false)
+  private JsonNode matchStateBefore;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "match_state_after", columnDefinition = "jsonb", nullable = false)
+  private JsonNode matchStateAfter;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "decision_context", columnDefinition = "jsonb", nullable = false)
+  private JsonNode decisionContext;
+
+  @Column(name = "score_actor_before", nullable = false)
+  private int scoreActorBefore;
+
+  @Column(name = "score_actor_after", nullable = false)
+  private int scoreActorAfter;
+
+  @Column(name = "score_opp_before", nullable = false)
+  private int scoreOppBefore;
+
+  @Column(name = "score_opp_after", nullable = false)
+  private int scoreOppAfter;
+
+  @Column(name = "tantos_actor", nullable = false)
+  private int tantosActor;
+
+  @Column(name = "tantos_opp", nullable = false)
+  private int tantosOpp;
+
+  @Column(name = "is_mano", nullable = false)
+  private boolean mano;
+
+  @Column(name = "forced", nullable = false)
+  private boolean forced;
 
   @Column(name = "schema_version", nullable = false)
   private int schemaVersion;
@@ -154,14 +186,114 @@ public class MatchActionLogJpaEntity {
     this.actionDetail = actionDetail;
   }
 
-  public JsonNode getMatchState() {
+  public JsonNode getMatchStateBefore() {
 
-    return this.matchState;
+    return this.matchStateBefore;
   }
 
-  public void setMatchState(final JsonNode matchState) {
+  public void setMatchStateBefore(final JsonNode matchStateBefore) {
 
-    this.matchState = matchState;
+    this.matchStateBefore = matchStateBefore;
+  }
+
+  public JsonNode getMatchStateAfter() {
+
+    return this.matchStateAfter;
+  }
+
+  public void setMatchStateAfter(final JsonNode matchStateAfter) {
+
+    this.matchStateAfter = matchStateAfter;
+  }
+
+  public JsonNode getDecisionContext() {
+
+    return this.decisionContext;
+  }
+
+  public void setDecisionContext(final JsonNode decisionContext) {
+
+    this.decisionContext = decisionContext;
+  }
+
+  public int getScoreActorBefore() {
+
+    return this.scoreActorBefore;
+  }
+
+  public void setScoreActorBefore(final int scoreActorBefore) {
+
+    this.scoreActorBefore = scoreActorBefore;
+  }
+
+  public int getScoreActorAfter() {
+
+    return this.scoreActorAfter;
+  }
+
+  public void setScoreActorAfter(final int scoreActorAfter) {
+
+    this.scoreActorAfter = scoreActorAfter;
+  }
+
+  public int getScoreOppBefore() {
+
+    return this.scoreOppBefore;
+  }
+
+  public void setScoreOppBefore(final int scoreOppBefore) {
+
+    this.scoreOppBefore = scoreOppBefore;
+  }
+
+  public int getScoreOppAfter() {
+
+    return this.scoreOppAfter;
+  }
+
+  public void setScoreOppAfter(final int scoreOppAfter) {
+
+    this.scoreOppAfter = scoreOppAfter;
+  }
+
+  public int getTantosActor() {
+
+    return this.tantosActor;
+  }
+
+  public void setTantosActor(final int tantosActor) {
+
+    this.tantosActor = tantosActor;
+  }
+
+  public int getTantosOpp() {
+
+    return this.tantosOpp;
+  }
+
+  public void setTantosOpp(final int tantosOpp) {
+
+    this.tantosOpp = tantosOpp;
+  }
+
+  public boolean isMano() {
+
+    return this.mano;
+  }
+
+  public void setMano(final boolean mano) {
+
+    this.mano = mano;
+  }
+
+  public boolean isForced() {
+
+    return this.forced;
+  }
+
+  public void setForced(final boolean forced) {
+
+    this.forced = forced;
   }
 
   public int getSchemaVersion() {

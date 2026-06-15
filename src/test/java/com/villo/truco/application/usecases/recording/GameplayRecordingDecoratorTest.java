@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -69,7 +68,10 @@ class GameplayRecordingDecoratorTest {
     assertThat(decision.actorType()).isEqualTo(ActorType.HUMAN);
     assertThat(decision.actorSeat()).isEqualTo(ActorSeat.PLAYER_ONE);
     assertThat(decision.action().type()).isEqualTo(RecordedActionType.FOLD);
-    assertThat(decision.schemaVersion()).isEqualTo(1);
+    assertThat(decision.snapshotBefore()).isNotNull();
+    assertThat(decision.snapshotAfter()).isNotNull();
+    assertThat(decision.context()).isNotNull();
+    assertThat(decision.schemaVersion()).isEqualTo(2);
   }
 
   @Test
@@ -95,6 +97,7 @@ class GameplayRecordingDecoratorTest {
 
     final var match = this.newMatch();
     final var command = new FoldCommand(match.getId(), match.getPlayerOne());
+    when(this.matchQueryRepository.findById(match.getId())).thenReturn(Optional.of(match));
 
     final UseCase<FoldCommand, Void> delegate = c -> {
       throw new IllegalStateException("jugada inválida");
@@ -104,7 +107,6 @@ class GameplayRecordingDecoratorTest {
         IllegalStateException.class);
 
     verifyNoInteractions(this.applicationEventPublisher);
-    verify(this.matchQueryRepository, never()).findById(any());
   }
 
   @Test

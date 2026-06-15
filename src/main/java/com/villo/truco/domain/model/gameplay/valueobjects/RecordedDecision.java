@@ -7,7 +7,8 @@ import java.util.Objects;
 
 public record RecordedDecision(MatchId matchId, long stateVersion, int gameNumber, int roundNumber,
                                ActorSeat actorSeat, ActorType actorType, RecordedAction action,
-                               MatchSnapshot snapshot, Instant occurredAt, int schemaVersion) {
+                               MatchSnapshot snapshotBefore, MatchSnapshot snapshotAfter,
+                               DecisionContext context, Instant occurredAt, int schemaVersion) {
 
   public RecordedDecision {
 
@@ -15,7 +16,9 @@ public record RecordedDecision(MatchId matchId, long stateVersion, int gameNumbe
     Objects.requireNonNull(actorSeat, "actorSeat is required");
     Objects.requireNonNull(actorType, "actorType is required");
     Objects.requireNonNull(action, "action is required");
-    Objects.requireNonNull(snapshot, "snapshot is required");
+    Objects.requireNonNull(snapshotBefore, "snapshotBefore is required");
+    Objects.requireNonNull(snapshotAfter, "snapshotAfter is required");
+    Objects.requireNonNull(context, "context is required");
     Objects.requireNonNull(occurredAt, "occurredAt is required");
   }
 
