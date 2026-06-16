@@ -14,9 +14,7 @@ import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.in.StartMatchUseCase;
-import com.villo.truco.application.ports.RematchVeto;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
-import com.villo.truco.application.services.BotVsBotRematchVeto;
 import com.villo.truco.application.usecases.commands.AbandonMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.CallEnvidoCommandHandler;
 import com.villo.truco.application.usecases.commands.CallTrucoCommandHandler;
@@ -33,7 +31,6 @@ import com.villo.truco.application.usecases.queries.GetMatchStateQueryHandler;
 import com.villo.truco.application.usecases.queries.GetPublicMatchesQueryHandler;
 import com.villo.truco.application.usecases.recording.GameplayRecordingDecorator;
 import com.villo.truco.application.usecases.recording.RecordedActionFactory;
-import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
@@ -84,12 +81,6 @@ public class MatchUseCaseConfiguration {
   MatchResolver matchResolver() {
 
     return new MatchResolver(this.matchQueryRepository);
-  }
-
-  @Bean
-  RematchVeto botVsBotRematchVeto(final BotVsBotMatchRegistry botVsBotMatchRegistry) {
-
-    return new BotVsBotRematchVeto(botVsBotMatchRegistry);
   }
 
   @Bean

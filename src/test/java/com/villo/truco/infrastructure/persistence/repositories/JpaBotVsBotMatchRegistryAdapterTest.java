@@ -1,6 +1,8 @@
 package com.villo.truco.infrastructure.persistence.repositories;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
@@ -9,17 +11,23 @@ import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
+import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataJoinCodeRegistryRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @DisplayName("JpaBotVsBotMatchRegistryAdapter")
 class JpaBotVsBotMatchRegistryAdapterTest {
+
+  @MockitoBean
+  private SpringDataJoinCodeRegistryRepository springDataJoinCodeRegistryRepository;
 
   @Autowired
   private BotVsBotMatchRegistry registry;
@@ -29,6 +37,12 @@ class JpaBotVsBotMatchRegistryAdapterTest {
 
   @Autowired
   private JdbcTemplate jdbcTemplate;
+
+  @BeforeEach
+  void setUp() {
+
+    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(1);
+  }
 
   private Match startedBotVsBotMatch() {
 

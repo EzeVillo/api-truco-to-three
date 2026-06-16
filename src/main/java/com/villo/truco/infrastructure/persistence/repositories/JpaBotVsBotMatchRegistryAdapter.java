@@ -47,8 +47,8 @@ public class JpaBotVsBotMatchRegistryAdapter implements BotVsBotMatchRegistry {
   @Override
   public Optional<MatchId> findActiveOwnedMatchId(final PlayerId ownerId) {
 
-    return this.springDataBotVsBotMatchRepository.findActiveOwnedMatchId(ownerId.value())
-        .map(MatchId::new);
+    return this.springDataBotVsBotMatchRepository.findActiveOwnedMatchIds(ownerId.value()).stream()
+        .findFirst().map(MatchId::new);
   }
 
 }

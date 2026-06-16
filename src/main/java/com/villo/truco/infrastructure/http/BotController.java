@@ -79,10 +79,10 @@ public class BotController {
   @Operation(summary = "Crear partida entre dos bots", description = "Crea una partida ya iniciada entre dos bots que juegan solos. Solo el creador puede espectarla y queda ocupado por autoría hasta que termine. No genera chat ni revancha.", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateBotVsBotMatchResponse.class))),
-      @ApiResponse(responseCode = "400", description = "Body inválido o faltante, o bots iguales", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "404", description = "Alguno de los bots no existe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "422", description = "El usuario ya está ocupado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+      @ApiResponse(responseCode = "422", description = "El usuario ya está ocupado, o ambos bots son iguales", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
   public ResponseEntity<CreateBotVsBotMatchResponse> createBotVsBotMatch(
       @Valid @RequestBody final CreateBotVsBotMatchRequest request,
       @AuthenticationPrincipal final Jwt jwt) {

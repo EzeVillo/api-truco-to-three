@@ -103,7 +103,7 @@ genera revancha.
 - [X] T012 [P] [US1] Test
   `src/test/java/com/villo/truco/application/services/BotVsBotRematchVetoTest.java`: vetea revancha
   si el match es bot-vs-bot; no vetea si no lo es.
-- [ ] T013 [US1] Test de integración
+- [X] T013 [US1] Test de integración
   `src/test/java/com/villo/truco/integration/BotVsBotSpectatingIT.java`: crear por REST → espectar
   como creador devuelve ambas manos → no-creador recibe `422` → la partida queda `PRIVATE` (fuera del
   lobby) y no abre revancha al terminar.
@@ -176,8 +176,9 @@ genera revancha.
   (depende de T023, T025).
 - [X] T029 [US1] En `src/main/java/com/villo/truco/infrastructure/config/EventNotifierConfiguration.java`,
   pasar `BotVsBotMatchRegistry` al `SpectatorNotificationEventTranslator` (depende de T026).
-- [X] T030 [US1] En `src/main/java/com/villo/truco/infrastructure/config/MatchUseCaseConfiguration.java`,
-  registrar el bean `BotVsBotRematchVeto` (se suma a `List<RematchVeto>`) (depende de T027).
+- [X] T030 [US1] Registrar el bean `BotVsBotRematchVeto` (se suma a `List<RematchVeto>`) en
+  `src/main/java/com/villo/truco/infrastructure/config/RematchConfiguration.java` (no en
+  `MatchUseCaseConfiguration`: ahí genera un ciclo de beans con el `MatchEventNotifier`) (depende de T027).
 
 **Checkpoint**: US1 funcional — crear, espectar owner-only y ver ambas manos (snapshot + WS), sin
 revancha. MVP entregable.
