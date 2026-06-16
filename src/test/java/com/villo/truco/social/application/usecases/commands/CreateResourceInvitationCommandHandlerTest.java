@@ -359,7 +359,7 @@ class CreateResourceInvitationCommandHandlerTest {
     return new CreateResourceInvitationCommandHandler(new SocialUserGuard(userQueryRepository),
         new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
             cupQueryRepository, mock(BotRegistry.class), mock(RematchSessionRepository.class),
-            mock(QuickMatchQueuePort.class), NoOpSpectatorshipRepository.INSTANCE),
+            mock(QuickMatchQueuePort.class), NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry()),
         friendshipQueryRepository, new ResourceInvitationPolicy(resourceInvitationQueryRepository),
         resourceInvitationRepository, events -> {
     }, new InvitationTargetService(matchQueryRepository, leagueQueryRepository, cupQueryRepository),

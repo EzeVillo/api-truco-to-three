@@ -224,7 +224,7 @@ class StartMatchCommandHandlerTest {
     };
     final var checker = new PlayerAvailabilityChecker(queryRepo, leagueQueryRepo, cupQueryRepo,
         noBotRegistry, NoOpRematchSessionRepository.INSTANCE, NoOpQuickMatchQueuePort.INSTANCE,
-        NoOpSpectatorshipRepository.INSTANCE);
+        NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
     return new StartMatchCommandHandler(resolver, matchRepository, notifier, checker);
   }
 

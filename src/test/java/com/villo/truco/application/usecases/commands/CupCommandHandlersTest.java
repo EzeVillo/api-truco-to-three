@@ -236,7 +236,7 @@ class CupCommandHandlersTest {
     };
     return new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
         cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE,
-        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE);
+        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
   }
 
   @Test

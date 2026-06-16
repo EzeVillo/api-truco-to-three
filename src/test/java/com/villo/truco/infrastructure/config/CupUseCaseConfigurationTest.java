@@ -26,7 +26,7 @@ class CupUseCaseConfigurationTest {
         mock(MatchQueryRepository.class), mock(LeagueQueryRepository.class),
         mock(CupQueryRepository.class), mock(BotRegistry.class),
         mock(RematchSessionRepository.class), mock(QuickMatchQueuePort.class),
-        mock(SpectatorshipRepository.class));
+        mock(SpectatorshipRepository.class), mock(com.villo.truco.domain.ports.BotVsBotMatchRegistry.class));
 
     final var configuration = new CupUseCaseConfiguration(mock(CupQueryRepository.class),
         mock(com.villo.truco.domain.ports.CupRepository.class), mock(MatchRepository.class),

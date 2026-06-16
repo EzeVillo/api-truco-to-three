@@ -196,46 +196,46 @@ espectando.
 
 ### Tests para User Story 2 ⚠️
 
-- [ ] T031 [P] [US2] Extender
+- [X] T031 [P] [US2] Extender
   `src/test/java/com/villo/truco/application/usecases/commands/PlayerAvailabilityCheckerTest.java`:
   `OWNS_BOT_MATCH` bloquea cuando hay bot-match propia activa; no bloquea cuando no la hay; los bots
   siguen sin chequearse.
-- [ ] T032 [P] [US2] Extender
+- [X] T032 [P] [US2] Extender
   `src/test/java/com/villo/truco/application/usecases/queries/UserPresenceResolverTest.java`:
   `ownedBotMatch` presente con match activo y `busy:true`; ausente cuando no hay; no interfiere con
   los demás refs.
 
 ### Implementación — Ocupación
 
-- [ ] T033 [P] [US2] Crear
+- [X] T033 [P] [US2] Crear
   `src/main/java/com/villo/truco/domain/model/match/exceptions/PlayerOwnsActiveBotMatchException.java`
   (`extends DomainException` → 422).
-- [ ] T034 [US2] Modificar
+- [X] T034 [US2] Modificar
   `src/main/java/com/villo/truco/application/usecases/commands/PlayerAvailabilityChecker.java`:
   inyectar `BotVsBotMatchRegistry`; agregar `BlockingReason.OWNS_BOT_MATCH`
   (`findActiveOwnedMatchId(player).isPresent()`) y lanzar `PlayerOwnsActiveBotMatchException` en
   `ensureAvailable` (depende de T002, T033).
-- [ ] T035 [US2] En
+- [X] T035 [US2] En
   `src/main/java/com/villo/truco/infrastructure/config/PlayerAvailabilityConfiguration.java`, pasar
   `BotVsBotMatchRegistry` al `PlayerAvailabilityChecker` (depende de T034).
 
 ### Implementación — Presencia
 
-- [ ] T036 [P] [US2] Crear `src/main/java/com/villo/truco/application/dto/ActiveOwnedBotMatchRefDTO.java`
+- [X] T036 [P] [US2] Crear `src/main/java/com/villo/truco/application/dto/ActiveOwnedBotMatchRefDTO.java`
   (`matchId`, `status`).
-- [ ] T037 [US2] Modificar `src/main/java/com/villo/truco/application/dto/UserPresenceDTO.java`:
+- [X] T037 [US2] Modificar `src/main/java/com/villo/truco/application/dto/UserPresenceDTO.java`:
   agregar `ownedBotMatch` y sumarlo al cálculo de `busy` en `of(...)` (depende de T036).
-- [ ] T038 [US2] Modificar
+- [X] T038 [US2] Modificar
   `src/main/java/com/villo/truco/application/usecases/queries/UserPresenceResolver.java`: inyectar
   `BotVsBotMatchRegistry`; resolver `ownedBotMatch` vía `findActiveOwnedMatchId(player)` + estado del
   match (`MatchQueryRepository`) (depende de T002, T037).
-- [ ] T039 [US2] Modificar
+- [X] T039 [US2] Modificar
   `src/main/java/com/villo/truco/infrastructure/http/dto/response/UserPresenceResponse.java`: agregar
   el record anidado `OwnedBotMatchRef { matchId, status }`, el campo `ownedBotMatch` y su mapeo en
   `from(...)` (depende de T037).
-- [ ] T040 [US2] En `src/main/java/com/villo/truco/infrastructure/config/PresenceUseCaseConfiguration.java`,
+- [X] T040 [US2] En `src/main/java/com/villo/truco/infrastructure/config/PresenceUseCaseConfiguration.java`,
   pasar `BotVsBotMatchRegistry` al `UserPresenceResolver` (depende de T038).
-- [ ] T041 [US2] Test de integración
+- [X] T041 [US2] Test de integración
   `src/test/java/com/villo/truco/integration/BotVsBotOccupancyIT.java`: tras crear una bot-match,
   `GET /api/me/presence` muestra `busy:true` + `ownedBotMatch` sin espectar; crear otra bot-match y
   una partida normal devuelven `422` (depende de T034, T039, T040).
@@ -254,7 +254,7 @@ presencia `busy:false`, `ownedBotMatch:null`, y se puede crear una nueva partida
 
 ### Tests para User Story 3 ⚠️
 
-- [ ] T042 [US3] Test de integración
+- [X] T042 [US3] Test de integración
   `src/test/java/com/villo/truco/integration/BotVsBotReleaseIT.java`: dejar que una bot-match llegue
   a estado terminal y verificar que `GET /api/me/presence` pasa a `busy:false`/`ownedBotMatch:null` y
   que el creador puede crear una nueva bot-match (depende de T034, T038, Phase 2).

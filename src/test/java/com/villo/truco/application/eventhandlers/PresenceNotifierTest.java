@@ -37,7 +37,7 @@ class PresenceNotifierTest {
     notifier = new PresenceNotifier(resolver, publisher, botRegistry);
     when(botRegistry.isBot(any())).thenReturn(false);
     when(resolver.resolve(any())).thenReturn(
-        UserPresenceDTO.of(null, null, null, null, null, null));
+        UserPresenceDTO.of(null, null, null, null, null, null, null));
   }
 
   @Test
@@ -45,7 +45,7 @@ class PresenceNotifierTest {
   void publishesPerHumanPlayer() {
 
     final var player = PlayerId.generate();
-    final var snapshot = UserPresenceDTO.of(null, null, null, null, null, null);
+    final var snapshot = UserPresenceDTO.of(null, null, null, null, null, null, null);
     when(resolver.resolve(player)).thenReturn(snapshot);
 
     notifier.notifyPlayers(List.of(player));

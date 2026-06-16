@@ -125,7 +125,7 @@ class FriendAvailabilityResolverTest {
     final var quickMatchQueue = mock(QuickMatchQueuePort.class);
     when(quickMatchQueue.isPlayerQueued(any())).thenReturn(quickQueued);
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        quickMatchQueue, NoOpSpectatorshipRepository.INSTANCE);
+        quickMatchQueue, NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
   }
 
   @Test

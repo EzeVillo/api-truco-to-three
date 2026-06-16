@@ -14,6 +14,7 @@ import com.villo.truco.domain.model.league.League;
 import com.villo.truco.domain.model.league.exceptions.PlayerAlreadyInWaitingLeagueException;
 import com.villo.truco.domain.model.league.exceptions.PlayerBusyInLeagueException;
 import com.villo.truco.domain.model.match.exceptions.PlayerAlreadyInActiveMatchException;
+import com.villo.truco.domain.model.match.exceptions.PlayerOwnsActiveBotMatchException;
 import com.villo.truco.domain.model.quickmatch.exceptions.PlayerAlreadyInQueueException;
 import com.villo.truco.domain.model.spectator.Spectatorship;
 import com.villo.truco.domain.model.spectator.exceptions.PlayerIsSpectatingException;
@@ -27,6 +28,8 @@ import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.domain.shared.valueobjects.Visibility;
+import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
+import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +78,7 @@ class PlayerAvailabilityCheckerTest {
     final var spectatorshipRepo = mock(SpectatorshipRepository.class);
     when(spectatorshipRepo.findBySpectatorId(any())).thenReturn(Optional.empty());
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        quickMatchQueuePort, spectatorshipRepo);
+        quickMatchQueuePort, spectatorshipRepo, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
   }
 
   @Test
@@ -290,7 +293,7 @@ class PlayerAvailabilityCheckerTest {
     final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
     when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(true);
     final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
-        rematchRepo, quickMatchQueuePort, NoOpSpectatorshipRepository.INSTANCE);
+        rematchRepo, quickMatchQueuePort, NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
 
     assertThatThrownBy(() -> checker.ensureAvailable(PlayerId.generate())).isInstanceOf(
         PlayerAlreadyInQueueException.class);
@@ -331,10 +334,64 @@ class PlayerAvailabilityCheckerTest {
     when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(false);
 
     final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
-        rematchRepo, quickMatchQueuePort, spectatorshipRepo);
+        rematchRepo, quickMatchQueuePort, spectatorshipRepo, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
 
     assertThatThrownBy(() -> checker.ensureAvailable(spectatorId)).isInstanceOf(
         PlayerIsSpectatingException.class);
+  }
+
+  private static PlayerAvailabilityChecker checkerWithRegistry(final BotRegistry botRegistry,
+      final InMemoryBotVsBotMatchRegistry botVsBotRegistry) {
+
+    final var matchRepo = mock(MatchQueryRepository.class);
+    when(matchRepo.hasUnfinishedMatch(any())).thenReturn(false);
+    final var leagueRepo = mock(LeagueQueryRepository.class);
+    when(leagueRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(leagueRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var cupRepo = mock(CupQueryRepository.class);
+    when(cupRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(cupRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
+        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE, botVsBotRegistry);
+  }
+
+  @Test
+  @DisplayName("OWNS_BOT_MATCH bloquea cuando hay bot-match propia activa")
+  void throwsWhenPlayerOwnsActiveBotMatch() {
+
+    final var owner = PlayerId.generate();
+    final var registry = new InMemoryBotVsBotMatchRegistry();
+    registry.register(MatchId.generate(), owner);
+    final var checker = checkerWithRegistry(mock(BotRegistry.class), registry);
+
+    assertThatThrownBy(() -> checker.ensureAvailable(owner)).isInstanceOf(
+        PlayerOwnsActiveBotMatchException.class);
+  }
+
+  @Test
+  @DisplayName("no bloquea cuando no hay bot-match propia activa")
+  void doesNotBlockWithoutActiveBotMatch() {
+
+    final var checker = checkerWithRegistry(mock(BotRegistry.class),
+        new InMemoryBotVsBotMatchRegistry());
+
+    assertThatCode(() -> checker.ensureAvailable(PlayerId.generate())).doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("los bots no se chequean aunque figuren como dueños de una bot-match")
+  void botsAreNotCheckedForOwnedBotMatch() {
+
+    final var bot = PlayerId.generate();
+    final var botRegistry = mock(BotRegistry.class);
+    when(botRegistry.isBot(bot)).thenReturn(true);
+    final var registry = new InMemoryBotVsBotMatchRegistry();
+    registry.register(MatchId.generate(), bot);
+    final var checker = checkerWithRegistry(botRegistry, registry);
+
+    assertThatCode(() -> checker.ensureAvailable(bot)).doesNotThrowAnyException();
   }
 
 }

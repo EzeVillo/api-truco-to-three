@@ -275,7 +275,7 @@ class StartMatchCommandHandlerConcurrencyTest {
     };
     final var checker = new PlayerAvailabilityChecker(matchQueryRepository, leagueQueryRepository,
         cupQueryRepository, noBotRegistry, NoOpRematchSessionRepository.INSTANCE,
-        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE);
+        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
     final var rawHandler = new StartMatchCommandHandler(matchResolver, matchRepository,
         matchEventNotifier, checker);
     handler = pipeline.wrap(rawHandler)::handle;

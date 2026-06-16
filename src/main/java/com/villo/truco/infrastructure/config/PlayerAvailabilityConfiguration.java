@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.config;
 
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -22,13 +23,15 @@ public class PlayerAvailabilityConfiguration {
   private final RematchSessionRepository rematchSessionRepository;
   private final QuickMatchQueuePort quickMatchQueuePort;
   private final SpectatorshipRepository spectatorshipRepository;
+  private final BotVsBotMatchRegistry botVsBotMatchRegistry;
 
   public PlayerAvailabilityConfiguration(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository, final BotRegistry botRegistry,
       final RematchSessionRepository rematchSessionRepository,
       final QuickMatchQueuePort quickMatchQueuePort,
-      @Lazy final SpectatorshipRepository spectatorshipRepository) {
+      @Lazy final SpectatorshipRepository spectatorshipRepository,
+      final BotVsBotMatchRegistry botVsBotMatchRegistry) {
 
     this.matchQueryRepository = matchQueryRepository;
     this.leagueQueryRepository = leagueQueryRepository;
@@ -37,6 +40,7 @@ public class PlayerAvailabilityConfiguration {
     this.rematchSessionRepository = rematchSessionRepository;
     this.quickMatchQueuePort = quickMatchQueuePort;
     this.spectatorshipRepository = spectatorshipRepository;
+    this.botVsBotMatchRegistry = botVsBotMatchRegistry;
   }
 
   @Bean
@@ -44,7 +48,7 @@ public class PlayerAvailabilityConfiguration {
 
     return new PlayerAvailabilityChecker(this.matchQueryRepository, this.leagueQueryRepository,
         this.cupQueryRepository, this.botRegistry, this.rematchSessionRepository,
-        this.quickMatchQueuePort, this.spectatorshipRepository);
+        this.quickMatchQueuePort, this.spectatorshipRepository, this.botVsBotMatchRegistry);
   }
 
 }

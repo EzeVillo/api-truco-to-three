@@ -37,6 +37,7 @@ class UserPresenceResolverTest {
   private RematchSessionRepository rematchSessionRepository;
   private QuickMatchQueuePort quickMatchQueuePort;
   private SpectatorshipRepository spectatorshipRepository;
+  private com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry botVsBotMatchRegistry;
   private UserPresenceResolver resolver;
 
   private static Match unfinishedMatch(final PlayerId player) {
@@ -73,9 +74,12 @@ class UserPresenceResolverTest {
     rematchSessionRepository = mock(RematchSessionRepository.class);
     quickMatchQueuePort = mock(QuickMatchQueuePort.class);
     spectatorshipRepository = mock(SpectatorshipRepository.class);
+    botVsBotMatchRegistry = new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry();
     resolver = new UserPresenceResolver(matchQueryRepository, leagueQueryRepository,
-        cupQueryRepository, rematchSessionRepository, quickMatchQueuePort, spectatorshipRepository);
+        cupQueryRepository, rematchSessionRepository, quickMatchQueuePort, spectatorshipRepository,
+        botVsBotMatchRegistry);
 
+    when(matchQueryRepository.findById(any())).thenReturn(Optional.empty());
     when(matchQueryRepository.findUnfinishedByPlayer(any())).thenReturn(Optional.empty());
     when(leagueQueryRepository.findInProgressByPlayer(any())).thenReturn(Optional.empty());
     when(leagueQueryRepository.findWaitingByPlayer(any())).thenReturn(Optional.empty());
@@ -195,6 +199,34 @@ class UserPresenceResolverTest {
     assertThat(presence.quickMatch()).isNotNull();
     assertThat(presence.quickMatch().status()).isEqualTo("SEARCHING");
     assertThat(presence.quickMatch().enqueuedAt()).isEqualTo(enqueuedAt);
+  }
+
+  @Test
+  @DisplayName("con bot-match propia activa expone ownedBotMatch con id y estado y busy true")
+  void exposesOwnedBotMatchReference() {
+
+    final var owner = PlayerId.generate();
+    final var match = unfinishedMatch(owner);
+    botVsBotMatchRegistry.register(match.getId(), owner);
+    when(matchQueryRepository.findById(match.getId())).thenReturn(Optional.of(match));
+
+    final var presence = resolver.resolve(owner);
+
+    assertThat(presence.busy()).isTrue();
+    assertThat(presence.ownedBotMatch()).isNotNull();
+    assertThat(presence.ownedBotMatch().matchId()).isEqualTo(match.getId().value().toString());
+    assertThat(presence.ownedBotMatch().status()).isEqualTo(match.getStatus().name());
+    assertThat(presence.match()).isNull();
+    assertThat(presence.spectating()).isNull();
+  }
+
+  @Test
+  @DisplayName("sin bot-match propia activa ownedBotMatch es null")
+  void noOwnedBotMatchWhenAbsent() {
+
+    final var presence = resolver.resolve(PlayerId.generate());
+
+    assertThat(presence.ownedBotMatch()).isNull();
   }
 
 }
