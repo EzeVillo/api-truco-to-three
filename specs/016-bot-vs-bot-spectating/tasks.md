@@ -84,23 +84,23 @@ genera revancha.
 
 ### Tests para User Story 1 ⚠️
 
-- [ ] T008 [P] [US1] Test
+- [X] T008 [P] [US1] Test
   `src/test/java/com/villo/truco/application/usecases/commands/CreateBotVsBotMatchCommandHandlerTest.java`:
   crea+inicia el match y registra al dueño; rechaza bots iguales; rechaza bot inexistente; rechaza
   si el creador está ocupado.
-- [ ] T009 [P] [US1] Extender
+- [X] T009 [P] [US1] Extender
   `src/test/java/com/villo/truco/domain/model/spectator/SpectatingEligibilityPolicyTest.java`:
   bot-vs-bot permite al dueño y rechaza a un no-dueño; la rama de partidas con humanos
   (amistad/competición) queda intacta.
-- [ ] T010 [P] [US1] Test
+- [X] T010 [P] [US1] Test
   `src/test/java/com/villo/truco/application/assemblers/SpectatorMatchStateDTOAssemblerTest.java`:
   manos de ambos bots presentes en bot-vs-bot y `null` en partidas con humanos.
-- [ ] T011 [P] [US1] Test
+- [X] T011 [P] [US1] Test
   `src/test/java/com/villo/truco/application/eventhandlers/SpectatorNotificationEventTranslatorTest.java`:
   en bot-vs-bot reenvía `HAND_DEALT` (ambas manos) y `PLAYER_HAND_UPDATED` de ambos asientos; en
   partidas con humanos NO reenvía `HAND_DEALT` (cierre de fuga) ni `PLAYER_HAND_UPDATED`;
   `AVAILABLE_ACTIONS_UPDATED` nunca al espectador.
-- [ ] T012 [P] [US1] Test
+- [X] T012 [P] [US1] Test
   `src/test/java/com/villo/truco/application/services/BotVsBotRematchVetoTest.java`: vetea revancha
   si el match es bot-vs-bot; no vetea si no lo es.
 - [ ] T013 [US1] Test de integración
