@@ -23,6 +23,9 @@ final class EnvidoProbabilityCalculator {
     }
     final var shownCard = rivalCardPlayed == null ? null : rivalCardPlayed.card();
     if (shownCard != null) {
+      if (myEnvido < scoring.of(List.of(shownCard))) {
+        return 0.0;
+      }
       known.add(shownCard);
     }
 
