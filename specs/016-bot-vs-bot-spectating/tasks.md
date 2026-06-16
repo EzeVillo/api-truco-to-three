@@ -30,7 +30,7 @@ títulos en español). Todos los títulos de test van en español.
 **Purpose**: el proyecto ya existe (Java 21 / Spring Boot, Clean/Hexagonal). No hay init de proyecto
 ni dependencias nuevas.
 
-- [ ] T001 Verificar que la próxima migración Flyway disponible es `V22` (la última es `V21`) y que
+- [X] T001 Verificar que la próxima migración Flyway disponible es `V24` (V22/V23 ya las tomó la feature 015 gameplay-recording) y que
   la feature no requiere dependencias nuevas (reusa stack actual). Sin cambios de código.
 
 ---
@@ -42,28 +42,28 @@ ocupación, presencia, elegibilidad owner-only y veto. Todas las stories depende
 
 **⚠️ CRITICAL**: ninguna user story puede completarse hasta terminar esta fase.
 
-- [ ] T002 [P] Crear el puerto de dominio
+- [X] T002 [P] Crear el puerto de dominio
   `src/main/java/com/villo/truco/domain/ports/BotVsBotMatchRegistry.java` con
   `register(MatchId, PlayerId)`, `isBotVsBotMatch(MatchId): boolean`,
   `findOwnerByMatchId(MatchId): Optional<PlayerId>`,
   `findActiveOwnedMatchId(PlayerId): Optional<MatchId>` (POJO, sin Spring).
-- [ ] T003 [P] Crear la migración
-  `src/main/resources/db/migration/V22__create_bot_vs_bot_matches.sql` con tabla
+- [X] T003 [P] Crear la migración
+  `src/main/resources/db/migration/V24__create_bot_vs_bot_matches.sql` con tabla
   `bot_vs_bot_matches (match_id UUID PK, owner_id UUID NOT NULL)` e índice
   `idx_bot_vs_bot_matches_owner_id`.
-- [ ] T004 [P] Crear la entidad JPA
+- [X] T004 [P] Crear la entidad JPA
   `src/main/java/com/villo/truco/infrastructure/persistence/entities/BotVsBotMatchJpaEntity.java`
   (`@Id matchId`, `ownerId`), espejando `CampaignMatchJpaEntity`.
-- [ ] T005 Crear el repositorio Spring Data
+- [X] T005 Crear el repositorio Spring Data
   `src/main/java/com/villo/truco/infrastructure/persistence/repositories/spring/SpringDataBotVsBotMatchRepository.java`
   con `existsById`, `findById`, y una query `findActiveOwnedMatchId` que cruza `bot_vs_bot_matches`
   con `matches` filtrando estados terminales (`FINISHED`, `FORFEITED`, `ABANDONED`, `CANCELLED`) por
   `owner_id` (depende de T004).
-- [ ] T006 Crear el adapter
+- [X] T006 Crear el adapter
   `src/main/java/com/villo/truco/infrastructure/persistence/repositories/JpaBotVsBotMatchRegistryAdapter.java`
   (`@Repository`, implementa `BotVsBotMatchRegistry`), espejando `JpaCampaignMatchRegistryAdapter`
   (depende de T002, T004, T005).
-- [ ] T007 [P] Test del adapter (H2)
+- [X] T007 [P] Test del adapter (H2)
   `src/test/java/com/villo/truco/infrastructure/persistence/repositories/JpaBotVsBotMatchRegistryAdapterTest.java`:
   `register`/`isBotVsBotMatch`/`findOwnerByMatchId`, y `findActiveOwnedMatchId` devolviendo el match
   no terminado y vacío cuando el match está finalizado (depende de T006).
