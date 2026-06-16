@@ -14,21 +14,19 @@ public final class BotDecisionEngine {
   private final EnvidoDecisionPolicy envidoPolicy;
   private final CardSelectionPolicy cardPolicy;
 
-  public BotDecisionEngine(final BotPersonality personality) {
+  public BotDecisionEngine(final BotPersonality personality, final EnvidoScoring envidoScoring) {
 
-    Objects.requireNonNull(personality);
-    final var random = new Random();
-    this.trucoPolicy = new TrucoDecisionPolicy(personality, random);
-    this.envidoPolicy = new EnvidoDecisionPolicy(personality, random);
-    this.cardPolicy = new CardSelectionPolicy(personality, random);
+    this(personality, new Random(), envidoScoring);
   }
 
-  BotDecisionEngine(final BotPersonality personality, final Random random) {
+  BotDecisionEngine(final BotPersonality personality, final Random random,
+      final EnvidoScoring envidoScoring) {
 
     Objects.requireNonNull(personality);
     Objects.requireNonNull(random);
+    Objects.requireNonNull(envidoScoring);
     this.trucoPolicy = new TrucoDecisionPolicy(personality, random);
-    this.envidoPolicy = new EnvidoDecisionPolicy(personality, random);
+    this.envidoPolicy = new EnvidoDecisionPolicy(personality, random, envidoScoring);
     this.cardPolicy = new CardSelectionPolicy(personality, random);
   }
 

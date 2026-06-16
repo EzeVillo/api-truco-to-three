@@ -225,7 +225,7 @@ class ExecuteBotTurnCommandHandlerTest {
 
     final var handler = new ExecuteBotTurnCommandHandler(registryWith(botPlayer),
         repositoryWith(match), playCardUseCase, callTrucoUseCase, respondTrucoUseCase,
-        callEnvidoUseCase, respondEnvidoUseCase, foldUseCase);
+        callEnvidoUseCase, respondEnvidoUseCase, foldUseCase, new MatchEnvidoScoring());
 
     handler.handle(new ExecuteBotTurnCommand(match.getId(), botPlayer));
 
@@ -269,7 +269,7 @@ class ExecuteBotTurnCommandHandlerTest {
 
     final var handler = new ExecuteBotTurnCommandHandler(registryWith(botPlayer),
         repositoryWith(match), playCardUseCase, callTrucoUseCase, respondTrucoUseCase,
-        callEnvidoUseCase, respondEnvidoUseCase, foldUseCase);
+        callEnvidoUseCase, respondEnvidoUseCase, foldUseCase, new MatchEnvidoScoring());
 
     handler.handle(new ExecuteBotTurnCommand(match.getId(), botPlayer));
 

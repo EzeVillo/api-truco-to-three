@@ -416,9 +416,9 @@ sobrevive hasta el siguiente `onRoundStarted`.
 
 ### Envido del bot con la partida empatada en punto (2-2)
 
-Cuando ambos jugadores están a un punto de ganar (típicamente **2-2** en una partida a 3), la regla de
-**punto exacto** invierte el valor del envido: el envido vale 2 → quien lo gana llega a 4 y **se pasa
-(pierde)**, mientras que la falta vale 1 → quien la gana llega a 3 y **gana**. Por eso, en ese
+Cuando ambos jugadores están a un punto de ganar (típicamente **2-2** en una partida a 3), la regla
+de **punto exacto** invierte el valor del envido: el envido vale 2 → quien lo gana llega a 4 y **se
+pasa (pierde)**, mientras que la falta vale 1 → quien la gana llega a 3 y **gana**. Por eso, en ese
 escenario el bot (`EnvidoDecisionPolicy.decideBothAtMatchPoint`) **siempre canta**, sin intervención
 de la personalidad, eligiendo nivel según la probabilidad real de ganar el tanto:
 

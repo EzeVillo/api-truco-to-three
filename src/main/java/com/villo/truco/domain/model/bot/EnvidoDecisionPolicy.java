@@ -23,11 +23,14 @@ final class EnvidoDecisionPolicy {
 
   private final BotPersonality personality;
   private final Random random;
+  private final EnvidoScoring envidoScoring;
 
-  EnvidoDecisionPolicy(final BotPersonality personality, final Random random) {
+  EnvidoDecisionPolicy(final BotPersonality personality, final Random random,
+      final EnvidoScoring envidoScoring) {
 
     this.personality = personality;
     this.random = random;
+    this.envidoScoring = envidoScoring;
   }
 
   Optional<BotEnvidoCall> decideCall(final List<BotEnvidoCall> availableCalls,
@@ -40,7 +43,7 @@ final class EnvidoDecisionPolicy {
     }
 
     if (isFirstCall && myScore == pointsToWin - 1 && rivalScore == pointsToWin - 1) {
-      final var forced = decideBothAtMatchPoint(availableCalls, myCards, envidoScore, isMano,
+      final var forced = this.decideBothAtMatchPoint(availableCalls, myCards, envidoScore, isMano,
           rivalCardPlayed);
       if (forced.isPresent()) {
         return forced;
@@ -149,8 +152,7 @@ final class EnvidoDecisionPolicy {
   private CallRiskProfile callRiskProfile(final BotEnvidoCall call, final int envidoScore,
       final int myScore, final int rivalScore, final int pointsToWin) {
 
-    final var botDiesIfRejected =
-        myScore + call.rejectedPointsIfRivalDeclines() > pointsToWin;
+    final var botDiesIfRejected = myScore + call.rejectedPointsIfRivalDeclines() > pointsToWin;
     if (botDiesIfRejected) {
       return CallRiskProfile.FORBIDDEN;
     }
@@ -194,16 +196,6 @@ final class EnvidoDecisionPolicy {
     return Optional.empty();
   }
 
-  /**
-   * Empate en punto de partida (típicamente 2-2 en una partida a 3). Por la regla de punto exacto,
-   * el envido empuja a 4 y revienta a quien lo gana, mientras que la falta hace llegar a 3 al
-   * ganador. Por eso el bot SIEMPRE canta, eligiendo según la probabilidad real de ganar el tanto
-   * (calculada en vivo con sus cartas): si es favorito (≥ 0,5) canta falta para ganar; si no, canta
-   * envido como trampa para que el rival gane el tanto y se pase. La personalidad no interviene.
-   *
-   * <p>Como mano entra siempre. Como pie solo entra si el rival ya jugó una carta que el bot no
-   * puede matar (si la puede matar, conserva chances de truco y cae en la lógica habitual).
-   */
   private Optional<BotEnvidoCall> decideBothAtMatchPoint(final List<BotEnvidoCall> availableCalls,
       final List<BotCard> myCards, final int envidoScore, final boolean isMano,
       final BotCard rivalCardPlayed) {
@@ -219,10 +211,11 @@ final class EnvidoDecisionPolicy {
       }
     }
 
-    final var winProbability = EnvidoProbabilityCalculator.probabilityBotWinsTanto(myCards,
-        envidoScore, isMano, rivalCardPlayed);
-    final var targetLevel = winProbability >= BOTH_AT_MATCH_POINT_THRESHOLD
-        ? BotEnvidoLevel.FALTA_ENVIDO : BotEnvidoLevel.ENVIDO;
+    final var winProbability = EnvidoProbabilityCalculator.probabilityBotWinsTanto(
+        this.envidoScoring, myCards, envidoScore, isMano, rivalCardPlayed);
+    final var targetLevel =
+        winProbability >= BOTH_AT_MATCH_POINT_THRESHOLD ? BotEnvidoLevel.FALTA_ENVIDO
+            : BotEnvidoLevel.ENVIDO;
 
     return availableCalls.stream().filter(call -> call.level() == targetLevel).findFirst();
   }
@@ -239,8 +232,7 @@ final class EnvidoDecisionPolicy {
       maxJustifiedLevel = BotEnvidoLevel.ENVIDO;
     }
 
-    return availableCalls.stream()
-        .filter(o -> o.level().ordinal() <= maxJustifiedLevel.ordinal())
+    return availableCalls.stream().filter(o -> o.level().ordinal() <= maxJustifiedLevel.ordinal())
         .max(Comparator.comparingInt(o -> o.level().ordinal()));
   }
 

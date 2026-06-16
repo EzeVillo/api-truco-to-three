@@ -16,8 +16,10 @@ import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.usecases.commands.CreateBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.ExecuteBotTurnCommandHandler;
+import com.villo.truco.application.usecases.commands.MatchEnvidoScoring;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.queries.GetBotsQueryHandler;
+import com.villo.truco.domain.model.bot.EnvidoScoring;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -79,11 +81,17 @@ public class BotConfiguration {
   }
 
   @Bean
+  EnvidoScoring envidoScoring() {
+
+    return new MatchEnvidoScoring();
+  }
+
+  @Bean
   ExecuteBotTurnUseCase executeBotTurnCommandHandler() {
 
     return new ExecuteBotTurnCommandHandler(this.botRegistry, this.matchQueryRepository,
         this.playCardUseCase, this.callTrucoUseCase, this.respondTrucoUseCase,
-        this.callEnvidoUseCase, this.respondEnvidoUseCase, this.foldUseCase);
+        this.callEnvidoUseCase, this.respondEnvidoUseCase, this.foldUseCase, this.envidoScoring());
   }
 
   @Bean
