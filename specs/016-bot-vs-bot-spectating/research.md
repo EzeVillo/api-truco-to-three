@@ -128,12 +128,23 @@ y `UserPresenceResponse` suman el campo `ownedBotMatch`; `busy` pasa a true si e
 **Rationale**: el usuario eligió un **campo nuevo** separado de `spectating`, para desacoplar "soy
 dueño (ocupado)" de "estoy mirando activamente". No obliga a estar mirando.
 
-## D9 — Estadísticas/logros ya excluyen bots (sin cambios)
+## D9 — Stats y logros en bot-vs-bot (sin cambios, mecanismos distintos)
 
-**Verificado**: `ProfilePlayerStatsTrackingService.handle` corta temprano si
-`botRegistry.isBot(playerOne) || botRegistry.isBot(playerTwo)` (líneas 46-49). En bot-vs-bot ambos
-son bots → no se registran stats ni outcomes (FR-015) sin cambios. Los logros se evalúan sobre
-jugadores registrados; los bots no tienen perfil → no se disparan.
+**Verificado** — y son dos mecanismos diferentes, ojo:
+
+- **Stats** (`ProfilePlayerStatsTrackingService.handle`, líneas 46-49): corta temprano si
+  `botRegistry.isBot(playerOne) || botRegistry.isBot(playerTwo)`. O sea, **contra cualquier bot no
+  hay stats** (ni en humano-vs-bot ni en bot-vs-bot).
+- **Logros** (`ProfileAchievementTrackingService.handle`): **NO** descarta bots de entrada. Evalúa
+  el `MatchAchievementTracker` y, recién al desbloquear, filtra por **usuarios registrados**
+  (`registeredPlayers = userQueryRepository.findUsernamesByIds(...)`, líneas 71-81): solo desbloquea
+  para playerIds que son cuentas de usuario. Por eso, en **humano-vs-bot el humano SÍ puede
+  desbloquear logros** (el bot no), tal como espera el producto.
+
+**Consecuencia para bot-vs-bot**: ningún asiento es usuario registrado → la lista de desbloqueos se
+filtra a vacío → **no se desbloquea ningún logro** (FR-015 se cumple). El `MatchAchievementTracker`
+igual se persiste como bookkeeping interno por match (inocuo, no es algo visible al usuario). **Sin
+cambios de código**; FR-015 se sostiene por el filtro de "usuario registrado", no por excluir bots.
 
 ## D10 — Liberación al terminar (sin cambios de cleanup)
 
