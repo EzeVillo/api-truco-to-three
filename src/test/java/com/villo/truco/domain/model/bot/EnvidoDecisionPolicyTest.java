@@ -4,11 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.domain.model.bot.exceptions.PendingEnvidoCallRequiredException;
+import com.villo.truco.domain.model.bot.valueobjects.BotCard;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoCall;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoLevel;
 import com.villo.truco.domain.model.bot.valueobjects.BotEnvidoResponse;
 import com.villo.truco.domain.model.bot.valueobjects.BotMatchView.PendingEnvidoOutcome;
 import com.villo.truco.domain.model.bot.valueobjects.BotPersonality;
+import com.villo.truco.domain.model.match.CardEvaluationService;
+import com.villo.truco.domain.shared.cards.valueobjects.Card;
+import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import java.util.List;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
@@ -19,6 +23,8 @@ class EnvidoDecisionPolicyTest {
   private static final int POINTS_TO_WIN_FIVE = 5;
 
   private static final BotPersonality NEUTRAL = new BotPersonality(50, 1, 50, 50, 50);
+
+  private static final EnvidoScoring SCORING = CardEvaluationService::envidoScore;
 
   private static final Random ALWAYS_ZERO = new Random() {
     @Override
@@ -62,7 +68,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p1_rejectionKillsRival_noQuiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // chain=[envido,envido]: ptsIfBotWins=4, ptsIfRivalWins=4, rejectedPts=2
     final var result = policy.decideResponse(30, 0, 2, POINTS_TO_WIN,
         new PendingEnvidoOutcome(4, 4, 2));
@@ -72,7 +78,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p2_winWin_quiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     // chain=[envido]: ptsIfBotWins=2, ptsIfRivalWins=2, rejectedPts=1
     final var result = policy.decideResponse(10, 1, 2, POINTS_TO_WIN,
         new PendingEnvidoOutcome(2, 2, 1));
@@ -82,7 +88,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p3_bothDie_rejectionGivesRivalWin_quiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     // chain=[envido]: ptsIfBotWins=2, ptsIfRivalWins=2, rejectedPts=1
     final var result = policy.decideResponse(33, 2, 2, POINTS_TO_WIN,
         new PendingEnvidoOutcome(2, 2, 1));
@@ -92,7 +98,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p3_bothDie_rejectionNeutral_lowEnvido_quiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     // chain=[realEnvido]: ptsIfBotWins=3, ptsIfRivalWins=3, rejectedPts=1
     final var result = policy.decideResponse(15, 1, 1, POINTS_TO_WIN,
         new PendingEnvidoOutcome(3, 3, 1));
@@ -102,7 +108,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p3_bothDie_rejectionNeutral_highEnvido_noQuiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     // chain=[realEnvido]: ptsIfBotWins=3, ptsIfRivalWins=3, rejectedPts=1
     final var result = policy.decideResponse(30, 1, 1, POINTS_TO_WIN,
         new PendingEnvidoOutcome(3, 3, 1));
@@ -112,7 +118,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p4_onlyBotDies_noQuiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // chain=[envido]: ptsIfBotWins=2, ptsIfRivalWins=2, rejectedPts=1
     final var result = policy.decideResponse(20, 2, 0, POINTS_TO_WIN,
         new PendingEnvidoOutcome(2, 2, 1));
@@ -122,7 +128,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_p5_rejectionGivesRivalWin_botSafe_quiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     // chain=[envido]: ptsIfBotWins=2, ptsIfRivalWins=2, rejectedPts=1
     final var result = policy.decideResponse(10, 0, 2, POINTS_TO_WIN,
         new PendingEnvidoOutcome(2, 2, 1));
@@ -132,7 +138,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_faltaAt2_2_quiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     // chain=[faltaEnvido(3,2,2)]: ptsIfBotWins=1, ptsIfRivalWins=1, rejectedPts=1
     final var result = policy.decideResponse(20, 2, 2, POINTS_TO_WIN,
         new PendingEnvidoOutcome(1, 1, 1));
@@ -142,7 +148,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_faltaAtZeroZero_noQuieroEvenWithStrongEnvido() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // falta@0-0 a 3pts: aceptar y perder => rival gana la partida.
     // Salvo que rechazar también la cierre, nunca aceptar.
     final var result = policy.decideResponse(30, 0, 0, POINTS_TO_WIN,
@@ -153,7 +159,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_realEnvidoCostsTheGame_noQuiero() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // realEnvido a 5pts en 0-2: aceptar y perder => rival llega a 5. Rechazar solo le da 1.
     final var result = policy.decideResponse(20, 0, 2, POINTS_TO_WIN_FIVE,
         new PendingEnvidoOutcome(3, 3, 1));
@@ -163,7 +169,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_envidoFarFromGameLoss_allowsProbabilistic() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // envido simple a 5pts en 0-0: perder no cierra la partida, cae a la rama probabilística.
     final var result = policy.decideResponse(10, 0, 0, POINTS_TO_WIN_FIVE,
         new PendingEnvidoOutcome(2, 2, 1));
@@ -173,7 +179,7 @@ class EnvidoDecisionPolicyTest {
   @Test
   void decideResponse_withoutPendingOutcome_throws() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
 
     assertThatThrownBy(() -> policy.decideResponse(20, 0, 0, POINTS_TO_WIN, null)).isInstanceOf(
             PendingEnvidoCallRequiredException.class)
@@ -184,18 +190,18 @@ class EnvidoDecisionPolicyTest {
   void decideCall_atMatchPoint_goodEnvido_callsFalta() {
 
     final var falta = faltaEnvido(POINTS_TO_WIN, 2, 2);
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     final var result = policy.decideCall(List.of(envido(), falta), 30, 2, 2, POINTS_TO_WIN, false,
-        true);
+        true, List.of(), null);
     assertThat(result).contains(falta);
   }
 
   @Test
   void decideCall_atMatchPoint_neverRaisesInChain() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var result = policy.decideCall(List.of(realEnvido()), 30, 2, 0, POINTS_TO_WIN, false,
-        false);
+        false, List.of(), null);
     assertThat(result).isEmpty();
   }
 
@@ -203,66 +209,67 @@ class EnvidoDecisionPolicyTest {
   void decideCall_usesDynamicPointsToWin() {
 
     final var dynamicFalta = faltaEnvido(POINTS_TO_WIN_FIVE, 4, 4);
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
     final var result = policy.decideCall(List.of(envido(), dynamicFalta), 30, 4, 4,
-        POINTS_TO_WIN_FIVE, false, true);
+        POINTS_TO_WIN_FIVE, false, true, List.of(), null);
     assertThat(result).contains(dynamicFalta);
   }
 
   @Test
   void decideCall_highRealEnvidoAtOneOne_skipsSuicidalCall() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var result = policy.decideCall(List.of(realEnvido()), 30, 1, 1, POINTS_TO_WIN, false,
-        true);
+        true, List.of(), null);
     assertThat(result).isEmpty();
   }
 
   @Test
   void decideCall_raiseUsesProjectedTotalsAndSkipsSuicidalRaise() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var projectedRealRaise = call(5, 5, 2, BotEnvidoLevel.REAL_ENVIDO);
     final var result = policy.decideCall(List.of(projectedRealRaise), 30, 1, 1, POINTS_TO_WIN,
-        false, false);
+        false, false, List.of(), null);
     assertThat(result).isEmpty();
   }
 
   @Test
   void decideCall_trapAtTwoTwo_allowsCallWithLowEnvido() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
-    final var result = policy.decideCall(List.of(envido()), 15, 2, 2, POINTS_TO_WIN, false, true);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
+    final var result = policy.decideCall(List.of(envido()), 15, 2, 2, POINTS_TO_WIN, false, true,
+        List.of(), null);
     assertThat(result).contains(envido());
   }
 
   @Test
   void decideCall_trapAtZeroZeroWithHighEnvido_skipsCall() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
     final var result = policy.decideCall(List.of(doubleEnvidoRaise), 24, 0, 0, POINTS_TO_WIN, false,
-        false);
+        false, List.of(), null);
     assertThat(result).isEmpty();
   }
 
   @Test
   void decideCall_trapAtZeroZeroWithThresholdEnvido_allowsCall() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
     final var result = policy.decideCall(List.of(doubleEnvidoRaise), 19, 0, 0, POINTS_TO_WIN, false,
-        false);
+        false, List.of(), null);
     assertThat(result).contains(doubleEnvidoRaise);
   }
 
   @Test
   void decideCall_trapAtZeroZeroAboveThreshold_skipsCall() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
     final var result = policy.decideCall(List.of(doubleEnvidoRaise), 20, 0, 0, POINTS_TO_WIN, false,
-        false);
+        false, List.of(), null);
     assertThat(result).isEmpty();
   }
 
@@ -272,43 +279,43 @@ class EnvidoDecisionPolicyTest {
     final var doubleEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
     final var projectedRealRaise = call(5, 5, 2, BotEnvidoLevel.REAL_ENVIDO);
     final var projectedFaltaRaise = call(6, 6, 2, BotEnvidoLevel.FALTA_ENVIDO);
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var result = policy.decideCall(
         List.of(projectedRealRaise, projectedFaltaRaise, doubleEnvidoRaise), 19, 0, 0,
-        POINTS_TO_WIN, false, false);
+        POINTS_TO_WIN, false, false, List.of(), null);
     assertThat(result).contains(doubleEnvidoRaise);
   }
 
   @Test
   void decideCall_faltaRaiseOverRealEnvido_botDiesIfRejected_skipsCall() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // Rival cantó real envido. Bot en 1, rival en 2, a 3 puntos.
     // Si bot escala a falta y rival rechaza, bot suma 3 (real envido) -> 1+3=4 > 3 => pierde el game.
     final var projectedFaltaRaise = call(1, 2, 3, BotEnvidoLevel.FALTA_ENVIDO);
     final var result = policy.decideCall(List.of(projectedFaltaRaise), 30, 1, 2, POINTS_TO_WIN,
-        false, false);
+        false, false, List.of(), null);
     assertThat(result).isEmpty();
   }
 
   @Test
   void decideCall_faltaRaiseOverEnvido_botDiesIfRejected_skipsCall() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     // Rival cantó envido. Bot en 2, rival en 0, a 3 puntos.
     // Si bot escala a falta y rival rechaza, bot suma 2 (envido) -> 2+2=4 > 3 => pierde el game.
     final var projectedFaltaRaise = call(3, 1, 2, BotEnvidoLevel.FALTA_ENVIDO);
     final var result = policy.decideCall(List.of(projectedFaltaRaise), 30, 2, 0, POINTS_TO_WIN,
-        false, false);
+        false, false, List.of(), null);
     assertThat(result).isEmpty();
   }
 
   @Test
   void decideCall_safeOptions_keepAggressiveLevelSelection() {
 
-    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
     final var result = policy.decideCall(List.of(envido(), realEnvido()), 30, 0, 0, POINTS_TO_WIN,
-        false, true);
+        false, true, List.of(), null);
     assertThat(result).contains(realEnvido());
   }
 
@@ -321,13 +328,70 @@ class EnvidoDecisionPolicyTest {
     // y solo deja FALTA_ENVIDO como SAFE (3 pts, no supera). El bot NO debe escalar a falta
     // con envido bajo: debe devolver empty y dejar que decideResponse decida.
     final var aggressive = new BotPersonality(100, 1, 100, 100, 50);
-    final var policy = new EnvidoDecisionPolicy(aggressive, ALWAYS_ZERO);
+    final var policy = new EnvidoDecisionPolicy(aggressive, ALWAYS_ZERO, SCORING);
     final var envidoEnvidoRaise = call(4, 4, 2, BotEnvidoLevel.ENVIDO);
     final var realEnvidoRaise = call(5, 5, 2, BotEnvidoLevel.REAL_ENVIDO);
     final var faltaEnvidoRaise = call(3, 3, 2, BotEnvidoLevel.FALTA_ENVIDO);
     final var result = policy.decideCall(
         List.of(envidoEnvidoRaise, realEnvidoRaise, faltaEnvidoRaise), 5, 0, 0, POINTS_TO_WIN,
-        false, false);
+        false, false, List.of(), null);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void decideCall_bothAtMatchPoint_mano_highTanto_callsFalta() {
+
+    // 2-2 como mano con 31 de envido (6 y 5 de espada): favorito amplio -> falta para llegar a 3.
+    final var falta = faltaEnvido(POINTS_TO_WIN, 2, 2);
+    final var myCards = List.of(new BotCard(7, Card.of(Suit.ESPADA, 6)),
+        new BotCard(6, Card.of(Suit.ESPADA, 5)), new BotCard(1, Card.of(Suit.BASTO, 4)));
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
+    final var result = policy.decideCall(List.of(envido(), falta), 31, 2, 2, POINTS_TO_WIN, true,
+        true, myCards, null);
+    assertThat(result).contains(falta);
+  }
+
+  @Test
+  void decideCall_bothAtMatchPoint_mano_lowTanto_callsEnvido() {
+
+    // 2-2 como mano con 7 de envido (cartas de distinto palo): no es favorito -> envido trampa,
+    // para que el rival gane el tanto, llegue a 4 y se pase.
+    final var falta = faltaEnvido(POINTS_TO_WIN, 2, 2);
+    final var myCards = List.of(new BotCard(8, Card.of(Suit.ESPADA, 7)),
+        new BotCard(5, Card.of(Suit.BASTO, 6)), new BotCard(3, Card.of(Suit.ORO, 5)));
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ONE, SCORING);
+    final var result = policy.decideCall(List.of(envido(), falta), 7, 2, 2, POINTS_TO_WIN, true,
+        true, myCards, null);
+    assertThat(result).contains(envido());
+  }
+
+  @Test
+  void decideCall_bothAtMatchPoint_pie_cannotBeatCard_highTanto_callsFalta() {
+
+    // 2-2 como pie, no puede matar el 1 de espada del rival: entra al modo forzado.
+    // Con 30 de envido (condicionado a que el rival tiene el 1 de espada) sigue siendo favorito.
+    final var falta = faltaEnvido(POINTS_TO_WIN, 2, 2);
+    final var rivalCard = new BotCard(14, Card.of(Suit.ESPADA, 1));
+    final var myCards = List.of(new BotCard(3, Card.of(Suit.ESPADA, 6)),
+        new BotCard(2, Card.of(Suit.ESPADA, 4)), new BotCard(1, Card.of(Suit.BASTO, 2)));
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
+    final var result = policy.decideCall(List.of(envido(), falta), 30, 2, 2, POINTS_TO_WIN, false,
+        true, myCards, rivalCard);
+    assertThat(result).contains(falta);
+  }
+
+  @Test
+  void decideCall_bothAtMatchPoint_pie_canBeatCard_doesNotForceCall() {
+
+    // 2-2 como pie que SÍ puede matar la carta del rival: no entra al modo forzado y, con envido
+    // bajo, la lógica existente no canta.
+    final var falta = faltaEnvido(POINTS_TO_WIN, 2, 2);
+    final var rivalCard = new BotCard(5, Card.of(Suit.ORO, 7));
+    final var myCards = List.of(new BotCard(14, Card.of(Suit.ESPADA, 1)),
+        new BotCard(8, Card.of(Suit.BASTO, 5)), new BotCard(6, Card.of(Suit.COPA, 10)));
+    final var policy = new EnvidoDecisionPolicy(NEUTRAL, ALWAYS_ZERO, SCORING);
+    final var result = policy.decideCall(List.of(envido(), falta), 15, 2, 2, POINTS_TO_WIN, false,
+        true, myCards, rivalCard);
     assertThat(result).isEmpty();
   }
 

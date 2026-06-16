@@ -16,6 +16,7 @@ import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.domain.model.bot.BotDecisionEngine;
+import com.villo.truco.domain.model.bot.EnvidoScoring;
 import com.villo.truco.domain.model.bot.valueobjects.BotAction;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import java.util.Objects;
@@ -34,12 +35,13 @@ public final class ExecuteBotTurnCommandHandler implements ExecuteBotTurnUseCase
   private final CallEnvidoUseCase callEnvidoUseCase;
   private final RespondEnvidoUseCase respondEnvidoUseCase;
   private final FoldUseCase foldUseCase;
+  private final EnvidoScoring envidoScoring;
 
   public ExecuteBotTurnCommandHandler(final BotRegistry botRegistry,
       final MatchQueryRepository matchQueryRepository, final PlayCardUseCase playCardUseCase,
       final CallTrucoUseCase callTrucoUseCase, final RespondTrucoUseCase respondTrucoUseCase,
       final CallEnvidoUseCase callEnvidoUseCase, final RespondEnvidoUseCase respondEnvidoUseCase,
-      final FoldUseCase foldUseCase) {
+      final FoldUseCase foldUseCase, final EnvidoScoring envidoScoring) {
 
     this.botRegistry = Objects.requireNonNull(botRegistry);
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
@@ -49,6 +51,7 @@ public final class ExecuteBotTurnCommandHandler implements ExecuteBotTurnUseCase
     this.callEnvidoUseCase = Objects.requireNonNull(callEnvidoUseCase);
     this.respondEnvidoUseCase = Objects.requireNonNull(respondEnvidoUseCase);
     this.foldUseCase = Objects.requireNonNull(foldUseCase);
+    this.envidoScoring = Objects.requireNonNull(envidoScoring);
   }
 
   @Override
@@ -82,7 +85,7 @@ public final class ExecuteBotTurnCommandHandler implements ExecuteBotTurnUseCase
     }
 
     final var view = MatchToBotACL.translate(decisionView);
-    final var engine = new BotDecisionEngine(profile.personality());
+    final var engine = new BotDecisionEngine(profile.personality(), this.envidoScoring);
     final var action = engine.decide(view);
 
     LOGGER.debug("Bot {} decided {} in match {}", command.botPlayerId(),

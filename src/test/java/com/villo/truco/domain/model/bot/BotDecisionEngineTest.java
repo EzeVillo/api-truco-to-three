@@ -13,6 +13,7 @@ import com.villo.truco.domain.model.bot.valueobjects.BotMatchView.TrucoContext;
 import com.villo.truco.domain.model.bot.valueobjects.BotPersonality;
 import com.villo.truco.domain.model.bot.valueobjects.BotTrucoCall;
 import com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse;
+import com.villo.truco.domain.model.match.CardEvaluationService;
 import com.villo.truco.domain.shared.cards.valueobjects.Card;
 import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import java.util.List;
@@ -26,6 +27,8 @@ class BotDecisionEngineTest {
 
   private static final BotPersonality AGGRESSIVE = new BotPersonality(100, 1, 100, 100, 50);
   private static final BotPersonality PASSIVE = new BotPersonality(1, 1, 1, 1, 1);
+
+  private static final EnvidoScoring SCORING = CardEvaluationService::envidoScore;
 
   private static final BotCard ANCHO_ESPADA = new BotCard(14, Card.of(Suit.ESPADA, 1));
   private static final BotCard CUATRO_COPA = new BotCard(1, Card.of(Suit.COPA, 4));
@@ -108,7 +111,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_qymvam_takesOverEvenWhenEnvidoAvailable() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
     final var view = withTrucoResponse(List.of(ANCHO_ESPADA), 0, 2, TRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO,
             BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO), null, List.of(envido()), 0);
@@ -121,7 +124,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_noQuieroKillsRival_returnsNoQuiero() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
     final var view = withTrucoResponse(List.of(), 0, 2, RETRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(), 0);
     final var action = engine.decide(view);
@@ -132,7 +135,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_envidoAntesDeTruco_whenEnvidoAvailableWhileRespondingTruco() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
     final var view = withTrucoResponse(List.of(CUATRO_COPA), 0, 0, TRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(envido()), 0);
     final var action = engine.decide(view);
@@ -142,7 +145,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_noEnvidoAntesDeTruco_whenEnvidoNotAvailable() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
     final var view = withTrucoResponse(List.of(ANCHO_ESPADA), 0, 0, TRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(), 1);
     final var action = engine.decide(view);
@@ -152,7 +155,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_qymvamWithoutCards_acceptsTruco() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ONE, SCORING);
     final var view = withTrucoResponse(List.of(), 0, 2, TRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(), 0);
     final var action = engine.decide(view);
@@ -163,7 +166,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_acceptsWhenRejectWouldGiveRivalExactWin() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = withTrucoResponse(List.of(), 0, 1, RETRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(), 0);
     final var action = engine.decide(view);
@@ -174,7 +177,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_escalatesTrucoWhenResponding() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
     final var view = withTrucoResponse(List.of(ANCHO_ESPADA), 0, 0, TRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), RETRUCO_CALL, List.of(), 0);
     final var action = engine.decide(view);
@@ -185,7 +188,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_fallsBackToPlayCard_whenNoSpecialActions() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = playOnly(List.of(ANCHO_ESPADA));
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.PlayCard.class);
@@ -194,7 +197,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_foldsWhenThatMakesBotWinTheGame() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = withFoldOption(List.of(ANCHO_ESPADA), 1, 2, true);
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.Fold.class);
@@ -203,7 +206,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_doesNotFoldWhenRivalWouldOnlyWinExact() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = withFoldOption(List.of(ANCHO_ESPADA), 0, 2, false);
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.PlayCard.class);
@@ -212,7 +215,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_callsGuaranteedWinningTruco_whenBotLosesHandAndRivalCannotEscape() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = guaranteedWinningScenario(CUATRO_COPA, ANCHO_ESPADA, 2, 2, 0, TRUCO_CALL);
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.CallTruco.class);
@@ -222,7 +225,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_doesNotCallGuaranteedWinningTruco_whenRivalStillHasCards() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = guaranteedWinningScenario(CUATRO_COPA, ANCHO_ESPADA, 2, 2, 1, TRUCO_CALL);
     final var action = engine.decide(view);
     assertThat(action).isNotInstanceOf(BotAction.CallTruco.class);
@@ -231,7 +234,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_raisesToRetruco_whenRespondingAndWinIsGuaranteed() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var game = new GameContext(List.of(CUATRO_COPA), 1, 1, ANCHO_ESPADA, 0, 2, false, false,
         false, false, POINTS_TO_WIN, 0);
     final var truco = new TrucoContext(RETRUCO_CALL,
@@ -247,7 +250,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_doesNotCallGuaranteedWinningTruco_whenBotCanBeatRivalsCard() {
 
-    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE);
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
     final var view = guaranteedWinningScenario(ANCHO_ESPADA, CUATRO_COPA, 2, 2, 0, TRUCO_CALL);
     final var action = engine.decide(view);
     assertThat(action).isNotInstanceOf(BotAction.CallTruco.class);
@@ -256,7 +259,7 @@ class BotDecisionEngineTest {
   @Test
   void decide_usesDynamicPointsToWinFromGameContext() {
 
-    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO);
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
     final var view = withTrucoResponse(List.of(ANCHO_ESPADA), 0, 2, TRUCO_CALL,
         List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(), 0,
         POINTS_TO_WIN_FIVE);
