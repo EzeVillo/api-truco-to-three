@@ -822,7 +822,9 @@ Response `200`:
     },
     "actionDeadline": 1772768188123,
     "turnDurationMillis": 30000,
-    "actionDeadlineSeat": "PLAYER_ONE"
+    "actionDeadlineSeat": "PLAYER_ONE",
+    "handPlayerOne": null,
+    "handPlayerTwo": null
   },
   "spectatorCount": 3
 }
@@ -831,6 +833,10 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `currentRound.handPlayerOne` y `currentRound.handPlayerTwo` exponen las **cartas en mano** de cada
+  asiento **solo en partidas bot-vs-bot** (§9.2b), para que el creador vea ambas manos; en cualquier
+  otra partida (con humanos) ambos campos son `null`. En bot-vs-bot solo el **creador** puede
+  espectar (un no-creador es rechazado al suscribirse por WS, ver §9.5g)
 - `playerOneUsername` y `playerTwoUsername` son el roster asiento->nombre, para que el tablero
   etiquete ambos lados; `playerTwoUsername` es `null` si todavia no hay rival sentado
 - `gamesToPlay` es la cantidad de games necesarios para ganar el match (best-of); coincide con el
@@ -2207,12 +2213,13 @@ Response `200`:
   "cup": null,
   "rematch": null,
   "quickMatch": null,
-  "spectating": null
+  "spectating": null,
+  "ownedBotMatch": null
 }
 ```
 
-- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup`, `rematch`, `quickMatch`
-  o `spectating` es no-nulo.
+- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup`, `rematch`, `quickMatch`,
+  `spectating` u `ownedBotMatch` es no-nulo.
 - Cada dominio en el que el usuario **no** está ocupado se devuelve como `null` explícito (nunca se
   omite la clave).
 - `match`: partida **no finalizada** del usuario (estados `WAITING_FOR_PLAYERS`, `READY` o
@@ -2228,6 +2235,11 @@ Response `200`:
 - `spectating`: match que el usuario esta mirando activamente. Trae `matchId`. Es no-nulo
   mientras el usuario tenga al menos una suscripcion STOMP activa a `/user/queue/match-spectate`.
   Util para redirigir al espectador al match correcto al cargar desde un nuevo dispositivo/pestaña.
+- `ownedBotMatch`: partida **bot-vs-bot** (§9.2b) de la que el usuario es **dueño** y que aún no
+  terminó. Trae `matchId` y `status`. Marca ocupación por **autoría**, independiente de `spectating`
+  (mirar es opcional). Si además la está espectando, `spectating` y `ownedBotMatch` apuntan al mismo
+  `matchId`. Pasa a `null` automáticamente cuando la partida llega a un estado terminal, liberando
+  al creador.
 
 Usuario sin ocupación alguna:
 
@@ -2941,18 +2953,29 @@ Reglas:
 
 `/user/queue/match-spectate`, espectadores activos del match)
 
-- `SPECTATE_STATE` - snapshot inicial enviado al completar la suscripcion
-- `SPECTATE_ERROR` - error al intentar registrarse como espectador
+- `SPECTATE_STATE` - snapshot inicial enviado al completar la suscripcion. En partidas **bot-vs-bot**
+  (§9.2b) su `matchState.currentRound` incluye `handPlayerOne` y `handPlayerTwo` (las manos de ambos
+  bots); en el resto de las partidas ambos campos son `null`
+- `SPECTATE_ERROR` - error al intentar registrarse como espectador. En bot-vs-bot se devuelve si un
+  usuario que **no es el creador** intenta suscribirse (espectado owner-only)
 - `SPECTATOR_COUNT_CHANGED` - cambia la cantidad de espectadores del match
 - ademas se reenvian los eventos publicos del match que no estan atados a un asiento concreto
 - `ACTION_DEADLINE_SET` / `ACTION_DEADLINE_CLEARED` tambien se reenvian: son publicos (indican el
   asiento que debe actuar via `seat`, no son privados por destinatario), asi el espectador puede
   renderizar el temporizador del turno
 
-No se reenvian al espectador los eventos privados por asiento:
+**Manos en vivo (solo bot-vs-bot):** al creador que espectea una partida bot-vs-bot se le reenvian,
+como a un jugador normal, los eventos de mano de **ambos** asientos:
 
-- `PLAYER_HAND_UPDATED`
-- `AVAILABLE_ACTIONS_UPDATED`
+- `HAND_DEALT` - en cada reparto, con `{ player_one: [...], player_two: [...] }`
+- `PLAYER_HAND_UPDATED` - por asiento (`{ seat, cards }`) cuando una mano cambia al jugarse una carta
+
+No se reenvian al espectador los eventos privados por asiento (regla general, fuera de bot-vs-bot):
+
+- `HAND_DEALT` - en partidas **con humanos** ya **no** se reenvía a espectadores (cierre de una fuga
+  previa: antes llegaba con ambas manos). Solo se reenvía en bot-vs-bot
+- `PLAYER_HAND_UPDATED` - solo se reenvía en bot-vs-bot (nunca en partidas con humanos)
+- `AVAILABLE_ACTIONS_UPDATED` - nunca se reenvía a ningún espectador, tampoco en bot-vs-bot
 
 ### 9.5h eventType posibles - Lobby publico (`/topic/public-*`)
 
@@ -3230,6 +3253,53 @@ Errores:
 |--------|------------------------------------------------------------------------------------------------------------------------------------|
 | `404`  | El `botId` no existe en el catalogo de bots                                                                                        |
 | `422`  | `gamesToPlay` fuera del conjunto `{1, 3, 5}`, el jugador ya tiene una partida activa, tiene una revancha `OPEN`, o ya está en cola |
+
+### 9.2b Crear partida entre dos bots (bot vs bot)
+
+`POST /api/matches/bot-vs-bot`
+
+Requiere Bearer token. Crea una partida entre **dos bots** que juegan solos hasta una conclusión. El
+usuario que la crea es su **dueño**: queda **ocupado por autoría** (busy total) hasta que la partida
+termine —la mire o no— y es el **único** habilitado para espectarla.
+
+Request:
+
+```json
+{
+  "botOneId": "00000000-0000-0000-0000-000000000001",
+  "botTwoId": "00000000-0000-0000-0000-000000000002",
+  "gamesToPlay": 3
+}
+```
+
+| Campo         | Tipo            | Descripcion                                                               |
+|---------------|-----------------|---------------------------------------------------------------------------|
+| `botOneId`    | `string (UUID)` | ID del primer bot (de `GET /api/bots`)                                    |
+| `botTwoId`    | `string (UUID)` | ID del segundo bot, **distinto** de `botOneId`                            |
+| `gamesToPlay` | `integer`       | Partidas totales de la serie (mejor de N). Valores válidos: `1`, `3`, `5` |
+
+Response `200`:
+
+```json
+{
+  "matchId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+- La partida se crea directamente en estado `IN_PROGRESS` y es `PRIVATE`: **no** aparece en el lobby
+  público. No genera chat ni sesión de revancha.
+- Crear la partida deja al solicitante **busy total**: no puede crear otra bot-match, partida normal,
+  Quick Match, liga ni copa hasta que la actual termine.
+- Para espectarla (viendo las cartas de ambos bots) el creador se suscribe por WebSocket (ver §4.15 y
+  §9.5g). La ocupación es por autoría, no por estar mirando.
+
+Errores:
+
+| Codigo | Descripcion                                                                                          |
+|--------|------------------------------------------------------------------------------------------------------|
+| `400`  | Body inválido o faltante                                                                              |
+| `404`  | Alguno de los `botId` no existe en el catálogo de bots                                                |
+| `422`  | `gamesToPlay` fuera de `{1, 3, 5}`, ambos bots iguales, o el usuario ya está ocupado (incluye ser dueño de otra bot-match en curso) |
 
 ### 9.3 Quick Match (emparejamiento automatico)
 

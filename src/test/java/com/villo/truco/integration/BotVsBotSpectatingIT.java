@@ -87,10 +87,11 @@ class BotVsBotSpectatingIT {
   void matchIsPrivateAndOutOfLobby() throws Exception {
 
     final var owner = PlayerId.generate();
-    final var ownerToken = this.tokenIssuer.issueForUser(owner).value();
     final var matchId = this.createMatch(owner);
 
-    final var lobby = this.get("/api/matches/public", ownerToken);
+    // El lobby se consulta con un usuario libre: el creador queda busy total y no puede listarlo.
+    final var viewerToken = this.tokenIssuer.issueForUser(PlayerId.generate()).value();
+    final var lobby = this.get("/api/matches/public", viewerToken);
     assertThat(lobby.statusCode()).isEqualTo(200);
     assertThat(lobby.body()).doesNotContain(matchId);
   }

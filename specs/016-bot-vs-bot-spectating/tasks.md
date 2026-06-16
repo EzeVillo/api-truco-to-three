@@ -268,16 +268,16 @@ presencia `busy:false`, `ownedBotMatch:null`, y se puede crear una nueva partida
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [ ] T043 [P] Actualizar `docs/CONTRATOS_API.md`: nuevo `POST /api/matches/bot-vs-bot`; manos
+- [X] T043 [P] Actualizar `docs/CONTRATOS_API.md`: nuevo `POST /api/matches/bot-vs-bot`; manos
   (`handPlayerOne`/`handPlayerTwo`) en `GET /spectate` solo bot-vs-bot; `ownedBotMatch` en
   `GET /api/me/presence`; sección spectate WS (HAND_DEALT/PLAYER_HAND_UPDATED de ambos asientos en
   bot-vs-bot y cierre de fuga de HAND_DEALT para partidas con humanos); espectado owner-only.
-- [ ] T044 [P] Revisar `README.md` y actualizar si lista recursos REST / capacidades / enums (agregar
+- [X] T044 [P] Revisar `README.md` y actualizar si lista recursos REST / capacidades / enums (agregar
   el recurso bot-vs-bot y la ocupación por autoría si corresponde).
-- [ ] T045 Verificar `CleanArchitectureTest` (ArchUnit) en verde tras los cambios de capas y puertos.
-- [ ] T046 Ejecutar `./gradlew build` (cobertura JaCoCo ≥ 70%) y `./gradlew test`; corregir lo que
+- [X] T045 Verificar `CleanArchitectureTest` (ArchUnit) en verde tras los cambios de capas y puertos.
+- [X] T046 Ejecutar `./gradlew build` (cobertura JaCoCo ≥ 70%) y `./gradlew test`; corregir lo que
   falle.
-- [ ] T047 Ejecutar la validación de `quickstart.md` de punta a punta (crear, ocupar, espectar ambas
+- [X] T047 Ejecutar la validación de `quickstart.md` de punta a punta (crear, ocupar, espectar ambas
   manos por WS, no-regresión de fuga en partidas con humanos, liberar).
 
 ---

@@ -1,6 +1,7 @@
 package com.villo.truco.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -12,8 +13,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
@@ -41,8 +41,6 @@ class BotVsBotReleaseIT {
   private int port;
   @Autowired
   private AccessTokenIssuer tokenIssuer;
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
   void setUp() {
@@ -51,31 +49,31 @@ class BotVsBotReleaseIT {
   }
 
   @Test
-  @DisplayName("al llegar la partida a estado terminal el creador queda libre y puede crear otra")
+  @DisplayName("al terminar la partida (los bots juegan solos) el creador queda libre y puede crear otra")
   void ownerIsReleasedWhenMatchFinishes() throws Exception {
 
     final var owner = PlayerId.generate();
     final var token = this.tokenIssuer.issueForUser(owner).value();
 
+    // gamesToPlay=1: la serie es la más corta posible, así los bots la terminan rápido solos.
     final var createResponse = this.post("/api/matches/bot-vs-bot",
-        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":5}",
+        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":1}",
         token);
     assertThat(createResponse.statusCode()).isEqualTo(200);
-    final var matchId = (String) this.readJson(createResponse.body()).get("matchId");
 
     final var busy = this.readJson(this.get("/api/me/presence", token).body());
     assertThat(busy.get("busy")).isEqualTo(Boolean.TRUE);
     assertThat(busy.get("ownedBotMatch")).isInstanceOf(Map.class);
 
-    this.jdbcTemplate.update("UPDATE matches SET status = 'FINISHED' WHERE id = ?",
-        UUID.fromString(matchId));
-
-    final var released = this.readJson(this.get("/api/me/presence", token).body());
-    assertThat(released.get("busy")).isEqualTo(Boolean.FALSE);
-    assertThat(released.get("ownedBotMatch")).isNull();
+    // La liberación es emergente del filtro de estado: al terminar la partida, ownedBotMatch se vacía.
+    await().atMost(Duration.ofSeconds(90)).pollInterval(Duration.ofMillis(500)).untilAsserted(() -> {
+      final var presence = this.readJson(this.get("/api/me/presence", token).body());
+      assertThat(presence.get("ownedBotMatch")).isNull();
+      assertThat(presence.get("busy")).isEqualTo(Boolean.FALSE);
+    });
 
     final var newMatch = this.post("/api/matches/bot-vs-bot",
-        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":5}",
+        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":1}",
         token);
     assertThat(newMatch.statusCode()).isEqualTo(200);
   }
