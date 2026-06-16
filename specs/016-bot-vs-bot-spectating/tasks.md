@@ -110,37 +110,37 @@ genera revancha.
 
 ### Implementación — Crear partida
 
-- [ ] T014 [P] [US1] Crear `src/main/java/com/villo/truco/application/commands/CreateBotVsBotMatchCommand.java`
+- [X] T014 [P] [US1] Crear `src/main/java/com/villo/truco/application/commands/CreateBotVsBotMatchCommand.java`
   (`ownerId`, `gamesToPlay`, `botOneId`, `botTwoId` + constructor secundario desde strings/int).
-- [ ] T015 [P] [US1] Crear `src/main/java/com/villo/truco/application/dto/CreateBotVsBotMatchDTO.java`
+- [X] T015 [P] [US1] Crear `src/main/java/com/villo/truco/application/dto/CreateBotVsBotMatchDTO.java`
   (`matchId`).
-- [ ] T016 [P] [US1] Crear `src/main/java/com/villo/truco/application/ports/in/CreateBotVsBotMatchUseCase.java`
+- [X] T016 [P] [US1] Crear `src/main/java/com/villo/truco/application/ports/in/CreateBotVsBotMatchUseCase.java`
   (`extends UseCase<CreateBotVsBotMatchCommand, CreateBotVsBotMatchDTO>`).
-- [ ] T017 [US1] Crear
+- [X] T017 [US1] Crear
   `src/main/java/com/villo/truco/application/usecases/commands/CreateBotVsBotMatchCommandHandler.java`:
   `ensureAvailable(ownerId)`; validar bots distintos (`SamePlayerMatchException`) y existentes
   (`BotNotFoundException`); `Match.createReady(botOne, botTwo, MatchRules.fromGamesToPlay(...))`;
   `startMatch` ×2; `save`; `botVsBotMatchRegistry.register(matchId, ownerId)`; publicar eventos
   (depende de T002, T014-T016).
-- [ ] T018 [P] [US1] Crear
+- [X] T018 [P] [US1] Crear
   `src/main/java/com/villo/truco/infrastructure/http/dto/request/CreateBotVsBotMatchRequest.java`
   (`@NotBlank botOneId`, `@NotBlank botTwoId`, `@NotNull @Min(1) gamesToPlay`).
-- [ ] T019 [P] [US1] Crear
+- [X] T019 [P] [US1] Crear
   `src/main/java/com/villo/truco/infrastructure/http/dto/response/CreateBotVsBotMatchResponse.java`
   (`matchId` + `from(dto)`).
-- [ ] T020 [US1] Agregar endpoint `POST /api/matches/bot-vs-bot` en
+- [X] T020 [US1] Agregar endpoint `POST /api/matches/bot-vs-bot` en
   `src/main/java/com/villo/truco/infrastructure/http/BotController.java` (inyecta
   `CreateBotVsBotMatchUseCase`; OpenAPI: 200/400/401/404/422) (depende de T016, T018, T019).
-- [ ] T021 [US1] Registrar el bean `CreateBotVsBotMatchUseCase` en
+- [X] T021 [US1] Registrar el bean `CreateBotVsBotMatchUseCase` en
   `src/main/java/com/villo/truco/infrastructure/config/BotConfiguration.java` envuelto en
   `retryTransactionalPipeline` (depende de T017).
 
 ### Implementación — Espectar owner-only
 
-- [ ] T022 [P] [US1] Crear
+- [X] T022 [P] [US1] Crear
   `src/main/java/com/villo/truco/domain/model/spectator/exceptions/SpectateBotMatchNotOwnerException.java`
   (`extends DomainException` → mapea a 422).
-- [ ] T023 [US1] Modificar
+- [X] T023 [US1] Modificar
   `src/main/java/com/villo/truco/domain/model/spectator/SpectatingEligibilityPolicy.java`: si
   `registry.isBotVsBotMatch(matchId)`, omitir amistad/competición y exigir
   `findOwnerByMatchId == spectatorId` (si no, `SpectateBotMatchNotOwnerException`); conservar
@@ -148,16 +148,16 @@ genera revancha.
 
 ### Implementación — Ambas manos en el snapshot
 
-- [ ] T024 [US1] Modificar `src/main/java/com/villo/truco/application/dto/SpectatorRoundStateDTO.java`
+- [X] T024 [US1] Modificar `src/main/java/com/villo/truco/application/dto/SpectatorRoundStateDTO.java`
   agregando `List<CardDTO> handPlayerOne` y `List<CardDTO> handPlayerTwo` al final.
-- [ ] T025 [US1] Modificar
+- [X] T025 [US1] Modificar
   `src/main/java/com/villo/truco/application/assemblers/SpectatorMatchStateDTOAssembler.java`: si
   `registry.isBotVsBotMatch(matchId)`, poblar las manos con
   `match.getCardsOf(playerOne)`/`getCardsOf(playerTwo)`; si no, `null` (depende de T002, T024).
 
 ### Implementación — Ambas manos por WebSocket (+ cierre de fuga)
 
-- [ ] T026 [US1] Modificar
+- [X] T026 [US1] Modificar
   `src/main/java/com/villo/truco/application/eventhandlers/SpectatorNotificationEventTranslator.java`:
   inyectar `BotVsBotMatchRegistry`; para `HandDealtEvent`/`SeatTargetedEvent` reenviar solo si es
   evento de mano (`HandDealtEvent`/`PlayerHandUpdatedEvent`) **y** `isBotVsBotMatch`; el resto de los
@@ -166,17 +166,17 @@ genera revancha.
 
 ### Implementación — Sin revancha
 
-- [ ] T027 [P] [US1] Crear `src/main/java/com/villo/truco/application/services/BotVsBotRematchVeto.java`
+- [X] T027 [P] [US1] Crear `src/main/java/com/villo/truco/application/services/BotVsBotRematchVeto.java`
   (`implements RematchVeto`, `vetoesRematch = registry.isBotVsBotMatch(matchId)`) (depende de T002).
 
 ### Wiring de configuración (US1)
 
-- [ ] T028 [US1] En `src/main/java/com/villo/truco/infrastructure/config/SpectatorConfiguration.java`,
+- [X] T028 [US1] En `src/main/java/com/villo/truco/infrastructure/config/SpectatorConfiguration.java`,
   pasar `BotVsBotMatchRegistry` a `SpectatingEligibilityPolicy` y a `SpectatorMatchStateDTOAssembler`
   (depende de T023, T025).
-- [ ] T029 [US1] En `src/main/java/com/villo/truco/infrastructure/config/EventNotifierConfiguration.java`,
+- [X] T029 [US1] En `src/main/java/com/villo/truco/infrastructure/config/EventNotifierConfiguration.java`,
   pasar `BotVsBotMatchRegistry` al `SpectatorNotificationEventTranslator` (depende de T026).
-- [ ] T030 [US1] En `src/main/java/com/villo/truco/infrastructure/config/MatchUseCaseConfiguration.java`,
+- [X] T030 [US1] En `src/main/java/com/villo/truco/infrastructure/config/MatchUseCaseConfiguration.java`,
   registrar el bean `BotVsBotRematchVeto` (se suma a `List<RematchVeto>`) (depende de T027).
 
 **Checkpoint**: US1 funcional — crear, espectar owner-only y ver ambas manos (snapshot + WS), sin

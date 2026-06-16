@@ -6,6 +6,7 @@ public record SpectatorRoundStateDTO(String status, String currentTurn, String r
                                      String currentTrucoCall, String currentEnvidoCall,
                                      String winner, List<PlayedHandDTO> playedHands,
                                      CurrentHandDTO currentHand, Long actionDeadline,
-                                     Long turnDurationMillis, String actionDeadlineSeat) {
+                                     Long turnDurationMillis, String actionDeadlineSeat,
+                                     List<CardDTO> handPlayerOne, List<CardDTO> handPlayerTwo) {
 
 }

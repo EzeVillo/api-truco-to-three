@@ -7,6 +7,7 @@ import com.villo.truco.application.ports.RevealedBotIdsProvider;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
+import com.villo.truco.application.ports.in.CreateBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.ExecuteBotTurnUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
@@ -15,11 +16,13 @@ import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.usecases.commands.CreateBotMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.CreateBotVsBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.ExecuteBotTurnCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchEnvidoScoring;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.queries.GetBotsQueryHandler;
 import com.villo.truco.domain.model.bot.EnvidoScoring;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -38,6 +41,7 @@ import org.springframework.context.annotation.Lazy;
 public class BotConfiguration {
 
   private final BotRegistry botRegistry;
+  private final BotVsBotMatchRegistry botVsBotMatchRegistry;
   private final MatchQueryRepository matchQueryRepository;
   private final MatchRepository matchRepository;
   private final MatchEventNotifier matchEventNotifier;
@@ -51,6 +55,7 @@ public class BotConfiguration {
   private final UseCasePipeline retryTransactionalPipeline;
 
   public BotConfiguration(final BotRegistry botRegistry,
+      final BotVsBotMatchRegistry botVsBotMatchRegistry,
       final MatchQueryRepository matchQueryRepository, final MatchRepository matchRepository,
       @Lazy final MatchEventNotifier matchEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
@@ -61,6 +66,7 @@ public class BotConfiguration {
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.botRegistry = botRegistry;
+    this.botVsBotMatchRegistry = botVsBotMatchRegistry;
     this.matchQueryRepository = matchQueryRepository;
     this.matchRepository = matchRepository;
     this.matchEventNotifier = matchEventNotifier;
@@ -112,6 +118,15 @@ public class BotConfiguration {
 
     final var handler = new CreateBotMatchCommandHandler(this.matchRepository,
         this.matchEventNotifier, this.botRegistry, this.playerAvailabilityChecker);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  CreateBotVsBotMatchUseCase createBotVsBotMatchCommandHandler() {
+
+    final var handler = new CreateBotVsBotMatchCommandHandler(this.matchRepository,
+        this.matchEventNotifier, this.botRegistry, this.botVsBotMatchRegistry,
+        this.playerAvailabilityChecker);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

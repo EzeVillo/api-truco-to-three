@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.assemblers.SpectatorMatchStateDTOAssembler;
+import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import com.villo.truco.application.queries.GetSpectateMatchStateQuery;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
@@ -91,7 +92,7 @@ class GetSpectateMatchStateQueryHandlerTest {
     };
 
     final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
-        30_000L);
+        new InMemoryBotVsBotMatchRegistry(), 30_000L);
     this.handler = new GetSpectateMatchStateQueryHandler(matchRepo, this.repository, assembler);
   }
 

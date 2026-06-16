@@ -1,13 +1,17 @@
 package com.villo.truco.infrastructure.http;
 
 import com.villo.truco.application.commands.CreateBotMatchCommand;
+import com.villo.truco.application.commands.CreateBotVsBotMatchCommand;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
+import com.villo.truco.application.ports.in.CreateBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
 import com.villo.truco.application.queries.GetBotsQuery;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.http.dto.request.CreateBotMatchRequest;
+import com.villo.truco.infrastructure.http.dto.request.CreateBotVsBotMatchRequest;
 import com.villo.truco.infrastructure.http.dto.response.BotCatalogResponse;
 import com.villo.truco.infrastructure.http.dto.response.CreateBotMatchResponse;
+import com.villo.truco.infrastructure.http.dto.response.CreateBotVsBotMatchResponse;
 import com.villo.truco.infrastructure.http.dto.response.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,11 +38,14 @@ public class BotController {
 
   private final GetBotsUseCase getBots;
   private final CreateBotMatchUseCase createBotMatch;
+  private final CreateBotVsBotMatchUseCase createBotVsBotMatch;
 
-  public BotController(final GetBotsUseCase getBots, final CreateBotMatchUseCase createBotMatch) {
+  public BotController(final GetBotsUseCase getBots, final CreateBotMatchUseCase createBotMatch,
+      final CreateBotVsBotMatchUseCase createBotVsBotMatch) {
 
     this.getBots = Objects.requireNonNull(getBots);
     this.createBotMatch = Objects.requireNonNull(createBotMatch);
+    this.createBotVsBotMatch = Objects.requireNonNull(createBotVsBotMatch);
   }
 
   @GetMapping("/bots")
@@ -66,6 +73,24 @@ public class BotController {
     final var dto = this.createBotMatch.handle(
         new CreateBotMatchCommand(jwt.getSubject(), request.gamesToPlay(), request.botId()));
     return ResponseEntity.ok(CreateBotMatchResponse.from(dto));
+  }
+
+  @PostMapping("/matches/bot-vs-bot")
+  @Operation(summary = "Crear partida entre dos bots", description = "Crea una partida ya iniciada entre dos bots que juegan solos. Solo el creador puede espectarla y queda ocupado por autoría hasta que termine. No genera chat ni revancha.", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Partida creada", content = @Content(schema = @Schema(implementation = CreateBotVsBotMatchResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Body inválido o faltante, o bots iguales", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Alguno de los bots no existe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "El usuario ya está ocupado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<CreateBotVsBotMatchResponse> createBotVsBotMatch(
+      @Valid @RequestBody final CreateBotVsBotMatchRequest request,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    final var dto = this.createBotVsBotMatch.handle(
+        new CreateBotVsBotMatchCommand(jwt.getSubject(), request.gamesToPlay(), request.botOneId(),
+            request.botTwoId()));
+    return ResponseEntity.ok(CreateBotVsBotMatchResponse.from(dto));
   }
 
 }
