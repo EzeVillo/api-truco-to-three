@@ -72,8 +72,8 @@ respecto del contrato actual).
 Reglas:
 - **Solo el creador** del match puede espectarlo. Un no-creador recibe `422`.
 - `handPlayerOne`/`handPlayerTwo` = cartas **en mano restantes** de cada bot (lo que aún no jugó).
-- Para refrescar las manos al iniciarse una ronda nueva, el cliente re-consulta este endpoint al
-  recibir `ROUND_STARTED`.
+- Es el estado **inicial** (para conectarse a media partida). Las actualizaciones de mano llegan por
+  WebSocket (ver §4), no por re-consulta REST.
 
 ## 3. REST — Presencia (MODIFICADO)
 
@@ -107,13 +107,22 @@ partida bot-vs-bot en curso; en ese caso `busy = true`.
 Cola `/user/queue/match-spectate` (sin cambios de destino).
 
 - `SPECTATE_STATE` (`{ matchState }`): para bot-vs-bot, `matchState` incluye `handPlayerOne` y
-  `handPlayerTwo` dentro de `currentRound` (misma forma que `GET /spectate`).
+  `handPlayerTwo` dentro de `currentRound` (misma forma que `GET /spectate`). Estado inicial.
 - `SPECTATE_ERROR` (`{ error }`): se devuelve si un usuario que **no es el creador** intenta
   suscribirse a una partida bot-vs-bot.
 - Eventos públicos en vivo (`CARD_PLAYED`, `TRUCO_*`, `ENVIDO_*`, `SCORE_CHANGED`, `ROUND_STARTED`,
   `GAME_*`, `MATCH_FINISHED`, `ACTION_DEADLINE_*`, etc.) se siguen reenviando.
-- **No** se reenvían eventos privados por asiento (`HAND_DEALT`, `PLAYER_HAND_UPDATED`): las manos
-  llegan por snapshot (`SPECTATE_STATE` / `GET /spectate`), no por evento.
+
+**Manos por WebSocket (solo bot-vs-bot):** el espectador (creador) recibe, como un jugador normal,
+los eventos de mano de **ambos** asientos:
+- `HAND_DEALT` → `{ player_one: [cartas], player_two: [cartas] }` en cada reparto.
+- `PLAYER_HAND_UPDATED` → `{ seat, cards }` cuando una mano cambia (tras jugar una carta), para
+  ambos asientos.
+
+**Cambio de comportamiento (cierre de fuga):** en partidas **con humanos**, los espectadores
+**dejan de recibir** `HAND_DEALT` (hoy se reenviaba con ambas manos, una fuga). Siguen sin recibir
+`PLAYER_HAND_UPDATED` ni `AVAILABLE_ACTIONS_UPDATED`. Es decir, fuera de bot-vs-bot ningún espectador
+ve cartas en mano. `AVAILABLE_ACTIONS_UPDATED` tampoco se reenvía en bot-vs-bot.
 
 ## 5. Enums / reglas afectadas
 

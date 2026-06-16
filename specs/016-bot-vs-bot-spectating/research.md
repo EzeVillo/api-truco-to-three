@@ -73,23 +73,57 @@ es ninguno.
 del dueño. El dominio no depende de `BotRegistry` (puerto de application): usa el puerto de dominio
 `BotVsBotMatchRegistry`, y `isBotVsBotMatch` ya implica "ambos asientos bots" por construcción.
 
-## D5 — Vista con cartas de ambos bots
+## D5 — Manos de ambos bots por WebSocket (y cierre de una fuga preexistente)
 
-**Decisión**: agregar a `SpectatorRoundStateDTO` dos campos `handPlayerOne`/`handPlayerTwo`
-(`List<CardDTO>`), poblados **solo** cuando el match es bot-vs-bot
-(`botVsBotMatchRegistry.isBotVsBotMatch`). `SpectatorMatchStateDTOAssembler` los llena con
-`match.getCardsOf(playerOne)` y `match.getCardsOf(playerTwo)` (cartas en mano restantes). Para
-partidas con humanos quedan `null` → **el contrato existente no cambia**.
+**Decisión**: las manos de ambos bots se entregan al espectador **por WebSocket, como en un partido
+normal** (decisión explícita del usuario), no solo en el snapshot. Dos canales, igual que un
+jugador:
 
-**Entrega en tiempo real**: el snapshot inicial `SPECTATE_STATE` y `GET /api/matches/{id}/spectate`
-ya entregan ambas manos (al usar el assembler). Los eventos públicos en vivo (`CARD_PLAYED`,
-`TRUCO_*`, `SCORE_CHANGED`, etc.) se siguen reenviando al espectador. Para refrescar las manos al
-inicio de cada ronda nueva, el cliente **re-consulta** `GET /spectate` al recibir `ROUND_STARTED`.
+1. **Estado inicial** (al conectarse a media partida): `SpectatorRoundStateDTO` suma
+   `handPlayerOne`/`handPlayerTwo` (`List<CardDTO>`), poblados **solo** en bot-vs-bot
+   (`botVsBotMatchRegistry.isBotVsBotMatch`), vía `match.getCardsOf(playerOne/Two)`. En partidas con
+   humanos quedan `null`. Esto entra en `SPECTATE_STATE` y `GET /spectate`.
+2. **En vivo**: el espectador recibe los eventos de mano de **ambos** asientos: `HAND_DEALT` (lleva
+   las dos manos) en cada reparto y `PLAYER_HAND_UPDATED` (por asiento) cuando una mano cambia al
+   jugar una carta. Igual que un jugador normal recibe la suya.
 
-**Alternativa rechazada**: reenviar al espectador los eventos privados por asiento (`HAND_DEALT` /
-`PLAYER_HAND_UPDATED`) sin redactar para bot-vs-bot. Tocaría el pipeline de redacción del
-`SpectatorNotificationEventTranslator` y rompería su invariante. YAGNI: exponer las manos en el
-snapshot alcanza para el alcance backend; el refresh por ronda es responsabilidad del cliente.
+### Hallazgo crítico — fuga actual de cartas a espectadores
+
+El `CompositeEventDispatcher.dispatchEvents` invoca a **todos** los handlers por evento (el `return`
+dentro de `MatchNotificationEventTranslator.handle` no corta la cadena). Como `HandDealtEvent`
+**no** implementa `SeatTargetedEvent`, el `SpectatorNotificationEventTranslator` (que solo descarta
+`SeatTargetedEvent`) **hoy publica `HAND_DEALT` con AMBAS manos a cualquier espectador**, también en
+partidas con humanos. Es una fuga de privacidad preexistente y contradice el requisito del usuario
+("ver las cartas no aplica a ningún otro caso de spectate").
+
+### Cambio: `SpectatorNotificationEventTranslator` recibe `BotVsBotMatchRegistry`
+
+Nueva regla de filtrado (la consulta al registro se hace **solo** para eventos de mano, no en el
+camino caliente de los eventos públicos):
+
+```text
+inner = unwrap(event)
+if (inner es HandDealtEvent o SeatTargetedEvent) {
+  esEventoDeMano = inner es HandDealtEvent o PlayerHandUpdatedEvent
+  if (!esEventoDeMano) return;                         // AVAILABLE_ACTIONS_UPDATED: nunca al espectador
+  if (!registry.isBotVsBotMatch(matchId)) return;      // manos: SOLO en bot-vs-bot (cierra la fuga)
+  // bot-vs-bot: HAND_DEALT (ambas manos) y PLAYER_HAND_UPDATED (por asiento) pasan
+}
+... fan-out a espectadores con mapper.map(inner)
+```
+
+Efecto:
+- **Partidas con humanos**: el espectador deja de recibir `HAND_DEALT` (se cierra la fuga) y sigue
+  sin recibir `PLAYER_HAND_UPDATED`/`AVAILABLE_ACTIONS_UPDATED`. Sin manos, como debe ser.
+- **bot-vs-bot**: el espectador (creador) recibe `HAND_DEALT` con ambas manos y `PLAYER_HAND_UPDATED`
+  de ambos asientos, en vivo.
+
+`mapHandDealt` ya emite ambos asientos (`{player_one:[...], player_two:[...]}`) y
+`mapPlayerHandUpdated` emite `{seat, cards}`; no hace falta tocar el `MatchEventMapper`. La redacción
+hacia el jugador (`MatchNotificationEventTranslator.publishHandDealt`) no se toca.
+
+**Alternativa rechazada**: dejar las manos solo en el snapshot + refetch en `ROUND_STARTED`. El
+usuario pidió explícitamente que vengan por WS como un partido normal; además no cerraría la fuga.
 
 ## D6 — Sin revancha para bot-vs-bot
 

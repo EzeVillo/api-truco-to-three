@@ -20,9 +20,13 @@ autoría en `PlayerAvailabilityChecker` y `UserPresenceResolver`, (b) elegibilid
 `SpectatingEligibilityPolicy`, y (c) veto de revancha. La creación usa `Match.createReady(botOne,
 botTwo, rules)` (el agregado ya soporta dos bots) sin tocar el agregado `Match`.
 
-**Fuera de alcance:** frontend (solo backend), espectadores adicionales (owner-only), cancelación
-manual anticipada, y reenvío de eventos privados por asiento al espectador (las manos se entregan en
-el snapshot de spectate; el cliente refresca por `GET /spectate` al cambiar de ronda).
+Las manos de ambos bots se entregan al espectador **por WebSocket** (eventos `HAND_DEALT` y
+`PLAYER_HAND_UPDATED` de ambos asientos), como a un jugador normal, más el snapshot inicial. De paso,
+se **cierra una fuga preexistente**: hoy `HAND_DEALT` (con ambas manos) se reenvía a los espectadores
+de cualquier match; tras este cambio solo se reenvía en bot-vs-bot.
+
+**Fuera de alcance:** frontend (solo backend), espectadores adicionales (owner-only) y cancelación
+manual anticipada de la partida.
 
 ## Technical Context
 
@@ -125,7 +129,10 @@ src/main/java/com/villo/truco/
 │   ├── usecases/queries/
 │   │   └── UserPresenceResolver.java                   # MOD — + ownedBotMatch
 │   ├── assemblers/
-│   │   └── SpectatorMatchStateDTOAssembler.java        # MOD — manos para bot-vs-bot
+│   │   └── SpectatorMatchStateDTOAssembler.java        # MOD — manos para bot-vs-bot (snapshot inicial)
+│   ├── eventhandlers/
+│   │   └── SpectatorNotificationEventTranslator.java   # MOD — reenvía manos por WS solo en bot-vs-bot
+│   │                                                   #        + cierra fuga de HAND_DEALT a humanos
 │   └── services/ (o ports)/
 │       └── BotVsBotRematchVeto.java                    # NUEVO — RematchVeto
 └── infrastructure/
@@ -145,6 +152,7 @@ src/main/java/com/villo/truco/
         ├── SpectatorConfiguration.java                 # MOD — eligibility + assembler reciben registry
         ├── PlayerAvailabilityConfiguration.java        # MOD — checker recibe registry
         ├── PresenceNotificationConfiguration.java(*)   # MOD — resolver recibe registry
+        ├── EventNotifierConfiguration.java             # MOD — spectator translator recibe registry
         └── MatchUseCaseConfiguration.java              # MOD — bean BotVsBotRematchVeto (lista de vetos)
 
 src/main/resources/db/migration/

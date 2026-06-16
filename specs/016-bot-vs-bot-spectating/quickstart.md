@@ -42,11 +42,16 @@ curl -s "http://localhost:8080/api/matches/<MID>/spectate" -H "Authorization: Be
 ```
 
 Flujo WebSocket-first (real): suscribirse a `/user/queue/match-spectate` con header `matchId: <MID>`
-→ llega `SPECTATE_STATE` con ambas manos. Al recibir `ROUND_STARTED`, re-consultar `GET /spectate`
-para ver las manos recién repartidas.
+→ llega `SPECTATE_STATE` con ambas manos (estado inicial). En vivo llegan, como a un jugador normal,
+`HAND_DEALT` (`{ player_one, player_two }`) en cada reparto y `PLAYER_HAND_UPDATED` de ambos asientos
+al jugarse cada carta.
 
 Verificar owner-only:
 - Con el JWT de **otro** usuario, intentar espectar `<MID>` → `422` (REST) / `SPECTATE_ERROR` (WS).
+
+Verificar no-regresión (cierre de fuga):
+- Espectar una partida **con humanos** (liga/copa/amistad) NO debe entregar `HAND_DEALT` ni manos al
+  espectador.
 
 ## 5. Avance automático
 
@@ -73,6 +78,9 @@ Tests esperados (títulos en español):
 - `PlayerAvailabilityChecker`: `OWNS_BOT_MATCH` bloquea altas.
 - `SpectatingEligibilityPolicy`: creador permitido / no-creador rechazado.
 - `SpectatorMatchStateDTOAssembler`: manos presentes en bot-vs-bot, `null` en partidas con humanos.
+- `SpectatorNotificationEventTranslator`: en bot-vs-bot reenvía `HAND_DEALT` (ambas manos) y
+  `PLAYER_HAND_UPDATED` de ambos asientos; en partidas con humanos NO reenvía `HAND_DEALT` ni manos
+  (cierre de fuga). `AVAILABLE_ACTIONS_UPDATED` nunca al espectador.
 - `BotVsBotRematchVeto`: vetea revancha de bot-vs-bot.
 - `UserPresenceResolver`: `ownedBotMatch` presente con match activo, ausente al terminar.
 - Adapter JPA del registro (H2): `register`/`isBotVsBotMatch`/`findOwnerByMatchId`/
