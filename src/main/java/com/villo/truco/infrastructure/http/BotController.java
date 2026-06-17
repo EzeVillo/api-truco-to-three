@@ -1,7 +1,9 @@
 package com.villo.truco.infrastructure.http;
 
+import com.villo.truco.application.commands.AbandonBotVsBotMatchCommand;
 import com.villo.truco.application.commands.CreateBotMatchCommand;
 import com.villo.truco.application.commands.CreateBotVsBotMatchCommand;
+import com.villo.truco.application.ports.in.AbandonBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
 import com.villo.truco.application.ports.in.CreateBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
@@ -26,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,13 +42,16 @@ public class BotController {
   private final GetBotsUseCase getBots;
   private final CreateBotMatchUseCase createBotMatch;
   private final CreateBotVsBotMatchUseCase createBotVsBotMatch;
+  private final AbandonBotVsBotMatchUseCase abandonBotVsBotMatch;
 
   public BotController(final GetBotsUseCase getBots, final CreateBotMatchUseCase createBotMatch,
-      final CreateBotVsBotMatchUseCase createBotVsBotMatch) {
+      final CreateBotVsBotMatchUseCase createBotVsBotMatch,
+      final AbandonBotVsBotMatchUseCase abandonBotVsBotMatch) {
 
     this.getBots = Objects.requireNonNull(getBots);
     this.createBotMatch = Objects.requireNonNull(createBotMatch);
     this.createBotVsBotMatch = Objects.requireNonNull(createBotVsBotMatch);
+    this.abandonBotVsBotMatch = Objects.requireNonNull(abandonBotVsBotMatch);
   }
 
   @GetMapping("/bots")
@@ -91,6 +97,19 @@ public class BotController {
         new CreateBotVsBotMatchCommand(jwt.getSubject(), request.gamesToPlay(), request.botOneId(),
             request.botTwoId()));
     return ResponseEntity.ok(CreateBotVsBotMatchResponse.from(dto));
+  }
+
+  @PostMapping("/matches/bot-vs-bot/{matchId}/abandon")
+  @Operation(summary = "Abandonar partida entre bots", description = "El creador corta anticipadamente su partida bot-vs-bot en curso; la serie termina y queda liberado. Solo el creador puede abandonarla.", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Partida abandonada"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "El usuario no es el creador de la partida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> abandonBotVsBotMatch(@PathVariable final String matchId,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    this.abandonBotVsBotMatch.handle(new AbandonBotVsBotMatchCommand(matchId, jwt.getSubject()));
+    return ResponseEntity.noContent().build();
   }
 
 }

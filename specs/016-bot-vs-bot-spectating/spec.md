@@ -206,8 +206,11 @@ verificando que el creador vuelve a estar disponible y puede crear una nueva par
   proteger. Esto reemplaza explícitamente la vista "neutral" (sin cartas) del espectado de partidas
   humanas.
 - **Ocupación acotada en el tiempo**: una partida bot-vs-bot progresa automáticamente y concluye en
-  un tiempo acotado, por lo que la ocupación del creador es naturalmente limitada; no se contempla
-  una cancelación manual anticipada en esta feature.
+  un tiempo acotado, por lo que la ocupación del creador es naturalmente limitada. Adicionalmente,
+  el
+  creador puede **abandonarla anticipadamente** (`POST /api/matches/bot-vs-bot/{matchId}/abandon`,
+  owner-only): la serie termina y la ocupación por autoría se libera de inmediato. El abandono se
+  carga con lock pesimista para ganar la carrera contra el avance automático de los bots.
 - **Reutilización de mecanismos existentes**: se reutilizan el catálogo de bots, el motor de
   decisiones de los bots, la noción de disponibilidad/ocupación de jugadores, el endpoint de
   presencia y la infraestructura de espectado ya existentes.

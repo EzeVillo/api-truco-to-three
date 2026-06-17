@@ -3304,6 +3304,29 @@ Errores:
 | `404`  | Alguno de los `botId` no existe en el catálogo de bots                                                                              |
 | `422`  | `gamesToPlay` fuera de `{1, 3, 5}`, ambos bots iguales, o el usuario ya está ocupado (incluye ser dueño de otra bot-match en curso) |
 
+#### Abandonar una partida bot vs bot
+
+`POST /api/matches/bot-vs-bot/{matchId}/abandon`
+
+Requiere Bearer token. El **creador** corta anticipadamente su partida bot-vs-bot en curso. La serie
+termina (uno de los bots gana administrativamente) y la **ocupación por autoría** del creador se
+libera automáticamente, dejándolo disponible para crear o sumarse a otras actividades.
+
+- Solo el **creador** puede abandonarla; cualquier otro usuario es rechazado con `422`.
+- Es **idempotente**: si los bots ya habían terminado la serie por su cuenta, devuelve `204` igual.
+- La carga del match se serializa con un lock de escritura, de modo que el abandono siempre gana la
+  carrera contra el turno de bot en vuelo (el avance automático corre en paralelo).
+
+Response `204` sin cuerpo.
+
+Errores:
+
+| Codigo | Descripcion                                           |
+|--------|-------------------------------------------------------|
+| `401`  | Token ausente o inválido                              |
+| `404`  | La partida no existe                                  |
+| `422`  | El usuario autenticado no es el creador de la partida |
+
 ### 9.3 Quick Match (emparejamiento automatico)
 
 #### Entrar a la cola
