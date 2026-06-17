@@ -14,6 +14,7 @@ import com.villo.truco.application.ports.in.GetRematchSessionUseCase;
 import com.villo.truco.application.ports.in.LeaveRematchUseCase;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.ports.out.RematchSessionDomainEventHandler;
+import com.villo.truco.application.services.BotVsBotRematchVeto;
 import com.villo.truco.application.usecases.commands.ChooseRematchCommandHandler;
 import com.villo.truco.application.usecases.commands.ExpireDueRematchSessionsCommandHandler;
 import com.villo.truco.application.usecases.commands.ExpireRematchSessionCommandHandler;
@@ -21,6 +22,7 @@ import com.villo.truco.application.usecases.commands.LeaveRematchCommandHandler;
 import com.villo.truco.application.usecases.commands.RematchEligibilityPolicy;
 import com.villo.truco.application.usecases.queries.GetRematchSessionQueryHandler;
 import com.villo.truco.domain.model.rematch.events.RematchSessionDomainEvent;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
@@ -80,6 +82,12 @@ public class RematchConfiguration {
     this.clock = clock;
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.retryableTransactionalRunner = retryableTransactionalRunner;
+  }
+
+  @Bean
+  RematchVeto botVsBotRematchVeto(final BotVsBotMatchRegistry botVsBotMatchRegistry) {
+
+    return new BotVsBotRematchVeto(botVsBotMatchRegistry);
   }
 
   @Bean

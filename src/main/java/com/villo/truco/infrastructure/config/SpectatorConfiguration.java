@@ -19,6 +19,7 @@ import com.villo.truco.application.usecases.commands.SpectatorshipLifecycleManag
 import com.villo.truco.application.usecases.commands.StopSpectatingMatchCommandHandler;
 import com.villo.truco.application.usecases.queries.GetSpectateMatchStateQueryHandler;
 import com.villo.truco.domain.model.spectator.SpectatingEligibilityPolicy;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CompetitionMembershipResolver;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.FriendshipSpectateEligibilityResolver;
@@ -42,6 +43,7 @@ public class SpectatorConfiguration {
   private final MatchEventMapper matchEventMapper;
   private final PublicActorResolver publicActorResolver;
   private final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver;
+  private final BotVsBotMatchRegistry botVsBotMatchRegistry;
   private final long idleTimeoutMillis;
   private final ObjectProvider<FriendAvailabilityChangeNotifier> friendAvailabilityChangeNotifierProvider;
   private final ObjectProvider<PresenceNotifier> presenceNotifierProvider;
@@ -52,6 +54,7 @@ public class SpectatorConfiguration {
       @Lazy final ApplicationEventPublisher eventPublisher, final MatchEventMapper matchEventMapper,
       final PublicActorResolver publicActorResolver,
       final FriendshipSpectateEligibilityResolver friendshipSpectateEligibilityResolver,
+      final BotVsBotMatchRegistry botVsBotMatchRegistry,
       final MatchTimeoutProperties matchTimeoutProperties,
       final ObjectProvider<FriendAvailabilityChangeNotifier> friendAvailabilityChangeNotifierProvider,
       final ObjectProvider<PresenceNotifier> presenceNotifierProvider) {
@@ -63,6 +66,7 @@ public class SpectatorConfiguration {
     this.matchEventMapper = matchEventMapper;
     this.publicActorResolver = publicActorResolver;
     this.friendshipSpectateEligibilityResolver = friendshipSpectateEligibilityResolver;
+    this.botVsBotMatchRegistry = botVsBotMatchRegistry;
     this.idleTimeoutMillis = matchTimeoutProperties.getPlayTimeoutSeconds() * 1000L;
     this.friendAvailabilityChangeNotifierProvider = friendAvailabilityChangeNotifierProvider;
     this.presenceNotifierProvider = presenceNotifierProvider;
@@ -87,7 +91,7 @@ public class SpectatorConfiguration {
   SpectatingEligibilityPolicy spectatingEligibilityPolicy() {
 
     return new SpectatingEligibilityPolicy(competitionMembershipResolver(),
-        this.friendshipSpectateEligibilityResolver);
+        this.friendshipSpectateEligibilityResolver, this.botVsBotMatchRegistry);
   }
 
   @Bean
@@ -108,7 +112,8 @@ public class SpectatorConfiguration {
   @Bean
   SpectatorMatchStateDTOAssembler spectatorMatchStateDTOAssembler() {
 
-    return new SpectatorMatchStateDTOAssembler(this.publicActorResolver, this.idleTimeoutMillis);
+    return new SpectatorMatchStateDTOAssembler(this.publicActorResolver, this.botVsBotMatchRegistry,
+        this.idleTimeoutMillis);
   }
 
   @Bean
@@ -138,7 +143,7 @@ public class SpectatorConfiguration {
   SpectatorNotificationEventTranslator spectatorNotificationEventTranslator() {
 
     return new SpectatorNotificationEventTranslator(spectatorshipRepository(),
-        this.matchEventMapper, this.eventPublisher);
+        this.botVsBotMatchRegistry, this.matchEventMapper, this.eventPublisher);
   }
 
   @Bean

@@ -71,7 +71,8 @@ class CreateBotMatchCommandHandlerTest {
     when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
     final var playerAvailabilityChecker = new PlayerAvailabilityChecker(matchRepo, leagueRepo,
         cupRepo, botRegistry, rematchRepo, NoOpQuickMatchQueuePort.INSTANCE,
-        NoOpSpectatorshipRepository.INSTANCE);
+        NoOpSpectatorshipRepository.INSTANCE,
+        new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
 
     final var chatRepo = mock(ChatRepository.class);
     final var chatQueryRepo = mock(ChatQueryRepository.class);
@@ -131,7 +132,8 @@ class CreateBotMatchCommandHandlerTest {
     when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
     final var playerAvailabilityChecker = new PlayerAvailabilityChecker(matchRepo, leagueRepo,
         cupRepo, botRegistry, rematchRepo, NoOpQuickMatchQueuePort.INSTANCE,
-        NoOpSpectatorshipRepository.INSTANCE);
+        NoOpSpectatorshipRepository.INSTANCE,
+        new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
 
     final MatchEventNotifier matchEventNotifier = events -> {
     };

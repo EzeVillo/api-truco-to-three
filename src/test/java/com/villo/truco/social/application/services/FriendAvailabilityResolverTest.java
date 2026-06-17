@@ -32,6 +32,7 @@ import com.villo.truco.social.domain.model.invitation.ResourceInvitation;
 import com.villo.truco.social.domain.model.invitation.valueobjects.ResourceInvitationTargetType;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
+import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.time.Duration;
 import java.time.Instant;
@@ -125,7 +126,7 @@ class FriendAvailabilityResolverTest {
     final var quickMatchQueue = mock(QuickMatchQueuePort.class);
     when(quickMatchQueue.isPlayerQueued(any())).thenReturn(quickQueued);
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        quickMatchQueue, NoOpSpectatorshipRepository.INSTANCE);
+        quickMatchQueue, NoOpSpectatorshipRepository.INSTANCE, new InMemoryBotVsBotMatchRegistry());
   }
 
   @Test

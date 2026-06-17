@@ -17,6 +17,7 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
 import com.villo.truco.support.TestPublicActorResolver;
+import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -91,7 +92,7 @@ class GetSpectateMatchStateQueryHandlerTest {
     };
 
     final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
-        30_000L);
+        new InMemoryBotVsBotMatchRegistry(), 30_000L);
     this.handler = new GetSpectateMatchStateQueryHandler(matchRepo, this.repository, assembler);
   }
 

@@ -3,12 +3,14 @@ package com.villo.truco.application.usecases.queries;
 import com.villo.truco.application.dto.ActiveCupRefDTO;
 import com.villo.truco.application.dto.ActiveLeagueRefDTO;
 import com.villo.truco.application.dto.ActiveMatchRefDTO;
+import com.villo.truco.application.dto.ActiveOwnedBotMatchRefDTO;
 import com.villo.truco.application.dto.ActiveQuickMatchRefDTO;
 import com.villo.truco.application.dto.ActiveRematchRefDTO;
 import com.villo.truco.application.dto.ActiveSpectatingRefDTO;
 import com.villo.truco.application.dto.UserPresenceDTO;
 import com.villo.truco.domain.model.cup.valueobjects.CupStatus;
 import com.villo.truco.domain.model.league.valueobjects.LeagueStatus;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
@@ -33,13 +35,15 @@ public final class UserPresenceResolver {
   private final RematchSessionRepository rematchSessionRepository;
   private final QuickMatchQueuePort quickMatchQueuePort;
   private final SpectatorshipRepository spectatorshipRepository;
+  private final BotVsBotMatchRegistry botVsBotMatchRegistry;
 
   public UserPresenceResolver(final MatchQueryRepository matchQueryRepository,
       final LeagueQueryRepository leagueQueryRepository,
       final CupQueryRepository cupQueryRepository,
       final RematchSessionRepository rematchSessionRepository,
       final QuickMatchQueuePort quickMatchQueuePort,
-      final SpectatorshipRepository spectatorshipRepository) {
+      final SpectatorshipRepository spectatorshipRepository,
+      final BotVsBotMatchRegistry botVsBotMatchRegistry) {
 
     this.matchQueryRepository = Objects.requireNonNull(matchQueryRepository);
     this.leagueQueryRepository = Objects.requireNonNull(leagueQueryRepository);
@@ -47,6 +51,7 @@ public final class UserPresenceResolver {
     this.rematchSessionRepository = Objects.requireNonNull(rematchSessionRepository);
     this.quickMatchQueuePort = Objects.requireNonNull(quickMatchQueuePort);
     this.spectatorshipRepository = Objects.requireNonNull(spectatorshipRepository);
+    this.botVsBotMatchRegistry = Objects.requireNonNull(botVsBotMatchRegistry);
   }
 
   public UserPresenceDTO resolve(final PlayerId player) {
@@ -60,9 +65,18 @@ public final class UserPresenceResolver {
     final var rematchRef = resolveRematch(player);
     final var quickMatchRef = resolveQuickMatch(player);
     final var spectatingRef = resolveSpectating(player);
+    final var ownedBotMatchRef = resolveOwnedBotMatch(player);
 
-    return UserPresenceDTO.of(matchRef, leagueRef, cupRef, rematchRef, quickMatchRef,
-        spectatingRef);
+    return UserPresenceDTO.of(matchRef, leagueRef, cupRef, rematchRef, quickMatchRef, spectatingRef,
+        ownedBotMatchRef);
+  }
+
+  private ActiveOwnedBotMatchRefDTO resolveOwnedBotMatch(final PlayerId player) {
+
+    return this.botVsBotMatchRegistry.findActiveOwnedMatchId(player)
+        .flatMap(this.matchQueryRepository::findById).map(
+            match -> new ActiveOwnedBotMatchRefDTO(match.getId().value().toString(),
+                match.getStatus().name())).orElse(null);
   }
 
   private ActiveMatchRefDTO resolveMatch(final PlayerId player) {

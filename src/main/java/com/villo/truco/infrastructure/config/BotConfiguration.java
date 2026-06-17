@@ -4,9 +4,12 @@ import com.villo.truco.application.eventhandlers.BotDomainEventTranslator;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.HiddenBotIdsProvider;
 import com.villo.truco.application.ports.RevealedBotIdsProvider;
+import com.villo.truco.application.ports.in.AbandonBotVsBotMatchUseCase;
+import com.villo.truco.application.ports.in.AdvanceBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
+import com.villo.truco.application.ports.in.CreateBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.ExecuteBotTurnUseCase;
 import com.villo.truco.application.ports.in.FoldUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
@@ -14,13 +17,18 @@ import com.villo.truco.application.ports.in.PlayCardUseCase;
 import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.application.usecases.commands.AbandonBotVsBotMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.AdvanceBotVsBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateBotMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.CreateBotVsBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.ExecuteBotTurnCommandHandler;
 import com.villo.truco.application.usecases.commands.MatchEnvidoScoring;
 import com.villo.truco.application.usecases.commands.PlayerAvailabilityChecker;
 import com.villo.truco.application.usecases.queries.GetBotsQueryHandler;
 import com.villo.truco.domain.model.bot.EnvidoScoring;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.MatchEventNotifier;
+import com.villo.truco.domain.ports.MatchLockingRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.infrastructure.bot.AsyncBotActionExecutor;
@@ -38,8 +46,10 @@ import org.springframework.context.annotation.Lazy;
 public class BotConfiguration {
 
   private final BotRegistry botRegistry;
+  private final BotVsBotMatchRegistry botVsBotMatchRegistry;
   private final MatchQueryRepository matchQueryRepository;
   private final MatchRepository matchRepository;
+  private final MatchLockingRepository matchLockingRepository;
   private final MatchEventNotifier matchEventNotifier;
   private final PlayerAvailabilityChecker playerAvailabilityChecker;
   private final PlayCardUseCase playCardUseCase;
@@ -51,7 +61,9 @@ public class BotConfiguration {
   private final UseCasePipeline retryTransactionalPipeline;
 
   public BotConfiguration(final BotRegistry botRegistry,
+      final BotVsBotMatchRegistry botVsBotMatchRegistry,
       final MatchQueryRepository matchQueryRepository, final MatchRepository matchRepository,
+      final MatchLockingRepository matchLockingRepository,
       @Lazy final MatchEventNotifier matchEventNotifier,
       final PlayerAvailabilityChecker playerAvailabilityChecker,
       @Lazy final PlayCardUseCase playCardUseCase, @Lazy final CallTrucoUseCase callTrucoUseCase,
@@ -61,8 +73,10 @@ public class BotConfiguration {
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline) {
 
     this.botRegistry = botRegistry;
+    this.botVsBotMatchRegistry = botVsBotMatchRegistry;
     this.matchQueryRepository = matchQueryRepository;
     this.matchRepository = matchRepository;
+    this.matchLockingRepository = matchLockingRepository;
     this.matchEventNotifier = matchEventNotifier;
     this.playerAvailabilityChecker = playerAvailabilityChecker;
     this.playCardUseCase = playCardUseCase;
@@ -104,7 +118,7 @@ public class BotConfiguration {
   BotDomainEventTranslator botDomainEventTranslator(
       @Lazy final ApplicationEventPublisher publisher) {
 
-    return new BotDomainEventTranslator(this.botRegistry, publisher);
+    return new BotDomainEventTranslator(this.botRegistry, this.botVsBotMatchRegistry, publisher);
   }
 
   @Bean
@@ -112,6 +126,31 @@ public class BotConfiguration {
 
     final var handler = new CreateBotMatchCommandHandler(this.matchRepository,
         this.matchEventNotifier, this.botRegistry, this.playerAvailabilityChecker);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  CreateBotVsBotMatchUseCase createBotVsBotMatchCommandHandler() {
+
+    final var handler = new CreateBotVsBotMatchCommandHandler(this.matchRepository,
+        this.matchEventNotifier, this.botRegistry, this.botVsBotMatchRegistry,
+        this.playerAvailabilityChecker);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  AbandonBotVsBotMatchUseCase abandonBotVsBotMatchCommandHandler() {
+
+    final var handler = new AbandonBotVsBotMatchCommandHandler(this.botVsBotMatchRegistry,
+        this.matchLockingRepository, this.matchRepository, this.matchEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  AdvanceBotVsBotMatchUseCase advanceBotVsBotMatchCommandHandler() {
+
+    final var handler = new AdvanceBotVsBotMatchCommandHandler(this.botVsBotMatchRegistry,
+        this.matchLockingRepository, this.executeBotTurnCommandHandler());
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

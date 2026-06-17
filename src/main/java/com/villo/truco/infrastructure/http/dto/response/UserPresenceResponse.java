@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.http.dto.response;
 import com.villo.truco.application.dto.ActiveCupRefDTO;
 import com.villo.truco.application.dto.ActiveLeagueRefDTO;
 import com.villo.truco.application.dto.ActiveMatchRefDTO;
+import com.villo.truco.application.dto.ActiveOwnedBotMatchRefDTO;
 import com.villo.truco.application.dto.ActiveQuickMatchRefDTO;
 import com.villo.truco.application.dto.ActiveRematchRefDTO;
 import com.villo.truco.application.dto.ActiveSpectatingRefDTO;
@@ -18,14 +19,16 @@ public record UserPresenceResponse(
     @Schema(description = "Copa del usuario, o null", nullable = true) ActiveCupRef cup,
     @Schema(description = "Sesion de revancha abierta del usuario, o null", nullable = true) ActiveRematchRef rematch,
     @Schema(description = "Busqueda Quick Match activa del usuario, o null", nullable = true) ActiveQuickMatchRef quickMatch,
-    @Schema(description = "Partida que el usuario esta especteando, o null", nullable = true) ActiveSpectatingRef spectating) {
+    @Schema(description = "Partida que el usuario esta especteando, o null", nullable = true) ActiveSpectatingRef spectating,
+    @Schema(description = "Partida bot-vs-bot de la que el usuario es dueño, o null", nullable = true) OwnedBotMatchRef ownedBotMatch) {
 
   public static UserPresenceResponse from(final UserPresenceDTO presence) {
 
     return new UserPresenceResponse(presence.busy(), ActiveMatchRef.from(presence.match()),
         ActiveLeagueRef.from(presence.league()), ActiveCupRef.from(presence.cup()),
         ActiveRematchRef.from(presence.rematch()), ActiveQuickMatchRef.from(presence.quickMatch()),
-        ActiveSpectatingRef.from(presence.spectating()));
+        ActiveSpectatingRef.from(presence.spectating()),
+        OwnedBotMatchRef.from(presence.ownedBotMatch()));
   }
 
   @Schema(description = "Referencia a la partida activa")
@@ -97,6 +100,18 @@ public record UserPresenceResponse(
     static ActiveSpectatingRef from(final ActiveSpectatingRefDTO dto) {
 
       return dto == null ? null : new ActiveSpectatingRef(dto.matchId());
+    }
+
+  }
+
+  @Schema(description = "Referencia a la partida bot-vs-bot de la que el usuario es dueño")
+  public record OwnedBotMatchRef(
+      @Schema(description = "ID de la partida bot-vs-bot", example = "550e8400-e29b-41d4-a716-446655440000") String matchId,
+      @Schema(description = "Estado de la partida", example = "IN_PROGRESS") String status) {
+
+    static OwnedBotMatchRef from(final ActiveOwnedBotMatchRefDTO dto) {
+
+      return dto == null ? null : new OwnedBotMatchRef(dto.matchId(), dto.status());
     }
 
   }

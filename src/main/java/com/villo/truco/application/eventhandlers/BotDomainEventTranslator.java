@@ -9,17 +9,21 @@ import com.villo.truco.domain.model.match.events.MatchEventEnvelope;
 import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import java.util.Objects;
 
 public final class BotDomainEventTranslator implements MatchDomainEventHandler<MatchDomainEvent> {
 
   private final BotRegistry botRegistry;
+  private final BotVsBotMatchRegistry botVsBotMatchRegistry;
   private final ApplicationEventPublisher applicationEventPublisher;
 
   public BotDomainEventTranslator(final BotRegistry botRegistry,
+      final BotVsBotMatchRegistry botVsBotMatchRegistry,
       final ApplicationEventPublisher applicationEventPublisher) {
 
     this.botRegistry = Objects.requireNonNull(botRegistry);
+    this.botVsBotMatchRegistry = Objects.requireNonNull(botVsBotMatchRegistry);
     this.applicationEventPublisher = Objects.requireNonNull(applicationEventPublisher);
   }
 
@@ -35,6 +39,9 @@ public final class BotDomainEventTranslator implements MatchDomainEventHandler<M
     final var inner = event instanceof MatchEventEnvelope env ? env.getInner() : event;
     final var seat = this.resolveSeat(inner);
     if (seat == null) {
+      return;
+    }
+    if (this.botVsBotMatchRegistry.isBotVsBotMatch(event.getMatchId())) {
       return;
     }
     final var player = event.resolvePlayer(seat);

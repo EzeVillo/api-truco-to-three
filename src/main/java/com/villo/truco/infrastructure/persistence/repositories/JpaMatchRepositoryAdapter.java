@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.persistence.repositories;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchStatus;
 import com.villo.truco.domain.ports.JoinCodeRegistryRepository;
+import com.villo.truco.domain.ports.MatchLockingRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
 import com.villo.truco.domain.ports.MatchTimeoutEntry;
@@ -28,7 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Transactional(readOnly = true)
-public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRepository {
+public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRepository,
+    MatchLockingRepository {
 
   private final SpringDataMatchRepository springDataRepo;
   private final MatchMapper mapper;
@@ -72,6 +74,13 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   public Optional<Match> findById(final MatchId matchId) {
 
     return this.springDataRepo.findById(matchId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  @Transactional
+  public Optional<Match> findByIdForUpdate(final MatchId matchId) {
+
+    return this.springDataRepo.findByIdForUpdate(matchId.value()).map(this.mapper::toDomain);
   }
 
   @Override

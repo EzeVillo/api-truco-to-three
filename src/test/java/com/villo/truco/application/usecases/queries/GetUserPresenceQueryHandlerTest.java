@@ -23,7 +23,7 @@ class GetUserPresenceQueryHandlerTest {
     final var handler = new GetUserPresenceQueryHandler(resolver);
     final var player = PlayerId.generate();
     final var expected = UserPresenceDTO.of(new ActiveMatchRefDTO("m-1", "IN_PROGRESS"), null, null,
-        null, null, null);
+        null, null, null, null);
     when(resolver.resolve(player)).thenReturn(expected);
 
     final var presence = handler.handle(new GetUserPresenceQuery(player));

@@ -6,7 +6,7 @@ in this repository.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/015-gameplay-recording/plan.md`
+`specs/016-bot-vs-bot-spectating/plan.md`
 <!-- SPECKIT END -->
 
 ---

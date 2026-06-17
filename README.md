@@ -56,7 +56,10 @@ games.
   cantar/responder envido, fold, abandono, consulta de estado del jugador y consulta de estado
   para espectador registrado.
 - Bots:
-  catalogo de personalidades y creacion de match listo para jugar.
+  catalogo de personalidades y creacion de match listo para jugar. Tambien partidas **bot vs bot**
+  (`POST /api/matches/bot-vs-bot`): dos bots que **no avanzan solos** —el creador dispara cada
+  jugada con `POST /api/matches/bot-vs-bot/{matchId}/advance`—, queda ocupado por autoria (busy
+- total hasta que termine) y es el unico que puede espectarlas viendo las cartas de ambos.
 - League:
   creacion `PUBLIC` o `PRIVATE`, join compartido por `joinCode`, lobby publico por coleccion,
   autostart publico al completarse, leave, start privado, tabla, fixture y avance automatico.
@@ -336,6 +339,8 @@ Recursos REST principales:
 
 - `/api/auth`
 - `/api/matches`
+- `/api/matches/bot` — `POST` crea una partida contra un bot; `/api/matches/bot-vs-bot` — `POST`
+  crea una partida entre dos bots (espectable solo por el creador, que queda ocupado por autoría)
 - `/api/matches/quick` — Quick Match: `POST` para entrar a la cola, `DELETE` para cancelar
 - `/api/leagues`
 - `/api/cups`

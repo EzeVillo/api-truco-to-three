@@ -35,6 +35,7 @@ import com.villo.truco.domain.shared.valueobjects.Visibility;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
 import com.villo.truco.social.application.services.FriendAvailabilityChangeNotifier;
 import com.villo.truco.support.TestPublicActorResolver;
+import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -320,13 +321,14 @@ class SpectateMatchCommandHandlerTest {
         this.match.getId(), this.playerOne, this.playerTwo, this.spectator).findByMatchId(matchId)
         .map(league -> league.getParticipants().contains(playerId)).orElse(false);
     final var assembler = new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
-        30_000L);
+        new InMemoryBotVsBotMatchRegistry(), 30_000L);
     final var countPublisher = new SpectatorCountChangedPublisher(matchRepo, this.repository,
         this.publishedEvents::add);
 
     this.handler = new SpectateMatchCommandHandler(matchRepo, this.repository,
-        new SpectatingEligibilityPolicy(resolver, (match, spectatorId) -> false), countPublisher,
-        assembler, mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
+        new SpectatingEligibilityPolicy(resolver, (match, spectatorId) -> false,
+            new InMemoryBotVsBotMatchRegistry()), countPublisher, assembler,
+        mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
   }
 
   @Test
@@ -355,9 +357,10 @@ class SpectateMatchCommandHandlerTest {
     final var countPublisher = new SpectatorCountChangedPublisher(emptyMatchRepo, this.repository,
         this.publishedEvents::add);
     final var h = new SpectateMatchCommandHandler(emptyMatchRepo, this.repository,
-        new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),
-        countPublisher,
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false,
+            new InMemoryBotVsBotMatchRegistry()), countPublisher,
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
+            new InMemoryBotVsBotMatchRegistry(), 30_000L),
         mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     assertThatThrownBy(
@@ -373,9 +376,11 @@ class SpectateMatchCommandHandlerTest {
         MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
     final var matchRepo = stubMatchRepo(readyMatch);
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
-        new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false),
+        new SpectatingEligibilityPolicy((matchId, playerId) -> true, (match, spectatorId) -> false,
+            new InMemoryBotVsBotMatchRegistry()),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
+            new InMemoryBotVsBotMatchRegistry(), 30_000L),
         mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     assertThatThrownBy(
@@ -428,10 +433,11 @@ class SpectateMatchCommandHandlerTest {
 
     final var matchRepo = stubMatchRepo(this.match);
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
-        new SpectatingEligibilityPolicy((matchId, playerId) -> false,
-            (match, spectatorId) -> false),
+        new SpectatingEligibilityPolicy((matchId, playerId) -> false, (match, spectatorId) -> false,
+            new InMemoryBotVsBotMatchRegistry()),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
+            new InMemoryBotVsBotMatchRegistry(), 30_000L),
         mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     assertThatThrownBy(() -> h.handle(
@@ -446,9 +452,11 @@ class SpectateMatchCommandHandlerTest {
     final var matchRepo = stubMatchRepo(this.match);
     final var h = new SpectateMatchCommandHandler(matchRepo, this.repository,
         new SpectatingEligibilityPolicy((matchId, playerId) -> false,
-            (match, spectatorId) -> spectatorId.equals(this.spectator)),
+            (match, spectatorId) -> spectatorId.equals(this.spectator),
+            new InMemoryBotVsBotMatchRegistry()),
         new SpectatorCountChangedPublisher(matchRepo, this.repository, this.publishedEvents::add),
-        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(), 30_000L),
+        new SpectatorMatchStateDTOAssembler(TestPublicActorResolver.guestStyle(),
+            new InMemoryBotVsBotMatchRegistry(), 30_000L),
         mock(FriendAvailabilityChangeNotifier.class), mock(PresenceNotifier.class));
 
     final var result = h.handle(new SpectateMatchCommand(this.match.getId(), this.spectator));

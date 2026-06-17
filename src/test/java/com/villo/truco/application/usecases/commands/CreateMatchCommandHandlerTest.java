@@ -205,7 +205,8 @@ class CreateMatchCommandHandlerTest {
 
   private static final PlayerAvailabilityChecker FREE_CHECKER = new PlayerAvailabilityChecker(
       NO_ACTIVE_MATCH_REPO, NO_LEAGUE_REPO, NO_CUP_REPO, NO_BOT_REGISTRY, NO_REMATCH_REPO,
-      NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE);
+      NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE,
+      new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
   private static final MatchEventNotifier NO_OP_MATCH_EVENT_NOTIFIER = events -> {
   };
 
@@ -361,7 +362,8 @@ class CreateMatchCommandHandlerTest {
 
     final var busyChecker = new PlayerAvailabilityChecker(busyMatchRepo, NO_LEAGUE_REPO,
         NO_CUP_REPO, NO_BOT_REGISTRY, NO_REMATCH_REPO, NoOpQuickMatchQueuePort.INSTANCE,
-        NoOpSpectatorshipRepository.INSTANCE);
+        NoOpSpectatorshipRepository.INSTANCE,
+        new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
     final var handler = new CreateMatchCommandHandler(repository, NO_OP_MATCH_EVENT_NOTIFIER,
         busyChecker);
 
