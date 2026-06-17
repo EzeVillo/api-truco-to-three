@@ -30,7 +30,8 @@ títulos en español). Todos los títulos de test van en español.
 **Purpose**: el proyecto ya existe (Java 21 / Spring Boot, Clean/Hexagonal). No hay init de proyecto
 ni dependencias nuevas.
 
-- [X] T001 Verificar que la próxima migración Flyway disponible es `V24` (V22/V23 ya las tomó la feature 015 gameplay-recording) y que
+- [X] T001 Verificar que la próxima migración Flyway disponible es `V24` (V22/V23 ya las tomó la
+  feature 015 gameplay-recording) y que
   la feature no requiere dependencias nuevas (reusa stack actual). Sin cambios de código.
 
 ---
@@ -105,16 +106,20 @@ genera revancha.
   si el match es bot-vs-bot; no vetea si no lo es.
 - [X] T013 [US1] Test de integración
   `src/test/java/com/villo/truco/integration/BotVsBotSpectatingIT.java`: crear por REST → espectar
-  como creador devuelve ambas manos → no-creador recibe `422` → la partida queda `PRIVATE` (fuera del
+  como creador devuelve ambas manos → no-creador recibe `422` → la partida queda `PRIVATE` (fuera
+  del
   lobby) y no abre revancha al terminar.
 
 ### Implementación — Crear partida
 
-- [X] T014 [P] [US1] Crear `src/main/java/com/villo/truco/application/commands/CreateBotVsBotMatchCommand.java`
+- [X] T014 [P] [US1] Crear
+  `src/main/java/com/villo/truco/application/commands/CreateBotVsBotMatchCommand.java`
   (`ownerId`, `gamesToPlay`, `botOneId`, `botTwoId` + constructor secundario desde strings/int).
-- [X] T015 [P] [US1] Crear `src/main/java/com/villo/truco/application/dto/CreateBotVsBotMatchDTO.java`
+- [X] T015 [P] [US1] Crear
+  `src/main/java/com/villo/truco/application/dto/CreateBotVsBotMatchDTO.java`
   (`matchId`).
-- [X] T016 [P] [US1] Crear `src/main/java/com/villo/truco/application/ports/in/CreateBotVsBotMatchUseCase.java`
+- [X] T016 [P] [US1] Crear
+  `src/main/java/com/villo/truco/application/ports/in/CreateBotVsBotMatchUseCase.java`
   (`extends UseCase<CreateBotVsBotMatchCommand, CreateBotVsBotMatchDTO>`).
 - [X] T017 [US1] Crear
   `src/main/java/com/villo/truco/application/usecases/commands/CreateBotVsBotMatchCommandHandler.java`:
@@ -148,7 +153,8 @@ genera revancha.
 
 ### Implementación — Ambas manos en el snapshot
 
-- [X] T024 [US1] Modificar `src/main/java/com/villo/truco/application/dto/SpectatorRoundStateDTO.java`
+- [X] T024 [US1] Modificar
+  `src/main/java/com/villo/truco/application/dto/SpectatorRoundStateDTO.java`
   agregando `List<CardDTO> handPlayerOne` y `List<CardDTO> handPlayerTwo` al final.
 - [X] T025 [US1] Modificar
   `src/main/java/com/villo/truco/application/assemblers/SpectatorMatchStateDTOAssembler.java`: si
@@ -160,25 +166,31 @@ genera revancha.
 - [X] T026 [US1] Modificar
   `src/main/java/com/villo/truco/application/eventhandlers/SpectatorNotificationEventTranslator.java`:
   inyectar `BotVsBotMatchRegistry`; para `HandDealtEvent`/`SeatTargetedEvent` reenviar solo si es
-  evento de mano (`HandDealtEvent`/`PlayerHandUpdatedEvent`) **y** `isBotVsBotMatch`; el resto de los
+  evento de mano (`HandDealtEvent`/`PlayerHandUpdatedEvent`) **y** `isBotVsBotMatch`; el resto de
+  los
   eventos públicos sin cambios. Consultar el registro solo en esos eventos (no en el camino público)
   (depende de T002).
 
 ### Implementación — Sin revancha
 
-- [X] T027 [P] [US1] Crear `src/main/java/com/villo/truco/application/services/BotVsBotRematchVeto.java`
+- [X] T027 [P] [US1] Crear
+  `src/main/java/com/villo/truco/application/services/BotVsBotRematchVeto.java`
   (`implements RematchVeto`, `vetoesRematch = registry.isBotVsBotMatch(matchId)`) (depende de T002).
 
 ### Wiring de configuración (US1)
 
-- [X] T028 [US1] En `src/main/java/com/villo/truco/infrastructure/config/SpectatorConfiguration.java`,
-  pasar `BotVsBotMatchRegistry` a `SpectatingEligibilityPolicy` y a `SpectatorMatchStateDTOAssembler`
+- [X] T028 [US1] En
+  `src/main/java/com/villo/truco/infrastructure/config/SpectatorConfiguration.java`,
+  pasar `BotVsBotMatchRegistry` a `SpectatingEligibilityPolicy` y a
+  `SpectatorMatchStateDTOAssembler`
   (depende de T023, T025).
-- [X] T029 [US1] En `src/main/java/com/villo/truco/infrastructure/config/EventNotifierConfiguration.java`,
+- [X] T029 [US1] En
+  `src/main/java/com/villo/truco/infrastructure/config/EventNotifierConfiguration.java`,
   pasar `BotVsBotMatchRegistry` al `SpectatorNotificationEventTranslator` (depende de T026).
 - [X] T030 [US1] Registrar el bean `BotVsBotRematchVeto` (se suma a `List<RematchVeto>`) en
   `src/main/java/com/villo/truco/infrastructure/config/RematchConfiguration.java` (no en
-  `MatchUseCaseConfiguration`: ahí genera un ciclo de beans con el `MatchEventNotifier`) (depende de T027).
+  `MatchUseCaseConfiguration`: ahí genera un ciclo de beans con el `MatchEventNotifier`) (depende de
+  T027).
 
 **Checkpoint**: US1 funcional — crear, espectar owner-only y ver ambas manos (snapshot + WS), sin
 revancha. MVP entregable.
@@ -187,7 +199,8 @@ revancha. MVP entregable.
 
 ## Phase 4: User Story 2 - Ocupación por autoría y presencia (Priority: P1)
 
-**Goal**: crear una partida bot-vs-bot deja al creador **busy total** (no puede crear otra ni iniciar
+**Goal**: crear una partida bot-vs-bot deja al creador **busy total** (no puede crear otra ni
+iniciar
 otra actividad), aunque no la espectee, y la presencia lo refleja con `ownedBotMatch`.
 
 **Independent Test**: con una bot-match propia activa, `GET /api/me/presence` devuelve `busy:true` y
@@ -221,19 +234,23 @@ espectando.
 
 ### Implementación — Presencia
 
-- [X] T036 [P] [US2] Crear `src/main/java/com/villo/truco/application/dto/ActiveOwnedBotMatchRefDTO.java`
+- [X] T036 [P] [US2] Crear
+  `src/main/java/com/villo/truco/application/dto/ActiveOwnedBotMatchRefDTO.java`
   (`matchId`, `status`).
 - [X] T037 [US2] Modificar `src/main/java/com/villo/truco/application/dto/UserPresenceDTO.java`:
   agregar `ownedBotMatch` y sumarlo al cálculo de `busy` en `of(...)` (depende de T036).
 - [X] T038 [US2] Modificar
   `src/main/java/com/villo/truco/application/usecases/queries/UserPresenceResolver.java`: inyectar
-  `BotVsBotMatchRegistry`; resolver `ownedBotMatch` vía `findActiveOwnedMatchId(player)` + estado del
+  `BotVsBotMatchRegistry`; resolver `ownedBotMatch` vía `findActiveOwnedMatchId(player)` + estado
+  del
   match (`MatchQueryRepository`) (depende de T002, T037).
 - [X] T039 [US2] Modificar
-  `src/main/java/com/villo/truco/infrastructure/http/dto/response/UserPresenceResponse.java`: agregar
+  `src/main/java/com/villo/truco/infrastructure/http/dto/response/UserPresenceResponse.java`:
+  agregar
   el record anidado `OwnedBotMatchRef { matchId, status }`, el campo `ownedBotMatch` y su mapeo en
   `from(...)` (depende de T037).
-- [X] T040 [US2] En `src/main/java/com/villo/truco/infrastructure/config/PresenceUseCaseConfiguration.java`,
+- [X] T040 [US2] En
+  `src/main/java/com/villo/truco/infrastructure/config/PresenceUseCaseConfiguration.java`,
   pasar `BotVsBotMatchRegistry` al `UserPresenceResolver` (depende de T038).
 - [X] T041 [US2] Test de integración
   `src/test/java/com/villo/truco/integration/BotVsBotOccupancyIT.java`: tras crear una bot-match,
@@ -256,7 +273,8 @@ presencia `busy:false`, `ownedBotMatch:null`, y se puede crear una nueva partida
 
 - [X] T042 [US3] Test de integración
   `src/test/java/com/villo/truco/integration/BotVsBotReleaseIT.java`: dejar que una bot-match llegue
-  a estado terminal y verificar que `GET /api/me/presence` pasa a `busy:false`/`ownedBotMatch:null` y
+  a estado terminal y verificar que `GET /api/me/presence` pasa a `busy:false`/`ownedBotMatch:null`
+  y
   que el creador puede crear una nueva bot-match (depende de T034, T038, Phase 2).
 
 > La liberación es emergente del filtro de estado en `findActiveOwnedMatchId` (T005) y no requiere
@@ -272,9 +290,11 @@ presencia `busy:false`, `ownedBotMatch:null`, y se puede crear una nueva partida
   (`handPlayerOne`/`handPlayerTwo`) en `GET /spectate` solo bot-vs-bot; `ownedBotMatch` en
   `GET /api/me/presence`; sección spectate WS (HAND_DEALT/PLAYER_HAND_UPDATED de ambos asientos en
   bot-vs-bot y cierre de fuga de HAND_DEALT para partidas con humanos); espectado owner-only.
-- [X] T044 [P] Revisar `README.md` y actualizar si lista recursos REST / capacidades / enums (agregar
+- [X] T044 [P] Revisar `README.md` y actualizar si lista recursos REST / capacidades / enums (
+  agregar
   el recurso bot-vs-bot y la ocupación por autoría si corresponde).
-- [X] T045 Verificar `CleanArchitectureTest` (ArchUnit) en verde tras los cambios de capas y puertos.
+- [X] T045 Verificar `CleanArchitectureTest` (ArchUnit) en verde tras los cambios de capas y
+  puertos.
 - [X] T046 Ejecutar `./gradlew build` (cobertura JaCoCo ≥ 70%) y `./gradlew test`; corregir lo que
   falle.
 - [X] T047 Ejecutar la validación de `quickstart.md` de punta a punta (crear, ocupar, espectar ambas
@@ -287,7 +307,8 @@ presencia `busy:false`, `ownedBotMatch:null`, y se puede crear una nueva partida
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: sin dependencias.
-- **Foundational (Phase 2)**: tras Setup. **BLOQUEA** todas las stories (el registro es transversal).
+- **Foundational (Phase 2)**: tras Setup. **BLOQUEA** todas las stories (el registro es
+  transversal).
 - **US1 (Phase 3)**, **US2 (Phase 4)**, **US3 (Phase 5)**: tras Phase 2.
 - **Polish (Phase 6)**: tras las stories deseadas.
 

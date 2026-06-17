@@ -11,6 +11,7 @@ import com.villo.truco.domain.model.match.events.PlayerHandUpdatedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
 import com.villo.truco.domain.model.spectator.Spectatorship;
+import com.villo.truco.domain.shared.DomainEventBase;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
@@ -56,7 +57,7 @@ class SpectatorNotificationEventTranslatorTest {
     this.repository.save(spectatorship);
   }
 
-  private MatchEventEnvelope envelope(final com.villo.truco.domain.shared.DomainEventBase inner) {
+  private MatchEventEnvelope envelope(final DomainEventBase inner) {
 
     return new MatchEventEnvelope(this.matchId, this.playerOne, this.playerTwo, inner);
   }
@@ -90,8 +91,8 @@ class SpectatorNotificationEventTranslatorTest {
     this.withActiveSpectator();
     this.botVsBotMatchRegistry.register(this.matchId, PlayerId.generate());
 
-    this.translator.handle(this.envelope(
-        new HandDealtEvent(Map.of(PlayerSeat.PLAYER_ONE, List.of(), PlayerSeat.PLAYER_TWO, List.of()))));
+    this.translator.handle(this.envelope(new HandDealtEvent(
+        Map.of(PlayerSeat.PLAYER_ONE, List.of(), PlayerSeat.PLAYER_TWO, List.of()))));
 
     assertThat(this.publishedEvents).hasSize(1);
     final var notification = (SpectatorMatchEventNotification) this.publishedEvents.getFirst();
@@ -105,22 +106,25 @@ class SpectatorNotificationEventTranslatorTest {
     this.withActiveSpectator();
     this.botVsBotMatchRegistry.register(this.matchId, PlayerId.generate());
 
-    this.translator.handle(this.envelope(new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE, List.of())));
-    this.translator.handle(this.envelope(new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_TWO, List.of())));
+    this.translator.handle(
+        this.envelope(new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE, List.of())));
+    this.translator.handle(
+        this.envelope(new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_TWO, List.of())));
 
     assertThat(this.publishedEvents).hasSize(2);
-    assertThat(this.publishedEvents).allSatisfy(event -> assertThat(
-        ((SpectatorMatchEventNotification) event).eventType()).isEqualTo("PLAYER_HAND_UPDATED"));
+    assertThat(this.publishedEvents).allSatisfy(
+        event -> assertThat(((SpectatorMatchEventNotification) event).eventType()).isEqualTo(
+            "PLAYER_HAND_UPDATED"));
   }
 
   @Test
-  @DisplayName("en partidas con humanos NO reenvía HAND_DEALT (cierre de fuga)")
+  @DisplayName("en partidas con humanos NO reenvía HAND_DEALT")
   void doesNotForwardHandDealtForHumanMatch() {
 
     this.withActiveSpectator();
 
-    this.translator.handle(this.envelope(
-        new HandDealtEvent(Map.of(PlayerSeat.PLAYER_ONE, List.of(), PlayerSeat.PLAYER_TWO, List.of()))));
+    this.translator.handle(this.envelope(new HandDealtEvent(
+        Map.of(PlayerSeat.PLAYER_ONE, List.of(), PlayerSeat.PLAYER_TWO, List.of()))));
 
     assertThat(this.publishedEvents).isEmpty();
   }
@@ -131,7 +135,8 @@ class SpectatorNotificationEventTranslatorTest {
 
     this.withActiveSpectator();
 
-    this.translator.handle(this.envelope(new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE, List.of())));
+    this.translator.handle(
+        this.envelope(new PlayerHandUpdatedEvent(PlayerSeat.PLAYER_ONE, List.of())));
 
     assertThat(this.publishedEvents).isEmpty();
   }

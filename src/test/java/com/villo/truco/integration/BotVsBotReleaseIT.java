@@ -45,7 +45,8 @@ class BotVsBotReleaseIT {
   @BeforeEach
   void setUp() {
 
-    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(1);
+    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(
+        1);
   }
 
   @Test
@@ -66,11 +67,12 @@ class BotVsBotReleaseIT {
     assertThat(busy.get("ownedBotMatch")).isInstanceOf(Map.class);
 
     // La liberación es emergente del filtro de estado: al terminar la partida, ownedBotMatch se vacía.
-    await().atMost(Duration.ofSeconds(90)).pollInterval(Duration.ofMillis(500)).untilAsserted(() -> {
-      final var presence = this.readJson(this.get("/api/me/presence", token).body());
-      assertThat(presence.get("ownedBotMatch")).isNull();
-      assertThat(presence.get("busy")).isEqualTo(Boolean.FALSE);
-    });
+    await().atMost(Duration.ofSeconds(90)).pollInterval(Duration.ofMillis(500))
+        .untilAsserted(() -> {
+          final var presence = this.readJson(this.get("/api/me/presence", token).body());
+          assertThat(presence.get("ownedBotMatch")).isNull();
+          assertThat(presence.get("busy")).isEqualTo(Boolean.FALSE);
+        });
 
     final var newMatch = this.post("/api/matches/bot-vs-bot",
         "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":1}",

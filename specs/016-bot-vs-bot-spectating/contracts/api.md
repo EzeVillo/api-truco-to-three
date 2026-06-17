@@ -25,19 +25,22 @@ Request body:
 Response `200`:
 
 ```json
-{ "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7" }
+{
+  "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
+}
 ```
 
 Errores:
 
-| Código | Causa                                                                              |
-|--------|------------------------------------------------------------------------------------|
-| `400`  | Body inválido/faltante; `gamesToPlay` fuera de `{1,3,5}`; bots iguales.             |
-| `401`  | Token ausente o inválido.                                                           |
-| `404`  | Alguno de los bots no existe en el catálogo.                                        |
-| `409`/`422` | El usuario ya está ocupado (incluye ser dueño de otra bot-match en curso).     |
+| Código      | Causa                                                                      |
+|-------------|----------------------------------------------------------------------------|
+| `400`       | Body inválido/faltante; `gamesToPlay` fuera de `{1,3,5}`; bots iguales.    |
+| `401`       | Token ausente o inválido.                                                  |
+| `404`       | Alguno de los bots no existe en el catálogo.                               |
+| `409`/`422` | El usuario ya está ocupado (incluye ser dueño de otra bot-match en curso). |
 
 Notas:
+
 - La partida arranca `IN_PROGRESS` y los bots juegan solos hasta una conclusión.
 - La partida es `PRIVATE`: **no** aparece en el lobby público.
 - Crear esta partida deja al solicitante **ocupado por autoría** hasta que termine (busy total).
@@ -70,6 +73,7 @@ respecto del contrato actual).
 ```
 
 Reglas:
+
 - **Solo el creador** del match puede espectarlo. Un no-creador recibe `422`.
 - `handPlayerOne`/`handPlayerTwo` = cartas **en mano restantes** de cada bot (lo que aún no jugó).
 - Es el estado **inicial** (para conectarse a media partida). Las actualizaciones de mano llegan por
@@ -98,7 +102,8 @@ partida bot-vs-bot en curso; en ese caso `busy = true`.
 }
 ```
 
-- `ownedBotMatch` marca ocupación por **autoría**, independiente de `spectating` (mirar es opcional).
+- `ownedBotMatch` marca ocupación por **autoría**, independiente de `spectating` (mirar es
+  opcional).
 - Si el usuario además está espectando esa misma partida, `spectating` y `ownedBotMatch` pueden
   apuntar al mismo `matchId` (el FE puede deduplicar).
 
@@ -115,13 +120,15 @@ Cola `/user/queue/match-spectate` (sin cambios de destino).
 
 **Manos por WebSocket (solo bot-vs-bot):** el espectador (creador) recibe, como un jugador normal,
 los eventos de mano de **ambos** asientos:
+
 - `HAND_DEALT` → `{ player_one: [cartas], player_two: [cartas] }` en cada reparto.
 - `PLAYER_HAND_UPDATED` → `{ seat, cards }` cuando una mano cambia (tras jugar una carta), para
   ambos asientos.
 
 **Cambio de comportamiento (cierre de fuga):** en partidas **con humanos**, los espectadores
 **dejan de recibir** `HAND_DEALT` (hoy se reenviaba con ambas manos, una fuga). Siguen sin recibir
-`PLAYER_HAND_UPDATED` ni `AVAILABLE_ACTIONS_UPDATED`. Es decir, fuera de bot-vs-bot ningún espectador
+`PLAYER_HAND_UPDATED` ni `AVAILABLE_ACTIONS_UPDATED`. Es decir, fuera de bot-vs-bot ningún
+espectador
 ve cartas en mano. `AVAILABLE_ACTIONS_UPDATED` tampoco se reenvía en bot-vs-bot.
 
 ## 5. Enums / reglas afectadas

@@ -22,7 +22,6 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import com.villo.truco.testutil.NoOpQuickMatchQueuePort;
 import com.villo.truco.testutil.NoOpSpectatorshipRepository;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -59,7 +58,8 @@ class CreateBotVsBotMatchCommandHandlerTest {
     final var rematchRepo = mock(com.villo.truco.domain.ports.RematchSessionRepository.class);
     when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
+        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE,
+        new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
   }
 
   private static MatchRepository capturingRepository(final AtomicReference<Match> sink) {

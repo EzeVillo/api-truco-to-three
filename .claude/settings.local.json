@@ -42,7 +42,8 @@
       "Bash(Remove-Item:*)",
       "Bash(Get-ChildItem:*)",
       "Bash(Select-Object:*)",
-      "Bash(Sort-Object:*)"
+      "Bash(Sort-Object:*)",
+      "Bash(bash ~/.claude/statusline.sh)"
     ]
   }
 }

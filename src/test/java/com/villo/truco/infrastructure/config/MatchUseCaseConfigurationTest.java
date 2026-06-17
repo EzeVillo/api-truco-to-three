@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CupQueryRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
@@ -27,7 +28,7 @@ class MatchUseCaseConfigurationTest {
         mock(MatchQueryRepository.class), mock(LeagueQueryRepository.class),
         mock(CupQueryRepository.class), mock(BotRegistry.class),
         mock(RematchSessionRepository.class), mock(QuickMatchQueuePort.class),
-        mock(SpectatorshipRepository.class), mock(com.villo.truco.domain.ports.BotVsBotMatchRegistry.class));
+        mock(SpectatorshipRepository.class), mock(BotVsBotMatchRegistry.class));
 
     final var configuration = new MatchUseCaseConfiguration(mock(MatchQueryRepository.class),
         mock(MatchRepository.class), mock(MatchEventNotifier.class),

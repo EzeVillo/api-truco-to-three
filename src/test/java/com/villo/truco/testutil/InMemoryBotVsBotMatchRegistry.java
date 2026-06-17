@@ -7,10 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Registro de autoria bot-vs-bot en memoria para tests. Sin filtro de estado: "activo" es
- * cualquier match registrado, salvo que se marque como finalizado con {@link #finish(MatchId)}.
- */
 public final class InMemoryBotVsBotMatchRegistry implements BotVsBotMatchRegistry {
 
   private final Map<MatchId, PlayerId> owners = new LinkedHashMap<>();
@@ -21,11 +17,6 @@ public final class InMemoryBotVsBotMatchRegistry implements BotVsBotMatchRegistr
 
     this.owners.put(matchId, ownerId);
     this.active.put(matchId, true);
-  }
-
-  public void finish(final MatchId matchId) {
-
-    this.active.put(matchId, false);
   }
 
   @Override
@@ -43,10 +34,8 @@ public final class InMemoryBotVsBotMatchRegistry implements BotVsBotMatchRegistr
   @Override
   public Optional<MatchId> findActiveOwnedMatchId(final PlayerId ownerId) {
 
-    return this.owners.entrySet().stream()
-        .filter(entry -> entry.getValue().equals(ownerId))
-        .filter(entry -> this.active.getOrDefault(entry.getKey(), false))
-        .map(Map.Entry::getKey)
+    return this.owners.entrySet().stream().filter(entry -> entry.getValue().equals(ownerId))
+        .filter(entry -> this.active.getOrDefault(entry.getKey(), false)).map(Map.Entry::getKey)
         .findFirst();
   }
 

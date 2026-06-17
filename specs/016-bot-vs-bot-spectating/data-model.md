@@ -17,10 +17,10 @@ CREATE TABLE bot_vs_bot_matches
 CREATE INDEX idx_bot_vs_bot_matches_owner_id ON bot_vs_bot_matches (owner_id);
 ```
 
-| Columna    | Tipo | Notas                                                        |
-|------------|------|--------------------------------------------------------------|
+| Columna    | Tipo | Notas                                                         |
+|------------|------|---------------------------------------------------------------|
 | `match_id` | UUID | PK. Identifica la partida bot-vs-bot.                         |
-| `owner_id` | UUID | Usuario creador/dueño. Indexado para resolver "match propio".|
+| `owner_id` | UUID | Usuario creador/dueño. Indexado para resolver "match propio". |
 
 - No se borra al terminar el match: "activo" se deriva del estado del match (ver consultas).
 - Sin FK dura a `matches` (igual que `campaign_matches`), para no acoplar el ciclo de borrado.
@@ -31,10 +31,15 @@ CREATE INDEX idx_bot_vs_bot_matches_owner_id ON bot_vs_bot_matches (owner_id);
 
 ```java
 public interface BotVsBotMatchRegistry {
+
   void register(MatchId matchId, PlayerId ownerId);
+
   boolean isBotVsBotMatch(MatchId matchId);
+
   Optional<PlayerId> findOwnerByMatchId(MatchId matchId);
+
   Optional<MatchId> findActiveOwnedMatchId(PlayerId ownerId);
+
 }
 ```
 
@@ -47,7 +52,8 @@ public interface BotVsBotMatchRegistry {
 
 - **Match** (`domain.model.match.Match`): se crea con `createReady(botOne, botTwo, rules)`
   (`Visibility.PRIVATE`, `MatchStatus.READY` → `IN_PROGRESS` tras `startMatch`). **Sin cambios** al
-  agregado. Métodos reutilizados: `getCardsOf(PlayerId)` (mano restante por asiento), `getPlayerOne`,
+  agregado. Métodos reutilizados: `getCardsOf(PlayerId)` (mano restante por asiento),
+  `getPlayerOne`,
   `getPlayerTwo`, `getStatus`.
 - **BotProfile** / **BotRegistry**: catálogo de bots; valida existencia de cada bot.
 - **Spectatorship**: reutilizado para el espectado en vivo (no para la ocupación).
@@ -58,23 +64,32 @@ public interface BotVsBotMatchRegistry {
 // application.commands
 public record CreateBotVsBotMatchCommand(PlayerId ownerId, GamesToPlay gamesToPlay,
                                          PlayerId botOneId, PlayerId botTwoId) {
+
   public CreateBotVsBotMatchCommand(String ownerId, int gamesToPlay, String botOneId,
       String botTwoId) {
+
     this(PlayerId.of(ownerId), GamesToPlay.of(gamesToPlay), PlayerId.of(botOneId),
         PlayerId.of(botTwoId));
   }
+
 }
 
 // application.dto
-public record CreateBotVsBotMatchDTO(String matchId) {}
+public record CreateBotVsBotMatchDTO(String matchId) {
 
-public record ActiveOwnedBotMatchRefDTO(String matchId, String status) {}
+}
+
+public record ActiveOwnedBotMatchRefDTO(String matchId, String status) {
+
+}
 ```
 
 ```java
 // application.ports.in
-public interface CreateBotVsBotMatchUseCase
-    extends UseCase<CreateBotVsBotMatchCommand, CreateBotVsBotMatchDTO> {}
+public interface CreateBotVsBotMatchUseCase extends
+    UseCase<CreateBotVsBotMatchCommand, CreateBotVsBotMatchDTO> {
+
+}
 ```
 
 ## 5. DTOs modificados (deltas)
@@ -91,6 +106,7 @@ public record SpectatorRoundStateDTO(String status, String currentTurn, String r
                                      Long turnDurationMillis, String actionDeadlineSeat,
                                      List<CardDTO> handPlayerOne,   // NUEVO — solo bot-vs-bot
                                      List<CardDTO> handPlayerTwo) { // NUEVO — solo bot-vs-bot
+
 }
 ```
 

@@ -49,7 +49,8 @@ class BotVsBotSpectatingIT {
   @BeforeEach
   void setUp() {
 
-    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(1);
+    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(
+        1);
   }
 
   private String createMatch(final PlayerId owner) throws Exception {
@@ -70,8 +71,8 @@ class BotVsBotSpectatingIT {
     final var matchId = this.createMatch(owner);
     assertThat(matchId).isNotBlank();
 
-    final var state = this.spectateMatch.handle(new SpectateMatchCommand(matchId,
-        owner.value().toString()));
+    final var state = this.spectateMatch.handle(
+        new SpectateMatchCommand(matchId, owner.value().toString()));
     assertThat(state.currentRound()).isNotNull();
     assertThat(state.currentRound().handPlayerOne()).isNotNull();
     assertThat(state.currentRound().handPlayerTwo()).isNotNull();

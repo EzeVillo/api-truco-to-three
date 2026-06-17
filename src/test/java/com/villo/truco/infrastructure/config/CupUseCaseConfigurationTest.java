@@ -5,8 +5,10 @@ import static org.mockito.Mockito.mock;
 
 import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.PublicActorResolver;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.CupQueryRepository;
+import com.villo.truco.domain.ports.CupRepository;
 import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
@@ -26,12 +28,12 @@ class CupUseCaseConfigurationTest {
         mock(MatchQueryRepository.class), mock(LeagueQueryRepository.class),
         mock(CupQueryRepository.class), mock(BotRegistry.class),
         mock(RematchSessionRepository.class), mock(QuickMatchQueuePort.class),
-        mock(SpectatorshipRepository.class), mock(com.villo.truco.domain.ports.BotVsBotMatchRegistry.class));
+        mock(SpectatorshipRepository.class), mock(BotVsBotMatchRegistry.class));
 
     final var configuration = new CupUseCaseConfiguration(mock(CupQueryRepository.class),
-        mock(com.villo.truco.domain.ports.CupRepository.class), mock(MatchRepository.class),
-        mock(CupEventNotifier.class), availabilityConfiguration.playerAvailabilityChecker(),
-        mock(PublicActorResolver.class), new UseCasePipeline(List.of()));
+        mock(CupRepository.class), mock(MatchRepository.class), mock(CupEventNotifier.class),
+        availabilityConfiguration.playerAvailabilityChecker(), mock(PublicActorResolver.class),
+        new UseCasePipeline(List.of()));
 
     assertThat(configuration.cupResolver()).isNotNull();
     assertThat(configuration.getCupStateQueryHandler(new CupTimeoutProperties())).isNotNull();

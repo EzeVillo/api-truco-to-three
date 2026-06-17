@@ -1,6 +1,7 @@
 # Implementation Plan: Partidas Bot vs Bot Espectables
 
-**Branch**: `claude/bot-matches-spectating-4vr917` | **Date**: 2026-06-16 | **Spec**: [spec.md](./spec.md)
+**Branch**: `claude/bot-matches-spectating-4vr917` | **Date**: 2026-06-16 | **Spec
+**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/016-bot-vs-bot-spectating/spec.md`
 
@@ -21,8 +22,10 @@ autoría en `PlayerAvailabilityChecker` y `UserPresenceResolver`, (b) elegibilid
 botTwo, rules)` (el agregado ya soporta dos bots) sin tocar el agregado `Match`.
 
 Las manos de ambos bots se entregan al espectador **por WebSocket** (eventos `HAND_DEALT` y
-`PLAYER_HAND_UPDATED` de ambos asientos), como a un jugador normal, más el snapshot inicial. De paso,
-se **cierra una fuga preexistente**: hoy `HAND_DEALT` (con ambas manos) se reenvía a los espectadores
+`PLAYER_HAND_UPDATED` de ambos asientos), como a un jugador normal, más el snapshot inicial. De
+paso,
+se **cierra una fuga preexistente**: hoy `HAND_DEALT` (con ambas manos) se reenvía a los
+espectadores
 de cualquier match; tras este cambio solo se reenvía en bot-vs-bot.
 
 **Fuera de alcance:** frontend (solo backend), espectadores adicionales (owner-only) y cancelación
@@ -54,7 +57,8 @@ presencia/disponibilidad debe ser O(1) por consulta (query con join, no escaneo 
 
 - El dominio permanece puro: el nuevo puerto `BotVsBotMatchRegistry` vive en `domain.ports`; la
   implementación JPA en `infrastructure`.
-- No se modifica el agregado `Match` (ni su entidad/mapper/migración): la autoría se persiste aparte.
+- No se modifica el agregado `Match` (ni su entidad/mapper/migración): la autoría se persiste
+  aparte.
 - No se importa otro agregado: el registro es un puerto, y `SpectatingEligibilityPolicy` ya recibe
   `Match`.
 - La ocupación por autoría debe sobrevivir a "no estar mirando" (anti-infinito).
@@ -66,15 +70,15 @@ particionado ni retención especial.
 
 *GATE: pasa antes de Phase 0; re-evaluado tras Phase 1.*
 
-| Principio                                              | Estado | Justificación                                                                                                                                                              |
-|--------------------------------------------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Principio                                              | Estado | Justificación                                                                                                                                                                                     |
+|--------------------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | I. Hexagonal + DDD (Domain→Application→Infrastructure) | ✅ PASS | Puerto `BotVsBotMatchRegistry` y excepciones en domain; `CreateBotVsBotMatchCommandHandler`, veto, resolver de presencia y assembler en application; adapter/entidad/migración en infrastructure. |
-| Controllers dependen de puertos de entrada             | ✅ PASS | `BotController` depende de `CreateBotVsBotMatchUseCase` (puerto in); no de la implementación.                                                                              |
-| Agregados no se importan entre sí                      | ✅ PASS | No se importa otro agregado. La autoría es un puerto; la política de espectado ya opera sobre `Match`.                                                                     |
-| II. Dominio puro                                       | ✅ PASS | `BotVsBotMatchRegistry` es interfaz POJO; nuevas excepciones POJO. Sin Spring/JPA en domain.                                                                              |
-| III. Test-first ≥70%                                   | ✅ PASS | Tests de handler, eligibility owner-only, veto, availability (`OWNS_BOT_MATCH`), presence resolver, assembler (manos) y adapter (H2).                                      |
-| IV. Español en artefactos                              | ✅ PASS | spec/plan/research/data-model/quickstart/contracts en español.                                                                                                            |
-| V. Simplicidad / YAGNI                                 | ✅ PASS | Reusa spectate/presencia/disponibilidad; registro espeja a campaña; sin tocar `Match` ni el pipeline de redacción por asiento.                                            |
+| Controllers dependen de puertos de entrada             | ✅ PASS | `BotController` depende de `CreateBotVsBotMatchUseCase` (puerto in); no de la implementación.                                                                                                     |
+| Agregados no se importan entre sí                      | ✅ PASS | No se importa otro agregado. La autoría es un puerto; la política de espectado ya opera sobre `Match`.                                                                                            |
+| II. Dominio puro                                       | ✅ PASS | `BotVsBotMatchRegistry` es interfaz POJO; nuevas excepciones POJO. Sin Spring/JPA en domain.                                                                                                      |
+| III. Test-first ≥70%                                   | ✅ PASS | Tests de handler, eligibility owner-only, veto, availability (`OWNS_BOT_MATCH`), presence resolver, assembler (manos) y adapter (H2).                                                             |
+| IV. Español en artefactos                              | ✅ PASS | spec/plan/research/data-model/quickstart/contracts en español.                                                                                                                                    |
+| V. Simplicidad / YAGNI                                 | ✅ PASS | Reusa spectate/presencia/disponibilidad; registro espeja a campaña; sin tocar `Match` ni el pipeline de redacción por asiento.                                                                    |
 
 **Resultado**: PASS. Sin violaciones — *Complexity Tracking* no aplica.
 

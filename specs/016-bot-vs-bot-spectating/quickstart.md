@@ -1,7 +1,8 @@
 # Quickstart / Verificación: Partidas Bot vs Bot Espectables
 
 Cómo verificar la feature de punta a punta (backend). Requiere app corriendo
-(`./gradlew bootRun`, con `docker compose up -d` para PostgreSQL) y un JWT de un usuario autenticado.
+(`./gradlew bootRun`, con `docker compose up -d` para PostgreSQL) y un JWT de un usuario
+autenticado.
 
 ## 1. Listar bots y elegir dos
 
@@ -20,6 +21,7 @@ curl -s http://localhost:8080/api/matches/bot-vs-bot \
 ```
 
 Verificar:
+
 - Mismo bot en ambos asientos → `400`.
 - Bot inexistente → `404`.
 
@@ -31,6 +33,7 @@ curl -s http://localhost:8080/api/me/presence -H "Authorization: Bearer $JWT" | 
 ```
 
 Verificar ocupación total (sin haber abierto spectate):
+
 - Crear otra bot-match → rechazado por ocupado.
 - `POST /api/matches/bot`, `POST /api/matches/quick`, etc. → rechazados por ocupado.
 
@@ -43,13 +46,16 @@ curl -s "http://localhost:8080/api/matches/<MID>/spectate" -H "Authorization: Be
 
 Flujo WebSocket-first (real): suscribirse a `/user/queue/match-spectate` con header `matchId: <MID>`
 → llega `SPECTATE_STATE` con ambas manos (estado inicial). En vivo llegan, como a un jugador normal,
-`HAND_DEALT` (`{ player_one, player_two }`) en cada reparto y `PLAYER_HAND_UPDATED` de ambos asientos
+`HAND_DEALT` (`{ player_one, player_two }`) en cada reparto y `PLAYER_HAND_UPDATED` de ambos
+asientos
 al jugarse cada carta.
 
 Verificar owner-only:
+
 - Con el JWT de **otro** usuario, intentar espectar `<MID>` → `422` (REST) / `SPECTATE_ERROR` (WS).
 
 Verificar no-regresión (cierre de fuga):
+
 - Espectar una partida **con humanos** (liga/copa/amistad) NO debe entregar `HAND_DEALT` ni manos al
   espectador.
 
@@ -74,6 +80,7 @@ curl -s http://localhost:8080/api/me/presence -H "Authorization: Bearer $JWT" | 
 ```
 
 Tests esperados (títulos en español):
+
 - Crear bot-vs-bot: bots iguales / inexistente / usuario ocupado.
 - `PlayerAvailabilityChecker`: `OWNS_BOT_MATCH` bloquea altas.
 - `SpectatingEligibilityPolicy`: creador permitido / no-creador rechazado.

@@ -20,8 +20,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("SpectatingEligibilityPolicy")
 class SpectatingEligibilityPolicyTest {
 
-  private static final InMemoryBotVsBotMatchRegistry NO_BOT_VS_BOT =
-      new InMemoryBotVsBotMatchRegistry();
+  private static final InMemoryBotVsBotMatchRegistry NO_BOT_VS_BOT = new InMemoryBotVsBotMatchRegistry();
 
   private static Match startedMatch() {
 
@@ -141,8 +140,9 @@ class SpectatingEligibilityPolicyTest {
     final var policy = new SpectatingEligibilityPolicy((matchId, playerId) -> true,
         (m, spectatorId) -> true, registry);
 
-    assertThatThrownBy(() -> policy.ensureCanStartWatching(Spectatorship.create(PlayerId.generate()),
-        match)).isInstanceOf(SpectateBotMatchNotOwnerException.class);
+    assertThatThrownBy(
+        () -> policy.ensureCanStartWatching(Spectatorship.create(PlayerId.generate()),
+            match)).isInstanceOf(SpectateBotMatchNotOwnerException.class);
   }
 
   @Test

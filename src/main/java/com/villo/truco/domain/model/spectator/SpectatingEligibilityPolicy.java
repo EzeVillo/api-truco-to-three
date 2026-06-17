@@ -50,10 +50,10 @@ public final class SpectatingEligibilityPolicy {
         throw new SpectateBotMatchNotOwnerException();
       }
     } else {
-      final var canSpectateByCompetition =
-          this.competitionMembershipResolver.belongsToSameCompetition(match.getId(), spectatorId);
-      final var canSpectateByFriendship =
-          this.friendshipSpectateEligibilityResolver.canSpectateAsFriend(match, spectatorId);
+      final var canSpectateByCompetition = this.competitionMembershipResolver.belongsToSameCompetition(
+          match.getId(), spectatorId);
+      final var canSpectateByFriendship = this.friendshipSpectateEligibilityResolver.canSpectateAsFriend(
+          match, spectatorId);
 
       if (!canSpectateByCompetition && !canSpectateByFriendship) {
         throw new SpectateNotAllowedException();

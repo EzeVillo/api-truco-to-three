@@ -15,6 +15,7 @@ otra → partidas infinitas, justo lo que el pedido quiere evitar ("generar el m
 por más que no lo veas").
 
 **Alternativas consideradas**:
+
 - *Spectatorship como ocupación* (iteración previa): rechazada por lo anterior.
 - *Campo `ownerId`/`createdBy` en el agregado `Match`*: rechazada por YAGNI/pureza — obligaría a
   tocar `Match`, su entidad JPA, el mapper, `reconstruct`, todas las factories y una migración de la
@@ -27,12 +28,20 @@ propia `bot_vs_bot_matches (match_id PK, owner_id, idx owner_id)`, **espejando e
 `CampaignMatchRegistry`** (`campaign_matches`, `JpaCampaignMatchRegistryAdapter`).
 
 **Puerto**:
+
 ```java
 public interface BotVsBotMatchRegistry {
+
   void register(MatchId matchId, PlayerId ownerId);
-  boolean isBotVsBotMatch(MatchId matchId);                 // existsById — veto + manos + eligibility
+
+  boolean isBotVsBotMatch(
+      MatchId matchId);                 // existsById — veto + manos + eligibility
+
   Optional<PlayerId> findOwnerByMatchId(MatchId matchId);   // eligibility owner-only
-  Optional<MatchId> findActiveOwnedMatchId(PlayerId ownerId); // ocupación/presencia (join con estado)
+
+  Optional<MatchId> findActiveOwnedMatchId(
+      PlayerId ownerId); // ocupación/presencia (join con estado)
+
 }
 ```
 
@@ -48,7 +57,8 @@ terminar (evita carreras de orden con el veto de revancha que también corre en 
 
 ## D3 — Ocupación: `OWNS_BOT_MATCH` en `PlayerAvailabilityChecker` (busy total)
 
-**Decisión**: agregar `BlockingReason.OWNS_BOT_MATCH` a `PlayerAvailabilityChecker.findBlockingReason`
+**Decisión**: agregar `BlockingReason.OWNS_BOT_MATCH` a
+`PlayerAvailabilityChecker.findBlockingReason`
 (vía `botVsBotMatchRegistry.findActiveOwnedMatchId(player).isPresent()`), lanzando una nueva
 `PlayerOwnsActiveBotMatchException` en `ensureAvailable`. Es **busy total**: bloquea crear otra
 bot-match, partida normal, Quick Match, liga y copa (decisión del usuario).
@@ -60,6 +70,7 @@ ahí da consistencia automática. La guarda `if botRegistry.isBot(player) return
 ## D4 — Espectado owner-only en `SpectatingEligibilityPolicy`
 
 **Decisión**: en `ensureCanStartWatching`, si `botVsBotMatchRegistry.isBotVsBotMatch(matchId)`:
+
 - se conservan los chequeos de `IN_PROGRESS` y de "no espectar dos matches a la vez";
 - se **omite** el requisito de amistad/competición;
 - se exige que `findOwnerByMatchId(matchId) == spectatorId`; si no, se rechaza
@@ -113,13 +124,16 @@ if (inner es HandDealtEvent o SeatTargetedEvent) {
 ```
 
 Efecto:
+
 - **Partidas con humanos**: el espectador deja de recibir `HAND_DEALT` (se cierra la fuga) y sigue
   sin recibir `PLAYER_HAND_UPDATED`/`AVAILABLE_ACTIONS_UPDATED`. Sin manos, como debe ser.
-- **bot-vs-bot**: el espectador (creador) recibe `HAND_DEALT` con ambas manos y `PLAYER_HAND_UPDATED`
+- **bot-vs-bot**: el espectador (creador) recibe `HAND_DEALT` con ambas manos y
+  `PLAYER_HAND_UPDATED`
   de ambos asientos, en vivo.
 
 `mapHandDealt` ya emite ambos asientos (`{player_one:[...], player_two:[...]}`) y
-`mapPlayerHandUpdated` emite `{seat, cards}`; no hace falta tocar el `MatchEventMapper`. La redacción
+`mapPlayerHandUpdated` emite `{seat, cards}`; no hace falta tocar el `MatchEventMapper`. La
+redacción
 hacia el jugador (`MatchNotificationEventTranslator.publishHandDealt`) no se toca.
 
 **Alternativa rechazada**: dejar las manos solo en el snapshot + refetch en `ROUND_STARTED`. El
@@ -138,6 +152,7 @@ incluido bot-vs-bot, dejando una sesión huérfana (ningún humano para confirma
 ## D7 — Creación: reusar `Match.createReady` y validar bots
 
 **Decisión**: `CreateBotVsBotMatchCommandHandler`:
+
 1. `playerAvailabilityChecker.ensureAvailable(ownerId)` (FR-004, incluye `OWNS_BOT_MATCH`).
 2. validar que `botOneId != botTwoId` (FR-002) y que ambos están en `BotRegistry` (FR-003).
 3. `Match.createReady(botOne, botTwo, MatchRules.fromGamesToPlay(gamesToPlay, false))`
@@ -148,7 +163,8 @@ incluido bot-vs-bot, dejando una sesión huérfana (ningún humano para confirma
 7. devolver `matchId`.
 
 Todo dentro del `retryTransactionalPipeline` (como `CreateBotMatchCommandHandler`). **No** se
-auto-suscribe al creador como espectador: la ocupación es por autoría; si quiere ver, se suscribe por
+auto-suscribe al creador como espectador: la ocupación es por autoría; si quiere ver, se suscribe
+por
 WS (la eligibility owner-only lo habilita). El motor de bots juega solo
 (`RoundStartedEvent → BotDomainEventTranslator → BotTurnRequired → AsyncBotActionExecutor`).
 
@@ -156,7 +172,8 @@ WS (la eligibility owner-only lo habilita). El motor de bots juega solo
 
 **Decisión**: `UserPresenceResolver` suma una resolución `ownedBotMatch` vía
 `botVsBotMatchRegistry.findActiveOwnedMatchId(player)` + estado del match
-(`MatchQueryRepository`), produciendo `ActiveOwnedBotMatchRefDTO(matchId, status)`. `UserPresenceDTO`
+(`MatchQueryRepository`), produciendo `ActiveOwnedBotMatchRefDTO(matchId, status)`.
+`UserPresenceDTO`
 y `UserPresenceResponse` suman el campo `ownedBotMatch`; `busy` pasa a true si está presente.
 
 **Rationale**: el usuario eligió un **campo nuevo** separado de `spectating`, para desacoplar "soy

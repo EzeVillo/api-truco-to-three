@@ -74,9 +74,9 @@ public final class UserPresenceResolver {
   private ActiveOwnedBotMatchRefDTO resolveOwnedBotMatch(final PlayerId player) {
 
     return this.botVsBotMatchRegistry.findActiveOwnedMatchId(player)
-        .flatMap(this.matchQueryRepository::findById)
-        .map(match -> new ActiveOwnedBotMatchRefDTO(match.getId().value().toString(),
-            match.getStatus().name())).orElse(null);
+        .flatMap(this.matchQueryRepository::findById).map(
+            match -> new ActiveOwnedBotMatchRefDTO(match.getId().value().toString(),
+                match.getStatus().name())).orElse(null);
   }
 
   private ActiveMatchRefDTO resolveMatch(final PlayerId player) {

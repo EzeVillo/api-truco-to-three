@@ -6,7 +6,9 @@
 
 **Status**: Draft
 
-**Input**: User description: "quiero poder crear partida entre bots y poder espectearlas — el usuario pasa a estar ocupado hasta que termine ese match, no puede crearlo si está ocupado tampoco, y se pueden ver las cartas de ambos bots"
+**Input**: User description: "quiero poder crear partida entre bots y poder espectearlas — el
+usuario pasa a estar ocupado hasta que termine ese match, no puede crearlo si está ocupado tampoco,
+y se pueden ver las cartas de ambos bots"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -52,7 +54,8 @@ dura hasta que la partida termina. Mientras tanto, no puede crear otra partida b
 ninguna otra actividad que requiera disponibilidad (partida normal, Quick Match, liga, copa). Esto
 evita que un mismo usuario genere partidas bot-vs-bot de forma infinita.
 
-**Why this priority**: Es una regla explícita del pedido. La ocupación debe derivar de la **autoría**
+**Why this priority**: Es una regla explícita del pedido. La ocupación debe derivar de la **autoría
+**
 (crear/poseer el match), no de mirarlo: si dependiera de estar espectando, el usuario podría crear y
 cerrar la pestaña para generar partidas sin límite. Es tan crítica como la US1.
 

@@ -44,7 +44,8 @@ class BotVsBotOccupancyIT {
   @BeforeEach
   void setUp() {
 
-    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(1);
+    when(this.springDataJoinCodeRegistryRepository.insertIfAbsent(any(), any(), any())).thenReturn(
+        1);
   }
 
   @Test

@@ -78,7 +78,24 @@ class PlayerAvailabilityCheckerTest {
     final var spectatorshipRepo = mock(SpectatorshipRepository.class);
     when(spectatorshipRepo.findBySpectatorId(any())).thenReturn(Optional.empty());
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        quickMatchQueuePort, spectatorshipRepo, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
+        quickMatchQueuePort, spectatorshipRepo, new InMemoryBotVsBotMatchRegistry());
+  }
+
+  private static PlayerAvailabilityChecker checkerWithRegistry(final BotRegistry botRegistry,
+      final InMemoryBotVsBotMatchRegistry botVsBotRegistry) {
+
+    final var matchRepo = mock(MatchQueryRepository.class);
+    when(matchRepo.hasUnfinishedMatch(any())).thenReturn(false);
+    final var leagueRepo = mock(LeagueQueryRepository.class);
+    when(leagueRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(leagueRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var cupRepo = mock(CupQueryRepository.class);
+    when(cupRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
+    when(cupRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
+    final var rematchRepo = mock(RematchSessionRepository.class);
+    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
+    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
+        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE, botVsBotRegistry);
   }
 
   @Test
@@ -293,7 +310,8 @@ class PlayerAvailabilityCheckerTest {
     final var quickMatchQueuePort = mock(QuickMatchQueuePort.class);
     when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(true);
     final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
-        rematchRepo, quickMatchQueuePort, NoOpSpectatorshipRepository.INSTANCE, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
+        rematchRepo, quickMatchQueuePort, NoOpSpectatorshipRepository.INSTANCE,
+        new InMemoryBotVsBotMatchRegistry());
 
     assertThatThrownBy(() -> checker.ensureAvailable(PlayerId.generate())).isInstanceOf(
         PlayerAlreadyInQueueException.class);
@@ -334,27 +352,10 @@ class PlayerAvailabilityCheckerTest {
     when(quickMatchQueuePort.isPlayerQueued(any())).thenReturn(false);
 
     final var checker = new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry,
-        rematchRepo, quickMatchQueuePort, spectatorshipRepo, new com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry());
+        rematchRepo, quickMatchQueuePort, spectatorshipRepo, new InMemoryBotVsBotMatchRegistry());
 
     assertThatThrownBy(() -> checker.ensureAvailable(spectatorId)).isInstanceOf(
         PlayerIsSpectatingException.class);
-  }
-
-  private static PlayerAvailabilityChecker checkerWithRegistry(final BotRegistry botRegistry,
-      final InMemoryBotVsBotMatchRegistry botVsBotRegistry) {
-
-    final var matchRepo = mock(MatchQueryRepository.class);
-    when(matchRepo.hasUnfinishedMatch(any())).thenReturn(false);
-    final var leagueRepo = mock(LeagueQueryRepository.class);
-    when(leagueRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
-    when(leagueRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
-    final var cupRepo = mock(CupQueryRepository.class);
-    when(cupRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
-    when(cupRepo.findWaitingByPlayer(any())).thenReturn(Optional.empty());
-    final var rematchRepo = mock(RematchSessionRepository.class);
-    when(rematchRepo.findOpenByPlayer(any())).thenReturn(Optional.empty());
-    return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
-        NoOpQuickMatchQueuePort.INSTANCE, NoOpSpectatorshipRepository.INSTANCE, botVsBotRegistry);
   }
 
   @Test

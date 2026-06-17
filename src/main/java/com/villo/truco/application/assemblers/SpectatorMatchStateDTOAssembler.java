@@ -30,6 +30,11 @@ public final class SpectatorMatchStateDTOAssembler {
     this.idleTimeoutMillis = idleTimeoutMillis;
   }
 
+  private static List<CardDTO> cardsOf(final Match match, final PlayerId playerId) {
+
+    return match.getCardsOf(playerId).stream().map(CardDTO::from).toList();
+  }
+
   public SpectatorMatchStateDTO toDto(final Match match, final int spectatorCount) {
 
     final var actorNames = this.resolveActorNames(match);
@@ -100,11 +105,6 @@ public final class SpectatorMatchStateDTOAssembler {
         currentTrucoCall, currentEnvidoCall, matchWinner, playedHands, currentHand,
         deadline.actionDeadline(), deadline.turnDurationMillis(), deadline.actionDeadlineSeat(),
         handPlayerOne, handPlayerTwo);
-  }
-
-  private static List<CardDTO> cardsOf(final Match match, final PlayerId playerId) {
-
-    return match.getCardsOf(playerId).stream().map(CardDTO::from).toList();
   }
 
 }

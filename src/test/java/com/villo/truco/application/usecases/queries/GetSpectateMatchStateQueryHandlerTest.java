@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.villo.truco.application.assemblers.SpectatorMatchStateDTOAssembler;
-import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import com.villo.truco.application.queries.GetSpectateMatchStateQuery;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
@@ -18,6 +17,7 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.inmemory.InMemorySpectatorshipRepository;
 import com.villo.truco.support.TestPublicActorResolver;
+import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

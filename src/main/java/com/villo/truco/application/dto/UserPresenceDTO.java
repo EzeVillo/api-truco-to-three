@@ -2,8 +2,7 @@ package com.villo.truco.application.dto;
 
 public record UserPresenceDTO(boolean busy, ActiveMatchRefDTO match, ActiveLeagueRefDTO league,
                               ActiveCupRefDTO cup, ActiveRematchRefDTO rematch,
-                              ActiveQuickMatchRefDTO quickMatch,
-                              ActiveSpectatingRefDTO spectating,
+                              ActiveQuickMatchRefDTO quickMatch, ActiveSpectatingRefDTO spectating,
                               ActiveOwnedBotMatchRefDTO ownedBotMatch) {
 
   public static UserPresenceDTO of(final ActiveMatchRefDTO match, final ActiveLeagueRefDTO league,

@@ -2953,7 +2953,8 @@ Reglas:
 
 `/user/queue/match-spectate`, espectadores activos del match)
 
-- `SPECTATE_STATE` - snapshot inicial enviado al completar la suscripcion. En partidas **bot-vs-bot**
+- `SPECTATE_STATE` - snapshot inicial enviado al completar la suscripcion. En partidas **bot-vs-bot
+  **
   (§9.2b) su `matchState.currentRound` incluye `handPlayerOne` y `handPlayerTwo` (las manos de ambos
   bots); en el resto de las partidas ambos campos son `null`
 - `SPECTATE_ERROR` - error al intentar registrarse como espectador. En bot-vs-bot se devuelve si un
@@ -2968,12 +2969,13 @@ Reglas:
 como a un jugador normal, los eventos de mano de **ambos** asientos:
 
 - `HAND_DEALT` - en cada reparto, con `{ player_one: [...], player_two: [...] }`
-- `PLAYER_HAND_UPDATED` - por asiento (`{ seat, cards }`) cuando una mano cambia al jugarse una carta
+- `PLAYER_HAND_UPDATED` - por asiento (`{ seat, cards }`) cuando una mano cambia al jugarse una
+  carta
 
 No se reenvian al espectador los eventos privados por asiento (regla general, fuera de bot-vs-bot):
 
-- `HAND_DEALT` - en partidas **con humanos** ya **no** se reenvía a espectadores (cierre de una fuga
-  previa: antes llegaba con ambas manos). Solo se reenvía en bot-vs-bot
+- `HAND_DEALT` - en partidas **con humanos** ya **no** se reenvía a espectadores.
+- Solo se reenvía en bot-vs-bot
 - `PLAYER_HAND_UPDATED` - solo se reenvía en bot-vs-bot (nunca en partidas con humanos)
 - `AVAILABLE_ACTIONS_UPDATED` - nunca se reenvía a ningún espectador, tampoco en bot-vs-bot
 
@@ -3288,17 +3290,18 @@ Response `200`:
 
 - La partida se crea directamente en estado `IN_PROGRESS` y es `PRIVATE`: **no** aparece en el lobby
   público. No genera chat ni sesión de revancha.
-- Crear la partida deja al solicitante **busy total**: no puede crear otra bot-match, partida normal,
+- Crear la partida deja al solicitante **busy total**: no puede crear otra bot-match, partida
+  normal,
   Quick Match, liga ni copa hasta que la actual termine.
-- Para espectarla (viendo las cartas de ambos bots) el creador se suscribe por WebSocket (ver §4.15 y
-  §9.5g). La ocupación es por autoría, no por estar mirando.
+- Para espectarla (viendo las cartas de ambos bots) el creador se suscribe por WebSocket (ver §4.15
+  y §9.5g). La ocupación es por autoría, no por estar mirando.
 
 Errores:
 
-| Codigo | Descripcion                                                                                          |
-|--------|------------------------------------------------------------------------------------------------------|
-| `400`  | Body inválido o faltante                                                                              |
-| `404`  | Alguno de los `botId` no existe en el catálogo de bots                                                |
+| Codigo | Descripcion                                                                                                                         |
+|--------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `400`  | Body inválido o faltante                                                                                                            |
+| `404`  | Alguno de los `botId` no existe en el catálogo de bots                                                                              |
 | `422`  | `gamesToPlay` fuera de `{1, 3, 5}`, ambos bots iguales, o el usuario ya está ocupado (incluye ser dueño de otra bot-match en curso) |
 
 ### 9.3 Quick Match (emparejamiento automatico)
