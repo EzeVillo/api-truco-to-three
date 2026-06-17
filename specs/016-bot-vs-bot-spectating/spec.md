@@ -25,14 +25,17 @@ bot-vs-bot y verlo con visibilidad total de cartas, no hay producto. Entrega val
 permite estudiar el comportamiento de los bots, comparar personalidades y disfrutar la partida.
 
 **Independent Test**: Se puede probar de punta a punta creando una partida entre dos bots
-distintos y verificando que (a) la partida arranca y los bots juegan solos hasta una conclusión,
-y (b) el espectador recibe en tiempo real el estado con las cartas de ambos bots visibles.
+distintos y verificando que (a) la partida arranca pero no progresa por sí sola, y avanza una acción
+por cada request del creador hasta una conclusión, y (b) el espectador recibe en tiempo real el
+estado con las cartas de ambos bots visibles.
 
 **Acceptance Scenarios**:
 
 1. **Given** un usuario autenticado y disponible, **When** crea una partida eligiendo dos bots
-   distintos y un formato de serie válido, **Then** la partida se crea, arranca automáticamente y
-   el usuario queda espectándola.
+   distintos y un formato de serie válido, **Then** la partida se crea (con la primera mano
+   repartida)
+   y el usuario queda espectándola; la partida **no avanza sola**, cada jugada la dispara el
+   creador.
 2. **Given** una partida bot-vs-bot en curso que el usuario está espectando, **When** los bots
    juegan sus cartas y cantan envido/truco, **Then** el espectador ve en tiempo real las cartas
    completas de ambas manos, los cantos, el puntaje y el avance de ronda/juego.
@@ -109,11 +112,12 @@ verificando que el creador vuelve a estar disponible y puede crear una nueva par
   usuario ya está ocupado; no se crea ninguna partida.
 - **Mismo bot en ambos asientos**: se rechaza la creación; una partida requiere dos bots distintos.
 - **Bot inexistente o no disponible en el catálogo**: se rechaza la creación.
-- **El creador pierde conexión o cierra la aplicación mientras la partida corre**: la partida
-  continúa jugándose automáticamente hasta su conclusión; el creador permanece ocupado (por autoría)
-  hasta que la partida termina y luego se libera, **sin** necesidad de que haya estado mirándola. Al
-  reconectar, puede recuperar la referencia a su partida vía presencia y volver a verla (si aún está
-  en curso) con las cartas de ambos bots.
+- **El creador pierde conexión o cierra la aplicación mientras la partida corre**: la partida queda
+  pausada en su estado actual (no avanza sin requests del creador) y no se forfeitea por
+  inactividad;
+  el creador permanece ocupado (por autoría). Al reconectar, recupera la referencia a su partida vía
+  presencia, vuelve a verla con las cartas de ambos bots y retoma el avance manual; también puede
+  abandonarla para liberarse.
 - **Final por punto exacto**: si un bot supera los 3 puntos (regla de punto exacto), pierde esa
   partida; la serie avanza o se decide según el formato, y el creador se libera cuando la serie
   termina.
@@ -140,9 +144,15 @@ verificando que el creador vuelve a estar disponible y puede crear una nueva par
 - **FR-006**: Mientras un usuario es dueño de una partida bot-vs-bot en curso, el sistema MUST
   tratarlo como ocupado para **todas** las acciones que requieren disponibilidad (crear otra partida
   bot-vs-bot, crear/jugar una partida normal, buscar Quick Match, entrar a liga o copa).
-- **FR-007**: El sistema MUST iniciar la partida automáticamente y hacer que ambos bots jueguen sus
-  turnos sin intervención humana, respetando las reglas del juego (partida a 3 puntos exactos,
-  regla de punto exacto y formato de serie elegido).
+- **FR-007**: El sistema MUST iniciar la partida (primera mano repartida) sin avanzarla sola. La
+  partida **no progresa automáticamente**: cada acción del bot al que le toca (jugar carta, cantar o
+  responder) se ejecuta a pedido del creador (ver FR-007b), respetando las reglas del juego (partida
+  a 3 puntos exactos, regla de punto exacto y formato de serie elegido).
+- **FR-007b**: El sistema MUST exponer una acción, **solo para el creador**, que avanza
+  **exactamente una** decisión del bot al que le corresponde actuar. El sistema MUST resolver
+  internamente qué bot debe actuar (el cliente no lo indica) y MUST ser idempotente cuando la serie
+  ya terminó o no hay acción pendiente. Las partidas contra un bot con jugador humano NO se ven
+  afectadas: el bot sigue respondiendo automáticamente.
 - **FR-008**: El sistema MUST permitir espectar una partida bot-vs-bot **solo a su creador**;
   cualquier otro usuario que intente espectarla MUST ser rechazado.
 - **FR-009**: Durante el espectado de una partida bot-vs-bot, el sistema MUST mostrar al creador las
@@ -190,8 +200,10 @@ verificando que el creador vuelve a estar disponible y puede crear una nueva par
   no es su creador son rechazados.
 - **SC-006**: Al terminar la partida, el creador queda disponible automáticamente y puede crear una
   nueva partida sin ninguna acción de "liberación" manual.
-- **SC-007**: El 100% de las partidas bot-vs-bot creadas se juegan hasta una conclusión (serie
-  decidida) sin intervención humana.
+- **SC-007**: El 100% de las partidas bot-vs-bot avanzan exactamente una acción por cada request del
+  creador y, encadenando requests, llegan a una conclusión (serie decidida); ninguna progresa sin
+  una
+  request del creador.
 
 ## Assumptions
 
@@ -205,12 +217,12 @@ verificando que el creador vuelve a estar disponible y puede crear una nueva par
   humano juega la partida y el observador no participa, por lo que no hay ventaja competitiva que
   proteger. Esto reemplaza explícitamente la vista "neutral" (sin cartas) del espectado de partidas
   humanas.
-- **Ocupación acotada en el tiempo**: una partida bot-vs-bot progresa automáticamente y concluye en
-  un tiempo acotado, por lo que la ocupación del creador es naturalmente limitada. Adicionalmente,
-  el
+- **Ocupación liberable por el creador**: una partida bot-vs-bot solo progresa con las requests de
+  avance del creador, así que la ocupación dura mientras él la juega o hasta que la abandone. El
   creador puede **abandonarla anticipadamente** (`POST /api/matches/bot-vs-bot/{matchId}/abandon`,
-  owner-only): la serie termina y la ocupación por autoría se libera de inmediato. El abandono se
-  carga con lock pesimista para ganar la carrera contra el avance automático de los bots.
+  owner-only): la serie termina y la ocupación por autoría se libera de inmediato. Tanto el avance
+  (`POST /api/matches/bot-vs-bot/{matchId}/advance`, owner-only) como el abandono se cargan con lock
+  pesimista para serializar requests concurrentes sin pisar el estado.
 - **Reutilización de mecanismos existentes**: se reutilizan el catálogo de bots, el motor de
   decisiones de los bots, la noción de disponibilidad/ocupación de jugadores, el endpoint de
   presencia y la infraestructura de espectado ya existentes.

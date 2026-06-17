@@ -57,8 +57,9 @@ games.
   para espectador registrado.
 - Bots:
   catalogo de personalidades y creacion de match listo para jugar. Tambien partidas **bot vs bot**
-  (`POST /api/matches/bot-vs-bot`): dos bots juegan solos, el creador queda ocupado por autoria
-  (busy total hasta que termine) y es el unico que puede espectarlas viendo las cartas de ambos.
+  (`POST /api/matches/bot-vs-bot`): dos bots que **no avanzan solos** —el creador dispara cada
+  jugada con `POST /api/matches/bot-vs-bot/{matchId}/advance`—, queda ocupado por autoria (busy
+- total hasta que termine) y es el unico que puede espectarlas viendo las cartas de ambos.
 - League:
   creacion `PUBLIC` o `PRIVATE`, join compartido por `joinCode`, lobby publico por coleccion,
   autostart publico al completarse, leave, start privado, tabla, fixture y avance automatico.

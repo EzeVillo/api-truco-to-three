@@ -5,6 +5,7 @@ import com.villo.truco.application.ports.BotRegistry;
 import com.villo.truco.application.ports.HiddenBotIdsProvider;
 import com.villo.truco.application.ports.RevealedBotIdsProvider;
 import com.villo.truco.application.ports.in.AbandonBotVsBotMatchUseCase;
+import com.villo.truco.application.ports.in.AdvanceBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.CallEnvidoUseCase;
 import com.villo.truco.application.ports.in.CallTrucoUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
@@ -17,6 +18,7 @@ import com.villo.truco.application.ports.in.RespondEnvidoUseCase;
 import com.villo.truco.application.ports.in.RespondTrucoUseCase;
 import com.villo.truco.application.ports.out.ApplicationEventPublisher;
 import com.villo.truco.application.usecases.commands.AbandonBotVsBotMatchCommandHandler;
+import com.villo.truco.application.usecases.commands.AdvanceBotVsBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.CreateBotVsBotMatchCommandHandler;
 import com.villo.truco.application.usecases.commands.ExecuteBotTurnCommandHandler;
@@ -116,7 +118,7 @@ public class BotConfiguration {
   BotDomainEventTranslator botDomainEventTranslator(
       @Lazy final ApplicationEventPublisher publisher) {
 
-    return new BotDomainEventTranslator(this.botRegistry, publisher);
+    return new BotDomainEventTranslator(this.botRegistry, this.botVsBotMatchRegistry, publisher);
   }
 
   @Bean
@@ -141,6 +143,14 @@ public class BotConfiguration {
 
     final var handler = new AbandonBotVsBotMatchCommandHandler(this.botVsBotMatchRegistry,
         this.matchLockingRepository, this.matchRepository, this.matchEventNotifier);
+    return this.retryTransactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  AdvanceBotVsBotMatchUseCase advanceBotVsBotMatchCommandHandler() {
+
+    final var handler = new AdvanceBotVsBotMatchCommandHandler(this.botVsBotMatchRegistry,
+        this.matchLockingRepository, this.executeBotTurnCommandHandler());
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

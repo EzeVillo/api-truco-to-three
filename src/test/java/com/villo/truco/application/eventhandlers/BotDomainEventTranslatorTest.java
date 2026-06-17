@@ -17,6 +17,7 @@ import com.villo.truco.domain.model.match.events.RoundStartedEvent;
 import com.villo.truco.domain.model.match.events.TurnChangedEvent;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
 import com.villo.truco.domain.model.match.valueobjects.PlayerSeat;
+import com.villo.truco.domain.ports.BotVsBotMatchRegistry;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
@@ -31,6 +32,7 @@ class BotDomainEventTranslatorTest {
 
   private final List<ApplicationEvent> published = new ArrayList<>();
   private final ApplicationEventPublisher publisher = published::add;
+  private final BotVsBotMatchRegistry botVsBotRegistry = mock(BotVsBotMatchRegistry.class);
 
   private static BotRegistry registryWith(final PlayerId botPlayerId) {
 
@@ -69,7 +71,7 @@ class BotDomainEventTranslatorTest {
     final var botPlayer = PlayerId.generate();
     final var botRegistry = mock(BotRegistry.class);
     when(botRegistry.isBot(botPlayer)).thenReturn(true);
-    final var translator = new BotDomainEventTranslator(botRegistry, publisher);
+    final var translator = new BotDomainEventTranslator(botRegistry, botVsBotRegistry, publisher);
     final var inner = new TurnChangedEvent(PlayerSeat.PLAYER_TWO);
     final var envelope = new MatchEventEnvelope(matchId, p1, botPlayer, inner);
 
@@ -91,7 +93,7 @@ class BotDomainEventTranslatorTest {
     final var p2 = PlayerId.generate();
     final var botRegistry = mock(BotRegistry.class);
     when(botRegistry.isBot(p1)).thenReturn(false);
-    final var translator = new BotDomainEventTranslator(botRegistry, publisher);
+    final var translator = new BotDomainEventTranslator(botRegistry, botVsBotRegistry, publisher);
     final var inner = new TurnChangedEvent(PlayerSeat.PLAYER_ONE);
     final var envelope = new MatchEventEnvelope(matchId, p1, p2, inner);
 
@@ -109,7 +111,7 @@ class BotDomainEventTranslatorTest {
     final var botPlayer = PlayerId.generate();
     final var botRegistry = mock(BotRegistry.class);
     when(botRegistry.isBot(botPlayer)).thenReturn(true);
-    final var translator = new BotDomainEventTranslator(botRegistry, publisher);
+    final var translator = new BotDomainEventTranslator(botRegistry, botVsBotRegistry, publisher);
     final var inner = new RoundStartedEvent(1, PlayerSeat.PLAYER_TWO);
     final var envelope = new MatchEventEnvelope(matchId, p1, botPlayer, inner);
 
@@ -130,7 +132,7 @@ class BotDomainEventTranslatorTest {
     final var p2 = PlayerId.generate();
     final var botRegistry = mock(BotRegistry.class);
     when(botRegistry.isBot(p1)).thenReturn(false);
-    final var translator = new BotDomainEventTranslator(botRegistry, publisher);
+    final var translator = new BotDomainEventTranslator(botRegistry, botVsBotRegistry, publisher);
     final var inner = new RoundStartedEvent(1, PlayerSeat.PLAYER_ONE);
     final var envelope = new MatchEventEnvelope(matchId, p1, p2, inner);
 
@@ -145,7 +147,8 @@ class BotDomainEventTranslatorTest {
 
     final var humanPlayer = PlayerId.generate();
     final var botPlayer = PlayerId.generate();
-    final var translator = new BotDomainEventTranslator(registryWith(botPlayer), publisher);
+    final var translator = new BotDomainEventTranslator(registryWith(botPlayer), botVsBotRegistry,
+        publisher);
     final var match = Match.createReady(humanPlayer, botPlayer,
         MatchRules.fromGamesToPlay(GamesToPlay.of(3), false));
 
@@ -175,6 +178,26 @@ class BotDomainEventTranslatorTest {
   }
 
   @Test
+  @DisplayName("TurnChanged en partida bot-vs-bot no publica nada (avance manual)")
+  void turnChangedInBotVsBotMatchPublishesNothing() {
+
+    final var matchId = MatchId.generate();
+    final var botOne = PlayerId.generate();
+    final var botTwo = PlayerId.generate();
+    final var botRegistry = mock(BotRegistry.class);
+    when(botRegistry.isBot(botTwo)).thenReturn(true);
+    final var manualRegistry = mock(BotVsBotMatchRegistry.class);
+    when(manualRegistry.isBotVsBotMatch(matchId)).thenReturn(true);
+    final var translator = new BotDomainEventTranslator(botRegistry, manualRegistry, publisher);
+    final var inner = new TurnChangedEvent(PlayerSeat.PLAYER_TWO);
+    final var envelope = new MatchEventEnvelope(matchId, botOne, botTwo, inner);
+
+    translator.handle(envelope);
+
+    assertThat(published).isEmpty();
+  }
+
+  @Test
   @DisplayName("evento no relacionado no publica nada")
   void nonTurnChangedOrRoundStartedEventPublishesNothing() {
 
@@ -182,7 +205,7 @@ class BotDomainEventTranslatorTest {
     final var p1 = PlayerId.generate();
     final var p2 = PlayerId.generate();
     final var botRegistry = mock(BotRegistry.class);
-    final var translator = new BotDomainEventTranslator(botRegistry, publisher);
+    final var translator = new BotDomainEventTranslator(botRegistry, botVsBotRegistry, publisher);
 
     translator.handle(new PlayerJoinedEvent(matchId, p1, p2));
 

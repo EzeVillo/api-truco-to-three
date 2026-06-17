@@ -1,10 +1,13 @@
 package com.villo.truco.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.villo.truco.application.commands.SpectateMatchCommand;
+import com.villo.truco.application.dto.SpectatorMatchStateDTO;
+import com.villo.truco.application.ports.in.SpectateMatchUseCase;
 import com.villo.truco.auth.application.ports.out.AccessTokenIssuer;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataJoinCodeRegistryRepository;
@@ -12,7 +15,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Map;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,20 +28,21 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
     "truco.security.issuer=test-issuer", "truco.security.audience=test-audience",
     "spring.profiles.active=test"}, webEnvironment = WebEnvironment.RANDOM_PORT)
-@DisplayName("Bot vs Bot liberación al terminar (integración)")
-class BotVsBotReleaseIT {
+@DisplayName("Bot vs Bot avance manual (integración)")
+class BotVsBotAdvanceIT {
 
   private static final String BOT_ONE = "00000000-0000-0000-0000-000000000001";
   private static final String BOT_TWO = "00000000-0000-0000-0000-000000000002";
 
   private final HttpClient httpClient = HttpClient.newHttpClient();
-  private final ObjectMapper objectMapper = new ObjectMapper();
   @MockitoBean
   private SpringDataJoinCodeRegistryRepository springDataJoinCodeRegistryRepository;
   @LocalServerPort
   private int port;
   @Autowired
   private AccessTokenIssuer tokenIssuer;
+  @Autowired
+  private SpectateMatchUseCase spectateMatch;
 
   @BeforeEach
   void setUp() {
@@ -48,50 +52,58 @@ class BotVsBotReleaseIT {
   }
 
   @Test
-  @DisplayName("al terminar la serie (avanzada por el dueño) el creador queda libre y puede crear otra")
-  void ownerIsReleasedWhenMatchFinishes() throws Exception {
+  @DisplayName("la partida no avanza sola; cada request del dueño la hace progresar")
+  void doesNotAdvanceOnItsOwnAndProgressesPerRequest() throws Exception {
 
     final var owner = PlayerId.generate();
     final var token = this.tokenIssuer.issueForUser(owner).value();
+    final var matchId = this.createMatch(token);
 
-    // gamesToPlay=1: la serie es la más corta posible, así se termina con menos requests.
-    final var createResponse = this.post("/api/matches/bot-vs-bot",
-        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":1}",
-        token);
-    assertThat(createResponse.statusCode()).isEqualTo(200);
-    final var matchId = this.readJson(createResponse.body()).get("matchId").toString();
+    final var initialVersion = this.stateOf(matchId, owner).stateVersion();
 
-    final var busy = this.readJson(this.get("/api/me/presence", token).body());
-    assertThat(busy.get("busy")).isEqualTo(Boolean.TRUE);
-    assertThat(busy.get("ownedBotMatch")).isInstanceOf(Map.class);
+    // En modo automático ya habría avanzado varias acciones; confirmamos que NO lo hace.
+    Thread.sleep(1500);
+    assertThat(this.stateOf(matchId, owner).stateVersion()).isEqualTo(initialVersion);
 
-    // Las partidas bot-vs-bot no avanzan solas: el dueño dispara cada jugada hasta que la serie
-    // queda decidida. La liberación es emergente del filtro de estado: ownedBotMatch se vacía.
-    var released = false;
-    for (int i = 0; i < 500 && !released; i++) {
-      final var advance = this.post("/api/matches/bot-vs-bot/" + matchId + "/advance", null, token);
-      assertThat(advance.statusCode()).isEqualTo(204);
-      released =
-          this.readJson(this.get("/api/me/presence", token).body()).get("ownedBotMatch") == null;
-    }
+    final var advance = this.post("/api/matches/bot-vs-bot/" + matchId + "/advance", token);
+    assertThat(advance.statusCode()).isEqualTo(204);
 
-    assertThat(released).as(
-        "la serie debería terminar y liberar al dueño dentro del límite de jugadas").isTrue();
-
-    final var presence = this.readJson(this.get("/api/me/presence", token).body());
-    assertThat(presence.get("busy")).isEqualTo(Boolean.FALSE);
-
-    final var newMatch = this.post("/api/matches/bot-vs-bot",
-        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":1}",
-        token);
-    assertThat(newMatch.statusCode()).isEqualTo(200);
+    await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(250)).untilAsserted(
+        () -> assertThat(this.stateOf(matchId, owner).stateVersion()).isGreaterThan(
+            initialVersion));
   }
 
-  private HttpResponse<String> get(final String path, final String token) throws Exception {
+  @Test
+  @DisplayName("un usuario que no es el creador no puede avanzar la partida (422)")
+  void nonOwnerCannotAdvance() throws Exception {
 
-    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + path))
-        .header("Authorization", "Bearer " + token).GET().build();
-    return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    final var owner = PlayerId.generate();
+    final var ownerToken = this.tokenIssuer.issueForUser(owner).value();
+    final var matchId = this.createMatch(ownerToken);
+
+    final var strangerToken = this.tokenIssuer.issueForUser(PlayerId.generate()).value();
+
+    final var advance = this.post("/api/matches/bot-vs-bot/" + matchId + "/advance", strangerToken);
+    assertThat(advance.statusCode()).isEqualTo(422);
+  }
+
+  private SpectatorMatchStateDTO stateOf(final String matchId, final PlayerId owner) {
+
+    return this.spectateMatch.handle(new SpectateMatchCommand(matchId, owner.value().toString()));
+  }
+
+  private String createMatch(final String token) throws Exception {
+
+    final var response = this.post("/api/matches/bot-vs-bot",
+        "{\"botOneId\":\"" + BOT_ONE + "\",\"botTwoId\":\"" + BOT_TWO + "\",\"gamesToPlay\":5}",
+        token);
+    assertThat(response.statusCode()).isEqualTo(200);
+    return response.body().replaceAll(".*\"matchId\"\\s*:\\s*\"([^\"]+)\".*", "$1");
+  }
+
+  private HttpResponse<String> post(final String path, final String token) throws Exception {
+
+    return this.post(path, null, token);
   }
 
   private HttpResponse<String> post(final String path, final String body, final String token)
@@ -103,12 +115,6 @@ class BotVsBotReleaseIT {
         .header("Authorization", "Bearer " + token).header("Content-Type", "application/json")
         .POST(bodyPublisher).build();
     return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-  }
-
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> readJson(final String body) throws Exception {
-
-    return this.objectMapper.readValue(body, Map.class);
   }
 
   private String baseUrl() {

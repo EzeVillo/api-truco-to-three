@@ -1,9 +1,11 @@
 package com.villo.truco.infrastructure.http;
 
 import com.villo.truco.application.commands.AbandonBotVsBotMatchCommand;
+import com.villo.truco.application.commands.AdvanceBotVsBotMatchCommand;
 import com.villo.truco.application.commands.CreateBotMatchCommand;
 import com.villo.truco.application.commands.CreateBotVsBotMatchCommand;
 import com.villo.truco.application.ports.in.AbandonBotVsBotMatchUseCase;
+import com.villo.truco.application.ports.in.AdvanceBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.CreateBotMatchUseCase;
 import com.villo.truco.application.ports.in.CreateBotVsBotMatchUseCase;
 import com.villo.truco.application.ports.in.GetBotsUseCase;
@@ -43,15 +45,18 @@ public class BotController {
   private final CreateBotMatchUseCase createBotMatch;
   private final CreateBotVsBotMatchUseCase createBotVsBotMatch;
   private final AbandonBotVsBotMatchUseCase abandonBotVsBotMatch;
+  private final AdvanceBotVsBotMatchUseCase advanceBotVsBotMatch;
 
   public BotController(final GetBotsUseCase getBots, final CreateBotMatchUseCase createBotMatch,
       final CreateBotVsBotMatchUseCase createBotVsBotMatch,
-      final AbandonBotVsBotMatchUseCase abandonBotVsBotMatch) {
+      final AbandonBotVsBotMatchUseCase abandonBotVsBotMatch,
+      final AdvanceBotVsBotMatchUseCase advanceBotVsBotMatch) {
 
     this.getBots = Objects.requireNonNull(getBots);
     this.createBotMatch = Objects.requireNonNull(createBotMatch);
     this.createBotVsBotMatch = Objects.requireNonNull(createBotVsBotMatch);
     this.abandonBotVsBotMatch = Objects.requireNonNull(abandonBotVsBotMatch);
+    this.advanceBotVsBotMatch = Objects.requireNonNull(advanceBotVsBotMatch);
   }
 
   @GetMapping("/bots")
@@ -109,6 +114,20 @@ public class BotController {
       @AuthenticationPrincipal final Jwt jwt) {
 
     this.abandonBotVsBotMatch.handle(new AbandonBotVsBotMatchCommand(matchId, jwt.getSubject()));
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/matches/bot-vs-bot/{matchId}/advance")
+  @Operation(summary = "Avanzar una jugada de la partida entre bots", description = "Las partidas bot-vs-bot no avanzan solas: cada llamada ejecuta exactamente la próxima acción del bot al que le toca (jugar carta, cantar o responder). Solo el creador puede avanzarla. El nuevo estado llega por el canal de espectado en tiempo real.", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Jugada avanzada (o sin acción pendiente)"),
+      @ApiResponse(responseCode = "401", description = "Token ausente o inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Partida no encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "El usuario no es el creador de la partida", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+  public ResponseEntity<Void> advanceBotVsBotMatch(@PathVariable final String matchId,
+      @AuthenticationPrincipal final Jwt jwt) {
+
+    this.advanceBotVsBotMatch.handle(new AdvanceBotVsBotMatchCommand(matchId, jwt.getSubject()));
     return ResponseEntity.noContent().build();
   }
 

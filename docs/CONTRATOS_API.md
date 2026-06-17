@@ -3260,9 +3260,10 @@ Errores:
 
 `POST /api/matches/bot-vs-bot`
 
-Requiere Bearer token. Crea una partida entre **dos bots** que juegan solos hasta una conclusión. El
-usuario que la crea es su **dueño**: queda **ocupado por autoría** (busy total) hasta que la partida
-termine —la mire o no— y es el **único** habilitado para espectarla.
+Requiere Bearer token. Crea una partida entre **dos bots**. A diferencia de las partidas contra un
+bot, **no avanza sola**: cada jugada se dispara con una request del dueño (ver _Avanzar una jugada_
+más abajo). El usuario que la crea es su **dueño**: queda **ocupado por autoría** (busy total) hasta
+que la partida termine —la mire o no— y es el **único** habilitado para espectarla.
 
 Request:
 
@@ -3304,6 +3305,32 @@ Errores:
 | `404`  | Alguno de los `botId` no existe en el catálogo de bots                                                                              |
 | `422`  | `gamesToPlay` fuera de `{1, 3, 5}`, ambos bots iguales, o el usuario ya está ocupado (incluye ser dueño de otra bot-match en curso) |
 
+#### Avanzar una jugada (bot vs bot)
+
+`POST /api/matches/bot-vs-bot/{matchId}/advance`
+
+Requiere Bearer token. Las partidas bot-vs-bot **no avanzan solas**: cada llamada ejecuta
+**exactamente la próxima acción** del bot al que le toca (jugar carta, cantar truco/envido o
+responder). El servidor resuelve internamente qué bot debe actuar; el cliente no manda ningún bot.
+
+- Solo el **creador** puede avanzarla; cualquier otro usuario es rechazado con `422`.
+- Es **idempotente**: si la serie ya terminó (o no hay acción pendiente), devuelve `204` sin
+  avanzar.
+- La carga del match se serializa con un lock de escritura, de modo que dos requests simultáneas (o
+  un `advance` que compite con un `abandon`) no pisan el estado.
+- El cliente conoce de quién es el turno por el estado de espectado (`currentRound.currentTurn`, ver
+  §9.5g) y recibe el nuevo estado por el canal de espectado en tiempo real tras cada avance.
+
+Response `204` sin cuerpo.
+
+Errores:
+
+| Codigo | Descripcion                                           |
+|--------|-------------------------------------------------------|
+| `401`  | Token ausente o inválido                              |
+| `404`  | La partida no existe                                  |
+| `422`  | El usuario autenticado no es el creador de la partida |
+
 #### Abandonar una partida bot vs bot
 
 `POST /api/matches/bot-vs-bot/{matchId}/abandon`
@@ -3313,9 +3340,9 @@ termina (uno de los bots gana administrativamente) y la **ocupación por autorí
 libera automáticamente, dejándolo disponible para crear o sumarse a otras actividades.
 
 - Solo el **creador** puede abandonarla; cualquier otro usuario es rechazado con `422`.
-- Es **idempotente**: si los bots ya habían terminado la serie por su cuenta, devuelve `204` igual.
+- Es **idempotente**: si la serie ya estaba terminada, devuelve `204` igual.
 - La carga del match se serializa con un lock de escritura, de modo que el abandono siempre gana la
-  carrera contra el turno de bot en vuelo (el avance automático corre en paralelo).
+  carrera contra un `advance` en vuelo.
 
 Response `204` sin cuerpo.
 
