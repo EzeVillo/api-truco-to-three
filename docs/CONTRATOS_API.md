@@ -800,7 +800,9 @@ Response `200`:
     "currentTurn": "juancho",
     "roundStatus": "PLAYING",
     "currentTrucoCall": "TRUCO",
+    "currentTrucoCaller": "martina",
     "currentEnvidoCall": null,
+    "currentEnvidoCaller": null,
     "winner": null,
     "playedHands": [
       {
@@ -833,6 +835,10 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `currentRound.currentTrucoCaller` y `currentRound.currentEnvidoCaller` indican **quién cantó** el
+  truco/envido que está pendiente de respuesta (el oponente del que figura en `currentTurn`); son
+  `null` cuando no hay ese canto en curso. Pensado para que el espectador sepa quién cantó sin poder
+  inferirlo de `availableActions` (que no se expone en spectate)
 - `currentRound.handPlayerOne` y `currentRound.handPlayerTwo` exponen las **cartas en mano** de cada
   asiento **solo en partidas bot-vs-bot** (§9.2b), para que el creador vea ambas manos; en cualquier
   otra partida (con humanos) ambos campos son `null`. En bot-vs-bot solo el **creador** puede

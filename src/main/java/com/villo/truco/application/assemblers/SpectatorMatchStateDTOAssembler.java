@@ -77,8 +77,14 @@ public final class SpectatorMatchStateDTOAssembler {
     final var currentTrucoCall = Optional.ofNullable(match.getCurrentTrucoCall()).map(Enum::name)
         .orElse(null);
 
+    final var currentTrucoCaller = Optional.ofNullable(match.getTrucoCaller()).map(actorNames::get)
+        .orElse(null);
+
     final var currentEnvidoCall = Optional.ofNullable(match.getCurrentEnvidoCall()).map(Enum::name)
         .orElse(null);
+
+    final var currentEnvidoCaller = Optional.ofNullable(match.getEnvidoCaller())
+        .map(actorNames::get).orElse(null);
 
     final var matchWinner = Optional.ofNullable(match.getMatchWinner()).map(actorNames::get)
         .orElse(null);
@@ -102,9 +108,9 @@ public final class SpectatorMatchStateDTOAssembler {
     final var handPlayerTwo = botVsBot ? cardsOf(match, match.getPlayerTwo()) : null;
 
     return new SpectatorRoundStateDTO(match.getStatus().name(), currentTurn, roundStatus,
-        currentTrucoCall, currentEnvidoCall, matchWinner, playedHands, currentHand,
-        deadline.actionDeadline(), deadline.turnDurationMillis(), deadline.actionDeadlineSeat(),
-        handPlayerOne, handPlayerTwo);
+        currentTrucoCall, currentTrucoCaller, currentEnvidoCall, currentEnvidoCaller, matchWinner,
+        playedHands, currentHand, deadline.actionDeadline(), deadline.turnDurationMillis(),
+        deadline.actionDeadlineSeat(), handPlayerOne, handPlayerTwo);
   }
 
 }

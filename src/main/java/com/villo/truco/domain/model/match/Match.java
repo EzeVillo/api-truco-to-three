@@ -807,9 +807,19 @@ public final class Match extends AggregateBase<MatchId> {
     return this.currentRound != null ? this.currentRound.getCurrentTrucoCall() : null;
   }
 
+  public PlayerId getTrucoCaller() {
+
+    return this.currentRound != null ? this.currentRound.getTrucoCaller() : null;
+  }
+
   public EnvidoCall getCurrentEnvidoCall() {
 
     return this.currentRound != null ? this.currentRound.getCurrentEnvidoCall() : null;
+  }
+
+  public PlayerId getEnvidoCaller() {
+
+    return this.currentRound != null ? this.currentRound.getEnvidoCaller() : null;
   }
 
   List<EnvidoCall> getEnvidoChain() {

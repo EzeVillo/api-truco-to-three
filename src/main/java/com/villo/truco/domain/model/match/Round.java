@@ -482,6 +482,18 @@ final class Round extends EntityBase<RoundId> {
     return currentTurn;
   }
 
+  PlayerId getEnvidoCaller() {
+
+    return this.status == RoundStatus.ENVIDO_IN_PROGRESS && this.currentTurn != null
+        ? this.getOpponent(this.currentTurn) : null;
+  }
+
+  PlayerId getTrucoCaller() {
+
+    return this.status == RoundStatus.TRUCO_IN_PROGRESS && this.currentTurn != null
+        ? this.getOpponent(this.currentTurn) : null;
+  }
+
   Hand getHandOf(final PlayerId playerId) {
 
     return playerId.equals(playerOne) ? handPlayerOne : handPlayerTwo;
