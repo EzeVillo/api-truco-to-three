@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-final class EnvidoDecisionPolicy {
+public final class EnvidoDecisionPolicy {
 
   private static final int GOOD_ENVIDO_THRESHOLD = 26;
   private static final int FALTA_ENVIDO_THRESHOLD = 29;
@@ -25,7 +25,7 @@ final class EnvidoDecisionPolicy {
   private final Random random;
   private final EnvidoScoring envidoScoring;
 
-  EnvidoDecisionPolicy(final BotPersonality personality, final Random random,
+  public EnvidoDecisionPolicy(final BotPersonality personality, final Random random,
       final EnvidoScoring envidoScoring) {
 
     this.personality = personality;
@@ -33,7 +33,7 @@ final class EnvidoDecisionPolicy {
     this.envidoScoring = envidoScoring;
   }
 
-  Optional<BotEnvidoCall> decideCall(final List<BotEnvidoCall> availableCalls,
+  public Optional<BotEnvidoCall> decideCall(final List<BotEnvidoCall> availableCalls,
       final int envidoScore, final int myScore, final int rivalScore, final int pointsToWin,
       final boolean isMano, final boolean isFirstCall, final List<BotCard> myCards,
       final BotCard rivalCardPlayed) {
@@ -87,7 +87,7 @@ final class EnvidoDecisionPolicy {
     return this.pickJustifiedLevel(viableCalls, envidoScore);
   }
 
-  BotEnvidoResponse decideResponse(final int envidoScore, final int myScore, final int rivalScore,
+  public BotEnvidoResponse decideResponse(final int envidoScore, final int myScore, final int rivalScore,
       final int pointsToWin, final BotMatchView.PendingEnvidoOutcome pendingOutcome) {
 
     if (pendingOutcome == null) {

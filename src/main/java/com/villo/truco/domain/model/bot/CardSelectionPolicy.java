@@ -7,12 +7,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-final class CardSelectionPolicy {
+public final class CardSelectionPolicy {
 
   private final BotPersonality personality;
   private final Random random;
 
-  CardSelectionPolicy(final BotPersonality personality, final Random random) {
+  public CardSelectionPolicy(final BotPersonality personality, final Random random) {
 
     this.personality = personality;
     this.random = random;
@@ -26,7 +26,7 @@ final class CardSelectionPolicy {
         .orElse(sortedAscending.getFirst());
   }
 
-  BotCard select(final List<BotCard> myCards, final BotCard rivalCardPlayed) {
+  public BotCard select(final List<BotCard> myCards, final BotCard rivalCardPlayed) {
 
     if (myCards.isEmpty()) {
       throw new BotWithoutCardsException();

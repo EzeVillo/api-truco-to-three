@@ -4,7 +4,7 @@ import com.villo.truco.domain.model.bot.valueobjects.BotCard;
 import java.util.List;
 import java.util.stream.IntStream;
 
-final class HandStrengthEvaluator {
+public final class HandStrengthEvaluator {
 
   private static final double MAX_TRUCO_VALUE = 14.0;
 
@@ -12,7 +12,7 @@ final class HandStrengthEvaluator {
 
   }
 
-  static double contextualStrength(final List<BotCard> cards, final BotCard rivalCardPlayed,
+  public static double contextualStrength(final List<BotCard> cards, final BotCard rivalCardPlayed,
       final int handsPlayedCount) {
 
     if (cards == null || cards.isEmpty()) {
@@ -41,7 +41,7 @@ final class HandStrengthEvaluator {
     return strength;
   }
 
-  static double trucoStrength(final List<BotCard> cards) {
+  public static double trucoStrength(final List<BotCard> cards) {
 
     if (cards == null || cards.isEmpty()) {
       return 0.0;

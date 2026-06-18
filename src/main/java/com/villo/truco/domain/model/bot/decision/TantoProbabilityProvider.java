@@ -22,7 +22,7 @@ public final class TantoProbabilityProvider {
   }
 
   /** Factory para tests que necesitan inyectar una probabilidad conocida directamente. */
-  static TantoProbabilityProvider withKnownProbability(final double probability) {
+  public static TantoProbabilityProvider withKnownProbability(final double probability) {
 
     return new TantoProbabilityProvider(probability);
   }

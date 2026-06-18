@@ -6,7 +6,7 @@ import com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse;
 import java.util.Optional;
 import java.util.Random;
 
-final class TrucoDecisionPolicy {
+public final class TrucoDecisionPolicy {
 
   private static final double CALL_BASE = 0.25;
   private static final double RESPOND_ACCEPT_BASE = 0.35;
@@ -14,13 +14,13 @@ final class TrucoDecisionPolicy {
   private final BotPersonality personality;
   private final Random random;
 
-  TrucoDecisionPolicy(final BotPersonality personality, final Random random) {
+  public TrucoDecisionPolicy(final BotPersonality personality, final Random random) {
 
     this.personality = personality;
     this.random = random;
   }
 
-  Optional<BotTrucoCall> decideCall(final BotTrucoCall availableCall, final double handStrength,
+  public Optional<BotTrucoCall> decideCall(final BotTrucoCall availableCall, final double handStrength,
       final int myScore, final int rivalScore, final int pointsToWin) {
 
     if (availableCall == null) {
@@ -55,7 +55,7 @@ final class TrucoDecisionPolicy {
     return Optional.of(availableCall);
   }
 
-  Optional<BotTrucoCall> decideRaise(final BotTrucoCall availableRaise, final double handStrength,
+  public Optional<BotTrucoCall> decideRaise(final BotTrucoCall availableRaise, final double handStrength,
       final int myScore, final int rivalScore, final int pointsToWin) {
 
     if (availableRaise == null) {
@@ -90,7 +90,7 @@ final class TrucoDecisionPolicy {
     return Optional.empty();
   }
 
-  BotTrucoResponse decideResponse(final BotTrucoCall pendingOffer, final double handStrength,
+  public BotTrucoResponse decideResponse(final BotTrucoCall pendingOffer, final double handStrength,
       final int myScore, final int rivalScore, final int pointsToWin) {
 
     if (TrucoScoreStrategy.rivalWinsIfRejected(rivalScore, pendingOffer, pointsToWin)
