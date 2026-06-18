@@ -56,6 +56,11 @@ class BotDecisionEngineTest {
     return new BotEnvidoCall(2, 2, 1, BotEnvidoLevel.ENVIDO);
   }
 
+  private static BotEnvidoCall faltaEnvido() {
+
+    return new BotEnvidoCall(2, 2, 1, BotEnvidoLevel.FALTA_ENVIDO);
+  }
+
   private static BotMatchView playOnly(final List<BotCard> cards) {
 
     final var game = new GameContext(cards, 0, 0, null, 0, 0, false, true, false, false,
@@ -266,6 +271,81 @@ class BotDecisionEngineTest {
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.RespondTruco.class);
     assertThat(((BotAction.RespondTruco) action).response()).isEqualTo(BotTrucoResponse.QUIERO);
+  }
+
+  // T026 — Integración del pipeline para los Casos 1, 4 y 5 (US1)
+
+  @Test
+  void pipeline_caso1_dosADos_conTantoBajo_llama_envido() {
+
+    // Caso 1: marcador 2-2, tanto bajo → EnvidoAtTwoTwoRule elige ENVIDO (bot busca que rival se pase)
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(CUATRO_COPA), 2, 2, null, 0, 0, false, true, false,
+        false, POINTS_TO_WIN, 1);
+    final var view = new BotMatchView(game, new TrucoContext(null, List.of(), null),
+        new EnvidoContext(List.of(envido(), faltaEnvido()), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
+    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(BotEnvidoLevel.ENVIDO);
+  }
+
+  @Test
+  void pipeline_caso1_dosADos_conTantoAlto_llama_faltaEnvido() {
+
+    // Caso 1: marcador 2-2, tanto alto → EnvidoAtTwoTwoRule elige FALTA_ENVIDO (bot apunta a ganar exacto)
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(ANCHO_ESPADA), 2, 2, null, 33, 0, false, true, false,
+        false, POINTS_TO_WIN, 1);
+    final var view = new BotMatchView(game, new TrucoContext(null, List.of(), null),
+        new EnvidoContext(List.of(envido(), faltaEnvido()), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
+    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(BotEnvidoLevel.FALTA_ENVIDO);
+  }
+
+  @Test
+  void pipeline_caso4_dosAUno_arriba_conAltaProbabilidadPerder_fuerza_bust_rival() {
+
+    // Caso 4: marcador 2-1 arriba, tanto muy bajo (pérdida probable >70%) →
+    // ForceRivalBustRule canta el nivel de envido que, si el rival gana, lo pasa de 3
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(CUATRO_COPA), 2, 1, null, 0, 0, false, true, false,
+        false, POINTS_TO_WIN, 1);
+    // acceptedPointsIfRivalWins=3 → rivalScore(1)+3=4>3 → rival se pasa si acepta y gana
+    final var bustingCall = new BotEnvidoCall(2, 3, 1, BotEnvidoLevel.FALTA_ENVIDO);
+    final var view = new BotMatchView(game, new TrucoContext(null, List.of(), null),
+        new EnvidoContext(List.of(bustingCall), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
+    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(BotEnvidoLevel.FALTA_ENVIDO);
+  }
+
+  @Test
+  void pipeline_caso5_qymvam_cuando_rival_se_pasa_al_aceptar() {
+
+    // Caso 5: rival canta truco; aceptar (QYMVAM) → rivalScore+stakeIfAccepted>pointsToWin → QYMVAM
+    // ResponseToRivalCallRule (prioridad=10) debe tomar precedencia sobre el fallback de VE
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var view = withTrucoResponse(List.of(CUATRO_COPA), 0, 2, TRUCO_CALL,
+        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO,
+            BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO), null, List.of(), 0);
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.RespondTruco.class);
+    assertThat(((BotAction.RespondTruco) action).response()).isEqualTo(
+        BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO);
+  }
+
+  @Test
+  void pipeline_caso5_noQuiero_cuando_rival_se_pasa_al_rechazar() {
+
+    // Caso 5: rival canta retruco; rechazar (NO_QUIERO) → rivalScore+stakeIfRejected>pointsToWin → NO_QUIERO
+    // ResponseToRivalCallRule (prioridad=10) debe tomar precedencia sobre el fallback de VE
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var view = withTrucoResponse(List.of(), 0, 2, RETRUCO_CALL,
+        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), null, List.of(), 0);
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.RespondTruco.class);
+    assertThat(((BotAction.RespondTruco) action).response()).isEqualTo(BotTrucoResponse.NO_QUIERO);
   }
 
 }
