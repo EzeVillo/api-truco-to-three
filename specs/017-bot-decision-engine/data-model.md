@@ -46,7 +46,32 @@ primera acción no vacía. Punto único donde se **registran** las tácticas (ex
 |---------|----------------------|-----------------------------------------|
 | `rules` | `List<DecisionRule>` | Ordenada por `priority()` al construir. |
 
+### Diagrama de prioridades del registry (menor número = se evalúa antes)
+
+```text
+DecisionRuleRegistry.decide(ctx)
+  │  recorre por priority() asc; primer Optional no vacío gana
+  ▼
+  10  ResponseToRivalCallRule   ── Caso 5: QYMVAM / NO_QUIERO que pasa al rival (solo mustRespond)
+  20  EnvidoAtTwoTwoRule         ── Caso 1: 2-2 canta envido/falta por prob. del tanto
+  30  ForceRivalBustRule         ── Caso 4: envido que obliga al rival a pasarse si gana
+  40  LockAndMazoRule            ── Casos 2,3,6,7: encierro sin cartas / escalada / aceptación
+ 1000  ExpectedValueFallbackRule ── Caso 8: valor esperado (SIEMPRE responde; FR-018)
+```
+
+- Las reglas 10–40 son **determinísticas** (no inyectan `Random`); solo consultan `arithmetic`,
+  `lock`, `tanto` o `unplayedHand`.
+- La regla 1000 es la única que usa `Random` (vía `TrucoDecisionPolicy` / `EnvidoDecisionPolicy` /
+  `CardSelectionPolicy`) y **siempre** devuelve una acción → garantiza FR-018.
+- Agregar una casuística nueva = insertar una regla con su `priority()` relativa; no se editan las
+  existentes (Open/Closed, FR-016).
+
 ## MatchArithmetic (primitivas determinísticas)
+
+**Aclaración**: `MatchArithmetic` es **solo un conjunto de primitivas aritméticas puras** sobre el
+marcador a 3 — NO es un gate ni una regla de decisión. No decide ninguna jugada; las reglas
+(`DecisionRule`) la consultan para evaluar "¿el rival se pasa si acepta/gana/rechaza?" y derivar su
+acción. No hay estado, no hay azar, no hay flujo de control de decisión aquí.
 
 Generaliza el actual `TrucoScoreStrategy`. Métodos sobre `(myScore, rivalScore, pointsToWin)` y los
 stakes de un canto:

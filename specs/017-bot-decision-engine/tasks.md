@@ -217,7 +217,7 @@ que el bot acepta/escala hacia el encierro y, si la 1ª mano no se jugó, apuest
   de `UnplayedHandProbability` para la mano no jugada en
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/LockAndMazoRule.java` (depende de
   T028)
-- [ ] T034 [US3] Tests de integración del pipeline para los Casos 6 y 7 en
+- [X] T034 [US3] Tests de integración del pipeline para los Casos 6 y 7 en
   `src/test/java/com/villo/truco/domain/model/bot/BotDecisionEngineTest.java` (depende de T033)
 
 **Checkpoint**: las tres historias funcionan de forma independiente.
@@ -228,22 +228,22 @@ que el bot acepta/escala hacia el encierro y, si la 1ª mano no se jugó, apuest
 
 **Purpose**: limpieza, validación de criterios de éxito y documentación.
 
-- [ ] T035 [P] Migrar/retirar `TrucoDecisionPolicy` y `EnvidoDecisionPolicy` obsoletas si el
+- [X] T035 [P] Migrar/retirar `TrucoDecisionPolicy` y `EnvidoDecisionPolicy` obsoletas si el
   fallback de VE las subsume, o reducirlas a colaboradores del fallback; ajustar `BotDecisionEngine`
   en `src/main/java/com/villo/truco/domain/model/bot/`
-- [ ] T036 [P] Test de regresión por valor esperado (SC-004: 0 jugadas de VE negativo) y límite
+- [X] T036 [P] Test de regresión por valor esperado (SC-004: 0 jugadas de VE negativo) y límite
   determinístico (SC-005: mismo input → misma salida sin `Random`) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/ExpectedValueInvariantsTest.java`
-- [ ] T037 Validar SC-007: enfrentar el motor rediseñado vs. el anterior en match a 3 y medir
+- [X] T037 Validar SC-007: enfrentar el motor rediseñado vs. el anterior en match a 3 y medir
   win-rate (objetivo ≥ 60%) reutilizando el camino bot-vs-bot (
   `AdvanceBotVsBotMatchCommandHandler`); documentar la muestra en
   `specs/017-bot-decision-engine/research.md`
-- [ ] T038 [P] Aclarar en `specs/017-bot-decision-engine/data-model.md` y
+- [X] T038 [P] Aclarar en `specs/017-bot-decision-engine/data-model.md` y
   `contracts/decision-rule-spi.md` que `MatchArithmetic` es solo primitivas (no un gate) y agregar
   el diagrama de prioridades del registry
-- [ ] T039 Correr `./gradlew build` y verificar cobertura JaCoCo ≥ 70% y reglas ArchUnit (dominio
+- [X] T039 Correr `./gradlew build` y verificar cobertura JaCoCo ≥ 70% y reglas ArchUnit (dominio
   puro) en verde
-- [ ] T040 Ejecutar la validación de `specs/017-bot-decision-engine/quickstart.md` (agregar una
+- [X] T040 Ejecutar la validación de `specs/017-bot-decision-engine/quickstart.md` (agregar una
   casuística de prueba como `2-0` y confirmar que es aditiva: nueva regla + registro, sin tocar
   reglas existentes)
 

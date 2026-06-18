@@ -31,6 +31,22 @@ public final class ExpectedValueFallbackRule implements DecisionRule {
     this.cardPolicy = new CardSelectionPolicy(personality, random);
   }
 
+  private static boolean isGuaranteedWinningTrucoCall(
+      final com.villo.truco.domain.model.bot.valueobjects.BotMatchView.GameContext game,
+      final BotTrucoCall availableCall, final int pointsToWin) {
+
+    if (game.rivalCardPlayed() == null || game.rivalCardsInHand() > 0) {
+      return false;
+    }
+    final var rivalRank = game.rivalCardPlayed().trucoRank();
+    final var canBeat = game.myCards().stream().anyMatch(card -> card.trucoRank() > rivalRank);
+    if (canBeat) {
+      return false;
+    }
+    return TrucoScoreStrategy.botWinsIfRejected(game.myScore(), availableCall, pointsToWin)
+        && TrucoScoreStrategy.rivalExceedsIfAccepted(game.rivalScore(), availableCall, pointsToWin);
+  }
+
   @Override
   public Optional<BotAction> apply(final DecisionContext ctx) {
 
@@ -49,14 +65,8 @@ public final class ExpectedValueFallbackRule implements DecisionRule {
     if (truco.mustRespond()) {
       final var pendingCall = truco.currentCall();
 
-      if (truco.canRespondWith(BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO)
-          && TrucoScoreStrategy.shouldQYMVAM(rivalScore, pendingCall, pointsToWin)) {
-        return Optional.of(new BotAction.RespondTruco(BotTrucoResponse.QUIERO_Y_ME_VOY_AL_MAZO));
-      }
-
-      if (TrucoScoreStrategy.noQuieroKillsRival(rivalScore, pendingCall, pointsToWin)) {
-        return Optional.of(new BotAction.RespondTruco(BotTrucoResponse.NO_QUIERO));
-      }
+      // Las respuestas que hacen al rival pasarse del límite (QYMVAM / NO_QUIERO) las resuelve
+      // ResponseToRivalCallRule (prioridad 10) antes de llegar al fallback; aquí no se duplican.
 
       if (envido.canCall()) {
         final var envidoCall = envidoPolicy.decideCall(envido.availableCalls(), envidoScore,
@@ -141,22 +151,6 @@ public final class ExpectedValueFallbackRule implements DecisionRule {
   public String name() {
 
     return "ExpectedValueFallbackRule";
-  }
-
-  private static boolean isGuaranteedWinningTrucoCall(
-      final com.villo.truco.domain.model.bot.valueobjects.BotMatchView.GameContext game,
-      final BotTrucoCall availableCall, final int pointsToWin) {
-
-    if (game.rivalCardPlayed() == null || game.rivalCardsInHand() > 0) {
-      return false;
-    }
-    final var rivalRank = game.rivalCardPlayed().trucoRank();
-    final var canBeat = game.myCards().stream().anyMatch(card -> card.trucoRank() > rivalRank);
-    if (canBeat) {
-      return false;
-    }
-    return TrucoScoreStrategy.botWinsIfRejected(game.myScore(), availableCall, pointsToWin)
-        && TrucoScoreStrategy.rivalExceedsIfAccepted(game.rivalScore(), availableCall, pointsToWin);
   }
 
 }

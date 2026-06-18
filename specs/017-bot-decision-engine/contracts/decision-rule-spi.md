@@ -53,6 +53,28 @@ DecisionRuleRegistry.decide(ctx):
     # nunca se alcanza: la última regla (ExpectedValueFallbackRule) siempre responde
 ```
 
+### Diagrama de prioridades del registry (menor número = se evalúa antes)
+
+```text
+DecisionRuleRegistry.decide(ctx)
+  │  recorre por priority() asc; primer Optional no vacío gana
+  ▼
+  10  ResponseToRivalCallRule   ── Caso 5: QYMVAM / NO_QUIERO que pasa al rival (solo mustRespond)
+  20  EnvidoAtTwoTwoRule         ── Caso 1: 2-2 canta envido/falta por prob. del tanto
+  30  ForceRivalBustRule         ── Caso 4: envido que obliga al rival a pasarse si gana
+  40  LockAndMazoRule            ── Casos 2,3,6,7: encierro sin cartas / escalada / aceptación
+ 1000  ExpectedValueFallbackRule ── Caso 8: valor esperado (SIEMPRE responde; FR-018)
+```
+
+- Las reglas 10–40 son **determinísticas** (no inyectan `Random`); solo consultan `arithmetic`,
+  `lock`, `tanto` o `unplayedHand` (SC-005).
+- La regla 1000 es la única que usa `Random` (vía las policies de VE) y **siempre** devuelve una
+  acción → garantiza FR-018.
+- `MatchArithmetic` **no es un gate**: es solo primitivas aritméticas que las reglas consultan; no
+  decide ninguna jugada por sí sola.
+- Agregar una casuística nueva = insertar una regla con su `priority()` relativa; no se editan las
+  existentes (Open/Closed, FR-016).
+
 ## Cómo se agrega una casuística (contrato de extensión)
 
 Para sumar, por ejemplo, el manejo de **2-0 ganando** u otro resultado:

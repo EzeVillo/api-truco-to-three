@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
  * Tests para la lógica de escalada de cantos en LockAndMazoRule (US3, Caso 7).
  *
  * <p>Cuando el bot puede garantizar la victoria si el rival rechaza un canto (botWinsIfRejected),
- * la regla escala aunque aceptar haría que el bot se pasara de 3; en ese caso el bot se irá al
- * mazo después de que el rival acepte (lógica de encierro).
+ * la regla escala aunque aceptar haría que el bot se pasara de 3; en ese caso el bot se irá al mazo
+ * después de que el rival acepte (lógica de encierro).
  */
 class LockAndMazoRuleEscalationTest {
 
@@ -54,8 +54,8 @@ class LockAndMazoRuleEscalationTest {
   private static BotMatchView gameConLlamadaDisponible(final int myScore, final int rivalScore,
       final BotTrucoCall available) {
 
-    final var game = new GameContext(List.of(ANCHO_ESPADA), myScore, rivalScore, null, 0, 1,
-        false, true, true, false, POINTS_TO_WIN, 1);
+    final var game = new GameContext(List.of(ANCHO_ESPADA), myScore, rivalScore, null, 0, 1, false,
+        true, true, false, POINTS_TO_WIN, 1);
     return new BotMatchView(game, new TrucoContext(available, List.of(), null),
         new EnvidoContext(List.of(), List.of(), List.of(), null));
   }
@@ -67,7 +67,8 @@ class LockAndMazoRuleEscalationTest {
 
     // 0-0, vale cuatro: stakeIfRejected=3 → myScore(0)+3==3 → si rival rechaza, bot gana
     // Aunque stakeIfAccepted=4 → 0+4>3 (bust), el bot puede foldearse al mazo si rival acepta
-    final var result = new LockAndMazoRule().apply(ctx(gameConLlamadaDisponible(0, 0, VALE_CUATRO_CALL)));
+    final var result = new LockAndMazoRule().apply(
+        ctx(gameConLlamadaDisponible(0, 0, VALE_CUATRO_CALL)));
     assertThat(result).isPresent();
     assertThat(result.get()).isInstanceOf(BotAction.CallTruco.class);
     assertThat(((BotAction.CallTruco) result.get()).call()).isEqualTo(VALE_CUATRO_CALL);
@@ -77,7 +78,8 @@ class LockAndMazoRuleEscalationTest {
   void a10_llama_retruco_cuando_rechazo_gana_el_match() {
 
     // 1-0 (bot gana 1), retruco: stakeIfRejected=2 → 1+2==3 → si rival rechaza, bot gana
-    final var result = new LockAndMazoRule().apply(ctx(gameConLlamadaDisponible(1, 0, RETRUCO_CALL)));
+    final var result = new LockAndMazoRule().apply(
+        ctx(gameConLlamadaDisponible(1, 0, RETRUCO_CALL)));
     assertThat(result).isPresent();
     assertThat(result.get()).isInstanceOf(BotAction.CallTruco.class);
     assertThat(((BotAction.CallTruco) result.get()).call()).isEqualTo(RETRUCO_CALL);
@@ -106,31 +108,25 @@ class LockAndMazoRuleEscalationTest {
   void no_escala_cuando_no_hay_llamada_disponible() {
 
     // Sin llamada disponible (null) no puede escalar
-    final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1,
-        false, true, false, false, POINTS_TO_WIN, 1);
+    final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1, false, true, false,
+        false, POINTS_TO_WIN, 1);
     final var view = new BotMatchView(game, new TrucoContext(null, List.of(), null),
         new EnvidoContext(List.of(), List.of(), List.of(), null));
     assertThat(new LockAndMazoRule().apply(ctx(view))).isEmpty();
   }
 
   @Test
-  void acepta_truco_del_rival_cuando_mustRespond_y_carta_fuerte() {
+  void no_acepta_truco_del_rival_fuera_de_match_point_cede_al_fallback() {
 
-    // mustRespond=true: la escalada (CallTruco) no aplica; en su lugar handleMustRespond
-    // verifica la probabilidad de mano no jugada y devuelve QUIERO cuando es alta (ANCHO_ESPADA)
-    final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1,
-        false, true, false, false, POINTS_TO_WIN, 1);
-    final var view = new BotMatchView(game,
-        new TrucoContext(VALE_CUATRO_CALL,
-            List.of(com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.QUIERO,
-                com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.NO_QUIERO),
-            TRUCO_CALL),
+    // 0-0 (nadie a punto de ganar): la aceptación por probabilidad de encierro no aplica;
+    // LockAndMazoRule cede (empty) para que el fallback de VE decida (p. ej. escalar truco).
+    final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1, false, true, false,
+        false, POINTS_TO_WIN, 1);
+    final var view = new BotMatchView(game, new TrucoContext(VALE_CUATRO_CALL,
+        List.of(com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.QUIERO,
+            com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.NO_QUIERO), TRUCO_CALL),
         new EnvidoContext(List.of(), List.of(), List.of(), null));
-    final var result = new LockAndMazoRule().apply(ctx(view));
-    assertThat(result).isPresent();
-    assertThat(result.get()).isInstanceOf(BotAction.RespondTruco.class);
-    assertThat(((BotAction.RespondTruco) result.get()).response()).isEqualTo(
-        com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.QUIERO);
+    assertThat(new LockAndMazoRule().apply(ctx(view))).isEmpty();
   }
 
 }

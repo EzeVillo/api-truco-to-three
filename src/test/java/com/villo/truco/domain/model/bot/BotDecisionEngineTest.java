@@ -300,7 +300,8 @@ class BotDecisionEngineTest {
         new EnvidoContext(List.of(envido(), faltaEnvido()), List.of(), List.of(), null));
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
-    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(BotEnvidoLevel.FALTA_ENVIDO);
+    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(
+        BotEnvidoLevel.FALTA_ENVIDO);
   }
 
   @Test
@@ -317,7 +318,8 @@ class BotDecisionEngineTest {
         new EnvidoContext(List.of(bustingCall), List.of(), List.of(), null));
     final var action = engine.decide(view);
     assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
-    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(BotEnvidoLevel.FALTA_ENVIDO);
+    assertThat(((BotAction.CallEnvido) action).call().level()).isEqualTo(
+        BotEnvidoLevel.FALTA_ENVIDO);
   }
 
   @Test
@@ -381,6 +383,76 @@ class BotDecisionEngineTest {
     final var action = engine.decide(view);
     // ForceRivalBustRule (prioridad=30) vence a LockAndMazoRule (prioridad=40)
     assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
+  }
+
+  // T034 — Integración del pipeline para los Casos 6 y 7 (US3)
+
+  @Test
+  void pipeline_caso6_unoAuno_rival_canta_truco_acepta_por_encierro_mano_no_jugada() {
+
+    // Caso 6: marcador 1-1, rival canta truco, primera mano sin jugar, bot con carta alta
+    // (ANCHO_ESPADA) → la probabilidad de ganar la mano no jugada supera el umbral →
+    // LockAndMazoRule responde QUIERO apostando al encierro posterior.
+    // ResponseToRivalCallRule no opera (rechazar/aceptar no pasa al rival a 1-1).
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(ANCHO_ESPADA, CUATRO_COPA), 1, 1, null, 0, 0, false,
+        false, false, false, POINTS_TO_WIN, 3);
+    final var truco = new TrucoContext(null,
+        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), TRUCO_CALL);
+    final var view = new BotMatchView(game, truco,
+        new EnvidoContext(List.of(), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.RespondTruco.class);
+    assertThat(((BotAction.RespondTruco) action).response()).isEqualTo(BotTrucoResponse.QUIERO);
+  }
+
+  @Test
+  void pipeline_caso6_unoAuno_acepta_truco_cuando_ya_gano_la_primera_mano() {
+
+    // Caso 6 (variante): 1-1, primera mano ya ganada por el bot, carta alta restante →
+    // la probabilidad de ganar la siguiente mano sigue siendo alta → QUIERO.
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(ANCHO_ESPADA, CUATRO_COPA), 1, 1, null, 0, 1, false,
+        false, false, false, POINTS_TO_WIN, 2);
+    final var truco = new TrucoContext(null,
+        List.of(BotTrucoResponse.QUIERO, BotTrucoResponse.NO_QUIERO), TRUCO_CALL);
+    final var view = new BotMatchView(game, truco,
+        new EnvidoContext(List.of(), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.RespondTruco.class);
+    assertThat(((BotAction.RespondTruco) action).response()).isEqualTo(BotTrucoResponse.QUIERO);
+  }
+
+  @Test
+  void pipeline_caso7_ceroAcero_vale_cuatro_encadena_escalera_para_encierro() {
+
+    // Caso 7: marcador 0-0, vale cuatro disponible, bot controla la mano con carta alta →
+    // si el rival rechaza el bot gana el match (0+3==3); la prob de mano no jugada es alta →
+    // LockAndMazoRule escala a vale cuatro (encadenar cantos para dejar sin respuesta).
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var valeCuatro = new BotTrucoCall(4, 3);
+    final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1, false, true, false,
+        false, POINTS_TO_WIN, 1);
+    final var view = new BotMatchView(game, new TrucoContext(valeCuatro, List.of(), null),
+        new EnvidoContext(List.of(), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.CallTruco.class);
+    assertThat(((BotAction.CallTruco) action).call()).isEqualTo(valeCuatro);
+  }
+
+  @Test
+  void pipeline_caso7_ceroAcero_no_escala_truco_simple_si_rechazo_no_gana_el_match() {
+
+    // Caso 7 (negativo): 0-0 con truco simple (stakeIfRejected=1 → 0+1≠3) no dispara la
+    // escalada de encierro (requiere botWinsIfRejected); cae al fallback de VE, que con
+    // personalidad pasiva y random alto juega carta en vez de farolear truco.
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1, false, true, false,
+        false, POINTS_TO_WIN, 1);
+    final var view = new BotMatchView(game, new TrucoContext(TRUCO_CALL, List.of(), null),
+        new EnvidoContext(List.of(), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.PlayCard.class);
   }
 
 }

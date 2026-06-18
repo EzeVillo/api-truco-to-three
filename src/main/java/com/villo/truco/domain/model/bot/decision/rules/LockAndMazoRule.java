@@ -11,9 +11,18 @@ import java.util.Optional;
 
 public final class LockAndMazoRule implements DecisionRule {
 
-  private static final int PRIORITY = 40;
   // Umbral para aceptar un truco del rival apostando a ganar la mano no jugada
   static final double ACCEPT_THRESHOLD = 0.60;
+  private static final int PRIORITY = 40;
+
+  private static BotCard bestBeatingCard(final List<BotCard> myCards,
+      final BotCard rivalCardPlayed) {
+
+    final int rivalRank = rivalCardPlayed.trucoRank();
+    return myCards.stream().filter(c -> c.trucoRank() > rivalRank)
+        .min(Comparator.comparingInt(BotCard::trucoRank)).orElseGet(
+            () -> myCards.stream().min(Comparator.comparingInt(BotCard::trucoRank)).orElseThrow());
+  }
 
   @Override
   public Optional<BotAction> apply(final DecisionContext ctx) {
@@ -84,25 +93,20 @@ public final class LockAndMazoRule implements DecisionRule {
     final var pending = truco.currentCall();
     final var arithmetic = ctx.arithmetic();
     // No intervenir si ResponseToRivalCallRule ya debe manejar el caso (rival bust)
-    if (arithmetic.rivalBustsIfAccepts(pending.stakeIfAccepted())
-        || arithmetic.rivalBustsIfRejects(pending.stakeIfRejected())) {
+    if (arithmetic.rivalBustsIfAccepts(pending.stakeIfAccepted()) || arithmetic.rivalBustsIfRejects(
+        pending.stakeIfRejected())) {
+      return Optional.empty();
+    }
+    // La aceptación por encierro cierra el match solo si lleva al bot exacto a pointsToWin
+    // (p. ej. 1-1 al truco: 1+2=3). Fuera de eso cede al fallback de VE, que puede escalar
+    // para llegar a 3 (p. ej. 0-0 al truco: conviene retruco antes que aceptar 2).
+    if (!arithmetic.botReachesExact(pending.stakeIfAccepted())) {
       return Optional.empty();
     }
     if (ctx.unplayedHand().probabilityHighCardWinsUnplayedTrick() > ACCEPT_THRESHOLD) {
       return Optional.of(new BotAction.RespondTruco(BotTrucoResponse.QUIERO));
     }
     return Optional.empty();
-  }
-
-  private static BotCard bestBeatingCard(final List<BotCard> myCards,
-      final BotCard rivalCardPlayed) {
-
-    final int rivalRank = rivalCardPlayed.trucoRank();
-    return myCards.stream()
-        .filter(c -> c.trucoRank() > rivalRank)
-        .min(Comparator.comparingInt(BotCard::trucoRank))
-        .orElseGet(
-            () -> myCards.stream().min(Comparator.comparingInt(BotCard::trucoRank)).orElseThrow());
   }
 
 }

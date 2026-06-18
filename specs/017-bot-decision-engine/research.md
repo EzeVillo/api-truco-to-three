@@ -77,7 +77,7 @@ quedan marcadores NEEDS CLARIFICATION.
   de enumeración garantiza resultados exactos y consistentes con el cálculo del tanto.
 - **Alternativas**: heurística de "fuerza de mano" (`HandStrengthEvaluator`) como proxy — se
   conserva solo para desempates de bajo impacto en el fallback de VE, no para la decisión del Caso
-  6.
+    6.
 
 ## D6 — Regla de desempate en empate de probabilidad (FR-017 / edge case 2-2 50/50)
 
@@ -130,3 +130,40 @@ quedan marcadores NEEDS CLARIFICATION.
 - **Rationale**: Cobertura ≥ 70% y trazabilidad 1:1 con los Acceptance Scenarios y SC-001..SC-006.
 - **Alternativas**: solo tests de integración — rechazado: no aislaría regresiones por regla ni
   permitiría afirmar el límite determinístico (SC-005).
+
+## D11 — Validación empírica SC-007 (win-rate motor rediseñado vs. anterior)
+
+- **Decisión**: validar SC-007 con un benchmark empírico que enfrenta el motor rediseñado contra una
+  réplica del motor anterior (`LegacyBotDecisionEngine`, test-only, copia fiel del código pre-T016)
+  reutilizando el camino bot-vs-bot a nivel de dominio: se crea un `Match` (partida única a 3
+  puntos, `MatchRules(1, false)`), y por cada turno se resuelve qué bot actúa
+  (`hasAvailableActions()`), se traduce la vista con `MatchToBotACL` y se despacha la `BotAction` al
+  match — exactamente como `ExecuteBotTurnCommandHandler` + `AdvanceBotVsBotMatchCommandHandler`.
+  Implementado en `BotEngineHeadToHeadBenchmarkTest` (alternando seats para anular el sesgo de
+  mano; `@Disabled` porque el reparto y los motores no son deterministas).
+- **Muestra**: 120 partidas, 0 errores, todas completadas. Win-rate observado del motor
+  rediseñado: **≈ 0,29 (29%)**, claramente por debajo del objetivo SC-007 (≥ 60%).
+- **Conclusión**: **SC-007 NO cumplido** con la implementación actual. El motor rediseñado pierde
+  frente a la baseline anterior en juego empírico.
+- **Análisis de causa probable**: la diferencia entre ambos motores es únicamente el conjunto de
+  reglas forzadas (`ResponseToRivalCall`, `EnvidoAtTwoTwo`, `ForceRivalBust`, `LockAndMazo`) sobre
+  un fallback de VE idéntico al motor anterior. Las reglas de envido (Casos 1/4) son
+  especificadas y unitariamente correctas, pero de alta varianza. El culpable más likely es la
+  **escalada de `LockAndMazoRule` (Caso 7)**: dispara `CallTruco` del nivel más alto disponible
+  cuando `botWinsIfRejected && probabilidadDeManoAlta`, **sin verificar el encierro real** (rival
+  sin cartas / camino al lock). Si el rival acepta y el bot gana la mano (probabilidad alta por
+  construcción), el bot **se pasa de 3 y pierde**. La spec Caso 7 exige escaladar “para dejar al
+  rival sin respuesta cuando se quede sin cartas”; la implementación actual no modela ese plan
+  multi-turno y se autobusta.
+- **Follow-up requerido** (fuera del alcance de T037, que es solo validación + documentación):
+    1. Re-gatear la escalada de `LockAndMazoRule` (Caso 7) sobre una condición de encierro real
+       (p. ej. `lock.leadsToLockIfAdvance()` / rival sin cartas), no sobre mera aritmética +
+       probabilidad de mano.
+    2. Re-tunear `ForceRivalBustRule` (umbral 0,70) y verificar que las trampas de envido no
+       autobusten al bot cuando `botBustsIfWins(acceptedPointsIfBotWins)`.
+    3. Re-correr `BotEngineHeadToHeadBenchmarkTest` (habilitándolo temporalmente) tras cada ajuste
+       hasta alcanzar ≥ 60%.
+- **Rationale**: documentar honestamente el resultado empírico aunque no cumpla el objetivo es
+  parte del contrato de T037 (“documentar la muestra en research.md”). No se falsifica SC-007.
+- **Artefactos**: `src/test/java/.../bot/LegacyBotDecisionEngine.java` (adversario),
+  `src/test/java/.../commands/BotEngineHeadToHeadBenchmarkTest.java` (benchmark `@Disabled`).
