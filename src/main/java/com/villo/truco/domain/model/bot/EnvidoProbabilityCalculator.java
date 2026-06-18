@@ -6,7 +6,7 @@ import com.villo.truco.domain.shared.cards.valueobjects.Suit;
 import java.util.ArrayList;
 import java.util.List;
 
-final class EnvidoProbabilityCalculator {
+public final class EnvidoProbabilityCalculator {
 
   private static final int[] CARD_NUMBERS = {1, 2, 3, 4, 5, 6, 7, 10, 11, 12};
 
@@ -14,7 +14,7 @@ final class EnvidoProbabilityCalculator {
 
   }
 
-  static double probabilityBotWinsTanto(final EnvidoScoring scoring, final List<BotCard> myCards,
+  public static double probabilityBotWinsTanto(final EnvidoScoring scoring, final List<BotCard> myCards,
       final int myEnvido, final boolean isMano, final BotCard rivalCardPlayed) {
 
     final var known = new ArrayList<Card>();
