@@ -348,4 +348,39 @@ class BotDecisionEngineTest {
     assertThat(((BotAction.RespondTruco) action).response()).isEqualTo(BotTrucoResponse.NO_QUIERO);
   }
 
+  // T030 — Integración del pipeline para los Casos 2 y 3 (US2)
+
+  @Test
+  void pipeline_caso2_avanza_jugando_carta_sin_cantar_truco_cuando_lideraEncierro() {
+
+    // Caso 2: 0-0, bot tiene 2 cartas, mata la del rival, rival sin cartas →
+    // LockAndMazoRule avanza (juega carta) en lugar de cantar truco prematuramente,
+    // incluso con personalidad agresiva (que de otro modo llamaría truco)
+    final var engine = new BotDecisionEngine(AGGRESSIVE, ALWAYS_ZERO, SCORING);
+    final var game = new GameContext(List.of(ANCHO_ESPADA, CUATRO_COPA), 0, 0, CUATRO_COPA, 0, 1,
+        false, true, false, false, POINTS_TO_WIN, 0);
+    final var view = new BotMatchView(game, new TrucoContext(TRUCO_CALL, List.of(), null),
+        new EnvidoContext(List.of(), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    assertThat(action).isInstanceOf(BotAction.PlayCard.class);
+  }
+
+  @Test
+  void pipeline_caso3_dosAUno_abajo_canta_envido_que_fuerza_bust_rival_ante_encierro() {
+
+    // Caso 3: 1-2 (abajo), rival jugó carta débil que bot mata, rival sin cartas →
+    // ForceRivalBustRule (prioridad=30) toma precedencia sobre LockAndMazoRule (prioridad=40):
+    // bot canta envido que, si rival gana, lo pasa de 3 (tanto bajo → pérdida muy probable)
+    final var engine = new BotDecisionEngine(PASSIVE, ALWAYS_ONE, SCORING);
+    final var game = new GameContext(List.of(ANCHO_ESPADA, CUATRO_COPA), 1, 2, CUATRO_COPA, 0, 1,
+        false, true, false, false, POINTS_TO_WIN, 0);
+    // acceptedPointsIfRivalWins=2 → rivalScore(2)+2=4>3 → rival se pasa si acepta y gana
+    final var bustingEnvido = new BotEnvidoCall(2, 2, 1, BotEnvidoLevel.ENVIDO);
+    final var view = new BotMatchView(game, new TrucoContext(TRUCO_CALL, List.of(), null),
+        new EnvidoContext(List.of(bustingEnvido), List.of(), List.of(), null));
+    final var action = engine.decide(view);
+    // ForceRivalBustRule (prioridad=30) vence a LockAndMazoRule (prioridad=40)
+    assertThat(action).isInstanceOf(BotAction.CallEnvido.class);
+  }
+
 }
