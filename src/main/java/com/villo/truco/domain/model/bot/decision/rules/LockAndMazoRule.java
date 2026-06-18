@@ -33,12 +33,13 @@ public final class LockAndMazoRule implements DecisionRule {
         // rivalCardsInHand=0 and bot can beat → leadsToLockIfAdvance was false only because myCards.size()==1
         return Optional.of(new BotAction.PlayCard(bestBeatingCard(game.myCards(), game.rivalCardPlayed())));
       }
-      // Bot can't beat rival's card, rival can't QYMVAM → call truco or fold after truco accepted
-      if (game.canFold()) {
-        return Optional.of(new BotAction.Fold());
-      }
+      // Bot can't beat rival's card, rival can't QYMVAM
+      // Call truco first; fold only when truco was already called/accepted (no call left)
       if (truco.canCall()) {
         return Optional.of(new BotAction.CallTruco(truco.availableCall()));
+      }
+      if (game.canFold()) {
+        return Optional.of(new BotAction.Fold());
       }
     }
 

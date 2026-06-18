@@ -9,6 +9,7 @@ import com.villo.truco.domain.model.bot.decision.UnplayedHandProbability;
 import com.villo.truco.domain.model.bot.decision.rules.EnvidoAtTwoTwoRule;
 import com.villo.truco.domain.model.bot.decision.rules.ExpectedValueFallbackRule;
 import com.villo.truco.domain.model.bot.decision.rules.ForceRivalBustRule;
+import com.villo.truco.domain.model.bot.decision.rules.LockAndMazoRule;
 import com.villo.truco.domain.model.bot.decision.rules.ResponseToRivalCallRule;
 import com.villo.truco.domain.model.bot.valueobjects.BotAction;
 import com.villo.truco.domain.model.bot.valueobjects.BotMatchView;
@@ -40,6 +41,7 @@ public final class BotDecisionEngine {
     this.envidoScoring = envidoScoring;
     this.registry = new DecisionRuleRegistry(
         List.of(new ResponseToRivalCallRule(), new EnvidoAtTwoTwoRule(), new ForceRivalBustRule(),
+            new LockAndMazoRule(),
             new ExpectedValueFallbackRule(personality, random, envidoScoring)));
   }
 
