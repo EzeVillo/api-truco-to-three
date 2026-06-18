@@ -32,7 +32,7 @@ independientes.
 
 **Purpose**: crear la estructura del subpaquete nuevo.
 
-- [ ] T001 Crear el subpaquete `decision` y `decision/rules` con `package-info.java` (resumen en
+- [X] T001 Crear el subpaquete `decision` y `decision/rules` con `package-info.java` (resumen en
   español del propósito del motor) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/package-info.java` y
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/package-info.java`
@@ -49,67 +49,67 @@ jugada legal en toda posición (FR-018), sin las tácticas forzadas todavía.
 
 ### Primitivas determinísticas (info cierta)
 
-- [ ] T002 [P] Tests de `MatchArithmetic` (rival/bot se pasa si acepta/gana/rechaza, llega exacto,
+- [X] T002 [P] Tests de `MatchArithmetic` (rival/bot se pasa si acepta/gana/rechaza, llega exacto,
   gana match si pierdo) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/MatchArithmeticTest.java`
-- [ ] T003 Implementar `MatchArithmetic` (generaliza `TrucoScoreStrategy`, opera sobre
+- [X] T003 Implementar `MatchArithmetic` (generaliza `TrucoScoreStrategy`, opera sobre
   `myScore/rivalScore/pointsToWin` y stakes) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/MatchArithmetic.java`
-- [ ] T004 [P] Tests de `CardLockAnalyzer` (rival sin cartas, no puede QYMVAM, mata carta jugada,
+- [X] T004 [P] Tests de `CardLockAnalyzer` (rival sin cartas, no puede QYMVAM, mata carta jugada,
   encierro al avanzar, parda) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/CardLockAnalyzerTest.java`
-- [ ] T005 Implementar `CardLockAnalyzer` (deriva de `BotMatchView.GameContext`: `rivalCardsInHand`,
+- [X] T005 Implementar `CardLockAnalyzer` (deriva de `BotMatchView.GameContext`: `rivalCardsInHand`,
   `myCards`, `rivalCardPlayed`, `handsPlayedCount`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/CardLockAnalyzer.java`
 
 ### Proveedores de probabilidad (única info oculta)
 
-- [ ] T006 [P] Tests de `TantoProbabilityProvider` (más probable ganar/perder/empate, delega en
+- [X] T006 [P] Tests de `TantoProbabilityProvider` (más probable ganar/perder/empate, delega en
   `EnvidoProbabilityCalculator`) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/TantoProbabilityProviderTest.java`
-- [ ] T007 Implementar `TantoProbabilityProvider` (fachada sobre `EnvidoProbabilityCalculator` +
+- [X] T007 Implementar `TantoProbabilityProvider` (fachada sobre `EnvidoProbabilityCalculator` +
   `EnvidoScoring`, con `moreLikelyToLoseTanto()/moreLikelyToWinTanto()/tie()`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/TantoProbabilityProvider.java`
-- [ ] T008 [P] Tests de `UnplayedHandProbability` (prob. de que la carta alta gane una mano no
+- [X] T008 [P] Tests de `UnplayedHandProbability` (prob. de que la carta alta gane una mano no
   jugada, enumerando mazo restante) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/UnplayedHandProbabilityTest.java`
-- [ ] T009 Implementar `UnplayedHandProbability` (calculadora combinatoria estilo
+- [X] T009 Implementar `UnplayedHandProbability` (calculadora combinatoria estilo
   `EnvidoProbabilityCalculator`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/UnplayedHandProbability.java`
 
 ### SPI, contexto, registry y fallback
 
-- [ ] T010 [P] Definir SPI `DecisionRule` (`Optional<BotAction> apply(DecisionContext)`,
+- [X] T010 [P] Definir SPI `DecisionRule` (`Optional<BotAction> apply(DecisionContext)`,
   `int priority()`, `String name()`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/DecisionRule.java`
-- [ ] T011 Implementar `DecisionContext` (VO inmutable: `view`, `arithmetic`, `lock`, `tanto`,
+- [X] T011 Implementar `DecisionContext` (VO inmutable: `view`, `arithmetic`, `lock`, `tanto`,
   `unplayedHand`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/DecisionContext.java` (depende de T003,
   T005, T007, T009, T010)
-- [ ] T012 [P] Tests de `ExpectedValueFallbackRule` (siempre devuelve acción legal; personalidad
+- [X] T012 [P] Tests de `ExpectedValueFallbackRule` (siempre devuelve acción legal; personalidad
   modula faroles; nunca QYMVAM sin cartas; nunca VE negativo) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/ExpectedValueFallbackRuleTest.java`
-- [ ] T013 Implementar `ExpectedValueFallbackRule` (Caso 8; reutiliza `HandStrengthEvaluator` +
+- [X] T013 Implementar `ExpectedValueFallbackRule` (Caso 8; reutiliza `HandStrengthEvaluator` +
   `CardSelectionPolicy` + `BotPersonality` + `Random`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/ExpectedValueFallbackRule.java` (
   depende de T011)
-- [ ] T014 [P] Tests de `DecisionRuleRegistry` (evalúa por prioridad, primer `Optional` no vacío
+- [X] T014 [P] Tests de `DecisionRuleRegistry` (evalúa por prioridad, primer `Optional` no vacío
   gana, siempre resuelve vía fallback) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/DecisionRuleRegistryTest.java`
-- [ ] T015 Implementar `DecisionRuleRegistry` (lista ordenada por `priority()`, `decide(ctx)`) en
+- [X] T015 Implementar `DecisionRuleRegistry` (lista ordenada por `priority()`, `decide(ctx)`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/DecisionRuleRegistry.java` (depende de
   T010, T013)
 
 ### Reescritura del motor (manteniendo el contrato externo)
 
-- [ ] T016 Reescribir `BotDecisionEngine.decide(view)` para construir `DecisionContext` y correr el
+- [X] T016 Reescribir `BotDecisionEngine.decide(view)` para construir `DecisionContext` y correr el
   `DecisionRuleRegistry`, **conservando la firma del constructor** `(BotPersonality, EnvidoScoring)`
   para no tocar call sites en
   `src/main/java/com/villo/truco/domain/model/bot/BotDecisionEngine.java` (depende de T011, T015)
-- [ ] T017 Adaptar `BotDecisionEngineTest` existente al nuevo flujo (smoke: el motor devuelve acción
+- [X] T017 Adaptar `BotDecisionEngineTest` existente al nuevo flujo (smoke: el motor devuelve acción
   legal por VE) en `src/test/java/com/villo/truco/domain/model/bot/BotDecisionEngineTest.java` (
   depende de T016)
-- [ ] T018 Verificar que la app compila y que `ExecuteBotTurnCommandHandler` y
+- [X] T018 Verificar que la app compila y que `ExecuteBotTurnCommandHandler` y
   `AdvanceBotVsBotMatchCommandHandler` siguen invocando el motor sin cambios (
   `./gradlew test --tests "com.villo.truco.application.*Bot*"`) (depende de T016)
 
@@ -129,31 +129,31 @@ depender del encierro de cartas.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T019 [P] [US1] Tests de `ResponseToRivalCallRule` (Caso 5: "no quiero" o QYMVAM que pasa al
+- [X] T019 [P] [US1] Tests de `ResponseToRivalCallRule` (Caso 5: "no quiero" o QYMVAM que pasa al
   rival; nunca QYMVAM sin cartas) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/ResponseToRivalCallRuleTest.java`
-- [ ] T020 [P] [US1] Tests de `ForceRivalBustRule` (Caso 4: 2-1 arriba con prob. alta de perder →
+- [X] T020 [P] [US1] Tests de `ForceRivalBustRule` (Caso 4: 2-1 arriba con prob. alta de perder →
   nivel de envido que obliga a aceptar y pasa al rival; umbral configurable) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/ForceRivalBustRuleTest.java`
-- [ ] T021 [P] [US1] Tests de `EnvidoAtTwoTwoRule` (Caso 1: 2-2 canta sí o sí; envido si más
+- [X] T021 [P] [US1] Tests de `EnvidoAtTwoTwoRule` (Caso 1: 2-2 canta sí o sí; envido si más
   probable perder, falta si más probable ganar; empate 50/50 → falta) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/EnvidoAtTwoTwoRuleTest.java`
 
 ### Implementation for User Story 1
 
-- [ ] T022 [P] [US1] Implementar `ResponseToRivalCallRule` (usa `MatchArithmetic` +
+- [X] T022 [P] [US1] Implementar `ResponseToRivalCallRule` (usa `MatchArithmetic` +
   `CardLockAnalyzer` para legalidad de QYMVAM) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/ResponseToRivalCallRule.java`
-- [ ] T023 [P] [US1] Implementar `ForceRivalBustRule` con constante
+- [X] T023 [P] [US1] Implementar `ForceRivalBustRule` con constante
   `HIGH_LOSS_PROBABILITY_THRESHOLD` (0.70) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/ForceRivalBustRule.java`
-- [ ] T024 [P] [US1] Implementar `EnvidoAtTwoTwoRule` con desempate documentado (50/50 → falta
+- [X] T024 [P] [US1] Implementar `EnvidoAtTwoTwoRule` con desempate documentado (50/50 → falta
   envido) en `src/main/java/com/villo/truco/domain/model/bot/decision/rules/EnvidoAtTwoTwoRule.java`
-- [ ] T025 [US1] Registrar las tres reglas en `DecisionRuleRegistry` con prioridad superior al
+- [X] T025 [US1] Registrar las tres reglas en `DecisionRuleRegistry` con prioridad superior al
   fallback de VE en
   `src/main/java/com/villo/truco/domain/model/bot/decision/DecisionRuleRegistry.java` (depende de
   T022, T023, T024)
-- [ ] T026 [US1] Tests de integración del pipeline para los Casos 1, 4 y 5 en
+- [X] T026 [US1] Tests de integración del pipeline para los Casos 1, 4 y 5 en
   `src/test/java/com/villo/truco/domain/model/bot/BotDecisionEngineTest.java` (depende de T025)
 
 **Checkpoint**: US1 funcional e independientemente testeable (forzar que el rival se pase).
