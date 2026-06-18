@@ -171,20 +171,20 @@ y avanza, y (b) gana o canta truco e irse al mazo en la 3ª mano según mate o n
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T027 [P] [US2] Tests de `LockAndMazoRule` (Caso 2: avanzar sin cantar; ganar si mata la
+- [X] T027 [P] [US2] Tests de `LockAndMazoRule` (Caso 2: avanzar sin cantar; ganar si mata la
   última; cantar truco + irse al mazo si no la mata; rival no puede QYMVAM) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/LockAndMazoRuleTest.java`
 
 ### Implementation for User Story 2
 
-- [ ] T028 [US2] Implementar `LockAndMazoRule` (usa `CardLockAnalyzer`: `leadsToLockIfAdvance`,
+- [X] T028 [US2] Implementar `LockAndMazoRule` (usa `CardLockAnalyzer`: `leadsToLockIfAdvance`,
   `botHasGuaranteedTrick`, `rivalCannotQYMVAM`) en
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/LockAndMazoRule.java`
-- [ ] T029 [US2] Registrar `LockAndMazoRule` en `DecisionRuleRegistry` con su prioridad relativa a
+- [X] T029 [US2] Registrar `LockAndMazoRule` en `DecisionRuleRegistry` con su prioridad relativa a
   las reglas de US1 en
   `src/main/java/com/villo/truco/domain/model/bot/decision/DecisionRuleRegistry.java` (depende de
   T028)
-- [ ] T030 [US2] Tests de integración del pipeline para el Caso 2 y el Caso 3 (2-1 abajo:
+- [X] T030 [US2] Tests de integración del pipeline para el Caso 2 y el Caso 3 (2-1 abajo:
   `ForceRivalBustRule` → `LockAndMazoRule`) en
   `src/test/java/com/villo/truco/domain/model/bot/BotDecisionEngineTest.java` (depende de T029,
   T025)
@@ -204,16 +204,16 @@ que el bot acepta/escala hacia el encierro y, si la 1ª mano no se jugó, apuest
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T031 [P] [US3] Tests de la lógica de escalera/aceptación en `LockAndMazoRule` (Caso 7: 0-0
+- [X] T031 [P] [US3] Tests de la lógica de escalera/aceptación en `LockAndMazoRule` (Caso 7: 0-0
   vale cuatro; encadenar cantos para dejar sin respuesta) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/LockAndMazoRuleEscalationTest.java`
-- [ ] T032 [P] [US3] Tests de aceptación con mano no jugada (Caso 6: 1-1 rival canta truco; aceptar
+- [X] T032 [P] [US3] Tests de aceptación con mano no jugada (Caso 6: 1-1 rival canta truco; aceptar
   por encierro; apostar a la 1ª mano según probabilidad) en
   `src/test/java/com/villo/truco/domain/model/bot/decision/rules/LockAndMazoRuleUnplayedHandTest.java`
 
 ### Implementation for User Story 3
 
-- [ ] T033 [US3] Extender `LockAndMazoRule` con la escalera de cantos (retruco/vale cuatro) y el uso
+- [X] T033 [US3] Extender `LockAndMazoRule` con la escalera de cantos (retruco/vale cuatro) y el uso
   de `UnplayedHandProbability` para la mano no jugada en
   `src/main/java/com/villo/truco/domain/model/bot/decision/rules/LockAndMazoRule.java` (depende de
   T028)

@@ -114,9 +114,10 @@ class LockAndMazoRuleEscalationTest {
   }
 
   @Test
-  void no_escala_si_esta_respondiendo_al_rival() {
+  void acepta_truco_del_rival_cuando_mustRespond_y_carta_fuerte() {
 
-    // mustRespond=true: la lógica de respuesta a truco la maneja otro método/regla
+    // mustRespond=true: la escalada (CallTruco) no aplica; en su lugar handleMustRespond
+    // verifica la probabilidad de mano no jugada y devuelve QUIERO cuando es alta (ANCHO_ESPADA)
     final var game = new GameContext(List.of(ANCHO_ESPADA), 0, 0, null, 0, 1,
         false, true, false, false, POINTS_TO_WIN, 1);
     final var view = new BotMatchView(game,
@@ -125,8 +126,11 @@ class LockAndMazoRuleEscalationTest {
                 com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.NO_QUIERO),
             TRUCO_CALL),
         new EnvidoContext(List.of(), List.of(), List.of(), null));
-    // Cuando mustRespond, la escalada no aplica (el rival es quien cantó)
-    assertThat(new LockAndMazoRule().apply(ctx(view))).isEmpty();
+    final var result = new LockAndMazoRule().apply(ctx(view));
+    assertThat(result).isPresent();
+    assertThat(result.get()).isInstanceOf(BotAction.RespondTruco.class);
+    assertThat(((BotAction.RespondTruco) result.get()).response()).isEqualTo(
+        com.villo.truco.domain.model.bot.valueobjects.BotTrucoResponse.QUIERO);
   }
 
 }
