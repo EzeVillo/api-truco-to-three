@@ -156,10 +156,11 @@ Verificar si el cambio propuesto impacta la documentación del proyecto:
   context, una tabla, un enum, un flujo operativo o una regla de negocio? Si sí, listarlo
   explícitamente en la sección "Documentación a actualizar" del plan.
 
-- **`docs/CONTRATOS_API.md`**: ¿agrega un endpoint REST nuevo, modifica el shape de uno existente,
-  agrega/quita un eventType WebSocket, cambia enums, cambia reglas de negocio expuestas al frontend,
-  o vuelve falsa alguna afirmación existente? Si sí, indicar qué sección debe actualizarse y el
-  cambio concreto.
+- **`docs/contratos/`** (índice en **`docs/CONTRATOS_API.md`**): ¿agrega un endpoint REST nuevo,
+  modifica el shape de uno existente, agrega/quita un eventType WebSocket, cambia enums, cambia
+  reglas de negocio expuestas al frontend, o vuelve falsa alguna afirmación existente? Si sí,
+  indicar qué archivo de `docs/contratos/` debe actualizarse y el cambio concreto. Si agregás un
+  documento nuevo en `docs/contratos/`, sumalo a la tabla del índice `docs/CONTRATOS_API.md`.
 
 ---
 
