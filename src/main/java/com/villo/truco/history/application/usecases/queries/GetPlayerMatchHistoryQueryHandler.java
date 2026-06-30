@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public final class GetPlayerMatchHistoryQueryHandler implements GetPlayerMatchHistoryUseCase {
 
-  private static final String UNKNOWN_OPPONENT = "Desconocido";
+  private static final String UNKNOWN_OPPONENT = "Invitado";
 
   private final PlayerMatchHistoryRepository playerMatchHistoryRepository;
   private final UserQueryRepository userQueryRepository;
