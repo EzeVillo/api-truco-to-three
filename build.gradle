@@ -55,6 +55,10 @@ graalvmNative {
     }
 }
 
+tasks.named('bootRun') {
+    jvmArgs '-Duser.timezone=UTC'
+}
+
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy(tasks.named('jacocoTestReport'))
