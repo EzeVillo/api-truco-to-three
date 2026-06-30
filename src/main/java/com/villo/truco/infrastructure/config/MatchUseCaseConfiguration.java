@@ -36,6 +36,7 @@ import com.villo.truco.domain.ports.LeagueQueryRepository;
 import com.villo.truco.domain.ports.MatchEventNotifier;
 import com.villo.truco.domain.ports.MatchQueryRepository;
 import com.villo.truco.domain.ports.MatchRepository;
+import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.infrastructure.pipeline.UseCasePipeline;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -171,10 +172,11 @@ public class MatchUseCaseConfiguration {
 
   @Bean
   GetMatchStateUseCase getMatchStateQueryHandler(
-      final MatchTimeoutProperties matchTimeoutProperties) {
+      final MatchTimeoutProperties matchTimeoutProperties,
+      final SpectatorshipRepository spectatorshipRepository) {
 
-    return new GetMatchStateQueryHandler(this.matchQueryRepository, this.publicActorResolver,
-        matchTimeoutProperties.getPlayTimeoutSeconds() * 1000L,
+    return new GetMatchStateQueryHandler(this.matchQueryRepository, spectatorshipRepository,
+        this.publicActorResolver, matchTimeoutProperties.getPlayTimeoutSeconds() * 1000L,
         matchTimeoutProperties.getLobbyTimeoutSeconds() * 1000L);
   }
 

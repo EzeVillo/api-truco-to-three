@@ -38,8 +38,8 @@ class MatchUseCaseConfigurationTest {
         mock(ApplicationEventPublisher.class), new GameplayRecordingProperties());
 
     assertThat(configuration.matchResolver()).isNotNull();
-    assertThat(
-        configuration.getMatchStateQueryHandler(mock(MatchTimeoutProperties.class))).isNotNull();
+    assertThat(configuration.getMatchStateQueryHandler(mock(MatchTimeoutProperties.class),
+        mock(SpectatorshipRepository.class))).isNotNull();
   }
 
 }

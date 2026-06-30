@@ -31,7 +31,8 @@ public final class MatchStateDTOAssembler {
     this.lobbyTimeoutMillis = lobbyTimeoutMillis;
   }
 
-  public MatchStateDTO toDto(final Match match, final PlayerId requestingPlayer) {
+  public MatchStateDTO toDto(final Match match, final PlayerId requestingPlayer,
+      final int spectatorCount) {
 
     final var actorNames = this.resolveActorNames(match);
 
@@ -52,7 +53,7 @@ public final class MatchStateDTOAssembler {
     return new MatchStateDTO(match.getId().value().toString(), match.getStatus().name(), viewerSeat,
         playerOneUsername, playerTwoUsername, match.getGamesToPlay(), match.getScorePlayerOne(),
         match.getScorePlayerTwo(), match.getGamesWonPlayerOne(), match.getGamesWonPlayerTwo(),
-        matchWinner, lobbyState, roundState, match.getStateVersion());
+        matchWinner, lobbyState, roundState, spectatorCount, match.getStateVersion());
   }
 
   private LobbyStateDTO toLobbyStateDto(final Match match) {
@@ -64,7 +65,7 @@ public final class MatchStateDTOAssembler {
 
     final var deadline =
         match.getLastActivityAt() != null ? match.getLastActivityAt().toEpochMilli()
-            + this.lobbyTimeoutMillis : null;
+                                            + this.lobbyTimeoutMillis : null;
 
     return new LobbyStateDTO(match.getVisibility().name(), match.getJoinCode().value(), deadline,
         match.isReadyPlayerOne(), match.isReadyPlayerTwo());

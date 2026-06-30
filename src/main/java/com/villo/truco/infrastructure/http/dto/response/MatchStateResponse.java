@@ -20,6 +20,7 @@ public record MatchStateResponse(
     @Schema(description = "Nombre visible del ganador final de la partida, si existe", example = "juancho") String matchWinner,
     @Schema(description = "Estado de la sala de espera; presente solo antes de empezar", nullable = true) LobbyStateResponse lobby,
     @Schema(description = "Estado de la ronda actual; presente solo en juego", nullable = true) RoundStateResponse roundGame,
+    @Schema(description = "Cantidad de espectadores activos en la partida", example = "3") int spectatorCount,
     @Schema(description = "Version de estado transicional del match", example = "5") long stateVersion) {
 
   public static MatchStateResponse from(final MatchStateDTO dto) {
@@ -29,7 +30,7 @@ public record MatchStateResponse(
         dto.scorePlayerTwo(), dto.gamesWonPlayerOne(), dto.gamesWonPlayerTwo(), dto.matchWinner(),
         LobbyStateResponse.from(dto.lobby()),
         dto.currentRound() != null ? RoundStateResponse.from(dto.currentRound()) : null,
-        dto.stateVersion());
+        dto.spectatorCount(), dto.stateVersion());
   }
 
 }

@@ -7,16 +7,20 @@ import com.villo.truco.application.queries.GetMatchStateQuery;
 import com.villo.truco.domain.model.match.Match;
 import com.villo.truco.domain.model.match.exceptions.PlayerNotInMatchException;
 import com.villo.truco.domain.model.match.valueobjects.MatchRules;
+import com.villo.truco.domain.model.spectator.Spectatorship;
 import com.villo.truco.domain.ports.MatchQueryRepository;
+import com.villo.truco.domain.ports.SpectatorshipRepository;
 import com.villo.truco.domain.shared.pagination.CursorPageQuery;
 import com.villo.truco.domain.shared.pagination.CursorPageResult;
 import com.villo.truco.domain.shared.valueobjects.GamesToPlay;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.support.TestPublicActorResolver;
+import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +31,7 @@ class GetMatchStateQueryHandlerTest {
   private PlayerId playerOne;
   private PlayerId playerTwo;
   private Match match;
+  private MatchQueryRepository queryRepo;
   private GetMatchStateQueryHandler handler;
 
   @BeforeEach
@@ -37,7 +42,7 @@ class GetMatchStateQueryHandlerTest {
     this.match = Match.createReady(playerOne, playerTwo,
         MatchRules.fromGamesToPlay(GamesToPlay.of(3), true));
 
-    final MatchQueryRepository queryRepo = new MatchQueryRepository() {
+    this.queryRepo = new MatchQueryRepository() {
 
       @Override
       public Optional<Match> findById(final MatchId matchId) {
@@ -82,8 +87,9 @@ class GetMatchStateQueryHandlerTest {
       }
     };
 
-    this.handler = new GetMatchStateQueryHandler(queryRepo, TestPublicActorResolver.guestStyle(),
-        30_000L, 300_000L);
+    this.handler = new GetMatchStateQueryHandler(this.queryRepo,
+        NoOpSpectatorshipRepository.INSTANCE, TestPublicActorResolver.guestStyle(), 30_000L,
+        300_000L);
   }
 
   @Test
@@ -123,6 +129,51 @@ class GetMatchStateQueryHandlerTest {
     assertThat(result.scorePlayerOne()).isZero();
     assertThat(result.scorePlayerTwo()).isZero();
     assertThat(result.currentRound()).isNull();
+  }
+
+  @Test
+  @DisplayName("expone el contador de espectadores activos del repositorio")
+  void exposesActiveSpectatorCount() {
+
+    final SpectatorshipRepository spectatorshipRepo = new SpectatorshipRepository() {
+
+      @Override
+      public Optional<Spectatorship> findBySpectatorId(final PlayerId spectatorId) {
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<Spectatorship> findActiveByMatchId(final MatchId matchId) {
+
+        return List.of();
+      }
+
+      @Override
+      public Set<PlayerId> findActiveSpectatorIdsByMatchId(final MatchId matchId) {
+
+        return Set.of();
+      }
+
+      @Override
+      public int countActiveByMatchId(final MatchId matchId) {
+
+        return 2;
+      }
+
+      @Override
+      public void save(final Spectatorship spectatorship) {
+
+      }
+    };
+    final var handlerWithSpectators = new GetMatchStateQueryHandler(this.queryRepo,
+        spectatorshipRepo, TestPublicActorResolver.guestStyle(), 30_000L, 300_000L);
+    final var query = new GetMatchStateQuery(match.getId().value().toString(),
+        playerOne.value().toString());
+
+    final var result = handlerWithSpectators.handle(query);
+
+    assertThat(result.spectatorCount()).isEqualTo(2);
   }
 
 }
