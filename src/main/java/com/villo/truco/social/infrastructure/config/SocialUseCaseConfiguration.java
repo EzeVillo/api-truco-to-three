@@ -58,6 +58,7 @@ import com.villo.truco.social.application.usecases.queries.GetResourceInvitation
 import com.villo.truco.social.application.usecases.queries.GetSentFriendshipRequestsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetSentResourceInvitationsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetSocialPreferencesQueryHandler;
+import com.villo.truco.social.domain.model.friendship.FriendshipLimitPolicy;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
@@ -72,7 +73,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 @Configuration
-@EnableConfigurationProperties(SocialInvitationExpirationProperties.class)
+@EnableConfigurationProperties({SocialInvitationExpirationProperties.class,
+    SocialFriendshipProperties.class})
 public class SocialUseCaseConfiguration {
 
   private final UserQueryRepository userQueryRepository;
@@ -89,6 +91,7 @@ public class SocialUseCaseConfiguration {
   private final UseCasePipeline retryTransactionalPipeline;
   private final UseCasePipeline transactionalPipeline;
   private final SocialInvitationExpirationProperties socialInvitationExpirationProperties;
+  private final SocialFriendshipProperties socialFriendshipProperties;
   private final Clock clock;
 
   public SocialUseCaseConfiguration(final UserQueryRepository userQueryRepository,
@@ -104,7 +107,7 @@ public class SocialUseCaseConfiguration {
       @Qualifier("retryTransactionalPipeline") final UseCasePipeline retryTransactionalPipeline,
       @Qualifier("transactionalPipeline") final UseCasePipeline transactionalPipeline,
       final SocialInvitationExpirationProperties socialInvitationExpirationProperties,
-      final Clock clock) {
+      final SocialFriendshipProperties socialFriendshipProperties, final Clock clock) {
 
     this.userQueryRepository = userQueryRepository;
     this.friendshipQueryRepository = friendshipQueryRepository;
@@ -120,6 +123,7 @@ public class SocialUseCaseConfiguration {
     this.retryTransactionalPipeline = retryTransactionalPipeline;
     this.transactionalPipeline = transactionalPipeline;
     this.socialInvitationExpirationProperties = socialInvitationExpirationProperties;
+    this.socialFriendshipProperties = socialFriendshipProperties;
     this.clock = clock;
   }
 
@@ -198,11 +202,18 @@ public class SocialUseCaseConfiguration {
   }
 
   @Bean
+  FriendshipLimitPolicy friendshipLimitPolicy() {
+
+    return new FriendshipLimitPolicy(this.friendshipQueryRepository,
+        this.socialFriendshipProperties.maxFriends());
+  }
+
+  @Bean
   RequestFriendshipUseCase requestFriendshipUseCase(final SocialEventNotifier socialEventNotifier) {
 
     final var handler = new RequestFriendshipCommandHandler(this.socialUserGuard(),
         this.friendshipQueryRepository, this.friendshipRepository, this.socialPreferencesRepository,
-        socialEventNotifier);
+        this.friendshipLimitPolicy(), socialEventNotifier);
     return this.transactionalPipeline.wrap(handler)::handle;
   }
 
@@ -225,7 +236,8 @@ public class SocialUseCaseConfiguration {
   AcceptFriendshipUseCase acceptFriendshipUseCase(final SocialEventNotifier socialEventNotifier) {
 
     final var handler = new AcceptFriendshipCommandHandler(this.socialUserGuard(),
-        this.friendshipQueryRepository, this.friendshipRepository, socialEventNotifier);
+        this.friendshipQueryRepository, this.friendshipRepository, this.friendshipLimitPolicy(),
+        socialEventNotifier);
     return this.retryTransactionalPipeline.wrap(handler)::handle;
   }
 

@@ -6,6 +6,7 @@ import com.villo.truco.social.application.exceptions.FriendshipRequestAlreadyPen
 import com.villo.truco.social.application.ports.in.RequestFriendshipUseCase;
 import com.villo.truco.social.application.services.SocialUserGuard;
 import com.villo.truco.social.domain.model.friendship.Friendship;
+import com.villo.truco.social.domain.model.friendship.FriendshipLimitPolicy;
 import com.villo.truco.social.domain.model.preferences.SocialPreferences;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
@@ -19,18 +20,21 @@ public final class RequestFriendshipCommandHandler implements RequestFriendshipU
   private final FriendshipQueryRepository friendshipQueryRepository;
   private final FriendshipRepository friendshipRepository;
   private final SocialPreferencesRepository socialPreferencesRepository;
+  private final FriendshipLimitPolicy friendshipLimitPolicy;
   private final SocialEventNotifier socialEventNotifier;
 
   public RequestFriendshipCommandHandler(final SocialUserGuard socialUserGuard,
       final FriendshipQueryRepository friendshipQueryRepository,
       final FriendshipRepository friendshipRepository,
       final SocialPreferencesRepository socialPreferencesRepository,
+      final FriendshipLimitPolicy friendshipLimitPolicy,
       final SocialEventNotifier socialEventNotifier) {
 
     this.socialUserGuard = Objects.requireNonNull(socialUserGuard);
     this.friendshipQueryRepository = Objects.requireNonNull(friendshipQueryRepository);
     this.friendshipRepository = Objects.requireNonNull(friendshipRepository);
     this.socialPreferencesRepository = Objects.requireNonNull(socialPreferencesRepository);
+    this.friendshipLimitPolicy = Objects.requireNonNull(friendshipLimitPolicy);
     this.socialEventNotifier = Objects.requireNonNull(socialEventNotifier);
   }
 
@@ -48,6 +52,9 @@ public final class RequestFriendshipCommandHandler implements RequestFriendshipU
         .ifPresent(existing -> {
           throw new FriendshipAlreadyExistsException();
         });
+
+    this.friendshipLimitPolicy.ensureSelfHasRoom(command.requesterId());
+    this.friendshipLimitPolicy.ensureCounterpartHasRoom(addresseeId);
 
     final var addresseeAcceptsRequests = this.socialPreferencesRepository.findByPlayerId(
         addresseeId).map(SocialPreferences::acceptsFriendRequests).orElse(true);

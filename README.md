@@ -90,7 +90,9 @@ games.
   `GET`/`PUT /api/social/preferences` exponen las preferencias de privacidad del jugador: con
   `acceptsFriendRequests = false` los demas no pueden enviarle nuevas solicitudes de amistad
   (`422 FriendRequestsNotAcceptedException`), aunque el jugador puede seguir enviando solicitudes y
-  las pendientes previas no se ven afectadas.
+  las pendientes previas no se ven afectadas. El maximo de amigos por jugador es configurable
+  (`truco.social.friendship.max-friends`, default `10`) y se valida al enviar y al aceptar
+  solicitudes (`422 FriendLimitReachedException`).
 - Profile:
   tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
   interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea

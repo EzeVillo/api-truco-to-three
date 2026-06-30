@@ -60,6 +60,14 @@ public interface SpringDataFriendshipRepository extends JpaRepository<Friendship
       """)
   List<FriendshipJpaEntity> findAcceptedByPlayer(@Param("playerId") UUID playerId);
 
+  @Query("""
+      select count(f)
+      from FriendshipJpaEntity f
+      where f.status = 'ACCEPTED'
+        and (f.requesterId = :playerId or f.addresseeId = :playerId)
+      """)
+  int countAcceptedByPlayer(@Param("playerId") UUID playerId);
+
   List<FriendshipJpaEntity> findByAddresseeIdAndStatusOrderByIdDesc(UUID addresseeId,
       String status);
 

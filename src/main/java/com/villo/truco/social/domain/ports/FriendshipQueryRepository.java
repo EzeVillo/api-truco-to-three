@@ -21,6 +21,8 @@ public interface FriendshipQueryRepository {
 
   List<Friendship> findAcceptedByPlayer(PlayerId playerId);
 
+  int countAcceptedByPlayer(PlayerId playerId);
+
   List<Friendship> findPendingReceivedBy(PlayerId playerId);
 
   List<Friendship> findPendingSentBy(PlayerId playerId);

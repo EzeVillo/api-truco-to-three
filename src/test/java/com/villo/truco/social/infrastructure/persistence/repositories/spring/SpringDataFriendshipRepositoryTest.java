@@ -66,6 +66,26 @@ class SpringDataFriendshipRepositoryTest {
   }
 
   @Test
+  @DisplayName("countAcceptedByPlayer cuenta solo amistades aceptadas del jugador en ambos roles")
+  void countAcceptedByPlayerCountsOnlyAcceptedRelationships() {
+
+    final var playerId = UUID.randomUUID();
+    final var firstFriendId = UUID.randomUUID();
+    final var secondFriendId = UUID.randomUUID();
+    final var otherId = UUID.randomUUID();
+
+    this.repository.save(entity(playerId, firstFriendId, "ACCEPTED"));
+    this.repository.save(entity(secondFriendId, playerId, "ACCEPTED"));
+    this.repository.save(entity(playerId, otherId, "PENDING"));
+    this.repository.save(entity(otherId, playerId, "DECLINED"));
+    this.repository.save(entity(firstFriendId, secondFriendId, "ACCEPTED"));
+
+    final var count = this.repository.countAcceptedByPlayer(playerId);
+
+    assertThat(count).isEqualTo(2);
+  }
+
+  @Test
   @DisplayName("findAcceptedByPlayers devuelve solo la amistad aceptada entre ambos jugadores")
   void findAcceptedByPlayersReturnsOnlyAcceptedRelationship() {
 

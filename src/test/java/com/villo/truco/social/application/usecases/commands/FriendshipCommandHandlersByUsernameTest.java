@@ -2,8 +2,10 @@ package com.villo.truco.social.application.usecases.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +18,8 @@ import com.villo.truco.social.application.exceptions.FriendshipNotFoundException
 import com.villo.truco.social.application.exceptions.SocialUserNotFoundException;
 import com.villo.truco.social.application.services.SocialUserGuard;
 import com.villo.truco.social.domain.model.friendship.Friendship;
+import com.villo.truco.social.domain.model.friendship.FriendshipLimitPolicy;
+import com.villo.truco.social.domain.model.friendship.exceptions.FriendLimitReachedException;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
 import java.util.Map;
@@ -44,8 +48,9 @@ class FriendshipCommandHandlersByUsernameTest {
 
     final var friendshipRepo = mock(FriendshipRepository.class);
     final var handler = new AcceptFriendshipCommandHandler(new SocialUserGuard(userRepo),
-        friendshipQueryRepo, friendshipRepo, events -> {
-    });
+        friendshipQueryRepo, friendshipRepo, new FriendshipLimitPolicy(friendshipQueryRepo, 10),
+        events -> {
+        });
 
     handler.handle(new AcceptFriendshipCommand("juancho", addressee.value().toString()));
 
@@ -53,6 +58,35 @@ class FriendshipCommandHandlersByUsernameTest {
     verify(friendshipRepo).save(captor.capture());
     assertThat(captor.getValue()).isSameAs(friendship);
     assertThat(friendship.isAccepted()).isTrue();
+  }
+
+  @Test
+  @DisplayName("accept rechaza cuando el que acepta ya alcanzó el máximo de amigos")
+  void acceptRejectsWhenAccepterReachedFriendLimit() {
+
+    final var requester = PlayerId.generate();
+    final var addressee = PlayerId.generate();
+    final var friendship = Friendship.request(requester, addressee, true);
+    final var userRepo = mock(UserQueryRepository.class);
+    when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(addressee, "martina"));
+    when(userRepo.findUserIdByUsername("juancho")).thenReturn(Optional.of(requester));
+
+    final var friendshipQueryRepo = mock(FriendshipQueryRepository.class);
+    when(friendshipQueryRepo.findPendingByRequesterAndAddressee(requester, addressee)).thenReturn(
+        Optional.of(friendship));
+    when(friendshipQueryRepo.countAcceptedByPlayer(addressee)).thenReturn(10);
+
+    final var friendshipRepo = mock(FriendshipRepository.class);
+    final var handler = new AcceptFriendshipCommandHandler(new SocialUserGuard(userRepo),
+        friendshipQueryRepo, friendshipRepo, new FriendshipLimitPolicy(friendshipQueryRepo, 10),
+        events -> {
+        });
+
+    assertThatThrownBy(() -> handler.handle(
+        new AcceptFriendshipCommand("juancho", addressee.value().toString()))).isInstanceOf(
+        FriendLimitReachedException.class);
+    verify(friendshipRepo, never()).save(any());
+    assertThat(friendship.isAccepted()).isFalse();
   }
 
   @Test
@@ -67,7 +101,7 @@ class FriendshipCommandHandlersByUsernameTest {
 
     final var handler = new AcceptFriendshipCommandHandler(new SocialUserGuard(userRepo),
         mock(FriendshipQueryRepository.class), friendship -> {
-    }, events -> {
+    }, new FriendshipLimitPolicy(mock(FriendshipQueryRepository.class), 10), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(
@@ -125,7 +159,7 @@ class FriendshipCommandHandlersByUsernameTest {
 
     final var handler = new AcceptFriendshipCommandHandler(new SocialUserGuard(userRepo),
         mock(FriendshipQueryRepository.class), friendship -> {
-    }, events -> {
+    }, new FriendshipLimitPolicy(mock(FriendshipQueryRepository.class), 10), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(

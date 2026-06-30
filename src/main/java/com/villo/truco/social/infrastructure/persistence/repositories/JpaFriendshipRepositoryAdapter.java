@@ -92,6 +92,12 @@ public class JpaFriendshipRepositoryAdapter implements FriendshipRepository,
   }
 
   @Override
+  public int countAcceptedByPlayer(final PlayerId playerId) {
+
+    return this.springDataFriendshipRepository.countAcceptedByPlayer(playerId.value());
+  }
+
+  @Override
   public List<Friendship> findPendingReceivedBy(final PlayerId playerId) {
 
     return this.springDataFriendshipRepository.findByAddresseeIdAndStatusOrderByIdDesc(

@@ -17,6 +17,8 @@ import com.villo.truco.social.application.exceptions.FriendshipRequestAlreadyPen
 import com.villo.truco.social.application.exceptions.SocialFeatureRequiresRegisteredUserException;
 import com.villo.truco.social.application.services.SocialUserGuard;
 import com.villo.truco.social.domain.model.friendship.Friendship;
+import com.villo.truco.social.domain.model.friendship.FriendshipLimitPolicy;
+import com.villo.truco.social.domain.model.friendship.exceptions.FriendLimitReachedException;
 import com.villo.truco.social.domain.model.friendship.exceptions.FriendRequestsNotAcceptedException;
 import com.villo.truco.social.domain.model.preferences.SocialPreferences;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
@@ -45,7 +47,8 @@ class RequestFriendshipCommandHandlerTest {
     final var friendshipRepo = mock(FriendshipRepository.class);
     final var preferencesRepo = mock(SocialPreferencesRepository.class);
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
-        friendshipQueryRepo, friendshipRepo, preferencesRepo, events -> {
+        friendshipQueryRepo, friendshipRepo, preferencesRepo,
+        new FriendshipLimitPolicy(friendshipQueryRepo, 10), events -> {
     });
 
     handler.handle(new RequestFriendshipCommand(requester.value().toString(), "martina"));
@@ -73,7 +76,8 @@ class RequestFriendshipCommandHandlerTest {
         Optional.of(SocialPreferences.reconstruct(addressee, false)));
 
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
-        friendshipQueryRepo, friendshipRepo, preferencesRepo, events -> {
+        friendshipQueryRepo, friendshipRepo, preferencesRepo,
+        new FriendshipLimitPolicy(friendshipQueryRepo, 10), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(
@@ -98,8 +102,9 @@ class RequestFriendshipCommandHandlerTest {
 
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
         friendshipQueryRepo, friendship -> {
-    }, mock(SocialPreferencesRepository.class), events -> {
-    });
+    }, mock(SocialPreferencesRepository.class), new FriendshipLimitPolicy(friendshipQueryRepo, 10),
+        events -> {
+        });
 
     assertThatThrownBy(() -> handler.handle(
         new RequestFriendshipCommand(requester.value().toString(), "martina"))).isInstanceOf(
@@ -123,12 +128,63 @@ class RequestFriendshipCommandHandlerTest {
 
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
         friendshipQueryRepo, friendship -> {
-    }, mock(SocialPreferencesRepository.class), events -> {
-    });
+    }, mock(SocialPreferencesRepository.class), new FriendshipLimitPolicy(friendshipQueryRepo, 10),
+        events -> {
+        });
 
     assertThatThrownBy(() -> handler.handle(
         new RequestFriendshipCommand(requester.value().toString(), "martina"))).isInstanceOf(
         FriendshipAlreadyExistsException.class);
+  }
+
+  @Test
+  @DisplayName("rechaza si el solicitante ya alcanzó el máximo de amigos")
+  void rejectsWhenRequesterReachedFriendLimit() {
+
+    final var requester = PlayerId.generate();
+    final var addressee = PlayerId.generate();
+    final var userRepo = mock(UserQueryRepository.class);
+    when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(requester, "juancho"));
+    when(userRepo.findUserIdByUsername("martina")).thenReturn(Optional.of(addressee));
+
+    final var friendshipQueryRepo = mock(FriendshipQueryRepository.class);
+    when(friendshipQueryRepo.countAcceptedByPlayer(requester)).thenReturn(10);
+    final var friendshipRepo = mock(FriendshipRepository.class);
+
+    final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
+        friendshipQueryRepo, friendshipRepo, mock(SocialPreferencesRepository.class),
+        new FriendshipLimitPolicy(friendshipQueryRepo, 10), events -> {
+    });
+
+    assertThatThrownBy(() -> handler.handle(
+        new RequestFriendshipCommand(requester.value().toString(), "martina"))).isInstanceOf(
+        FriendLimitReachedException.class);
+    verify(friendshipRepo, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("rechaza si el destinatario ya alcanzó el máximo de amigos")
+  void rejectsWhenAddresseeReachedFriendLimit() {
+
+    final var requester = PlayerId.generate();
+    final var addressee = PlayerId.generate();
+    final var userRepo = mock(UserQueryRepository.class);
+    when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(requester, "juancho"));
+    when(userRepo.findUserIdByUsername("martina")).thenReturn(Optional.of(addressee));
+
+    final var friendshipQueryRepo = mock(FriendshipQueryRepository.class);
+    when(friendshipQueryRepo.countAcceptedByPlayer(addressee)).thenReturn(10);
+    final var friendshipRepo = mock(FriendshipRepository.class);
+
+    final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
+        friendshipQueryRepo, friendshipRepo, mock(SocialPreferencesRepository.class),
+        new FriendshipLimitPolicy(friendshipQueryRepo, 10), events -> {
+    });
+
+    assertThatThrownBy(() -> handler.handle(
+        new RequestFriendshipCommand(requester.value().toString(), "martina"))).isInstanceOf(
+        FriendLimitReachedException.class);
+    verify(friendshipRepo, never()).save(any());
   }
 
   @Test
@@ -139,7 +195,8 @@ class RequestFriendshipCommandHandlerTest {
     final var userRepo = mock(UserQueryRepository.class);
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
         mock(FriendshipQueryRepository.class), friendship -> {
-    }, mock(SocialPreferencesRepository.class), events -> {
+    }, mock(SocialPreferencesRepository.class),
+        new FriendshipLimitPolicy(mock(FriendshipQueryRepository.class), 10), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(

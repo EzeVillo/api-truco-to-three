@@ -33,6 +33,8 @@ truco:
   observability:
     scheduler-heartbeat-max-age-ms: 180000
   social:
+    friendship:
+      max-friends: 10
     invitation-expiration:
       match: PT10M
       league: PT30M

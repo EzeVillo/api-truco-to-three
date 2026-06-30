@@ -4,6 +4,7 @@ import com.villo.truco.social.application.commands.AcceptFriendshipCommand;
 import com.villo.truco.social.application.exceptions.FriendshipNotFoundException;
 import com.villo.truco.social.application.ports.in.AcceptFriendshipUseCase;
 import com.villo.truco.social.application.services.SocialUserGuard;
+import com.villo.truco.social.domain.model.friendship.FriendshipLimitPolicy;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
 import com.villo.truco.social.domain.ports.SocialEventNotifier;
@@ -14,16 +15,19 @@ public final class AcceptFriendshipCommandHandler implements AcceptFriendshipUse
   private final SocialUserGuard socialUserGuard;
   private final FriendshipQueryRepository friendshipQueryRepository;
   private final FriendshipRepository friendshipRepository;
+  private final FriendshipLimitPolicy friendshipLimitPolicy;
   private final SocialEventNotifier socialEventNotifier;
 
   public AcceptFriendshipCommandHandler(final SocialUserGuard socialUserGuard,
       final FriendshipQueryRepository friendshipQueryRepository,
       final FriendshipRepository friendshipRepository,
+      final FriendshipLimitPolicy friendshipLimitPolicy,
       final SocialEventNotifier socialEventNotifier) {
 
     this.socialUserGuard = Objects.requireNonNull(socialUserGuard);
     this.friendshipQueryRepository = Objects.requireNonNull(friendshipQueryRepository);
     this.friendshipRepository = Objects.requireNonNull(friendshipRepository);
+    this.friendshipLimitPolicy = Objects.requireNonNull(friendshipLimitPolicy);
     this.socialEventNotifier = Objects.requireNonNull(socialEventNotifier);
   }
 
@@ -36,6 +40,10 @@ public final class AcceptFriendshipCommandHandler implements AcceptFriendshipUse
     final var friendship = this.friendshipQueryRepository.findPendingByRequesterAndAddressee(
         requesterId, command.actorId()).orElseThrow(
         () -> FriendshipNotFoundException.pendingRequestFromUsername(command.username()));
+
+    this.friendshipLimitPolicy.ensureSelfHasRoom(command.actorId());
+    this.friendshipLimitPolicy.ensureCounterpartHasRoom(requesterId);
+
     friendship.accept(command.actorId());
 
     this.friendshipRepository.save(friendship);
