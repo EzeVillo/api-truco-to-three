@@ -33,7 +33,7 @@ class FriendshipCommandHandlersByUsernameTest {
 
     final var requester = PlayerId.generate();
     final var addressee = PlayerId.generate();
-    final var friendship = Friendship.request(requester, addressee);
+    final var friendship = Friendship.request(requester, addressee, true);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(addressee, "martina"));
     when(userRepo.findUserIdByUsername("juancho")).thenReturn(Optional.of(requester));

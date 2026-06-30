@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,8 +17,11 @@ import com.villo.truco.social.application.exceptions.FriendshipRequestAlreadyPen
 import com.villo.truco.social.application.exceptions.SocialFeatureRequiresRegisteredUserException;
 import com.villo.truco.social.application.services.SocialUserGuard;
 import com.villo.truco.social.domain.model.friendship.Friendship;
+import com.villo.truco.social.domain.model.friendship.exceptions.FriendRequestsNotAcceptedException;
+import com.villo.truco.social.domain.model.preferences.SocialPreferences;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
+import com.villo.truco.social.domain.ports.SocialPreferencesRepository;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -39,8 +43,9 @@ class RequestFriendshipCommandHandlerTest {
 
     final var friendshipQueryRepo = mock(FriendshipQueryRepository.class);
     final var friendshipRepo = mock(FriendshipRepository.class);
+    final var preferencesRepo = mock(SocialPreferencesRepository.class);
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
-        friendshipQueryRepo, friendshipRepo, events -> {
+        friendshipQueryRepo, friendshipRepo, preferencesRepo, events -> {
     });
 
     handler.handle(new RequestFriendshipCommand(requester.value().toString(), "martina"));
@@ -52,12 +57,38 @@ class RequestFriendshipCommandHandlerTest {
   }
 
   @Test
+  @DisplayName("rechaza si el destinatario no acepta solicitudes de amistad")
+  void rejectsWhenAddresseeDoesNotAcceptRequests() {
+
+    final var requester = PlayerId.generate();
+    final var addressee = PlayerId.generate();
+    final var userRepo = mock(UserQueryRepository.class);
+    when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(requester, "juancho"));
+    when(userRepo.findUserIdByUsername("martina")).thenReturn(Optional.of(addressee));
+
+    final var friendshipQueryRepo = mock(FriendshipQueryRepository.class);
+    final var friendshipRepo = mock(FriendshipRepository.class);
+    final var preferencesRepo = mock(SocialPreferencesRepository.class);
+    when(preferencesRepo.findByPlayerId(addressee)).thenReturn(
+        Optional.of(SocialPreferences.reconstruct(addressee, false)));
+
+    final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
+        friendshipQueryRepo, friendshipRepo, preferencesRepo, events -> {
+    });
+
+    assertThatThrownBy(() -> handler.handle(
+        new RequestFriendshipCommand(requester.value().toString(), "martina"))).isInstanceOf(
+        FriendRequestsNotAcceptedException.class);
+    verify(friendshipRepo, never()).save(any());
+  }
+
+  @Test
   @DisplayName("rechaza si ya hay una solicitud pendiente entre los jugadores")
   void rejectsDuplicatedPendingFriendshipRequest() {
 
     final var requester = PlayerId.generate();
     final var addressee = PlayerId.generate();
-    final var existing = Friendship.request(requester, addressee);
+    final var existing = Friendship.request(requester, addressee, true);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(requester, "juancho"));
     when(userRepo.findUserIdByUsername("martina")).thenReturn(Optional.of(addressee));
@@ -67,7 +98,7 @@ class RequestFriendshipCommandHandlerTest {
 
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
         friendshipQueryRepo, friendship -> {
-    }, events -> {
+    }, mock(SocialPreferencesRepository.class), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(
@@ -81,7 +112,7 @@ class RequestFriendshipCommandHandlerTest {
 
     final var requester = PlayerId.generate();
     final var addressee = PlayerId.generate();
-    final var existing = Friendship.request(requester, addressee);
+    final var existing = Friendship.request(requester, addressee, true);
     existing.accept(addressee);
     final var userRepo = mock(UserQueryRepository.class);
     when(userRepo.findUsernamesByIds(anySet())).thenReturn(Map.of(requester, "juancho"));
@@ -92,7 +123,7 @@ class RequestFriendshipCommandHandlerTest {
 
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
         friendshipQueryRepo, friendship -> {
-    }, events -> {
+    }, mock(SocialPreferencesRepository.class), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(
@@ -108,7 +139,7 @@ class RequestFriendshipCommandHandlerTest {
     final var userRepo = mock(UserQueryRepository.class);
     final var handler = new RequestFriendshipCommandHandler(new SocialUserGuard(userRepo),
         mock(FriendshipQueryRepository.class), friendship -> {
-    }, events -> {
+    }, mock(SocialPreferencesRepository.class), events -> {
     });
 
     assertThatThrownBy(() -> handler.handle(

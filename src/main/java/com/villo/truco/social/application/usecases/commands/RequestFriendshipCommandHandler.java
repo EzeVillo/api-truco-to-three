@@ -6,9 +6,11 @@ import com.villo.truco.social.application.exceptions.FriendshipRequestAlreadyPen
 import com.villo.truco.social.application.ports.in.RequestFriendshipUseCase;
 import com.villo.truco.social.application.services.SocialUserGuard;
 import com.villo.truco.social.domain.model.friendship.Friendship;
+import com.villo.truco.social.domain.model.preferences.SocialPreferences;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
 import com.villo.truco.social.domain.ports.SocialEventNotifier;
+import com.villo.truco.social.domain.ports.SocialPreferencesRepository;
 import java.util.Objects;
 
 public final class RequestFriendshipCommandHandler implements RequestFriendshipUseCase {
@@ -16,16 +18,19 @@ public final class RequestFriendshipCommandHandler implements RequestFriendshipU
   private final SocialUserGuard socialUserGuard;
   private final FriendshipQueryRepository friendshipQueryRepository;
   private final FriendshipRepository friendshipRepository;
+  private final SocialPreferencesRepository socialPreferencesRepository;
   private final SocialEventNotifier socialEventNotifier;
 
   public RequestFriendshipCommandHandler(final SocialUserGuard socialUserGuard,
       final FriendshipQueryRepository friendshipQueryRepository,
       final FriendshipRepository friendshipRepository,
+      final SocialPreferencesRepository socialPreferencesRepository,
       final SocialEventNotifier socialEventNotifier) {
 
     this.socialUserGuard = Objects.requireNonNull(socialUserGuard);
     this.friendshipQueryRepository = Objects.requireNonNull(friendshipQueryRepository);
     this.friendshipRepository = Objects.requireNonNull(friendshipRepository);
+    this.socialPreferencesRepository = Objects.requireNonNull(socialPreferencesRepository);
     this.socialEventNotifier = Objects.requireNonNull(socialEventNotifier);
   }
 
@@ -44,7 +49,11 @@ public final class RequestFriendshipCommandHandler implements RequestFriendshipU
           throw new FriendshipAlreadyExistsException();
         });
 
-    final var friendship = Friendship.request(command.requesterId(), addresseeId);
+    final var addresseeAcceptsRequests = this.socialPreferencesRepository.findByPlayerId(
+        addresseeId).map(SocialPreferences::acceptsFriendRequests).orElse(true);
+
+    final var friendship = Friendship.request(command.requesterId(), addresseeId,
+        addresseeAcceptsRequests);
     this.friendshipRepository.save(friendship);
     this.socialEventNotifier.publishDomainEvents(friendship.getFriendshipDomainEvents());
     friendship.clearDomainEvents();

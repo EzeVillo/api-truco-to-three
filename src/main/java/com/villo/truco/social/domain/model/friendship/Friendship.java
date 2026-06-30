@@ -9,6 +9,7 @@ import com.villo.truco.social.domain.model.friendship.events.FriendRequestReceiv
 import com.villo.truco.social.domain.model.friendship.events.FriendshipDomainEvent;
 import com.villo.truco.social.domain.model.friendship.events.FriendshipRemovedEvent;
 import com.villo.truco.social.domain.model.friendship.exceptions.CannotFriendYourselfException;
+import com.villo.truco.social.domain.model.friendship.exceptions.FriendRequestsNotAcceptedException;
 import com.villo.truco.social.domain.model.friendship.exceptions.FriendshipNotAcceptedException;
 import com.villo.truco.social.domain.model.friendship.exceptions.FriendshipNotPendingException;
 import com.villo.truco.social.domain.model.friendship.exceptions.OnlyAddresseeCanRespondFriendRequestException;
@@ -40,12 +41,16 @@ public final class Friendship extends AggregateBase<FriendshipId> {
     return new Friendship(id, requesterId, addresseeId, status);
   }
 
-  public static Friendship request(final PlayerId requesterId, final PlayerId addresseeId) {
+  public static Friendship request(final PlayerId requesterId, final PlayerId addresseeId,
+      final boolean addresseeAcceptsRequests) {
 
     Objects.requireNonNull(requesterId, "Requester id cannot be null");
     Objects.requireNonNull(addresseeId, "Addressee id cannot be null");
     if (requesterId.equals(addresseeId)) {
       throw new CannotFriendYourselfException();
+    }
+    if (!addresseeAcceptsRequests) {
+      throw new FriendRequestsNotAcceptedException();
     }
 
     final var friendship = new Friendship(FriendshipId.generate(), requesterId, addresseeId,

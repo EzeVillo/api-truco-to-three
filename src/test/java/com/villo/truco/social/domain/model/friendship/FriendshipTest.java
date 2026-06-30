@@ -7,6 +7,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.social.domain.model.friendship.events.FriendRequestAcceptedEvent;
 import com.villo.truco.social.domain.model.friendship.events.FriendRequestReceivedEvent;
 import com.villo.truco.social.domain.model.friendship.exceptions.CannotFriendYourselfException;
+import com.villo.truco.social.domain.model.friendship.exceptions.FriendRequestsNotAcceptedException;
 import com.villo.truco.social.domain.model.friendship.exceptions.OnlyAddresseeCanRespondFriendRequestException;
 import com.villo.truco.social.domain.model.friendship.valueobjects.FriendshipStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ class FriendshipTest {
     final var requester = PlayerId.generate();
     final var addressee = PlayerId.generate();
 
-    final var friendship = Friendship.request(requester, addressee);
+    final var friendship = Friendship.request(requester, addressee, true);
 
     assertThat(friendship.getRequesterId()).isEqualTo(requester);
     assertThat(friendship.getAddresseeId()).isEqualTo(addressee);
@@ -37,7 +38,7 @@ class FriendshipTest {
 
     final var requester = PlayerId.generate();
     final var addressee = PlayerId.generate();
-    final var friendship = Friendship.request(requester, addressee);
+    final var friendship = Friendship.request(requester, addressee, true);
     friendship.clearDomainEvents();
 
     friendship.accept(addressee);
@@ -53,8 +54,19 @@ class FriendshipTest {
 
     final var player = PlayerId.generate();
 
-    assertThatThrownBy(() -> Friendship.request(player, player)).isInstanceOf(
+    assertThatThrownBy(() -> Friendship.request(player, player, true)).isInstanceOf(
         CannotFriendYourselfException.class);
+  }
+
+  @Test
+  @DisplayName("rechaza la solicitud si el destinatario no acepta solicitudes")
+  void rejectsRequestWhenAddresseeDoesNotAcceptRequests() {
+
+    final var requester = PlayerId.generate();
+    final var addressee = PlayerId.generate();
+
+    assertThatThrownBy(() -> Friendship.request(requester, addressee, false)).isInstanceOf(
+        FriendRequestsNotAcceptedException.class);
   }
 
   @Test
@@ -63,7 +75,7 @@ class FriendshipTest {
 
     final var requester = PlayerId.generate();
     final var addressee = PlayerId.generate();
-    final var friendship = Friendship.request(requester, addressee);
+    final var friendship = Friendship.request(requester, addressee, true);
 
     assertThatThrownBy(() -> friendship.accept(requester)).isInstanceOf(
         OnlyAddresseeCanRespondFriendRequestException.class);

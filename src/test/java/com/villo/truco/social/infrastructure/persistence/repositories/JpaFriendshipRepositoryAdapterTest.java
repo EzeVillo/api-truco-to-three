@@ -28,7 +28,7 @@ class JpaFriendshipRepositoryAdapterTest {
     final var springRepo = mock(SpringDataFriendshipRepository.class);
     final var mapper = mock(FriendshipMapper.class);
     final var adapter = new JpaFriendshipRepositoryAdapter(springRepo, mapper);
-    final var friendship = Friendship.request(PlayerId.generate(), PlayerId.generate());
+    final var friendship = Friendship.request(PlayerId.generate(), PlayerId.generate(), true);
     final var entity = new FriendshipJpaEntity();
     entity.setVersion(5);
     when(mapper.toEntity(friendship)).thenReturn(entity);
@@ -46,7 +46,7 @@ class JpaFriendshipRepositoryAdapterTest {
     final var springRepo = mock(SpringDataFriendshipRepository.class);
     final var mapper = mock(FriendshipMapper.class);
     final var adapter = new JpaFriendshipRepositoryAdapter(springRepo, mapper);
-    final var friendship = Friendship.request(PlayerId.generate(), PlayerId.generate());
+    final var friendship = Friendship.request(PlayerId.generate(), PlayerId.generate(), true);
     when(mapper.toEntity(friendship)).thenReturn(new FriendshipJpaEntity());
     when(springRepo.saveAndFlush(any())).thenThrow(
         new ObjectOptimisticLockingFailureException("Friendship", friendship.getId().value()));
@@ -82,7 +82,7 @@ class JpaFriendshipRepositoryAdapterTest {
     final var firstPlayerId = PlayerId.generate();
     final var secondPlayerId = PlayerId.generate();
     final var entity = new FriendshipJpaEntity();
-    final var friendship = Friendship.request(firstPlayerId, secondPlayerId);
+    final var friendship = Friendship.request(firstPlayerId, secondPlayerId, true);
     when(springRepo.findPendingByPlayers(firstPlayerId.value(), secondPlayerId.value())).thenReturn(
         java.util.Optional.of(entity));
     when(mapper.toDomain(entity)).thenReturn(friendship);
@@ -103,7 +103,7 @@ class JpaFriendshipRepositoryAdapterTest {
     final var requesterId = PlayerId.generate();
     final var addresseeId = PlayerId.generate();
     final var entity = new FriendshipJpaEntity();
-    final var friendship = Friendship.request(requesterId, addresseeId);
+    final var friendship = Friendship.request(requesterId, addresseeId, true);
     when(springRepo.findPendingByRequesterAndAddressee(requesterId.value(),
         addresseeId.value())).thenReturn(java.util.Optional.of(entity));
     when(mapper.toDomain(entity)).thenReturn(friendship);
@@ -124,7 +124,7 @@ class JpaFriendshipRepositoryAdapterTest {
     final var firstPlayerId = PlayerId.generate();
     final var secondPlayerId = PlayerId.generate();
     final var entity = new FriendshipJpaEntity();
-    final var friendship = Friendship.request(firstPlayerId, secondPlayerId);
+    final var friendship = Friendship.request(firstPlayerId, secondPlayerId, true);
     friendship.accept(secondPlayerId);
     when(
         springRepo.findAcceptedByPlayers(firstPlayerId.value(), secondPlayerId.value())).thenReturn(

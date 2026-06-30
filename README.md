@@ -87,6 +87,10 @@ games.
   `FRIEND_AVAILABILITY_STATE` al suscribirse y `FRIEND_AVAILABILITY_CHANGED` cuando cambia
   disponibilidad, online o spectate, sin exponer cartas ni estado privado. `friendshipId` queda solo
   como identidad interna del agregado y no forma parte del contrato publico REST/WebSocket.
+  `GET`/`PUT /api/social/preferences` exponen las preferencias de privacidad del jugador: con
+  `acceptsFriendRequests = false` los demas no pueden enviarle nuevas solicitudes de amistad
+  (`422 FriendRequestsNotAcceptedException`), aunque el jugador puede seguir enviando solicitudes y
+  las pendientes previas no se ven afectadas.
 - Profile:
   tracking de logros en tiempo real para usuarios registrados. Los logros se evalúan por game
   interno a `3` puntos y no se procesan en partidas contra bots. Al registrarse, se crea

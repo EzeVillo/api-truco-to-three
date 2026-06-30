@@ -23,8 +23,10 @@ import com.villo.truco.social.application.ports.in.GetFriendshipRequestsUseCase;
 import com.villo.truco.social.application.ports.in.GetResourceInvitationsUseCase;
 import com.villo.truco.social.application.ports.in.GetSentFriendshipRequestsUseCase;
 import com.villo.truco.social.application.ports.in.GetSentResourceInvitationsUseCase;
+import com.villo.truco.social.application.ports.in.GetSocialPreferencesUseCase;
 import com.villo.truco.social.application.ports.in.RemoveFriendshipUseCase;
 import com.villo.truco.social.application.ports.in.RequestFriendshipUseCase;
+import com.villo.truco.social.application.ports.in.UpdateSocialPreferencesUseCase;
 import com.villo.truco.social.application.ports.out.FriendOnlinePresencePort;
 import com.villo.truco.social.application.services.FriendActivityResolver;
 import com.villo.truco.social.application.services.FriendAvailabilityResolver;
@@ -47,6 +49,7 @@ import com.villo.truco.social.application.usecases.commands.DeclineResourceInvit
 import com.villo.truco.social.application.usecases.commands.ExpireResourceInvitationCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RemoveFriendshipCommandHandler;
 import com.villo.truco.social.application.usecases.commands.RequestFriendshipCommandHandler;
+import com.villo.truco.social.application.usecases.commands.UpdateSocialPreferencesCommandHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendActivityQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendAvailabilityQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetFriendsQueryHandler;
@@ -54,11 +57,13 @@ import com.villo.truco.social.application.usecases.queries.GetFriendshipRequests
 import com.villo.truco.social.application.usecases.queries.GetResourceInvitationsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetSentFriendshipRequestsQueryHandler;
 import com.villo.truco.social.application.usecases.queries.GetSentResourceInvitationsQueryHandler;
+import com.villo.truco.social.application.usecases.queries.GetSocialPreferencesQueryHandler;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.FriendshipRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationRepository;
 import com.villo.truco.social.domain.ports.SocialEventNotifier;
+import com.villo.truco.social.domain.ports.SocialPreferencesRepository;
 import java.time.Clock;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -73,6 +78,7 @@ public class SocialUseCaseConfiguration {
   private final UserQueryRepository userQueryRepository;
   private final FriendshipQueryRepository friendshipQueryRepository;
   private final FriendshipRepository friendshipRepository;
+  private final SocialPreferencesRepository socialPreferencesRepository;
   private final ResourceInvitationQueryRepository resourceInvitationQueryRepository;
   private final ResourceInvitationRepository resourceInvitationRepository;
   private final MatchQueryRepository matchQueryRepository;
@@ -88,6 +94,7 @@ public class SocialUseCaseConfiguration {
   public SocialUseCaseConfiguration(final UserQueryRepository userQueryRepository,
       final FriendshipQueryRepository friendshipQueryRepository,
       final FriendshipRepository friendshipRepository,
+      final SocialPreferencesRepository socialPreferencesRepository,
       final ResourceInvitationQueryRepository resourceInvitationQueryRepository,
       final ResourceInvitationRepository resourceInvitationRepository,
       final MatchQueryRepository matchQueryRepository,
@@ -102,6 +109,7 @@ public class SocialUseCaseConfiguration {
     this.userQueryRepository = userQueryRepository;
     this.friendshipQueryRepository = friendshipQueryRepository;
     this.friendshipRepository = friendshipRepository;
+    this.socialPreferencesRepository = socialPreferencesRepository;
     this.resourceInvitationQueryRepository = resourceInvitationQueryRepository;
     this.resourceInvitationRepository = resourceInvitationRepository;
     this.matchQueryRepository = matchQueryRepository;
@@ -193,7 +201,23 @@ public class SocialUseCaseConfiguration {
   RequestFriendshipUseCase requestFriendshipUseCase(final SocialEventNotifier socialEventNotifier) {
 
     final var handler = new RequestFriendshipCommandHandler(this.socialUserGuard(),
-        this.friendshipQueryRepository, this.friendshipRepository, socialEventNotifier);
+        this.friendshipQueryRepository, this.friendshipRepository, this.socialPreferencesRepository,
+        socialEventNotifier);
+    return this.transactionalPipeline.wrap(handler)::handle;
+  }
+
+  @Bean
+  GetSocialPreferencesUseCase getSocialPreferencesUseCase() {
+
+    return new GetSocialPreferencesQueryHandler(this.socialUserGuard(),
+        this.socialPreferencesRepository);
+  }
+
+  @Bean
+  UpdateSocialPreferencesUseCase updateSocialPreferencesUseCase() {
+
+    final var handler = new UpdateSocialPreferencesCommandHandler(this.socialUserGuard(),
+        this.socialPreferencesRepository);
     return this.transactionalPipeline.wrap(handler)::handle;
   }
 

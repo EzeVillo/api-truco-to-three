@@ -14,7 +14,7 @@ public final class FriendActivityTestFixtures {
 
   public static Friendship acceptedFriendship(final PlayerId requester, final PlayerId friend) {
 
-    final var friendship = Friendship.request(requester, friend);
+    final var friendship = Friendship.request(requester, friend, true);
     friendship.accept(friend);
     return friendship;
   }

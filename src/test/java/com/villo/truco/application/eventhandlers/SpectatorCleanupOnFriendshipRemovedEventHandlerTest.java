@@ -62,7 +62,7 @@ class SpectatorCleanupOnFriendshipRemovedEventHandlerTest {
   private static FriendshipRemovedEvent removedFriendship(final PlayerId requester,
       final PlayerId addressee) {
 
-    final var friendship = Friendship.request(requester, addressee);
+    final var friendship = Friendship.request(requester, addressee, true);
     friendship.accept(addressee);
     friendship.remove(requester);
     return (FriendshipRemovedEvent) friendship.getFriendshipDomainEvents().getLast();
