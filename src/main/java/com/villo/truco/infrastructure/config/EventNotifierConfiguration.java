@@ -45,6 +45,7 @@ import com.villo.truco.domain.ports.ChatRepository;
 import com.villo.truco.domain.ports.CupEventNotifier;
 import com.villo.truco.domain.ports.LeagueEventNotifier;
 import com.villo.truco.domain.ports.MatchEventNotifier;
+import com.villo.truco.history.infrastructure.eventhandlers.HistoryMatchDomainEventHandler;
 import com.villo.truco.infrastructure.events.CompositeChatEventNotifier;
 import com.villo.truco.infrastructure.events.CompositeCupEventNotifier;
 import com.villo.truco.infrastructure.events.CompositeLeagueEventNotifier;
@@ -210,7 +211,8 @@ public class EventNotifierConfiguration {
       final MatchPresenceEventTranslator matchPresenceEventTranslator,
       final FriendActivityMatchEventTranslator friendActivityMatchEventTranslator,
       final ChatMatchGameStartedEventHandler chatMatchGameStartedHandler,
-      final CampaignMatchDomainEventHandler campaignMatchDomainEventHandler) {
+      final CampaignMatchDomainEventHandler campaignMatchDomainEventHandler,
+      final HistoryMatchDomainEventHandler historyMatchDomainEventHandler) {
 
     final List<MatchDomainEventHandler<?>> handlers = List.of(this.matchNotificationEventTranslator,
         this.publicMatchLobbyEventTranslator, this.spectatorNotificationEventTranslator,
@@ -219,8 +221,9 @@ public class EventNotifierConfiguration {
         this.chatMatchAbandonedHandler(), this.chatMatchForfeitedHandler(),
         this.spectatorCleanupOnMatchEndEventHandler, this.matchInvitationExpirationEventTranslator,
         this.profileMatchDomainEventHandler, campaignMatchDomainEventHandler,
-        this.matchFinishedRematchSessionCreator, this.matchTimeoutEventHandler,
-        matchPresenceEventTranslator, friendActivityMatchEventTranslator);
+        historyMatchDomainEventHandler, this.matchFinishedRematchSessionCreator,
+        this.matchTimeoutEventHandler, matchPresenceEventTranslator,
+        friendActivityMatchEventTranslator);
     return new MatchDomainEventDispatcher(handlers);
   }
 

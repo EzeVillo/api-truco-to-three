@@ -28,7 +28,7 @@ Base URL (local):
 | [04 · Copas](contratos/04-copas.md)                                  | Crear/unirse/listar copas, bracket, estados y avance automático                                                                |
 | [05 · Chat](contratos/05-chat.md)                                    | Enviar y obtener mensajes, chat por recurso padre                                                                              |
 | [06 · Social](contratos/06-social.md)                                | Amistades, invitaciones sociales y expiración configurable                                                                     |
-| [07 · Perfil, presencia y campaña](contratos/07-perfil-presencia.md) | Perfil de jugador, logros, presencia/reconexión y modo campaña                                                                 |
+| [07 · Perfil, presencia y campaña](contratos/07-perfil-presencia.md) | Perfil de jugador, logros, historial de partidas, presencia/reconexión y modo campaña                                          |
 | [08 · Bots](contratos/08-bots.md)                                    | Listar bots, partida vs bot, bot-vs-bot y quick match                                                                          |
 | [09 · WebSocket / STOMP](contratos/09-websocket.md)                  | Transporte: conexión, auth, suscripciones, envelope y `stateVersion`. Los `eventType`/payloads viven en el doc de cada dominio |
 | [10 · Flujos y notas para FE](contratos/10-flujos-fe.md)             | Flujo de autenticación recomendado y notas para el frontend                                                                    |

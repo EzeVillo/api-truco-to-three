@@ -82,6 +82,27 @@ class CleanArchitectureTest {
       .dependOnClassesThat().resideInAnyPackage("org.springframework..");
 
   @ArchTest
+  static final ArchRule history_layered_architecture_must_be_respected = layeredArchitecture().consideringOnlyDependenciesInLayers()
+      .layer("HistoryDomain").definedBy("com.villo.truco.history.domain..")
+      .layer("HistoryApplication").definedBy("com.villo.truco.history.application..")
+      .layer("HistoryInfrastructure").definedBy("com.villo.truco.history.infrastructure..")
+      .whereLayer("HistoryDomain")
+      .mayOnlyBeAccessedByLayers("HistoryApplication", "HistoryInfrastructure")
+      .whereLayer("HistoryApplication").mayOnlyBeAccessedByLayers("HistoryInfrastructure")
+      .whereLayer("HistoryInfrastructure").mayNotBeAccessedByAnyLayer();
+
+  @ArchTest
+  static final ArchRule history_domain_must_not_depend_on_application_or_infrastructure_or_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.history.domain..").should().dependOnClassesThat()
+      .resideInAnyPackage("com.villo.truco.history.application..",
+          "com.villo.truco.history.infrastructure..", "org.springframework..");
+
+  @ArchTest
+  static final ArchRule history_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
+      .that().resideInAPackage("com.villo.truco.history.application..").should()
+      .dependOnClassesThat().resideInAnyPackage("org.springframework..");
+
+  @ArchTest
   static final ArchRule truco_application_must_not_depend_on_spring = ArchRuleDefinition.noClasses()
       .that().resideInAPackage("com.villo.truco.application..").should().dependOnClassesThat()
       .resideInAnyPackage("org.springframework..");

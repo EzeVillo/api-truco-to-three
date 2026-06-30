@@ -32,6 +32,7 @@ import com.villo.truco.campaign.infrastructure.eventhandlers.CampaignMatchDomain
 import com.villo.truco.domain.ports.ChatEventNotifier;
 import com.villo.truco.domain.ports.ChatQueryRepository;
 import com.villo.truco.domain.ports.ChatRepository;
+import com.villo.truco.history.infrastructure.eventhandlers.HistoryMatchDomainEventHandler;
 import com.villo.truco.profile.infrastructure.eventhandlers.ProfileMatchDomainEventHandler;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,8 @@ class EventNotifierConfigurationTest {
     assertThat(configuration.matchEventNotifier(mock(MatchPresenceEventTranslator.class),
         mock(FriendActivityMatchEventTranslator.class),
         configuration.chatMatchGameStartedHandler(chatEventNotifier),
-        mock(CampaignMatchDomainEventHandler.class))).isNotNull();
+        mock(CampaignMatchDomainEventHandler.class),
+        mock(HistoryMatchDomainEventHandler.class))).isNotNull();
     assertThat(configuration.cupEventNotifier(mock(CupPresenceEventTranslator.class),
         configuration.chatCupStartedHandler(chatEventNotifier))).isNotNull();
     assertThat(configuration.leagueEventNotifier(mock(LeaguePresenceEventTranslator.class),

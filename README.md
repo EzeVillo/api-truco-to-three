@@ -99,6 +99,17 @@ games.
   códigos), idéntico para todos e independiente del progreso, para que el frontend sepa qué logros
   existen sin hardcodear la lista; el título y la descripción de cada logro los resuelve el
   frontend a partir del código.
+- History:
+  bounded context separado que mantiene, por jugador, el resumen de sus últimas `5` partidas
+  terminadas (rival, ganó/perdió, juegos a favor/en contra, motivo de fin y fecha). Se arma
+  reaccionando a los eventos finales que el match ya emite (`MATCH_FINISHED`, `MATCH_ABANDONED`,
+  `MATCH_FORFEITED`), sin acoplar al agregado Match. El endpoint `GET /api/match-history` opera
+  sobre
+  el usuario autenticado y devuelve hasta `5` entradas, la más reciente primero. Incluye también
+  partidas contra bots (el bot no acumula historial propio); resuelve el nombre del rival (username
+  o
+  `displayName` del bot). Es distinto del registro de jugadas para entrenar bots. Persiste en la
+  tabla `player_match_history`.
 - Campaign:
   modo single-player de progresion contra un ranking fijo de `100` bots ordenados por puntos, con
   el puesto `#1` como meta. Solo usuarios registrados pueden jugarlo (los invitados reciben `401` al
@@ -354,6 +365,8 @@ Recursos REST principales:
 - `/api/profile`
 - `/api/achievements` — catálogo de logros existentes (solo los códigos); el frontend lo cruza con
   `/api/profile/{username}` para mostrar todos los logros con marca de desbloqueado
+- `/api/match-history` — `GET` devuelve, para el usuario autenticado, sus últimas `5` partidas
+  terminadas (rival, resultado, juegos y motivo de fin), la más reciente primero
 - `/api/me/presence` — `GET` de solo lectura que devuelve, para el usuario autenticado, en qué
   partida, liga, copa o revancha está ocupado (con los identificadores necesarios para reconectarse
   tras un refresco). No incluye Quick Match porque no sobrevive a la desconexión. Su contraparte en

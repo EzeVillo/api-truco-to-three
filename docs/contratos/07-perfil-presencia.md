@@ -139,6 +139,77 @@ perfil (`achievementCode`) para facilitar el cruce.
 |--------|--------------------------|
 | 401    | Token ausente o inválido |
 
+## Historial de partidas
+
+Lista de las **últimas partidas terminadas** del usuario, vista desde su propia perspectiva (contra
+quién jugó, si ganó o perdió, los juegos y cómo terminó). Es un bounded context independiente del
+perfil/estadísticas: se construye reaccionando a los eventos finales que el match ya emite
+(`MATCH_FINISHED`, `MATCH_ABANDONED`, `MATCH_FORFEITED`).
+
+### Obtener mi historial
+
+`GET /api/match-history` — requiere Bearer token.
+
+Opera **siempre sobre el usuario autenticado** (sale del token; no recibe `userId` ni `username`).
+Devuelve como máximo **5** partidas, **más reciente primero**.
+
+**Request:** sin body ni parámetros.
+
+**Respuesta 200:**
+
+```json
+{
+  "entries": [
+    {
+      "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+      "opponentName": "juancho",
+      "opponentIsBot": false,
+      "outcome": "WON",
+      "endReason": "FINISHED",
+      "ownGamesWon": 3,
+      "opponentGamesWon": 1,
+      "endedAt": 1772768158123
+    },
+    {
+      "matchId": "550e8400-e29b-41d4-a716-446655440099",
+      "opponentName": "Cacho Toledo",
+      "opponentIsBot": true,
+      "outcome": "LOST",
+      "endReason": "ABANDONED",
+      "ownGamesWon": 1,
+      "opponentGamesWon": 3,
+      "endedAt": 1772768000000
+    }
+  ]
+}
+```
+
+| Campo                        | Tipo    | Descripción                                                                  |
+|------------------------------|---------|------------------------------------------------------------------------------|
+| `entries`                    | array   | Hasta 5 partidas, ordenadas por `endedAt` descendente                        |
+| `entries[].matchId`          | string  | Identificador de la partida                                                  |
+| `entries[].opponentName`     | string  | Username del rival, o `displayName` si es bot (`Desconocido` si no resuelve) |
+| `entries[].opponentIsBot`    | boolean | `true` si el rival fue un bot                                                |
+| `entries[].outcome`          | string  | Resultado para el jugador: `WON` o `LOST`                                    |
+| `entries[].endReason`        | string  | Cómo terminó: `FINISHED`, `ABANDONED` o `FORFEITED`                          |
+| `entries[].ownGamesWon`      | int     | Juegos ganados por el jugador                                                |
+| `entries[].opponentGamesWon` | int     | Juegos ganados por el rival                                                  |
+| `entries[].endedAt`          | long    | Fecha de fin (epoch millis)                                                  |
+
+**Notas:**
+
+- Eventual-consistent: se actualiza después de que el evento final del match es procesado.
+- Incluye **todas** las partidas terminadas, también las jugadas **contra bots** (el bot no tiene
+  historial propio; solo el jugador registrado lo acumula).
+- El abandono/forfeit cuenta como derrota para quien lo provocó y victoria para el rival.
+- Los guests no tienen historial (devuelve `entries: []`).
+
+**Errores:**
+
+| Codigo | Descripcion              |
+|--------|--------------------------|
+| 401    | Token ausente o inválido |
+
 ## Presencia / reconexión del usuario
 
 Permite al frontend saber, tras un refresco de página o reconexión, **dónde está ocupado** el

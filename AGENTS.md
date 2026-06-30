@@ -196,3 +196,4 @@ hay que verificar contra el estado actual del código antes de asumir que sigue 
 | Hardening del bot / debilidad punto-exacto / meta del humano               | `docs/decisiones/bot-hardening.md`          |
 | Bot-vs-bot (avance manual) / matches vs bots sin timeout                   | `docs/decisiones/bot-vs-bot.md`             |
 | Modo campaña (incluye desbloqueo de bots para casual)                      | `docs/decisiones/campania.md`               |
+| Historial de partidas (BC separado que consume eventos finales de match)   | `docs/decisiones/historial-partidas.md`     |
