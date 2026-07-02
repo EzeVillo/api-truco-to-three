@@ -19,8 +19,12 @@ import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateExcep
 import com.villo.truco.infrastructure.persistence.mappers.CupMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataCupRepository;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -90,6 +94,38 @@ public class JpaCupRepositoryAdapter implements CupRepository, CupQueryRepositor
   public Optional<Cup> findWaitingByPlayer(final PlayerId playerId) {
 
     return this.springDataRepo.findWaitingByPlayer(playerId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public Map<PlayerId, Cup> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+    if (playerIds.isEmpty()) {
+      return Map.of();
+    }
+
+    final var ids = playerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    final var byPlayer = new HashMap<PlayerId, Cup>();
+    for (final var entity : this.springDataRepo.findInProgressByPlayers(ids)) {
+      final var cup = this.mapper.toDomain(entity);
+      for (final var participant : cup.getParticipants()) {
+        if (playerIds.contains(participant)) {
+          byPlayer.putIfAbsent(participant, cup);
+        }
+      }
+    }
+    return byPlayer;
+  }
+
+  @Override
+  public Set<PlayerId> findPlayersWaitingInCup(final Set<PlayerId> playerIds) {
+
+    if (playerIds.isEmpty()) {
+      return Set.of();
+    }
+
+    final var ids = playerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    return this.springDataRepo.findPlayersWaitingInCup(ids).stream().map(PlayerId::new)
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   @Override

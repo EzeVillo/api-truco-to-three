@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.persistence.repositories.spring;
 
 import com.villo.truco.infrastructure.persistence.entities.RematchSessionJpaEntity;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,10 @@ public interface SpringDataRematchSessionRepository extends
   @Query("SELECT r FROM RematchSessionJpaEntity r WHERE r.status = 'OPEN' "
       + "AND (r.playerOneId = :playerId OR r.playerTwoId = :playerId)")
   Optional<RematchSessionJpaEntity> findOpenByPlayer(@Param("playerId") UUID playerId);
+
+  @Query("SELECT r FROM RematchSessionJpaEntity r WHERE r.status = 'OPEN' "
+      + "AND (r.playerOneId IN :playerIds OR r.playerTwoId IN :playerIds)")
+  List<RematchSessionJpaEntity> findOpenByPlayers(@Param("playerIds") Collection<UUID> playerIds);
 
   @Query("SELECT r FROM RematchSessionJpaEntity r WHERE r.status = 'OPEN' "
       + "AND r.expiresAt <= :now ORDER BY r.expiresAt ASC")

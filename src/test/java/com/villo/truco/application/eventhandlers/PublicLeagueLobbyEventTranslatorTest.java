@@ -20,7 +20,9 @@ import com.villo.truco.support.TestPublicActorResolver;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -121,6 +123,18 @@ class PublicLeagueLobbyEventTranslatorTest {
       public CursorPageResult<League> findPublicWaiting(final CursorPageQuery pageQuery) {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+
+      @Override
+      public Map<PlayerId, League> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWaitingInLeague(final Set<PlayerId> playerIds) {
+
+        return Set.of();
       }
     };
   }

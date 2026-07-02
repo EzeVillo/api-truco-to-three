@@ -32,7 +32,9 @@ import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,6 +98,18 @@ class StartMatchCommandHandlerTest {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
       }
+
+      @Override
+      public Set<PlayerId> findPlayersWithUnfinishedMatch(final Set<PlayerId> playerIds) {
+
+        return Set.of();
+      }
+
+      @Override
+      public Map<PlayerId, Match> findUnfinishedByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
     };
 
     final MatchRepository matchRepository = new MatchRepository() {
@@ -155,6 +169,18 @@ class StartMatchCommandHandlerTest {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
       }
+
+      @Override
+      public Map<PlayerId, League> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWaitingInLeague(final Set<PlayerId> playerIds) {
+
+        return Set.of();
+      }
     };
     final CupQueryRepository cupQueryRepo = new CupQueryRepository() {
       @Override
@@ -196,6 +222,18 @@ class StartMatchCommandHandlerTest {
       public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+
+      @Override
+      public Map<PlayerId, Cup> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWaitingInCup(final Set<PlayerId> playerIds) {
+
+        return Set.of();
       }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {

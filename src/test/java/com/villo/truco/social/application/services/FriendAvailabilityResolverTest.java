@@ -6,6 +6,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.villo.truco.application.ports.BotRegistry;
@@ -36,9 +40,11 @@ import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import com.villo.truco.testutil.NoOpSpectatorshipRepository;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -111,22 +117,37 @@ class FriendAvailabilityResolverTest {
     final var matchRepo = mock(MatchQueryRepository.class);
     when(matchRepo.hasUnfinishedMatch(any())).thenReturn(unfinishedMatch);
     when(matchRepo.hasActiveMatch(any())).thenReturn(unfinishedMatch);
+    when(matchRepo.findPlayersWithUnfinishedMatch(anySet())).thenAnswer(
+        invocation -> matchingSubset(invocation.getArgument(0), unfinishedMatch));
     final var leagueRepo = mock(LeagueQueryRepository.class);
     when(leagueRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
     when(leagueRepo.findWaitingByPlayer(any())).thenReturn(
         leagueWaiting ? Optional.of(mock(League.class)) : Optional.empty());
+    when(leagueRepo.findInProgressByPlayers(anySet())).thenReturn(Map.of());
+    when(leagueRepo.findPlayersWaitingInLeague(anySet())).thenAnswer(
+        invocation -> matchingSubset(invocation.getArgument(0), leagueWaiting));
     final var cupRepo = mock(CupQueryRepository.class);
     when(cupRepo.findInProgressByPlayer(any())).thenReturn(Optional.empty());
     when(cupRepo.findWaitingByPlayer(any())).thenReturn(
         cupWaiting ? Optional.of(mock(Cup.class)) : Optional.empty());
+    when(cupRepo.findInProgressByPlayers(anySet())).thenReturn(Map.of());
+    when(cupRepo.findPlayersWaitingInCup(anySet())).thenAnswer(
+        invocation -> matchingSubset(invocation.getArgument(0), cupWaiting));
     final var botRegistry = mock(BotRegistry.class);
     final var rematchRepo = mock(RematchSessionRepository.class);
     when(rematchRepo.findOpenByPlayer(any())).thenReturn(
         openRematch ? Optional.of(mock(RematchSession.class)) : Optional.empty());
+    when(rematchRepo.findPlayersWithOpenRematch(anySet())).thenAnswer(
+        invocation -> matchingSubset(invocation.getArgument(0), openRematch));
     final var quickMatchQueue = mock(QuickMatchQueuePort.class);
     when(quickMatchQueue.isPlayerQueued(any())).thenReturn(quickQueued);
     return new PlayerAvailabilityChecker(matchRepo, leagueRepo, cupRepo, botRegistry, rematchRepo,
         quickMatchQueue, NoOpSpectatorshipRepository.INSTANCE, new InMemoryBotVsBotMatchRegistry());
+  }
+
+  private static Set<PlayerId> matchingSubset(final Set<PlayerId> queried, final boolean matches) {
+
+    return matches ? Set.copyOf(queried) : Set.of();
   }
 
   @Test
@@ -295,6 +316,50 @@ class FriendAvailabilityResolverTest {
   }
 
   @Test
+  @DisplayName("consulta las invitaciones pendientes del viewer una sola vez para todos los amigos")
+  void loadsViewerPendingInvitationsOncePerState() {
+
+    final var viewer = PlayerId.generate();
+    final var friendA = PlayerId.generate();
+    final var friendB = PlayerId.generate();
+    final var friendC = PlayerId.generate();
+    final var invitationRepository = mock(ResourceInvitationQueryRepository.class);
+    when(invitationRepository.findPendingSentBy(viewer)).thenReturn(List.of());
+    when(invitationRepository.findPendingReceivedBy(viewer)).thenReturn(List.of());
+    final var resolver = resolver(viewer,
+        List.of(acceptedFriendship(viewer, friendA), acceptedFriendship(viewer, friendB),
+            acceptedFriendship(viewer, friendC)),
+        Map.of(friendA, "ana", friendB, "beto", friendC, "caro"), player -> Optional.empty(),
+        availabilityChecker(false, false), player -> false, invitationRepository);
+
+    resolver.resolveState(viewer);
+
+    verify(invitationRepository, times(1)).findPendingSentBy(viewer);
+    verify(invitationRepository, times(1)).findPendingReceivedBy(viewer);
+  }
+
+  @Test
+  @DisplayName("resuelve los bloqueos de todos los amigos con una sola pasada batch (sin N+1)")
+  void resolvesBlockingReasonsInASingleBatch() {
+
+    final var viewer = PlayerId.generate();
+    final var friendA = PlayerId.generate();
+    final var friendB = PlayerId.generate();
+    final var friendC = PlayerId.generate();
+    final var checker = spy(availabilityChecker(false, false));
+    final var resolver = resolver(viewer,
+        List.of(acceptedFriendship(viewer, friendA), acceptedFriendship(viewer, friendB),
+            acceptedFriendship(viewer, friendC)),
+        Map.of(friendA, "ana", friendB, "beto", friendC, "caro"), player -> Optional.empty(),
+        checker, player -> false);
+
+    resolver.resolveState(viewer);
+
+    verify(checker, times(1)).findBlockingReasonsFor(anySet());
+    verify(checker, never()).findBlockingReason(any());
+  }
+
+  @Test
   @DisplayName("online no cambia la disponibilidad para invitar")
   void onlineDoesNotChangeAvailability() {
 
@@ -449,6 +514,22 @@ class FriendAvailabilityResolverTest {
     public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
 
       return new CursorPageResult<>(List.of(), null);
+    }
+
+    @Override
+    public Set<PlayerId> findPlayersWithUnfinishedMatch(final Set<PlayerId> playerIds) {
+
+      return Set.of();
+    }
+
+    @Override
+    public Map<PlayerId, Match> findUnfinishedByPlayers(final Set<PlayerId> playerIds) {
+
+      final var result = new LinkedHashMap<PlayerId, Match>();
+      for (final var playerId : playerIds) {
+        this.matchResolver.apply(playerId).ifPresent(match -> result.put(playerId, match));
+      }
+      return result;
     }
 
   }

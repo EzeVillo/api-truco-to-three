@@ -23,7 +23,9 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +100,18 @@ class AbandonMatchCommandHandlerTest {
       public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWithUnfinishedMatch(final Set<PlayerId> playerIds) {
+
+        return Set.of();
+      }
+
+      @Override
+      public Map<PlayerId, Match> findUnfinishedByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
       }
     };
 

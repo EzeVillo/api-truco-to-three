@@ -9,6 +9,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -38,6 +39,12 @@ public final class NoOpRematchSessionRepository implements RematchSessionReposit
   public Optional<RematchSession> findOpenByPlayer(final PlayerId playerId) {
 
     return Optional.empty();
+  }
+
+  @Override
+  public Set<PlayerId> findPlayersWithOpenRematch(final Set<PlayerId> playerIds) {
+
+    return Set.of();
   }
 
   @Override

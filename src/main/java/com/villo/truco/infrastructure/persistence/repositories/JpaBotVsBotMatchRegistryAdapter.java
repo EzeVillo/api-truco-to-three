@@ -6,6 +6,8 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import com.villo.truco.infrastructure.persistence.entities.BotVsBotMatchJpaEntity;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataBotVsBotMatchRepository;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +51,18 @@ public class JpaBotVsBotMatchRegistryAdapter implements BotVsBotMatchRegistry {
 
     return this.springDataBotVsBotMatchRepository.findActiveOwnedMatchIds(ownerId.value()).stream()
         .findFirst().map(MatchId::new);
+  }
+
+  @Override
+  public Set<PlayerId> findOwnersWithActiveMatch(final Set<PlayerId> ownerIds) {
+
+    if (ownerIds.isEmpty()) {
+      return Set.of();
+    }
+
+    final var ids = ownerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    return this.springDataBotVsBotMatchRepository.findOwnersWithActiveMatch(ids).stream()
+        .map(PlayerId::new).collect(Collectors.toUnmodifiableSet());
   }
 
 }

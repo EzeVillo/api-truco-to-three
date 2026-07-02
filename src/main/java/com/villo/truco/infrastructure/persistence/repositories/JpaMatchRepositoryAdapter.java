@@ -19,8 +19,14 @@ import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateExcep
 import com.villo.truco.infrastructure.persistence.mappers.MatchMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataMatchRepository;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -52,6 +58,30 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
   private static String encodeCursor(final MatchJpaEntity entity) {
 
     return new PublicLobbyCursor(entity.getLastActivityAt(), entity.getId()).encode();
+  }
+
+  private static void addIfQueried(final Set<PlayerId> target, final Set<PlayerId> queried,
+      final UUID candidate) {
+
+    if (candidate == null) {
+      return;
+    }
+    final var playerId = new PlayerId(candidate);
+    if (queried.contains(playerId)) {
+      target.add(playerId);
+    }
+  }
+
+  private static void assignIfQueried(final Map<PlayerId, Match> target,
+      final Set<PlayerId> queried, final UUID candidate, final Match match) {
+
+    if (candidate == null) {
+      return;
+    }
+    final var playerId = new PlayerId(candidate);
+    if (queried.contains(playerId)) {
+      target.putIfAbsent(playerId, match);
+    }
   }
 
   @Override
@@ -100,6 +130,39 @@ public class JpaMatchRepositoryAdapter implements MatchRepository, MatchQueryRep
 
     return this.springDataRepo.findUnfinishedByPlayer(playerId.value(), PageRequest.of(0, 1))
         .stream().findFirst().map(this.mapper::toDomain);
+  }
+
+  @Override
+  public Set<PlayerId> findPlayersWithUnfinishedMatch(final Set<PlayerId> playerIds) {
+
+    if (playerIds.isEmpty()) {
+      return Set.of();
+    }
+
+    final var ids = playerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    final var blocked = new HashSet<PlayerId>();
+    for (final var entity : this.springDataRepo.findUnfinishedInvolvingPlayers(ids)) {
+      addIfQueried(blocked, playerIds, entity.getPlayerOne());
+      addIfQueried(blocked, playerIds, entity.getPlayerTwo());
+    }
+    return blocked;
+  }
+
+  @Override
+  public Map<PlayerId, Match> findUnfinishedByPlayers(final Set<PlayerId> playerIds) {
+
+    if (playerIds.isEmpty()) {
+      return Map.of();
+    }
+
+    final var ids = playerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    final var byPlayer = new HashMap<PlayerId, Match>();
+    for (final var entity : this.springDataRepo.findUnfinishedByPlayers(ids)) {
+      final var match = this.mapper.toDomain(entity);
+      assignIfQueried(byPlayer, playerIds, entity.getPlayerOne(), match);
+      assignIfQueried(byPlayer, playerIds, entity.getPlayerTwo(), match);
+    }
+    return byPlayer;
   }
 
   @Override

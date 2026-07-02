@@ -6,6 +6,8 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class InMemoryBotVsBotMatchRegistry implements BotVsBotMatchRegistry {
 
@@ -37,6 +39,13 @@ public final class InMemoryBotVsBotMatchRegistry implements BotVsBotMatchRegistr
     return this.owners.entrySet().stream().filter(entry -> entry.getValue().equals(ownerId))
         .filter(entry -> this.active.getOrDefault(entry.getKey(), false)).map(Map.Entry::getKey)
         .findFirst();
+  }
+
+  @Override
+  public Set<PlayerId> findOwnersWithActiveMatch(final Set<PlayerId> ownerIds) {
+
+    return ownerIds.stream().filter(ownerId -> this.findActiveOwnedMatchId(ownerId).isPresent())
+        .collect(Collectors.toUnmodifiableSet());
   }
 
 }

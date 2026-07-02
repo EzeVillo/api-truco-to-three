@@ -7,7 +7,9 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface MatchQueryRepository {
 
@@ -18,6 +20,10 @@ public interface MatchQueryRepository {
   boolean hasUnfinishedMatch(PlayerId playerId);
 
   Optional<Match> findUnfinishedByPlayer(PlayerId playerId);
+
+  Set<PlayerId> findPlayersWithUnfinishedMatch(Set<PlayerId> playerIds);
+
+  Map<PlayerId, Match> findUnfinishedByPlayers(Set<PlayerId> playerIds);
 
   List<MatchId> findIdleMatchIds(Instant idleSince);
 

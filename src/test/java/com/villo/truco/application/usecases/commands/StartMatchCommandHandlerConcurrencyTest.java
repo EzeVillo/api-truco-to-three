@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -141,6 +142,18 @@ class StartMatchCommandHandlerConcurrencyTest {
 
       return new CursorPageResult<>(findPublicWaiting(), null);
     }
+
+    @Override
+    public Set<PlayerId> findPlayersWithUnfinishedMatch(final Set<PlayerId> playerIds) {
+
+      return Set.of();
+    }
+
+    @Override
+    public Map<PlayerId, Match> findUnfinishedByPlayers(final Set<PlayerId> playerIds) {
+
+      return Map.of();
+    }
   };
   private StartMatchUseCase handler;
   private PlayerId playerOne;
@@ -206,6 +219,18 @@ class StartMatchCommandHandlerConcurrencyTest {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
       }
+
+      @Override
+      public Map<PlayerId, League> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWaitingInLeague(final Set<PlayerId> playerIds) {
+
+        return Set.of();
+      }
     };
     final CupQueryRepository cupQueryRepository = new CupQueryRepository() {
       @Override
@@ -247,6 +272,18 @@ class StartMatchCommandHandlerConcurrencyTest {
       public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+
+      @Override
+      public Map<PlayerId, Cup> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWaitingInCup(final Set<PlayerId> playerIds) {
+
+        return Set.of();
       }
     };
     final BotRegistry noBotRegistry = new BotRegistry() {

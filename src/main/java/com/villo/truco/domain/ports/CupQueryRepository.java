@@ -8,7 +8,9 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CupQueryRepository {
 
@@ -19,6 +21,10 @@ public interface CupQueryRepository {
   Optional<Cup> findInProgressByPlayer(PlayerId playerId);
 
   Optional<Cup> findWaitingByPlayer(PlayerId playerId);
+
+  Map<PlayerId, Cup> findInProgressByPlayers(Set<PlayerId> playerIds);
+
+  Set<PlayerId> findPlayersWaitingInCup(Set<PlayerId> playerIds);
 
   List<CupId> findIdleCupIds(Instant idleSince);
 

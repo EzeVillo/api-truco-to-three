@@ -13,10 +13,14 @@ import com.villo.truco.social.application.dto.FriendAvailabilityStatus;
 import com.villo.truco.social.application.dto.FriendBusyReason;
 import com.villo.truco.social.application.dto.SpectatableMatchRefDTO;
 import com.villo.truco.social.application.ports.out.FriendOnlinePresencePort;
+import com.villo.truco.social.domain.model.invitation.ResourceInvitation;
 import com.villo.truco.social.domain.ports.FriendshipQueryRepository;
 import com.villo.truco.social.domain.ports.ResourceInvitationQueryRepository;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -64,16 +68,47 @@ public final class FriendAvailabilityResolver {
     return new SpectatableMatchRefDTO(match.getId().value().toString(), match.getStatus().name());
   }
 
+  private static SpectatableMatchRefDTO toSpectatableMatchIfInProgress(final Match match) {
+
+    if (match == null || match.getStatus() != MatchStatus.IN_PROGRESS) {
+      return null;
+    }
+    return toSpectatableMatch(match);
+  }
+
+  private static FriendAvailabilityStatus availabilityOf(final FriendBusyReason busyReason) {
+
+    return busyReason != null ? FriendAvailabilityStatus.BUSY : FriendAvailabilityStatus.AVAILABLE;
+  }
+
+  private static boolean hasBlockingPendingInvitation(final PlayerId friendId,
+      final ViewerPendingInvitations pendingInvitations) {
+
+    return pendingInvitations.sent().stream()
+        .anyMatch(invitation -> invitation.getRecipientId().equals(friendId))
+        || pendingInvitations.received().stream()
+        .anyMatch(invitation -> invitation.getSenderId().equals(friendId));
+  }
+
   public FriendAvailabilityStateDTO resolveState(final PlayerId viewerId) {
 
     final var friendships = this.friendshipQueryRepository.findAcceptedByPlayer(viewerId);
     final var friendIds = friendships.stream().map(friendship -> friendship.counterpartOf(viewerId))
         .toList();
-    final var usernames = this.userQueryRepository.findUsernamesByIds(Set.copyOf(friendIds));
+    final var friendIdSet = new LinkedHashSet<>(friendIds);
+    final var usernames = this.userQueryRepository.findUsernamesByIds(friendIdSet);
+    final var pendingInvitations = this.loadPendingInvitations(viewerId);
+    final var pendingFriendRequests = this.loadPendingFriendRequestCounterparts(viewerId);
+    final var blockingReasons = this.playerAvailabilityChecker.findBlockingReasonsFor(friendIdSet);
+    final var unfinishedMatches = this.matchQueryRepository.findUnfinishedByPlayers(friendIdSet);
     final var friends = new ArrayList<FriendAvailabilityDTO>();
 
     for (final var friendId : friendIds) {
-      friends.add(this.resolveFriend(viewerId, friendId, usernames.get(friendId)));
+      final var busyReason = this.resolveBusyReasonFromBatch(friendId, blockingReasons,
+          pendingInvitations, pendingFriendRequests);
+      friends.add(new FriendAvailabilityDTO(usernames.get(friendId),
+          this.friendOnlinePresencePort.isOnline(friendId), availabilityOf(busyReason), busyReason,
+          toSpectatableMatchIfInProgress(unfinishedMatches.get(friendId))));
     }
 
     return new FriendAvailabilityStateDTO(friends);
@@ -88,13 +123,26 @@ public final class FriendAvailabilityResolver {
   public FriendAvailabilityDTO resolveFriend(final PlayerId viewerId, final PlayerId friendId,
       final String friendUsername) {
 
-    final var busyReason = this.resolveBusyReason(viewerId, friendId);
-    final var availability =
-        busyReason != null ? FriendAvailabilityStatus.BUSY : FriendAvailabilityStatus.AVAILABLE;
+    return this.resolveFriendForViewer(viewerId, friendId, friendUsername,
+        this.resolveHardBusyReason(friendId), this.friendOnlinePresencePort.isOnline(friendId),
+        this.findSpectatableMatch(friendId), this.loadPendingInvitations(viewerId));
+  }
 
-    return new FriendAvailabilityDTO(friendUsername,
-        this.friendOnlinePresencePort.isOnline(friendId), availability, busyReason,
-        this.findSpectatableMatch(friendId));
+  private FriendAvailabilityDTO resolveFriendForViewer(final PlayerId viewerId,
+      final PlayerId friendId, final String friendUsername, final FriendBusyReason hardBusyReason,
+      final boolean online, final SpectatableMatchRefDTO spectatableMatch,
+      final ViewerPendingInvitations pendingInvitations) {
+
+    final var busyReason = this.resolveBusyReasonLive(viewerId, friendId, hardBusyReason,
+        pendingInvitations);
+    return new FriendAvailabilityDTO(friendUsername, online, availabilityOf(busyReason), busyReason,
+        spectatableMatch);
+  }
+
+  private FriendBusyReason resolveHardBusyReason(final PlayerId friendId) {
+
+    return this.playerAvailabilityChecker.findBlockingReason(friendId)
+        .map(FriendAvailabilityResolver::toBusyReason).orElse(null);
   }
 
   /**
@@ -114,14 +162,35 @@ public final class FriendAvailabilityResolver {
     return Optional.of(this.resolveFriend(viewerId, friendId, friendUsername));
   }
 
-  private FriendBusyReason resolveBusyReason(final PlayerId viewerId, final PlayerId friendId) {
+  private FriendBusyReason resolveBusyReasonFromBatch(final PlayerId friendId,
+      final Map<PlayerId, BlockingReason> blockingReasons,
+      final ViewerPendingInvitations pendingInvitations,
+      final Set<PlayerId> pendingFriendRequests) {
 
-    final var hardBlock = this.playerAvailabilityChecker.findBlockingReason(friendId);
-    if (hardBlock.isPresent()) {
-      return toBusyReason(hardBlock.get());
+    final var hardBlock = blockingReasons.get(friendId);
+    if (hardBlock != null) {
+      return toBusyReason(hardBlock);
     }
 
-    if (this.hasBlockingPendingInvitation(viewerId, friendId)) {
+    if (hasBlockingPendingInvitation(friendId, pendingInvitations)) {
+      return FriendBusyReason.PENDING_INVITATION;
+    }
+
+    if (pendingFriendRequests.contains(friendId)) {
+      return FriendBusyReason.PENDING_FRIEND_REQUEST;
+    }
+
+    return null;
+  }
+
+  private FriendBusyReason resolveBusyReasonLive(final PlayerId viewerId, final PlayerId friendId,
+      final FriendBusyReason hardBusyReason, final ViewerPendingInvitations pendingInvitations) {
+
+    if (hardBusyReason != null) {
+      return hardBusyReason;
+    }
+
+    if (hasBlockingPendingInvitation(friendId, pendingInvitations)) {
       return FriendBusyReason.PENDING_INVITATION;
     }
 
@@ -132,12 +201,23 @@ public final class FriendAvailabilityResolver {
     return null;
   }
 
-  private boolean hasBlockingPendingInvitation(final PlayerId viewerId, final PlayerId friendId) {
+  private Set<PlayerId> loadPendingFriendRequestCounterparts(final PlayerId viewerId) {
 
-    return this.resourceInvitationQueryRepository.findPendingSentBy(viewerId).stream()
-        .anyMatch(invitation -> invitation.getRecipientId().equals(friendId))
-        || this.resourceInvitationQueryRepository.findPendingReceivedBy(viewerId).stream()
-        .anyMatch(invitation -> invitation.getSenderId().equals(friendId));
+    final var counterparts = new HashSet<PlayerId>();
+    for (final var friendship : this.friendshipQueryRepository.findPendingSentBy(viewerId)) {
+      counterparts.add(friendship.counterpartOf(viewerId));
+    }
+    for (final var friendship : this.friendshipQueryRepository.findPendingReceivedBy(viewerId)) {
+      counterparts.add(friendship.counterpartOf(viewerId));
+    }
+    return counterparts;
+  }
+
+  private ViewerPendingInvitations loadPendingInvitations(final PlayerId viewerId) {
+
+    return new ViewerPendingInvitations(
+        this.resourceInvitationQueryRepository.findPendingSentBy(viewerId),
+        this.resourceInvitationQueryRepository.findPendingReceivedBy(viewerId));
   }
 
   public Map<PlayerId, FriendAvailabilityDTO> resolveAvailabilityChangesByRecipient(
@@ -153,10 +233,21 @@ public final class FriendAvailabilityResolver {
 
     final var activeUsername = this.userQueryRepository.findUsernamesByIds(Set.of(activePlayer))
         .get(activePlayer);
+    return getPlayerIdFriendAvailabilityDTOMap(activePlayer, recipients, activeUsername);
+  }
+
+  private Map<PlayerId, FriendAvailabilityDTO> getPlayerIdFriendAvailabilityDTOMap(
+      final PlayerId activePlayer, final List<PlayerId> recipients, final String activeUsername) {
+
+    final var hardBusyReason = this.resolveHardBusyReason(activePlayer);
+    final var online = this.friendOnlinePresencePort.isOnline(activePlayer);
+    final var spectatableMatch = this.findSpectatableMatch(activePlayer);
 
     final var changes = new LinkedHashMap<PlayerId, FriendAvailabilityDTO>();
     for (final var recipient : recipients) {
-      changes.put(recipient, this.resolveFriend(recipient, activePlayer, activeUsername));
+      changes.put(recipient,
+          this.resolveFriendForViewer(recipient, activePlayer, activeUsername, hardBusyReason,
+              online, spectatableMatch, this.loadPendingInvitations(recipient)));
     }
     return changes;
   }
@@ -171,12 +262,7 @@ public final class FriendAvailabilityResolver {
     }
 
     final var username = this.userQueryRepository.findUsernamesByIds(Set.of(player)).get(player);
-
-    final var changes = new LinkedHashMap<PlayerId, FriendAvailabilityDTO>();
-    for (final var recipient : recipients) {
-      changes.put(recipient, this.resolveFriend(recipient, player, username));
-    }
-    return changes;
+    return getPlayerIdFriendAvailabilityDTOMap(player, recipients, username);
   }
 
   private SpectatableMatchRefDTO findSpectatableMatch(final PlayerId friendId) {
@@ -184,6 +270,11 @@ public final class FriendAvailabilityResolver {
     return this.matchQueryRepository.findUnfinishedByPlayer(friendId)
         .filter(match -> match.getStatus() == MatchStatus.IN_PROGRESS)
         .map(FriendAvailabilityResolver::toSpectatableMatch).orElse(null);
+  }
+
+  private record ViewerPendingInvitations(List<ResourceInvitation> sent,
+                                          List<ResourceInvitation> received) {
+
   }
 
 }

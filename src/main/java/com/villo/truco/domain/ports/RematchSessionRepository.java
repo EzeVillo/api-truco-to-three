@@ -7,6 +7,7 @@ import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public interface RematchSessionRepository {
@@ -16,6 +17,8 @@ public interface RematchSessionRepository {
   Optional<RematchSession> findByOriginMatchId(MatchId matchId);
 
   Optional<RematchSession> findOpenByPlayer(PlayerId playerId);
+
+  Set<PlayerId> findPlayersWithOpenRematch(Set<PlayerId> playerIds);
 
   List<RematchSession> findExpiredCandidates(Instant now, int batchSize);
 

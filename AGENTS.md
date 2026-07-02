@@ -137,6 +137,15 @@ Docker Compose levanta PostgreSQL en el puerto `5432` y Adminer en `8081`.
   que pasen el valor nuevo de forma visible; preferí un único constructor canónico / factory
   explícito. Aceptá el churn a cambio de que la decisión quede a la vista en cada lugar.
 
+- **No usar métodos `default` en interfaces solo para evitar tocar implementaciones.** Cuando se
+  agrega un método a un puerto/interfaz, NO darle un cuerpo `default` con el único fin de no
+  actualizar los dobles de test u otras implementaciones. Ese `default` deja el contrato incompleto,
+  esconde que hay implementaciones que no eligieron su comportamiento y hace que un doble in-memory
+  se comporte distinto al adaptador real sin que nadie lo haya decidido. Declará el método abstracto
+  e implementalo explícitamente en cada implementación (tests incluidos). Reservá `default` solo
+  para comportamiento que genuinamente es compartido y correcto para TODA implementación presente y
+  futura.
+
 - **Timing de emisión de `ApplicationEvent`**: todo evento de aplicación nuevo DEBE declarar su
   momento de emisión implementando exactamente uno de dos marcadores (verificado por ArchUnit en
   `CleanArchitectureTest`):

@@ -17,12 +17,13 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        default_batch_fetch_size: 32
   flyway:
     enabled: true
 
 truco:
   web:
-    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:http://localhost:4200,https://*.trycloudflare.com}
+    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:http://localhost:4200,https://*.trycloudflare.com,https://localhost,capacitor://localhost}
   retry:
     max-retries: 3
     delay-ms: 200

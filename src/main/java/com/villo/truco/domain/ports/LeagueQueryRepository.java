@@ -8,7 +8,9 @@ import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LeagueQueryRepository {
 
@@ -19,6 +21,10 @@ public interface LeagueQueryRepository {
   Optional<League> findInProgressByPlayer(PlayerId playerId);
 
   Optional<League> findWaitingByPlayer(PlayerId playerId);
+
+  Map<PlayerId, League> findInProgressByPlayers(Set<PlayerId> playerIds);
+
+  Set<PlayerId> findPlayersWaitingInLeague(Set<PlayerId> playerIds);
 
   List<LeagueId> findIdleLeagueIds(Instant idleSince);
 

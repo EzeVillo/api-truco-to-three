@@ -19,8 +19,12 @@ import com.villo.truco.infrastructure.persistence.exceptions.StaleAggregateExcep
 import com.villo.truco.infrastructure.persistence.mappers.LeagueMapper;
 import com.villo.truco.infrastructure.persistence.repositories.spring.SpringDataLeagueRepository;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -92,6 +96,38 @@ public class JpaLeagueRepositoryAdapter implements LeagueRepository, LeagueQuery
   public Optional<League> findWaitingByPlayer(final PlayerId playerId) {
 
     return this.springDataRepo.findWaitingByPlayer(playerId.value()).map(this.mapper::toDomain);
+  }
+
+  @Override
+  public Map<PlayerId, League> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+    if (playerIds.isEmpty()) {
+      return Map.of();
+    }
+
+    final var ids = playerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    final var byPlayer = new HashMap<PlayerId, League>();
+    for (final var entity : this.springDataRepo.findInProgressByPlayers(ids)) {
+      final var league = this.mapper.toDomain(entity);
+      for (final var participant : league.getParticipants()) {
+        if (playerIds.contains(participant)) {
+          byPlayer.putIfAbsent(participant, league);
+        }
+      }
+    }
+    return byPlayer;
+  }
+
+  @Override
+  public Set<PlayerId> findPlayersWaitingInLeague(final Set<PlayerId> playerIds) {
+
+    if (playerIds.isEmpty()) {
+      return Set.of();
+    }
+
+    final var ids = playerIds.stream().map(PlayerId::value).collect(Collectors.toSet());
+    return this.springDataRepo.findPlayersWaitingInLeague(ids).stream().map(PlayerId::new)
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   @Override

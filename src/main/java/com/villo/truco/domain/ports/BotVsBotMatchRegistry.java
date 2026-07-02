@@ -3,6 +3,7 @@ package com.villo.truco.domain.ports;
 import com.villo.truco.domain.shared.valueobjects.MatchId;
 import com.villo.truco.domain.shared.valueobjects.PlayerId;
 import java.util.Optional;
+import java.util.Set;
 
 public interface BotVsBotMatchRegistry {
 
@@ -13,5 +14,7 @@ public interface BotVsBotMatchRegistry {
   Optional<PlayerId> findOwnerByMatchId(MatchId matchId);
 
   Optional<MatchId> findActiveOwnedMatchId(PlayerId ownerId);
+
+  Set<PlayerId> findOwnersWithActiveMatch(Set<PlayerId> ownerIds);
 
 }

@@ -3,6 +3,7 @@ package com.villo.truco.infrastructure.persistence.repositories.spring;
 import com.villo.truco.infrastructure.persistence.entities.MatchJpaEntity;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +31,16 @@ public interface SpringDataMatchRepository extends JpaRepository<MatchJpaEntity,
       + "AND (m.playerOne = :playerId OR m.playerTwo = :playerId) "
       + "ORDER BY m.lastActivityAt DESC")
   List<MatchJpaEntity> findUnfinishedByPlayer(@Param("playerId") UUID playerId, Pageable pageable);
+
+  @Query("SELECT m FROM MatchJpaEntity m WHERE m.status NOT IN ('FINISHED', 'CANCELLED') "
+      + "AND (m.playerOne IN :playerIds OR m.playerTwo IN :playerIds)")
+  List<MatchJpaEntity> findUnfinishedInvolvingPlayers(
+      @Param("playerIds") Collection<UUID> playerIds);
+
+  @Query("SELECT m FROM MatchJpaEntity m WHERE m.status NOT IN ('FINISHED', 'CANCELLED') "
+      + "AND (m.playerOne IN :playerIds OR m.playerTwo IN :playerIds) "
+      + "ORDER BY m.lastActivityAt DESC")
+  List<MatchJpaEntity> findUnfinishedByPlayers(@Param("playerIds") Collection<UUID> playerIds);
 
   @Query("SELECT m.id FROM MatchJpaEntity m "
       + "WHERE m.status NOT IN ('FINISHED', 'CANCELLED') AND m.lastActivityAt < :idleSince")

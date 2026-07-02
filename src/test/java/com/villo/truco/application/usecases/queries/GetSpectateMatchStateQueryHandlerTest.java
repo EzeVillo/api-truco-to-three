@@ -20,7 +20,9 @@ import com.villo.truco.support.TestPublicActorResolver;
 import com.villo.truco.testutil.InMemoryBotVsBotMatchRegistry;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -88,6 +90,18 @@ class GetSpectateMatchStateQueryHandlerTest {
       public CursorPageResult<Match> findPublicWaiting(final CursorPageQuery pageQuery) {
 
         return new CursorPageResult<>(findPublicWaiting(), null);
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWithUnfinishedMatch(final Set<PlayerId> playerIds) {
+
+        return Set.of();
+      }
+
+      @Override
+      public Map<PlayerId, Match> findUnfinishedByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
       }
     };
 

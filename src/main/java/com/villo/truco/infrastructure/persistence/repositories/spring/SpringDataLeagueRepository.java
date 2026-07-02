@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.persistence.repositories.spring;
 
 import com.villo.truco.infrastructure.persistence.entities.LeagueJpaEntity;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,14 @@ public interface SpringDataLeagueRepository extends JpaRepository<LeagueJpaEntit
   @Query("SELECT l FROM LeagueJpaEntity l JOIN l.participants p "
       + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId = :playerId")
   Optional<LeagueJpaEntity> findWaitingByPlayer(@Param("playerId") UUID playerId);
+
+  @Query("SELECT DISTINCT l FROM LeagueJpaEntity l JOIN l.participants p "
+      + "WHERE l.status = 'IN_PROGRESS' AND p.playerId IN :playerIds")
+  List<LeagueJpaEntity> findInProgressByPlayers(@Param("playerIds") Collection<UUID> playerIds);
+
+  @Query("SELECT DISTINCT p.playerId FROM LeagueJpaEntity l JOIN l.participants p "
+      + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId IN :playerIds")
+  List<UUID> findPlayersWaitingInLeague(@Param("playerIds") Collection<UUID> playerIds);
 
   @Query("SELECT l.id FROM LeagueJpaEntity l "
       + "WHERE l.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') "

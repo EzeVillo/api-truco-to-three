@@ -2,6 +2,7 @@ package com.villo.truco.infrastructure.persistence.repositories.spring;
 
 import com.villo.truco.infrastructure.persistence.entities.CupJpaEntity;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,14 @@ public interface SpringDataCupRepository extends JpaRepository<CupJpaEntity, UUI
   @Query("SELECT c FROM CupJpaEntity c JOIN c.participants p "
       + "WHERE c.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId = :playerId")
   Optional<CupJpaEntity> findWaitingByPlayer(@Param("playerId") UUID playerId);
+
+  @Query("SELECT DISTINCT c FROM CupJpaEntity c JOIN c.participants p "
+      + "WHERE c.status = 'IN_PROGRESS' AND p.playerId IN :playerIds")
+  List<CupJpaEntity> findInProgressByPlayers(@Param("playerIds") Collection<UUID> playerIds);
+
+  @Query("SELECT DISTINCT p.playerId FROM CupJpaEntity c JOIN c.participants p "
+      + "WHERE c.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') AND p.playerId IN :playerIds")
+  List<UUID> findPlayersWaitingInCup(@Param("playerIds") Collection<UUID> playerIds);
 
   @Query("SELECT c.id FROM CupJpaEntity c "
       + "WHERE c.status IN ('WAITING_FOR_PLAYERS', 'WAITING_FOR_START') "

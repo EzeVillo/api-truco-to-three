@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
@@ -84,6 +85,18 @@ class TimeoutIdleCupsCommandHandlerTest {
       public CursorPageResult<Cup> findPublicWaiting(final CursorPageQuery pageQuery) {
 
         return new CursorPageResult<>(List.of(), null);
+      }
+
+      @Override
+      public Map<PlayerId, Cup> findInProgressByPlayers(final Set<PlayerId> playerIds) {
+
+        return Map.of();
+      }
+
+      @Override
+      public Set<PlayerId> findPlayersWaitingInCup(final Set<PlayerId> playerIds) {
+
+        return Set.of();
       }
     };
 
