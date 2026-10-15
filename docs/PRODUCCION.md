@@ -37,8 +37,12 @@ Variables obligatorias del perfil:
 
 `TRUCO_ALLOWED_ORIGINS` acepta una lista separada por comas de orígenes HTTPS explícitos
 y el origen nativo exacto `capacitor://localhost`. Se conservan `https://localhost`
-y `capacitor://localhost` para las aplicaciones Capacitor existentes. Durante la transición:
-`https://ezevillo.com,https://www.ezevillo.com,https://ezevillo.github.io,https://localhost,capacitor://localhost`.
+y `capacitor://localhost` para las aplicaciones Capacitor existentes. La configuración final es:
+`https://ezevillo.com,https://www.ezevillo.com,https://localhost,capacitor://localhost`.
+GitHub Pages se retira como web de producción y su origen no se mantiene autorizado.
+Actualizar también `TRUCO_ALLOWED_ORIGINS` **en Render**, porque el valor externo tiene
+precedencia sobre el YAML. La actualización por MCP conserva las otras variables y dispara
+un redespliegue para aplicarlas. Verificar el deploy devuelto y no disparar otro duplicado.
 Agregar previews sólo por su origen exacto y cuando se necesiten. No autorizar
 `*.netlify.app`, túneles ni localhost HTTP de desarrollo en producción. CORS y ambos endpoints WebSocket
 usan la misma propiedad. CORS no reemplaza la autenticación ni bloquea clientes sin navegador.
@@ -61,8 +65,9 @@ en Render al ejecutar la imagen y nunca se guardan en el repositorio.
 5. Publicar el sitio de Truco y, al final, incorporar exclusivamente `/truco-a-3/*`
    al sitio Netlify que posee `ezevillo.com`.
 6. Ante un fallo de frontend, retirar/revertir esa regla. Ante un fallo de backend,
-   restaurar la imagen previa y su configuración compatible. Mantener el origen de
-   GitHub Pages mientras se use como alternativa.
+   restaurar la imagen previa y su configuración compatible. Retirar GitHub Pages una vez
+   publicado el frontend nuevo y quitar su origen de la configuración efectiva de Render.
+   El rollback del frontend usa los despliegues de Netlify, sin reactivar la web anterior.
 
 ## Condiciones pendientes para disponibilidad de producción
 

@@ -15,11 +15,11 @@ class ProductionConfigurationTest {
   private static final String TEST_SECRET = "test-only-production-secret-32-bytes";
 
   @Test
-  @DisplayName("Acepta los orígenes nuevos y el anterior durante la migración")
+  @DisplayName("Acepta los orígenes de la web de producción y las aplicaciones nativas")
   void acceptsExplicitProductionOrigins() {
     assertDoesNotThrow(() -> new ProductionConfiguration(
         new TrucoWebProperties(List.of("https://ezevillo.com", "https://www.ezevillo.com",
-            "https://ezevillo.github.io", "https://localhost", "capacitor://localhost")),
+            "https://localhost", "capacitor://localhost")),
         security(TEST_SECRET)));
   }
 

@@ -22,7 +22,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
     "truco.security.issuer=test-issuer", "truco.security.audience=test-audience",
-    "truco.web.allowed-origins=http://localhost:4200,https://ezevillo.com,https://ezevillo.github.io",
+    "truco.web.allowed-origins=http://localhost:4200,https://ezevillo.com",
     "spring.profiles.active=test"}, webEnvironment = WebEnvironment.RANDOM_PORT)
 class HttpSecurityIntegrationTest {
 
@@ -343,6 +343,20 @@ class HttpSecurityIntegrationTest {
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
         .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
         .header("Origin", "https://ezevillo.com.attacker.example")
+        .header("Access-Control-Request-Method", "POST").build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(403, response.statusCode());
+    assertTrue(response.headers().firstValue("Access-Control-Allow-Origin").isEmpty());
+  }
+
+  @Test
+  @DisplayName("Rechaza solicitudes desde la web anterior de GitHub Pages")
+  void rejectsRetiredWebOrigin() throws Exception {
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
+        .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+        .header("Origin", "https://ezevillo.github.io")
         .header("Access-Control-Request-Method", "POST").build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());

@@ -8,8 +8,8 @@ spring:
 
 truco:
   web:
-    # Se conserva el origen anterior durante la migración; no se permiten comodines.
-    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:https://ezevillo.com,https://www.ezevillo.com,https://ezevillo.github.io,https://localhost,capacitor://localhost}
+    # La única web de producción es ezevillo.com; se conservan los orígenes nativos.
+    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:https://ezevillo.com,https://www.ezevillo.com,https://localhost,capacitor://localhost}
   security:
     jwt-secret: ${TRUCO_JWT_SECRET}
 

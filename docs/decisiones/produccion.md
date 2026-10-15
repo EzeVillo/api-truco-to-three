@@ -6,7 +6,8 @@ describe el estado desplegado. Preparar los archivos no publica una imagen.
 - El monolito recibe REST y WebSocket mediante el ingreso HTTPS/WSS de Render. No se añade
   un gateway mientras no haya una política o un segundo servicio que lo requiera.
 - La web se sirve desde `/truco-a-3/`, pero el origen autorizado es `https://ezevillo.com`.
-  Se conservan GitHub Pages durante la migración y los orígenes exactos de Capacitor.
+  GitHub Pages se retira y no se mantiene como publicación alternativa. Se conservan
+  los orígenes exactos de Capacitor para las aplicaciones nativas.
 - `prod` exige credenciales externas, prohíbe el secreto conocido de desarrollo y valida
   orígenes sin comodines ni paths. Swagger y los detalles de diagnóstico no son públicos.
 - Los logs HTTP no contienen cuerpos ni headers de autenticación. Se conserva el request ID,
