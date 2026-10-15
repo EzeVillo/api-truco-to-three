@@ -1,0 +1,33 @@
+# Activar con SPRING_PROFILES_ACTIVE=prod al compilar el nativo y en Render.
+# Sin credenciales de desarrollo como fallback en producción.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${TRUCO_DB_USER}
+    password: ${TRUCO_DB_PASSWORD}
+
+truco:
+  web:
+    # Se conserva el origen anterior durante la migración; no se permiten comodines.
+    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:https://ezevillo.com,https://www.ezevillo.com,https://ezevillo.github.io,https://localhost,capacitor://localhost}
+  security:
+    jwt-secret: ${TRUCO_JWT_SECRET}
+
+logging:
+  level:
+    com.villo.truco: ${TRUCO_LOG_LEVEL:INFO}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

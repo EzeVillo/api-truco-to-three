@@ -473,13 +473,18 @@ acceso es por consulta SQL directa (rol administrativo/operador de la base), p. 
 
 ## CI/CD
 
+El perfil `prod` exige credenciales externas, restringe los orígenes de REST/WebSocket,
+deshabilita Swagger y expone sólo salud sin detalles. Los logs HTTP conservan la trazabilidad
+sin registrar cuerpos que puedan contener contraseñas o tokens. La configuración, el orden
+de despliegue y las condiciones operativas pendientes están en [Producción](docs/PRODUCCION.md).
+
 Workflows actuales en `.github/workflows`:
 
 - `ci.yml`
   ejecuta tests en cada push y build luego del test.
 - `release.yml`
   al pushear tags `v*` (o manualmente): compila el binario nativo (`nativeCompile`), lo valida
-  con un smoke test contra PostgreSQL real (readiness, Flyway, springdoc), publica la imagen
+  con un smoke test contra PostgreSQL real (readiness, Flyway y documentación deshabilitada), publica la imagen
   en GHCR (`Dockerfile`) y dispara el deploy hook de Render (secret `RENDER_DEPLOY_HOOK_URL`).
 
 ## Build (GraalVM native)
