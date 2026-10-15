@@ -1,0 +1,29 @@
+name: Verificar gateway de Truco
+on:
+  push:
+    paths: ['gateway/**', '.github/workflows/gateway.yml']
+  pull_request:
+    paths: ['gateway/**', '.github/workflows/gateway.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gateway
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.2.2
+          package_json_file: gateway/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: gateway/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm test
+      - run: pnpm run deploy:check

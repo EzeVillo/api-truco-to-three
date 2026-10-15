@@ -13,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
     "truco.security.issuer=test-issuer", "truco.security.audience=test-audience",
+    "truco.web.allowed-origins=http://localhost:4200,https://ezevillo.com",
     "spring.profiles.active=test"}, webEnvironment = WebEnvironment.RANDOM_PORT)
 class HttpSecurityIntegrationTest {
 
@@ -317,6 +319,75 @@ class HttpSecurityIntegrationTest {
 
     assertEquals(404, response.statusCode());
     assertTrue(response.body().contains("RESOURCE_NOT_FOUND"));
+  }
+
+  @Test
+  @DisplayName("Permite el preflight del dominio nuevo sin autenticación")
+  void allowsProductionOriginPreflight() throws Exception {
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
+        .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+        .header("Origin", "https://ezevillo.com")
+        .header("Access-Control-Request-Method", "POST")
+        .header("Access-Control-Request-Headers", "content-type,authorization").build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(200, response.statusCode());
+    assertEquals("https://ezevillo.com", response.headers()
+        .firstValue("Access-Control-Allow-Origin").orElse(""));
+  }
+
+  @Test
+  @DisplayName("Rechaza un origen que intenta imitar el dominio permitido")
+  void rejectsLookalikeOrigin() throws Exception {
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
+        .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+        .header("Origin", "https://ezevillo.com.attacker.example")
+        .header("Access-Control-Request-Method", "POST").build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(403, response.statusCode());
+    assertTrue(response.headers().firstValue("Access-Control-Allow-Origin").isEmpty());
+  }
+
+  @Test
+  @DisplayName("Rechaza solicitudes desde la web anterior de GitHub Pages")
+  void rejectsRetiredWebOrigin() throws Exception {
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
+        .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+        .header("Origin", "https://ezevillo.github.io")
+        .header("Access-Control-Request-Method", "POST").build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(403, response.statusCode());
+    assertTrue(response.headers().firstValue("Access-Control-Allow-Origin").isEmpty());
+  }
+
+  @Test
+  @DisplayName("Permite el handshake SockJS desde el dominio de producción")
+  void allowsProductionSockJsOrigin() throws Exception {
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/ws-sockjs/info"))
+        .header("Origin", "https://ezevillo.com").GET().build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(200, response.statusCode());
+    assertEquals("https://ezevillo.com", response.headers()
+        .firstValue("Access-Control-Allow-Origin").orElse(""));
+    assertTrue(response.body().contains("\"websocket\":true"));
+  }
+
+  @Test
+  @DisplayName("Rechaza el handshake SockJS desde un origen ajeno")
+  void rejectsUnknownSockJsOrigin() throws Exception {
+    final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/ws-sockjs/info"))
+        .header("Origin", "https://attacker.example").GET().build();
+
+    final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertEquals(403, response.statusCode());
   }
 
   private Map<String, Object> loginAndParse(final String username) throws Exception {
