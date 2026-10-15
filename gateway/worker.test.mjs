@@ -30,6 +30,7 @@ test('Reenvía cuerpo, JWT y query sin exponer la clave ni confiar en XFF', asyn
   const response = await handleRequest(request('/api/auth/login?source=web', {
     method: 'POST', body: JSON.stringify({ username: 'persona' }),
     headers: { Authorization: 'Bearer opaque', 'X-Forwarded-For': '198.51.100.1',
+      Forwarded: 'host=attacker.example;proto=http', 'X-Forwarded-Host': 'attacker.example',
       'X-Truco-Gateway-Secret': 'caller-controlled' },
   }), env);
   assert.equal(response.status, 204);
@@ -38,6 +39,8 @@ test('Reenvía cuerpo, JWT y query sin exponer la clave ni confiar en XFF', asyn
   assert.equal(upstream.headers.get('Authorization'), 'Bearer opaque');
   assert.equal(upstream.headers.get('X-Truco-Gateway-Secret'), env.GATEWAY_SECRET);
   assert.equal(upstream.headers.get('X-Forwarded-For'), null);
+  assert.equal(upstream.headers.get('Forwarded'), null);
+  assert.equal(upstream.headers.get('X-Forwarded-Host'), null);
   assert.equal(upstream.redirect, 'manual');
   assert.equal(await upstream.text(), JSON.stringify({ username: 'persona' }));
   assert.equal(options.cf.cacheTtl, 0);

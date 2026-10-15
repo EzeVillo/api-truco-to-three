@@ -98,8 +98,10 @@ export async function handleRequest(request, env) {
     }
     const upstream = new URL(path + url.search, backend);
     const headers = new Headers(request.headers);
-    headers.delete('Host');
-    headers.delete('X-Forwarded-For');
+    for (const header of ['Host', 'Forwarded', 'X-Forwarded-For', 'X-Forwarded-Host',
+      'X-Forwarded-Proto', 'X-Forwarded-Port', 'X-Forwarded-Prefix', 'X-Real-IP']) {
+      headers.delete(header);
+    }
     headers.set(SECRET_HEADER, env.GATEWAY_SECRET);
     headers.set('X-Request-Id', requestId);
     const forwarded = new Request(new Request(upstream, request), { headers, redirect: 'manual' });
