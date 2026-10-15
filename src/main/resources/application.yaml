@@ -22,6 +22,9 @@ spring:
     enabled: true
 
 truco:
+  gateway:
+    enabled: ${TRUCO_GATEWAY_ENABLED:false}
+    secret: ${TRUCO_GATEWAY_SECRET:}
   web:
     allowed-origins: ${TRUCO_ALLOWED_ORIGINS:http://localhost:4200,https://*.trycloudflare.com,https://localhost,capacitor://localhost}
   retry:

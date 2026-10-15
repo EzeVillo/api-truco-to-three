@@ -1,16 +1,60 @@
 # Producción y migración a ezevillo.com
 
-## Decisión sobre el gateway
+## Ingreso y rate limiting externo
 
-Se mantiene un único backend en Render, con REST y WebSocket/STOMP por HTTPS/WSS.
-Render ya termina TLS y enruta el tráfico al servicio. Un API gateway propio agregaría
-un despliegue y otro punto de fallo sin resolver un requisito actual de enrutamiento.
-Se reconsidera cuando existan varios servicios públicos, cuotas por cliente, políticas
-compartidas o una necesidad concreta de WAF/rate limiting en el perímetro.
+El Worker `truco-api` recibe REST y WebSocket/STOMP por HTTPS/WSS, aplica rate limiting
+y reenvía al único backend en Render. Su URL pública es
+`https://truco-api.ezevillodev.workers.dev`. No se modifica el DNS de DonWeb ni la raíz.
+Es independiente del Worker de IBIT. El código y su configuración están en `gateway/`.
 
 El frontend se publica en `https://ezevillo.com/truco-a-3/`. El origen de sus requests es
-`https://ezevillo.com`, sin path. REST y WebSocket van directamente al servicio de Render;
+`https://ezevillo.com`, sin path. REST y WebSocket pasan por el Worker;
 el proxy del portfolio sólo sirve archivos del frontend.
+
+### Políticas por minuto e IP
+
+| Política | Solicitudes |
+| --- | --- |
+| General | 300 |
+| Login | 10 |
+| Registro | 5 |
+| Invitado | 10 |
+| Refresh | 60 |
+| Apertura WebSocket / info de SockJS | 20 |
+
+Cloudflare aporta `CF-Connecting-IP`; no se confía en `X-Forwarded-For` del cliente.
+Los preflights no consumen cuota. Un exceso devuelve `429 RateLimitExceededException`
+y `Retry-After: 60`; CORS permite leer ese header. No se cachean respuestas de API ni
+se registran cuerpos, credenciales o IPs en logs propios del Worker. El proxy conserva
+el upgrade WebSocket sin aceptar ni inspeccionar frames. El chat mantiene su límite
+de dominio. Los contadores son aproximados y locales a cada ubicación de Cloudflare.
+
+### Protección del origen y operación del Worker
+
+`TRUCO_GATEWAY_ENABLED=true` en Render exige un secreto de al menos 32 bytes UTF-8 en
+`TRUCO_GATEWAY_SECRET`. El Worker conserva el mismo valor en su secreto `GATEWAY_SECRET`
+y sobrescribe el header privado antes de contactar a Render. Nunca poner esa clave en
+el frontend, TOML, logs ni GitHub. JWT sigue identificando al usuario independientemente.
+Sólo GET/HEAD de `/actuator/health/liveness` y `/actuator/health/readiness` quedan exceptuados.
+Una llamada directa a REST, wake o WebSocket devuelve `403 GatewayAccessDeniedException`.
+En desarrollo el filtro está desactivado por defecto; el bean siempre se compila en AOT.
+
+```powershell
+cd gateway
+pnpm install --frozen-lockfile
+pnpm test
+pnpm run deploy:check
+pnpm run deploy
+# Ingresar la clave mediante stdin; nunca como argumento visible.
+pnpm exec wrangler secret put GATEWAY_SECRET
+```
+
+La CI verifica el Worker sin red ni secretos. Sus despliegues usan Wrangler con la cuenta
+Cloudflare del operador; no copiar su token OAuth amplio a GitHub Actions. Publicar primero
+el Worker y su secreto, después el frontend y por último Render con la protección activa.
+Para rollback al frontend directo anterior, desactivar primero `TRUCO_GATEWAY_ENABLED`;
+eso abre temporalmente el bypass y debe revertirse al terminar la incidencia. No rotar JWT
+ni credenciales de PostgreSQL.
 
 ## Documentación a actualizar
 
@@ -75,8 +119,8 @@ en Render al ejecutar la imagen y nunca se guardan en el repositorio.
   puede suspenderse por inactividad; pasar a un plan permanente requiere decisión de costo.
 - Verificar backups de PostgreSQL y ensayar una restauración antes de prometer recuperación.
 - Configurar alertas externas sobre readiness y revisar fallos de despliegue y memoria.
-- Incorporar límites de intentos en login/registro/invitados y límites de tráfico adecuados.
-  Un gateway por sí solo no añade esas políticas.
+- Revisar los umbrales del Worker con tráfico real y alertas de `429`/`503`; las cuotas
+  por IP se comparten entre usuarios detrás del mismo NAT.
 - Auditar retención de logs anteriores y evaluar cambio de credenciales/sesiones expuestas
   a esos logs. El cambio del filtro sólo evita nuevos payloads después de publicar la imagen.
 - Mantener **una instancia** hasta resolver la distribución del broker STOMP, presencia y

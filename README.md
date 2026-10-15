@@ -7,6 +7,10 @@ games.
 
 ## Estado del proyecto
 
+Ingreso público de producción: `https://truco-api.ezevillodev.workers.dev`, con límites
+por IP/ruta en Cloudflare y protección del origen de Render mediante una clave privada.
+Operación, umbrales y rollback: [Producción](docs/PRODUCCION.md).
+
 - matches entre jugadores
 - matches contra bots
 - ligas round-robin

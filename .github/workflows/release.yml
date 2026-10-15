@@ -84,6 +84,9 @@ jobs:
           SMOKE_JWT_SECRET="$(openssl rand -hex 32)"
           echo "::add-mask::$SMOKE_JWT_SECRET"
           printf '%s\n' "TRUCO_NATIVE_SMOKE_JWT=$SMOKE_JWT_SECRET" >> "$GITHUB_ENV"
+          SMOKE_GATEWAY_SECRET="$(openssl rand -hex 32)"
+          echo "::add-mask::$SMOKE_GATEWAY_SECRET"
+          printf '%s\n' "TRUCO_NATIVE_SMOKE_GATEWAY=$SMOKE_GATEWAY_SECRET" >> "$GITHUB_ENV"
 
       - name: Compile native binary
         run: ./gradlew nativeCompile --rerun-tasks --no-daemon
@@ -95,6 +98,8 @@ jobs:
           TRUCO_DB_USER: truco
           TRUCO_DB_PASSWORD: ${{ github.run_id }}
           TRUCO_JWT_SECRET: ${{ env.TRUCO_NATIVE_SMOKE_JWT }}
+          # El smoke lo activa en runtime: comprueba que AOT no elimine el filtro.
+          TRUCO_GATEWAY_ENABLED: 'false'
 
       # Smoke test: el binario nativo falla en runtime (no en compile) si faltan
       # hints de reflection/recursos. Validamos contra Postgres real:
@@ -120,7 +125,14 @@ jobs:
           echo "--- readiness ---"
           curl -fsS http://localhost:8080/actuator/health/readiness
           echo ""
-          DOCS_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8080/v3/api-docs)
+          DIRECT_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8080/api/public/wake)
+          if [ "$DIRECT_STATUS" != "403" ]; then
+            echo "::error::El origen directo permite saltarse el gateway (HTTP $DIRECT_STATUS)"
+            exit 1
+          fi
+          curl -fsS -o /dev/null -H "X-Truco-Gateway-Secret: $TRUCO_GATEWAY_SECRET" http://localhost:8080/api/public/wake
+          curl -fsS -o /dev/null -H "X-Truco-Gateway-Secret: $TRUCO_GATEWAY_SECRET" http://localhost:8080/ws-sockjs/info
+          DOCS_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' -H "X-Truco-Gateway-Secret: $TRUCO_GATEWAY_SECRET" http://localhost:8080/v3/api-docs)
           if [ "$DOCS_STATUS" != "404" ]; then
             echo "::error::La documentación técnica está expuesta en producción (HTTP $DOCS_STATUS)"
             exit 1
@@ -131,6 +143,8 @@ jobs:
           TRUCO_DB_USER: truco
           TRUCO_DB_PASSWORD: ${{ github.run_id }}
           TRUCO_JWT_SECRET: ${{ env.TRUCO_NATIVE_SMOKE_JWT }}
+          TRUCO_GATEWAY_ENABLED: 'true'
+          TRUCO_GATEWAY_SECRET: ${{ env.TRUCO_NATIVE_SMOKE_GATEWAY }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

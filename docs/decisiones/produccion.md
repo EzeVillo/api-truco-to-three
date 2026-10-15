@@ -3,8 +3,13 @@
 Verificar el código y la configuración del servicio antes de asumir que esta decisión
 describe el estado desplegado. Preparar los archivos no publica una imagen.
 
-- El monolito recibe REST y WebSocket mediante el ingreso HTTPS/WSS de Render. No se añade
-  un gateway mientras no haya una política o un segundo servicio que lo requiera.
+- Cloudflare Worker `truco-api` recibe REST y WebSocket, aplica límites por IP/ruta y
+  reenvía a Render. Es independiente del Worker de IBIT y no modifica el DNS del portfolio.
+- Render exige `X-Truco-Gateway-Secret` cuando `TRUCO_GATEWAY_ENABLED=true`, para impedir
+  el bypass por `onrender.com`. Sólo GET/HEAD de los probes exactos quedan exceptuados.
+  La clave se guarda en Cloudflare/Render, nunca en el cliente ni los logs.
+- Los contadores son aproximados y por ubicación de Cloudflare. No prometen cuotas
+  globales exactas ni limitan frames WebSocket; el chat conserva su cooldown propio.
 - La web se sirve desde `/truco-a-3/`, pero el origen autorizado es `https://ezevillo.com`.
   GitHub Pages se retira y no se mantiene como publicación alternativa. Se conservan
   los orígenes exactos de Capacitor para las aplicaciones nativas.

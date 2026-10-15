@@ -206,4 +206,4 @@ hay que verificar contra el estado actual del código antes de asumir que sigue 
 | Bot-vs-bot (avance manual) / matches vs bots sin timeout                   | `docs/decisiones/bot-vs-bot.md`             |
 | Modo campaña (incluye desbloqueo de bots para casual)                      | `docs/decisiones/campania.md`               |
 | Historial de partidas (BC separado que consume eventos finales de match)   | `docs/decisiones/historial-partidas.md`     |
-| Despliegue, orígenes permitidos, logs HTTP o perfil de producción          | `docs/decisiones/produccion.md`            |
+| Despliegue, rate limiting externo, orígenes, logs HTTP o perfil de producción | `docs/decisiones/produccion.md`           |
