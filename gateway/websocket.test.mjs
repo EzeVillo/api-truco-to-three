@@ -64,7 +64,7 @@ test('El gateway transmite CONNECT, CONNECTED, SUBSCRIBE y MESSAGE con compresi�
 });
 
 for (const throughGateway of [false, true]) {
-  test(`El binario nativo completa STOMP ${throughGateway ? 'a través de Cloudflare' : 'directamente'}`,
+  test(`El binario nativo entrega un evento privado ${throughGateway ? 'mediante el Worker' : 'directamente'}`,
     { skip: !process.env.TRUCO_SMOKE_URL, timeout: 20000 }, async t => {
       const backend = new URL(process.env.TRUCO_SMOKE_URL);
       assert.equal(backend.hostname, '127.0.0.1', 'El smoke sólo acepta un backend local de CI');
@@ -77,6 +77,33 @@ for (const throughGateway of [false, true]) {
       assert.equal(typeof accessToken, 'string');
       const url = throughGateway ? await gateway(t, backend.host) : new URL('/ws', backend);
       url.protocol = 'ws:';
-      await connect(t, url, accessToken, !throughGateway);
+      const socket = await connect(t, url, accessToken, !throughGateway);
+      const event = once(socket, 'message', { signal: AbortSignal.timeout(8000) });
+      await new Promise((resolve, reject) => socket.send(
+        'SUBSCRIBE\nid:match-test\ndestination:/user/queue/match\n\n\0',
+        error => error ? reject(error) : resolve(),
+      ));
+      const headers = { Origin: origin, 'X-Truco-Gateway-Secret': fixtureKey,
+        Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
+      let matchId;
+      try {
+        const created = await fetch(new URL('/api/matches', backend), {
+          method: 'POST', headers, body: JSON.stringify({ gamesToPlay: 3, visibility: 'PRIVATE' }),
+        });
+        assert.equal(created.status, 200);
+        matchId = (await created.json()).matchId;
+        const frame = (await event)[0].toString();
+        assert.match(frame, /^MESSAGE\n/);
+        const payload = JSON.parse(frame.slice(frame.indexOf('\n\n') + 2).replace(/\0.*$/s, ''));
+        assert.equal(payload.matchId, matchId);
+        assert.equal(payload.eventType, 'MATCH_CREATED');
+      } finally {
+        if (matchId) {
+          const cleanup = await fetch(new URL(`/api/matches/${matchId}/leave`, backend), {
+            method: 'POST', headers,
+          });
+          assert.equal(cleanup.status, 204);
+        }
+      }
     });
 }

@@ -1,8 +1,13 @@
-name: Verificar transporte de la imagen nativa
+name: Verificar transporte de la imagen publicada
 on:
   workflow_dispatch:
+    inputs:
+      image:
+        description: Imagen nativa o digest a verificar con fixtures aisladas
+        default: ghcr.io/ezevillo/api-truco-to-three:latest
+        required: true
   push:
-    paths: ['.github/workflows/native-realtime.yml', 'gateway/websocket.test.mjs']
+    paths: ['.github/workflows/native-realtime.yml', 'gateway/**']
 permissions:
   contents: read
   packages: read
@@ -39,9 +44,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Arrancar imagen desplegada con base y credenciales efímeras de CI
+      - name: Arrancar imagen publicada con base y credenciales efímeras de CI
         env:
           TRUCO_DB_PASSWORD: ${{ github.run_id }}
+          SMOKE_IMAGE: ${{ inputs.image || 'ghcr.io/ezevillo/api-truco-to-three:latest' }}
         run: |
           docker run -d --name truco-realtime --network host \
             -e SPRING_PROFILES_ACTIVE=prod \
@@ -51,7 +57,7 @@ jobs:
             -e TRUCO_ALLOWED_ORIGINS=https://ezevillo.com \
             -e TRUCO_GATEWAY_ENABLED=true \
             -e TRUCO_GATEWAY_SECRET=gateway-fixture-not-used-in-production \
-            ghcr.io/ezevillo/api-truco-to-three@sha256:95ab2734bba48c0ae97590e035846b6d435e1f23d309d9546b9066fa4bde534e
+            "$SMOKE_IMAGE"
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8080/actuator/health/readiness > /dev/null; then exit 0; fi
             sleep 2

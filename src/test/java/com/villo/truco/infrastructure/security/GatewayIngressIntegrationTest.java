@@ -67,7 +67,7 @@ class GatewayIngressIntegrationTest {
   }
 
   @Test
-  @DisplayName("El ingreso protegido completa CONNECT y recibe mensajes STOMP por WebSocket")
+  @DisplayName("El ingreso protegido completa CONNECT y CONNECTED por WebSocket")
   void exchangesStompFramesThroughProtectedIngress() throws Exception {
     final var claims = JwtClaimsSet.builder().subject("11111111-1111-1111-1111-111111111111")
         .issuer("truco-api").audience(List.of("truco-clients"))

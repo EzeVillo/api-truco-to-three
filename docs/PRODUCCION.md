@@ -26,8 +26,9 @@ Cloudflare aporta `CF-Connecting-IP`; no se confía en `X-Forwarded-For` del cli
 Los preflights no consumen cuota. Un exceso devuelve `429 RateLimitExceededException`
 y `Retry-After: 60`; CORS permite leer ese header. No se cachean respuestas de API ni
 se registran cuerpos, credenciales o IPs en logs propios del Worker. El proxy conserva
-los frames WebSocket mediante un enlace explícito, sin registrar ni interpretar su contenido.
-Se conserva el subprotocolo STOMP y cada tramo negocia su propia compresión. El chat mantiene su límite
+el upgrade WebSocket sin aceptar ni inspeccionar frames. Los upgrades usan `fetch` sin opciones
+de caché de Cloudflare: aplicarles `cf.cacheTtl` bloqueaba los frames después del `101`.
+La política HTTP de no caché se aplica sólo al resto de las solicitudes. El chat mantiene su límite
 de dominio. Los contadores son aproximados y locales a cada ubicación de Cloudflare.
 
 ### Protección del origen y operación del Worker
@@ -36,6 +37,8 @@ de dominio. Los contadores son aproximados y locales a cada ubicación de Cloudf
 `TRUCO_GATEWAY_SECRET`. El Worker conserva el mismo valor en su secreto `GATEWAY_SECRET`
 y sobrescribe el header privado antes de contactar a Render. Nunca poner esa clave en
 el frontend, TOML, logs ni GitHub. JWT sigue identificando al usuario independientemente.
+Los secretos productivos los genera y carga el usuario: el agente trabaja con nombres
+y configuración, sin consultar sus valores. Los tests usan fixtures aisladas de producción.
 Sólo GET/HEAD de `/actuator/health/liveness` y `/actuator/health/readiness` quedan exceptuados.
 Una llamada directa a REST, wake o WebSocket devuelve `403 GatewayAccessDeniedException`.
 En desarrollo el filtro está desactivado por defecto; el bean siempre se compila en AOT.

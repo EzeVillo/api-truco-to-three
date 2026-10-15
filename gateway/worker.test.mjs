@@ -128,49 +128,16 @@ test('Rechaza orígenes ajenos y no autoriza el header privado desde el navegado
   assert.equal(fetchMock.mock.callCount(), 0);
 });
 
-test('Activa ambos sockets, conserva STOMP y aplica la cuota sólo a la apertura', async t => {
+test('Preserva exactamente el upgrade WebSocket y aplica su cuota de conexión', async t => {
   const { env, request, calls, fetchMock } = fixture(t);
-  class Socket extends EventTarget {
-    readyState = 1;
-    sent = [];
-    closed = [];
-    accept(options) { this.accepted = options; }
-    send(data) { this.sent.push(data); }
-    close(code, reason) { this.readyState = 3; this.closed.push({ code, reason }); }
-  }
-  const upstream = new Socket();
-  const downstream = new Socket();
-  const client = {};
-  globalThis.WebSocketPair = class { constructor() { this[0] = client; this[1] = downstream; } };
-  t.after(() => { delete globalThis.WebSocketPair; });
-  t.mock.method(globalThis, 'Response', function (_body, init) { return { ...init }; });
-  const upgrade = { status: 101, webSocket: upstream, headers: new Headers({
-    'Sec-WebSocket-Protocol': 'v12.stomp', 'Sec-WebSocket-Extensions': 'permessage-deflate',
-    'Sec-WebSocket-Accept': 'upstream-key', 'X-Truco-Gateway-Secret': env.GATEWAY_SECRET,
-  }) };
+  const upgrade = { status: 101, webSocket: {} };
   fetchMock.mock.mockImplementation(async () => upgrade);
   const result = await handleRequest(request('/ws', { headers: { Upgrade: 'websocket' } }), env);
-  assert.equal(result.status, 101);
-  assert.equal(result.webSocket, client);
-  assert.deepEqual(upstream.accepted, { allowHalfOpen: true });
-  assert.deepEqual(downstream.accepted, { allowHalfOpen: true });
-  assert.equal(upstream.binaryType, 'arraybuffer');
-  assert.equal(result.headers.get('Sec-WebSocket-Protocol'), 'v12.stomp');
-  for (const header of ['Sec-WebSocket-Extensions', 'Sec-WebSocket-Accept', 'X-Truco-Gateway-Secret']) {
-    assert.equal(result.headers.get(header), null);
-  }
-  downstream.dispatchEvent(new MessageEvent('message', { data: 'CONNECT\n\n\0' }));
-  upstream.dispatchEvent(new MessageEvent('message', { data: 'CONNECTED\n\n\0' }));
-  const binary = new Uint8Array([0, 1, 2]).buffer;
-  upstream.dispatchEvent(new MessageEvent('message', { data: binary }));
-  assert.deepEqual(upstream.sent, ['CONNECT\n\n\0']);
-  assert.deepEqual(downstream.sent, ['CONNECTED\n\n\0', binary]);
+  assert.equal(result, upgrade);
+  // Un upgrade debe usar fetch sin opciones de caché de Cloudflare.
+  assert.equal(fetchMock.mock.calls[0].arguments.length, 1);
   assert.deepEqual(calls.map(value => value.name), ['API_LIMITER', 'CONNECTION_LIMITER']);
   assert.equal(fetchMock.mock.calls[0].arguments[0].headers.get('Upgrade'), 'websocket');
-  const closed = new Event('close');
-  Object.assign(closed, { code: 1006, reason: '' });
-  upstream.dispatchEvent(closed);
-  assert.equal(downstream.closed[0].code, 1011);
 });
 
 test('SockJS limita aperturas sin tratar cada recepción XHR como una conexión nueva', async t => {

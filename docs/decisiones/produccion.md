@@ -10,6 +10,9 @@ describe el estado desplegado. Preparar los archivos no publica una imagen.
   La clave se guarda en Cloudflare/Render, nunca en el cliente ni los logs.
 - Los contadores son aproximados y por ubicación de Cloudflare. No prometen cuotas
   globales exactas ni limitan frames WebSocket; el chat conserva su cooldown propio.
+- Los upgrades WebSocket se reenvían con `fetch` sin opciones `cf` de caché. Aplicarles
+  la política de caché HTTP dejaba el upgrade en `101` sin entregar frames STOMP.
+  Verificar `CONNECT` → `CONNECTED` y eventos, además del estado HTTP del handshake.
 - La web se sirve desde `/truco-a-3/`, pero el origen autorizado es `https://ezevillo.com`.
   GitHub Pages se retira y no se mantiene como publicación alternativa. Se conservan
   los orígenes exactos de Capacitor para las aplicaciones nativas.
