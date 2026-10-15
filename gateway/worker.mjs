@@ -81,7 +81,7 @@ export async function handleRequest(request, env) {
     let policyPath;
     try {
       policyPath = decodeURIComponent(path).replace(/\/+/g, '/').replace(/\/+$/, '');
-      if (/[;\\\0]/.test(policyPath)) throw new Error('Ambiguous path');
+      if (/[;%\\\0]/.test(policyPath)) throw new Error('Ambiguous path');
     } catch {
       return errorResponse(400, 'InvalidRequestException', origin, requestId);
     }

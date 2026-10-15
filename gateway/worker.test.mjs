@@ -84,6 +84,14 @@ test('La cuota general limita la API y no se evade con un XFF inventado', async 
   assert.equal(fetchMock.mock.callCount(), 0);
 });
 
+test('Rechaza doble codificación y parámetros de path para impedir bypass de políticas', async t => {
+  const { env, request, fetchMock } = fixture(t);
+  for (const path of ['/api/auth/%256cogin', '/api/auth/login;param=value']) {
+    assert.equal((await handleRequest(request(path, { method: 'POST' }), env)).status, 400);
+  }
+  assert.equal(fetchMock.mock.callCount(), 0);
+});
+
 test('Nunca expone la clave privada aunque el origen la incluya en un header de respuesta', async t => {
   const { env, request, fetchMock } = fixture(t);
   fetchMock.mock.mockImplementation(async () => new Response(null, {
