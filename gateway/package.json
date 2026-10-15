@@ -5,11 +5,13 @@
   "packageManager": "pnpm@11.2.2",
   "scripts": {
     "check": "node --check worker.mjs",
-    "test": "node --test worker.test.mjs",
+    "test": "node --test worker.test.mjs websocket.test.mjs",
     "deploy:check": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "wrangler": "4.148.0"
+    "miniflare": "5.20261006.0-alpha",
+    "wrangler": "4.148.0",
+    "ws": "8.21.0"
   }
 }

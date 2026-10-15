@@ -1,0 +1,66 @@
+name: Verificar transporte de la imagen nativa
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/native-realtime.yml', 'gateway/websocket.test.mjs']
+permissions:
+  contents: read
+  packages: read
+jobs:
+  transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: truco
+          POSTGRES_USER: truco
+          POSTGRES_PASSWORD: ${{ github.run_id }}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U truco" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.2.2
+          package_json_file: gateway/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: gateway/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: gateway
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Arrancar imagen desplegada con base y credenciales efímeras de CI
+        env:
+          TRUCO_DB_PASSWORD: ${{ github.run_id }}
+        run: |
+          docker run -d --name truco-realtime --network host \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/truco \
+            -e TRUCO_DB_USER=truco -e TRUCO_DB_PASSWORD \
+            -e TRUCO_JWT_SECRET=jwt-fixture-not-used-in-production \
+            -e TRUCO_ALLOWED_ORIGINS=https://ezevillo.com \
+            -e TRUCO_GATEWAY_ENABLED=true \
+            -e TRUCO_GATEWAY_SECRET=gateway-fixture-not-used-in-production \
+            ghcr.io/ezevillo/api-truco-to-three@sha256:95ab2734bba48c0ae97590e035846b6d435e1f23d309d9546b9066fa4bde534e
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/actuator/health/readiness > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Verificar frames del binario con y sin gateway
+        working-directory: gateway
+        env:
+          TRUCO_SMOKE_URL: http://127.0.0.1:8080
+        run: pnpm test
+      - if: always()
+        run: docker rm -f truco-realtime || true
