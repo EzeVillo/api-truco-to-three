@@ -41,6 +41,45 @@ function routeLimiter(request, pathname, env) {
   return null;
 }
 
+function relayWebSocket(response, requestId) {
+  const upstream = response.webSocket;
+  if (!upstream) throw new Error('Missing upstream WebSocket');
+  const [client, downstream] = Object.values(new WebSocketPair());
+  upstream.binaryType = 'arraybuffer';
+  downstream.binaryType = 'arraybuffer';
+
+  const close = (socket, code, reason) => {
+    if (socket.readyState === 3) return;
+    try { socket.close(code, reason); } catch { /* El otro extremo ya puede estar cerrado. */ }
+  };
+  const fail = () => {
+    close(upstream, 1011, 'Connection unavailable');
+    close(downstream, 1011, 'Connection unavailable');
+  };
+  for (const [source, target] of [[upstream, downstream], [downstream, upstream]]) {
+    source.addEventListener('message', event => {
+      try { target.send(event.data); } catch { fail(); }
+    });
+    source.addEventListener('close', event => {
+      const valid = event.code === 1000 || (event.code >= 1001 && event.code <= 1014
+        && ![1004, 1005, 1006].includes(event.code)) || (event.code >= 3000 && event.code <= 4999);
+      const code = valid ? event.code : 1011;
+      const reason = valid ? event.reason : 'Connection unavailable';
+      close(target, code, reason);
+      close(source, code, reason);
+    });
+    source.addEventListener('error', fail);
+  }
+  // Aceptar ambos extremos activa la entrega de frames tras el upgrade HTTP.
+  upstream.accept({ allowHalfOpen: true });
+  downstream.accept({ allowHalfOpen: true });
+  const headers = new Headers({ 'Cache-Control': 'no-store', 'X-Request-Id': requestId });
+  const protocol = response.headers.get('Sec-WebSocket-Protocol');
+  if (protocol) headers.set('Sec-WebSocket-Protocol', protocol);
+  // La compresión y las claves del handshake se negocian por separado en cada tramo.
+  return new Response(null, { status: 101, webSocket: client, headers });
+}
+
 export async function handleRequest(request, env) {
   const requestId = crypto.randomUUID();
   const url = new URL(request.url);
@@ -106,8 +145,7 @@ export async function handleRequest(request, env) {
     headers.set('X-Request-Id', requestId);
     const forwarded = new Request(new Request(upstream, request), { headers, redirect: 'manual' });
     const response = await fetch(forwarded, { cf: { cacheTtl: 0, cacheEverything: false } });
-    // Preserve the native upgrade and its WebSocket; do not accept or buffer frames here.
-    if (response.status === 101) return response;
+    if (response.status === 101) return relayWebSocket(response, requestId);
     const result = new Response(response.body, response);
     for (const [name, value] of corsHeaders(origin)) result.headers.set(name, value);
     if (!origin) result.headers.delete('Access-Control-Allow-Origin');

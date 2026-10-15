@@ -26,7 +26,8 @@ Cloudflare aporta `CF-Connecting-IP`; no se confía en `X-Forwarded-For` del cli
 Los preflights no consumen cuota. Un exceso devuelve `429 RateLimitExceededException`
 y `Retry-After: 60`; CORS permite leer ese header. No se cachean respuestas de API ni
 se registran cuerpos, credenciales o IPs en logs propios del Worker. El proxy conserva
-el upgrade WebSocket sin aceptar ni inspeccionar frames. El chat mantiene su límite
+los frames WebSocket mediante un enlace explícito, sin registrar ni interpretar su contenido.
+Se conserva el subprotocolo STOMP y cada tramo negocia su propia compresión. El chat mantiene su límite
 de dominio. Los contadores son aproximados y locales a cada ubicación de Cloudflare.
 
 ### Protección del origen y operación del Worker
