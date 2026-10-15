@@ -53,8 +53,11 @@ pnpm run deploy
 pnpm exec wrangler secret put GATEWAY_SECRET
 ```
 
-La CI verifica el Worker sin red ni secretos. Sus despliegues usan Wrangler con la cuenta
-Cloudflare del operador; no copiar su token OAuth amplio a GitHub Actions. Publicar primero
+La CI verifica el Worker con orígenes efímeros locales, sin secretos productivos.
+`native-realtime.yml` comprueba la imagen publicada contra PostgreSQL aislado: autentica
+un invitado de prueba, completa STOMP y recibe un evento privado, con y sin el Worker.
+Sus despliegues usan Wrangler con la cuenta Cloudflare del operador;
+no copiar su token OAuth amplio a GitHub Actions. Publicar primero
 el Worker y su secreto, después el frontend y por último Render con la protección activa.
 Para rollback al frontend directo anterior, desactivar primero `TRUCO_GATEWAY_ENABLED`;
 eso abre temporalmente el bypass y debe revertirse al terminar la incidencia. No rotar JWT
