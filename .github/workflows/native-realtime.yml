@@ -54,11 +54,11 @@ jobs:
             -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/truco \
             -e TRUCO_DB_USER=truco -e TRUCO_DB_PASSWORD \
             -e TRUCO_JWT_SECRET=jwt-fixture-not-used-in-production \
-            -e TRUCO_ALLOWED_ORIGINS=https://ezevillo.com \
+            -e TRUCO_ALLOWED_ORIGINS=https://truco.ezevillo.com \
             -e TRUCO_GATEWAY_ENABLED=true \
             -e TRUCO_GATEWAY_SECRET=gateway-fixture-not-used-in-production \
             "$SMOKE_IMAGE"
-          for i in $(seq 1 30); do
+          for _attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8080/actuator/health/readiness > /dev/null; then exit 0; fi
             sleep 2
           done

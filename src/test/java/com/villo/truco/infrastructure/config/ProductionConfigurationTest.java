@@ -18,7 +18,7 @@ class ProductionConfigurationTest {
   @DisplayName("Acepta los orígenes de la web de producción y las aplicaciones nativas")
   void acceptsExplicitProductionOrigins() {
     assertDoesNotThrow(() -> new ProductionConfiguration(
-        new TrucoWebProperties(List.of("https://ezevillo.com", "https://www.ezevillo.com",
+        new TrucoWebProperties(List.of("https://truco.ezevillo.com",
             "https://localhost", "capacitor://localhost")),
         security(TEST_SECRET)));
   }
@@ -27,7 +27,7 @@ class ProductionConfigurationTest {
   @DisplayName("Rechaza el secreto conocido de desarrollo en producción")
   void rejectsDevelopmentSecret() {
     assertThrows(IllegalStateException.class, () -> new ProductionConfiguration(
-        new TrucoWebProperties(List.of("https://ezevillo.com")),
+        new TrucoWebProperties(List.of("https://truco.ezevillo.com")),
         security("truco-local-dev-secret-key-32-bytes")));
   }
 
@@ -40,9 +40,9 @@ class ProductionConfigurationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"http://localhost:4200", "https://*.netlify.app",
-      "https://ezevillo.com/truco-a-3", "https://ezevillo.com/",
-      "https://user@ezevillo.com", "https://ezevillo.com?query=1",
-      "https://ezevillo.com#fragment", "capacitor://attacker.example", "not an origin"})
+      "https://truco.ezevillo.com/truco-a-3", "https://truco.ezevillo.com/",
+      "https://user@ezevillo.com", "https://truco.ezevillo.com?query=1",
+      "https://truco.ezevillo.com#fragment", "capacitor://attacker.example", "not an origin"})
   @DisplayName("Rechaza HTTP, comodines y URLs que no representan un origen")
   void rejectsUnsafeOrigins(final String origin) {
     assertThrows(IllegalStateException.class, () -> new ProductionConfiguration(

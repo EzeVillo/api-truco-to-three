@@ -29,7 +29,7 @@ import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 
 @SpringBootTest(properties = {"spring.profiles.active=test", "truco.gateway.enabled=true",
-    "truco.web.allowed-origins=https://ezevillo.com"},
+    "truco.web.allowed-origins=https://truco.ezevillo.com"},
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GatewayIngressIntegrationTest {
 
@@ -54,7 +54,7 @@ class GatewayIngressIntegrationTest {
       assertEquals(403, this.send(path, false).statusCode());
       final var allowed = this.send(path, true);
       assertEquals(200, allowed.statusCode());
-      assertEquals("https://ezevillo.com",
+      assertEquals("https://truco.ezevillo.com",
           allowed.headers().firstValue("Access-Control-Allow-Origin").orElseThrow());
     }
     assertEquals(200, this.send("/actuator/health/liveness", false).statusCode());
@@ -76,7 +76,7 @@ class GatewayIngressIntegrationTest {
         JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
     final var received = new CompletableFuture<String>();
     final var socket = this.http.newWebSocketBuilder().connectTimeout(Duration.ofSeconds(5))
-        .header("Origin", "https://ezevillo.com").header("X-Truco-Gateway-Secret", SECRET)
+        .header("Origin", "https://truco.ezevillo.com").header("X-Truco-Gateway-Secret", SECRET)
         .subprotocols("v12.stomp")
         .buildAsync(URI.create("ws://localhost:" + this.port + "/ws"), new WebSocket.Listener() {
           private final StringBuilder text = new StringBuilder();
@@ -109,7 +109,7 @@ class GatewayIngressIntegrationTest {
   private HttpResponse<String> send(final String path, final boolean throughGateway)
       throws Exception {
     final var builder = HttpRequest.newBuilder(URI.create("http://localhost:" + this.port + path))
-        .header("Origin", "https://ezevillo.com");
+        .header("Origin", "https://truco.ezevillo.com");
     if (throughGateway) {
       builder.header("X-Truco-Gateway-Secret", SECRET);
     }

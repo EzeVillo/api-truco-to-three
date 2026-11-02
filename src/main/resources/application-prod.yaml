@@ -8,8 +8,8 @@ spring:
 
 truco:
   web:
-    # La única web de producción es ezevillo.com; se conservan los orígenes nativos.
-    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:https://ezevillo.com,https://www.ezevillo.com,https://localhost,capacitor://localhost}
+    # La única web de producción es truco.ezevillo.com; se conservan los orígenes nativos.
+    allowed-origins: ${TRUCO_ALLOWED_ORIGINS:https://truco.ezevillo.com,https://localhost,capacitor://localhost}
   security:
     jwt-secret: ${TRUCO_JWT_SECRET}
 

@@ -22,7 +22,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(properties = {"truco.security.jwt-secret=test-secret-test-secret-test-secret",
     "truco.security.issuer=test-issuer", "truco.security.audience=test-audience",
-    "truco.web.allowed-origins=http://localhost:4200,https://ezevillo.com",
+    "truco.web.allowed-origins=http://localhost:4200,https://truco.ezevillo.com",
     "spring.profiles.active=test"}, webEnvironment = WebEnvironment.RANDOM_PORT)
 class HttpSecurityIntegrationTest {
 
@@ -326,14 +326,14 @@ class HttpSecurityIntegrationTest {
   void allowsProductionOriginPreflight() throws Exception {
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
         .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
-        .header("Origin", "https://ezevillo.com")
+        .header("Origin", "https://truco.ezevillo.com")
         .header("Access-Control-Request-Method", "POST")
         .header("Access-Control-Request-Headers", "content-type,authorization").build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
     assertEquals(200, response.statusCode());
-    assertEquals("https://ezevillo.com", response.headers()
+    assertEquals("https://truco.ezevillo.com", response.headers()
         .firstValue("Access-Control-Allow-Origin").orElse(""));
   }
 
@@ -342,7 +342,7 @@ class HttpSecurityIntegrationTest {
   void rejectsLookalikeOrigin() throws Exception {
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/api/auth/login"))
         .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
-        .header("Origin", "https://ezevillo.com.attacker.example")
+        .header("Origin", "https://truco.ezevillo.com.attacker.example")
         .header("Access-Control-Request-Method", "POST").build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -369,12 +369,12 @@ class HttpSecurityIntegrationTest {
   @DisplayName("Permite el handshake SockJS desde el dominio de producción")
   void allowsProductionSockJsOrigin() throws Exception {
     final var request = HttpRequest.newBuilder(URI.create(this.baseUrl() + "/ws-sockjs/info"))
-        .header("Origin", "https://ezevillo.com").GET().build();
+        .header("Origin", "https://truco.ezevillo.com").GET().build();
 
     final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
     assertEquals(200, response.statusCode());
-    assertEquals("https://ezevillo.com", response.headers()
+    assertEquals("https://truco.ezevillo.com", response.headers()
         .firstValue("Access-Control-Allow-Origin").orElse(""));
     assertTrue(response.body().contains("\"websocket\":true"));
   }

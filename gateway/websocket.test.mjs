@@ -9,7 +9,7 @@ const worker = await readFile(new URL('./worker.mjs', import.meta.url), 'utf8');
 const config = JSON.parse(await readFile(new URL('./wrangler.jsonc', import.meta.url), 'utf8'));
 // Valor exclusivo de fixtures: nunca se consulta una clave de producción.
 const fixtureKey = 'gateway-fixture-not-used-in-production';
-const origin = 'https://ezevillo.com';
+const origin = 'https://truco.ezevillo.com';
 const connected = 'CONNECTED\nversion:1.2\n\n\0';
 
 async function gateway(t, address) {

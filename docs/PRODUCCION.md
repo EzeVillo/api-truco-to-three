@@ -1,4 +1,4 @@
-# Producción y migración a ezevillo.com
+# Producción de truco.ezevillo.com
 
 ## Ingreso y rate limiting externo
 
@@ -7,9 +7,9 @@ y reenvía al único backend en Render. Su URL pública es
 `https://truco-api.ezevillodev.workers.dev`. No se modifica el DNS de DonWeb ni la raíz.
 Es independiente del Worker de IBIT. El código y su configuración están en `gateway/`.
 
-El frontend se publica en `https://ezevillo.com/truco-a-3/`. El origen de sus requests es
-`https://ezevillo.com`, sin path. REST y WebSocket pasan por el Worker;
-el proxy del portfolio sólo sirve archivos del frontend.
+El frontend se publica en `https://truco.ezevillo.com/`. El origen de sus requests es
+`https://truco.ezevillo.com`, sin path. REST y WebSocket pasan por el Worker;
+el frontend se sirve directamente desde su Worker de assets, sin proxy del portfolio.
 
 ### Políticas por minuto e IP
 
@@ -89,7 +89,7 @@ Variables obligatorias del perfil:
 `TRUCO_ALLOWED_ORIGINS` acepta una lista separada por comas de orígenes HTTPS explícitos
 y el origen nativo exacto `capacitor://localhost`. Se conservan `https://localhost`
 y `capacitor://localhost` para las aplicaciones Capacitor existentes. La configuración final es:
-`https://ezevillo.com,https://www.ezevillo.com,https://localhost,capacitor://localhost`.
+`https://truco.ezevillo.com,https://localhost,capacitor://localhost`.
 GitHub Pages se retira como web de producción y su origen no se mantiene autorizado.
 Actualizar también `TRUCO_ALLOWED_ORIGINS` **en Render**, porque el valor externo tiene
 precedencia sobre el YAML. La actualización por MCP conserva las otras variables y dispara
@@ -113,12 +113,9 @@ en Render al ejecutar la imagen y nunca se guardan en el repositorio.
 3. Configurar las variables anteriores sin reemplazar el resto de variables del servicio.
 4. Desplegar el nuevo digest y usar `/actuator/health/readiness` como health check de Render:
    incluye base de datos y latido del scheduler; liveness sólo indica que el proceso vive.
-5. Publicar el sitio de Truco y, al final, incorporar exclusivamente `/truco-a-3/*`
-   al sitio Netlify que posee `ezevillo.com`.
-6. Ante un fallo de frontend, retirar/revertir esa regla. Ante un fallo de backend,
-   restaurar la imagen previa y su configuración compatible. Retirar GitHub Pages una vez
-   publicado el frontend nuevo y quitar su origen de la configuración efectiva de Render.
-   El rollback del frontend usa los despliegues de Netlify, sin reactivar la web anterior.
+5. Publicar el frontend en el Custom Domain `truco.ezevillo.com`, sin proxy ni prefijo.
+6. Verificar el frontend en su subdominio, login, WebSocket y PWA. Retirar la
+   publicación antigua de Netlify; no se mantienen aliases ni redirects.
 
 ## Condiciones pendientes para disponibilidad de producción
 

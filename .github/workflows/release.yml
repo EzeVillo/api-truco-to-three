@@ -109,9 +109,9 @@ jobs:
         run: |
           ./build/native/nativeCompile/truco &
           APP_PID=$!
-          trap "kill $APP_PID || true" EXIT
+          trap 'kill "$APP_PID" || true' EXIT
 
-          for i in $(seq 1 30); do
+          for _attempt in $(seq 1 30); do
             if curl -fsS http://localhost:8080/actuator/health/readiness > /dev/null 2>&1; then
               break
             fi

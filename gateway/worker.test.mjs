@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { handleRequest } from './worker.mjs';
 
-const origin = 'https://ezevillo.com';
+const origin = 'https://truco.ezevillo.com';
 const names = ['API_LIMITER', 'LOGIN_LIMITER', 'REGISTER_LIMITER', 'GUEST_LIMITER',
   'REFRESH_LIMITER', 'CONNECTION_LIMITER'];
 function fixture(t) {
@@ -116,7 +116,7 @@ test('El preflight permitido no consume cuota ni contacta a Render', async t => 
 test('Rechaza orígenes ajenos y no autoriza el header privado desde el navegador', async t => {
   const { env, request, fetchMock } = fixture(t);
   const forbidden = await handleRequest(request('/api/auth/login', {
-    headers: { Origin: 'https://ezevillo.com.attacker.example' },
+    headers: { Origin: 'https://truco.ezevillo.com.attacker.example' },
   }), env);
   assert.equal(forbidden.status, 403);
   assert.equal(forbidden.headers.get('Access-Control-Allow-Origin'), null);
@@ -126,6 +126,17 @@ test('Rechaza orígenes ajenos y no autoriza el header privado desde el navegado
   }), env);
   assert.equal(preflight.status, 403);
   assert.equal(fetchMock.mock.callCount(), 0);
+});
+
+test('El portfolio y otros proyectos no heredan acceso al gateway de Truco', async t => {
+  const { env, request, fetchMock, calls } = fixture(t);
+  for (const other of ['https://ezevillo.com', 'https://ibit.ezevillo.com', 'https://git-review.ezevillo.com']) {
+    const response = await handleRequest(request('/api/auth/login', { headers: { Origin: other } }), env);
+    assert.equal(response.status, 403);
+    assert.equal(response.headers.get('Access-Control-Allow-Origin'), null);
+  }
+  assert.equal(fetchMock.mock.callCount(), 0);
+  assert.equal(calls.length, 0);
 });
 
 test('Preserva exactamente el upgrade WebSocket y aplica su cuota de conexión', async t => {
